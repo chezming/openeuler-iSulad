@@ -3,9 +3,33 @@ branches: {
   }
 fileChange:
   /iSulad-1.0.tar.gz:
-    newFile: !uuid 'b51a10df9950ae4872af392af7c2bd7245c53c5c'
-    oldFile: null
-gitCommitId: !uuid 'c421bc426e76ec8caf9f73c35931b5c9bb7ff702'
+    newFile: null
+    oldFile: !uuid 'b51a10df9950ae4872af392af7c2bd7245c53c5c'
+  /src:
+    newFile: !uuid '01e90c61700938db1dfe9f534eb92c0a1344c289'
+    oldFile: !uuid '9af3b4b9c47f71bd083047784dadd6ec0c45d363'
+  /src/contrib:
+    newFile: !uuid '4760ba02f88df789557bedad549913942ebf394b'
+    oldFile: !uuid '2b2b749a56258805e35fec852bc55a9757057599'
+  /src/contrib/docker:
+    newFile: !uuid 'ab3b606857093df9eb1e0a8a495edb989502d083'
+    oldFile: !uuid 'ab3b606857093df9eb1e0a8a495edb989502d083'
+  /src/contrib/env_checkconfig:
+    newFile: !uuid 'a89cfb974b70ea7c24b1af72ceb56983aa90bff8'
+    oldFile: !uuid 'a89cfb974b70ea7c24b1af72ceb56983aa90bff8'
+  /src/contrib/generate_certificate.bash:
+    newFile: !uuid '831ade292587ad9fb9c8f1dff653c895ea2a4195'
+    oldFile: !uuid '831ade292587ad9fb9c8f1dff653c895ea2a4195'
+  /src/contrib/sysmonitor:
+    newFile: !uuid '88f14c9af69d06cfe1dcba281194cb235aed60ba'
+    oldFile: !uuid '7e34dda3ffe33ac0a43e27fd9458cafa94c3f3bb'
+  /src/contrib/sysmonitor/isulad-check.sh:
+    newFile: !uuid '2bad76bfbe25a4ef2832f4c7ca734afe94748642'
+    oldFile: !uuid '2bad76bfbe25a4ef2832f4c7ca734afe94748642'
+  /update-version.bash:
+    newFile: !uuid '8dda11fbad243a0b81d910c6aca96d33525f5ba0'
+    oldFile: !uuid '8dda11fbad243a0b81d910c6aca96d33525f5ba0'
+gitCommitId: !uuid 'ffd6ebe70c4b108ed6da78c2d17f964c2b8218ff'
 renames: {
   }
-revisionId: 4
+revisionId: 5
