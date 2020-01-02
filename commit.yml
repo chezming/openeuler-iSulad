@@ -2,25 +2,16 @@
 branches: {
   }
 fileChange:
-  /src:
-    newFile: !uuid '0e09376d1dff1fbdc0306d8178d976e45d196244'
-    oldFile: !uuid 'b682e41fa6e9a9f65f021a29e696b72f55a5fee8'
-  /src/services:
-    newFile: !uuid 'ee2f3b5aa0bfbaf3ae17048c9050314eae0cb6ac'
-    oldFile: !uuid 'e96156884c12a548623740463d094eb496db42b0'
-  /src/services/cri:
-    newFile: !uuid '6c04003c2301de741127bd8d8c6cda04f8aa1304'
-    oldFile: !uuid '6cfe31f8b6ea21c29f65acae296dd69061b86c08'
-  /src/services/cri/cri_helpers.cc:
-    newFile: !uuid '48589da4f692878e78ef77b0917d7e886b879f02'
-    oldFile: !uuid '2ecef0d93feca1a682795d7eb8c81a77b74c93ba'
-  /src/services/cri/cri_helpers.h:
-    newFile: !uuid '8e308c6192db370566ba12fc0ec1716d4faaf6b3'
-    oldFile: !uuid '43281d2cbf72907fda48c26cf4d2b0e79c4e45bf'
-  /src/services/cri/cri_sandbox.cc:
-    newFile: !uuid '5c0d0eb835ebeeffd6b356462a786d8e3ca71584'
-    oldFile: !uuid '0428b06b4e72567bd4ef4948fe29ec7bac7d8bfa'
-gitCommitId: !uuid '47b8d8094627c5441cbd130753fe337332e81b85'
+  /README.md:
+    newFile: !uuid 'd632af217ebb06e1339b250b255995c1f157d6bb'
+    oldFile: !uuid '0475907dd2e68cb367a9ac7670f0c121c85faa44'
+  /logo:
+    newFile: !uuid 'faeb61c3514214ab32541b261e4714f42ca67651'
+    oldFile: null
+  /logo/isula-logo.png:
+    newFile: !uuid '011d66d9c1a696a605bc88a02c8e470d6f54d039'
+    oldFile: null
+gitCommitId: !uuid '93586e04b4fc56786b06f6daa87670493577a848'
 renames: {
   }
-revisionId: 10
+revisionId: 11
