@@ -17,7 +17,7 @@
 #include <iostream>
 #include <string>
 #include <memory>
-#include <grpc++/grpc++.h>
+#include <grpcpp/grpcpp.h>
 #include <sstream>
 #include <fstream>
 
@@ -28,6 +28,7 @@
 #include "certificate.h"
 
 using grpc::Channel;
+using grpc::ChannelArguments;
 using grpc::ClientContext;
 using grpc::ClientReader;
 using grpc::ClientReaderWriter;
@@ -55,6 +56,10 @@ public:
             socket_address.erase(0, tcp_prefix.length());
         }
 
+        ChannelArguments channelArgs;
+        // Set the load balancing policy for the channel.
+        channelArgs.SetLoadBalancingPolicyName("round_robin");
+
         if (arguments->tls) {
             m_tlsMode = ClientBaseConstants::TLS_ON;
             m_certFile = arguments->cert_file != nullptr ?
@@ -75,12 +80,14 @@ public:
             // Create a default SSL ChannelCredentials object.
             auto channel_creds = grpc::SslCredentials(ssl_opts);
             // Create a channel using the credentials created in the previous step.
-            auto channel = grpc::CreateChannel(socket_address, channel_creds);
+            auto channel = grpc::CreateCustomChannel(socket_address, channel_creds, channelArgs);
             // Connect to gRPC server with ssl/tls authentication mechanism.
             stub_ = SV::NewStub(channel);
         } else {
             // Connect to gRPC server without ssl/tls authentication mechanism.
-            stub_ = SV::NewStub(grpc::CreateChannel(socket_address, grpc::InsecureChannelCredentials()));
+            stub_ = SV::NewStub(grpc::CreateCustomChannel(socket_address,
+                                                          grpc::InsecureChannelCredentials(),
+                                                          channelArgs));
         }
     }
     virtual ~ClientBase() = default;
