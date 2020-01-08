@@ -246,19 +246,11 @@ static struct bim *bim_get(const char *image_type, const char *image_name, const
     }
     if (ext_config_image != NULL) {
         bim->ext_config_image = util_strdup_s(ext_config_image);
-        if (bim->ext_config_image == NULL) {
-            lcrd_append_error_message("Failed to dup external config image %s", bim->ext_config_image);
-            bim_put(bim);
-            return NULL;
         }
     }
     if (container_id != NULL) {
         bim->container_id = util_strdup_s(container_id);
-         if (bim->container_id == NULL) {
-            lcrd_append_error_message("Failed to dup container id %s", bim->container_id);
-            bim_put(bim);
-            return NULL;
-    }
+        }
     return bim;
 }
 
