@@ -2,31 +2,40 @@
 branches: {
   }
 fileChange:
-  /cmake:
-    newFile: !uuid '065f27ac790adbdee3ba7efcff0a82118ad430be'
-    oldFile: !uuid 'e22d9b6b688d18c38376c52ce579b318a78c704c'
-  /cmake/set_build_flags.cmake:
-    newFile: !uuid 'b36920d0c681e0903e6674be29689ebbaddfde80'
-    oldFile: !uuid 'fbe587ce35c2631824b26ce28fbcb8afb7500b83'
   /src:
-    newFile: !uuid 'dcb92baf2a0ae12f187302546da8f902ace28f12'
-    oldFile: !uuid '1ad40eadf74647a07bb5c7e8d95eda77a6b1c5a1'
-  /src/log.c:
-    newFile: !uuid 'be5c708460ed87eec210fc02a4abec4224e02833'
-    oldFile: !uuid '4b4a36910a81ad49c856a0c8a05f91abc69dd2e5'
-  /src/log.h:
-    newFile: !uuid 'e5e82bd12ce90282168957898676f5cf56c25f4a'
-    oldFile: !uuid '29cae6564a31ce94640e3d053b5191519d117a03'
-  /src/websocket:
-    newFile: !uuid 'bc682c9e57c581df5884b4379eceb69e388dfbf1'
-    oldFile: !uuid '527f507c87945bb313729f1ad489d7f856577cf1'
-  /src/websocket/service:
-    newFile: !uuid 'ee260ede62bd906c85cc0f614d41da92d2738187'
-    oldFile: !uuid 'bfd315f92f7ea1fae3b7709a4cb5d54953a945ae'
-  /src/websocket/service/ws_server.cc:
-    newFile: !uuid '8c42aa8debdb63090b15dd51e9585ba4c10f9959'
-    oldFile: !uuid '718df10f1f40f7e0d09b12a9cdf52d60009dc8dc'
-gitCommitId: !uuid 'c874d60812273cf28d816d239bfc84fa3fe19436'
+    newFile: !uuid '970abc222c3169be1253b6abb4fd224f9f01a712'
+    oldFile: !uuid 'dcb92baf2a0ae12f187302546da8f902ace28f12'
+  /src/api:
+    newFile: !uuid 'fb77e75fbe28840eedb7420ae0218dc47753b8a7'
+    oldFile: !uuid 'e68aeb3e2a1f554e85fa95dfab997b85f4a13b7c'
+  /src/api/image_client:
+    newFile: !uuid 'ef0a5cc436510715b7c38368adc3b03923465a4e'
+    oldFile: !uuid 'f324c6538f279a347f076c30fca384cbef1d8d32'
+  /src/api/image_client/isula_image.proto:
+    newFile: !uuid '41a7f7d3ef4bc73c0c5e52670dadd2c5ee454d19'
+    oldFile: !uuid 'd882bb01e0fbabb4dc54649fb3a8571bd790291b'
+  /src/api/services:
+    newFile: !uuid '7413420eb3d537b174b87fb49cc3055b2d180fda'
+    oldFile: !uuid 'ecd232cfb2c07063df0d16648a5bd27e0f972d04'
+  /src/api/services/health:
+    newFile: !uuid 'c76b418e574750f0717443b2539c59771a14cff7'
+    oldFile: !uuid 'a032dd772b5c8d99e7a397500899a297ddc47fab'
+  /src/api/services/health/health.proto:
+    newFile: !uuid '84cf3579f61fc6ffc61c7045937e128a601fd819'
+    oldFile: !uuid '7a1de116f4626e2216ee3d8c3b8d72ffa8722684'
+  /src/api/services/images:
+    newFile: !uuid 'e946b1f6df74d3522715ac5d0a2680cb133fafa4'
+    oldFile: !uuid 'a54a3d769f7f6548b42b542ea26d2eab4a1a9601'
+  /src/api/services/images/images.proto:
+    newFile: !uuid '3d86722f9a84ce7b41ed061670747e5f5ef16e20'
+    oldFile: !uuid 'cd8e55c5831222d5f3cfcbc826e32fbfe48ad48d'
+  /src/api/types:
+    newFile: !uuid 'e901bb9c0cd19ac350f746034f676e6cb45c8b8a'
+    oldFile: !uuid 'e0e036bc9618131c2a7c17f566705917c8e6630d'
+  /src/api/types/descriptor.proto:
+    newFile: !uuid '5323f0091d39dd6847b9e8d43d84676c2a0cc17d'
+    oldFile: !uuid '198473e329f931e3ef8cff424e999ea5f493737a'
+gitCommitId: !uuid '1eae401d22f53e99414514813fc439d927ca769d'
 renames: {
   }
-revisionId: 24
+revisionId: 25
