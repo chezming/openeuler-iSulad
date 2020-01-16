@@ -3,39 +3,18 @@ branches: {
   }
 fileChange:
   /src:
-    newFile: !uuid '29b912e7e93f21e7db45e5556d981e9e84f1042c'
-    oldFile: !uuid 'e0c0bc43e0ae063b8de6e57318a48733b3b7d4b4'
-  /src/api:
-    newFile: !uuid 'e68aeb3e2a1f554e85fa95dfab997b85f4a13b7c'
-    oldFile: !uuid 'bf763af75abe3d6366d00f85797b5030b43a38d4'
-  /src/api/image_client:
-    newFile: !uuid 'f324c6538f279a347f076c30fca384cbef1d8d32'
-    oldFile: !uuid 'ed76dc2084c9125844d50c87280cf7b613ef5469'
-  /src/api/image_client/isula_image.proto:
-    newFile: !uuid 'd882bb01e0fbabb4dc54649fb3a8571bd790291b'
-    oldFile: !uuid 'df84870eb88f92f8a401ee4ebc753d471c336dd0'
-  /src/api/services:
-    newFile: !uuid 'ecd232cfb2c07063df0d16648a5bd27e0f972d04'
-    oldFile: !uuid 'dc3775d6c45b4d7dff49363ebdb13ab5d965db62'
-  /src/api/services/health:
-    newFile: !uuid 'a032dd772b5c8d99e7a397500899a297ddc47fab'
-    oldFile: !uuid '5bfc394cb207ad1871b89f97eff77356cd3350de'
-  /src/api/services/health/health.proto:
-    newFile: !uuid '7a1de116f4626e2216ee3d8c3b8d72ffa8722684'
-    oldFile: !uuid 'aeebc729df48171ee4b605ae51d6d1cac02d128b'
-  /src/api/services/images:
-    newFile: !uuid 'a54a3d769f7f6548b42b542ea26d2eab4a1a9601'
-    oldFile: !uuid '243ce853214b68df642fcb3ccc2ebcff4227ceb9'
-  /src/api/services/images/images.proto:
-    newFile: !uuid 'cd8e55c5831222d5f3cfcbc826e32fbfe48ad48d'
-    oldFile: !uuid '9863688018e737c77b3dee8d74e396b9ad1a1d41'
-  /src/api/types:
-    newFile: !uuid 'e0e036bc9618131c2a7c17f566705917c8e6630d'
-    oldFile: !uuid '5573c24eaa4359fbbedd59696cfbba97232dd756'
-  /src/api/types/descriptor.proto:
-    newFile: !uuid '198473e329f931e3ef8cff424e999ea5f493737a'
-    oldFile: !uuid '089ab6b4ba7f49e79b9bea2fe7501e49bbfa7c80'
-gitCommitId: !uuid '571899de0600b59b3606a942befaf20e9e2e9585'
+    newFile: !uuid '1ad40eadf74647a07bb5c7e8d95eda77a6b1c5a1'
+    oldFile: !uuid '29b912e7e93f21e7db45e5556d981e9e84f1042c'
+  /src/http:
+    newFile: !uuid 'a64b65af41ac2b06ccbc7f675747b12b68de0f4d'
+    oldFile: !uuid 'b4782c8ac5efea189d2127a7e877cdbd913ae97d'
+  /src/http/parser.c:
+    newFile: !uuid '92f8de0f110b565eeb269207e2cd291bbf16b1fb'
+    oldFile: !uuid 'c388c6a031851c067d472777ee84d4688d4d3f47'
+  /src/http/parser.h:
+    newFile: !uuid '537293224cf88fe15027d76293db3c1929fb05d2'
+    oldFile: !uuid 'c7506088ad031110e7fe8ae3954b1ab4c6a77b9c'
+gitCommitId: !uuid '12e17765b2e0a37febe20f040356c92727efff9b'
 renames: {
   }
-revisionId: 22
+revisionId: 23
