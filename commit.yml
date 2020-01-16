@@ -2,19 +2,31 @@
 branches: {
   }
 fileChange:
+  /cmake:
+    newFile: !uuid '065f27ac790adbdee3ba7efcff0a82118ad430be'
+    oldFile: !uuid 'e22d9b6b688d18c38376c52ce579b318a78c704c'
+  /cmake/set_build_flags.cmake:
+    newFile: !uuid 'b36920d0c681e0903e6674be29689ebbaddfde80'
+    oldFile: !uuid 'fbe587ce35c2631824b26ce28fbcb8afb7500b83'
   /src:
-    newFile: !uuid '1ad40eadf74647a07bb5c7e8d95eda77a6b1c5a1'
-    oldFile: !uuid '29b912e7e93f21e7db45e5556d981e9e84f1042c'
-  /src/http:
-    newFile: !uuid 'a64b65af41ac2b06ccbc7f675747b12b68de0f4d'
-    oldFile: !uuid 'b4782c8ac5efea189d2127a7e877cdbd913ae97d'
-  /src/http/parser.c:
-    newFile: !uuid '92f8de0f110b565eeb269207e2cd291bbf16b1fb'
-    oldFile: !uuid 'c388c6a031851c067d472777ee84d4688d4d3f47'
-  /src/http/parser.h:
-    newFile: !uuid '537293224cf88fe15027d76293db3c1929fb05d2'
-    oldFile: !uuid 'c7506088ad031110e7fe8ae3954b1ab4c6a77b9c'
-gitCommitId: !uuid '12e17765b2e0a37febe20f040356c92727efff9b'
+    newFile: !uuid 'dcb92baf2a0ae12f187302546da8f902ace28f12'
+    oldFile: !uuid '1ad40eadf74647a07bb5c7e8d95eda77a6b1c5a1'
+  /src/log.c:
+    newFile: !uuid 'be5c708460ed87eec210fc02a4abec4224e02833'
+    oldFile: !uuid '4b4a36910a81ad49c856a0c8a05f91abc69dd2e5'
+  /src/log.h:
+    newFile: !uuid 'e5e82bd12ce90282168957898676f5cf56c25f4a'
+    oldFile: !uuid '29cae6564a31ce94640e3d053b5191519d117a03'
+  /src/websocket:
+    newFile: !uuid 'bc682c9e57c581df5884b4379eceb69e388dfbf1'
+    oldFile: !uuid '527f507c87945bb313729f1ad489d7f856577cf1'
+  /src/websocket/service:
+    newFile: !uuid 'ee260ede62bd906c85cc0f614d41da92d2738187'
+    oldFile: !uuid 'bfd315f92f7ea1fae3b7709a4cb5d54953a945ae'
+  /src/websocket/service/ws_server.cc:
+    newFile: !uuid '8c42aa8debdb63090b15dd51e9585ba4c10f9959'
+    oldFile: !uuid '718df10f1f40f7e0d09b12a9cdf52d60009dc8dc'
+gitCommitId: !uuid 'c874d60812273cf28d816d239bfc84fa3fe19436'
 renames: {
   }
-revisionId: 23
+revisionId: 24
