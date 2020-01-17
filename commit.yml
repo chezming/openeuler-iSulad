@@ -2,40 +2,22 @@
 branches: {
   }
 fileChange:
-  /src:
-    newFile: !uuid '970abc222c3169be1253b6abb4fd224f9f01a712'
-    oldFile: !uuid 'dcb92baf2a0ae12f187302546da8f902ace28f12'
-  /src/api:
-    newFile: !uuid 'fb77e75fbe28840eedb7420ae0218dc47753b8a7'
-    oldFile: !uuid 'e68aeb3e2a1f554e85fa95dfab997b85f4a13b7c'
-  /src/api/image_client:
-    newFile: !uuid 'ef0a5cc436510715b7c38368adc3b03923465a4e'
-    oldFile: !uuid 'f324c6538f279a347f076c30fca384cbef1d8d32'
-  /src/api/image_client/isula_image.proto:
-    newFile: !uuid '41a7f7d3ef4bc73c0c5e52670dadd2c5ee454d19'
-    oldFile: !uuid 'd882bb01e0fbabb4dc54649fb3a8571bd790291b'
-  /src/api/services:
-    newFile: !uuid '7413420eb3d537b174b87fb49cc3055b2d180fda'
-    oldFile: !uuid 'ecd232cfb2c07063df0d16648a5bd27e0f972d04'
-  /src/api/services/health:
-    newFile: !uuid 'c76b418e574750f0717443b2539c59771a14cff7'
-    oldFile: !uuid 'a032dd772b5c8d99e7a397500899a297ddc47fab'
-  /src/api/services/health/health.proto:
-    newFile: !uuid '84cf3579f61fc6ffc61c7045937e128a601fd819'
-    oldFile: !uuid '7a1de116f4626e2216ee3d8c3b8d72ffa8722684'
-  /src/api/services/images:
-    newFile: !uuid 'e946b1f6df74d3522715ac5d0a2680cb133fafa4'
-    oldFile: !uuid 'a54a3d769f7f6548b42b542ea26d2eab4a1a9601'
-  /src/api/services/images/images.proto:
-    newFile: !uuid '3d86722f9a84ce7b41ed061670747e5f5ef16e20'
-    oldFile: !uuid 'cd8e55c5831222d5f3cfcbc826e32fbfe48ad48d'
-  /src/api/types:
-    newFile: !uuid 'e901bb9c0cd19ac350f746034f676e6cb45c8b8a'
-    oldFile: !uuid 'e0e036bc9618131c2a7c17f566705917c8e6630d'
-  /src/api/types/descriptor.proto:
-    newFile: !uuid '5323f0091d39dd6847b9e8d43d84676c2a0cc17d'
-    oldFile: !uuid '198473e329f931e3ef8cff424e999ea5f493737a'
-gitCommitId: !uuid '1eae401d22f53e99414514813fc439d927ca769d'
+  /CMakeLists.txt:
+    newFile: !uuid '1cbc2c4ee869c57bad95bcecefc25880ca63171a'
+    oldFile: !uuid '20569ffe41f2a771bb8ea1730df76a1504faed14'
+  /Dockerfile:
+    newFile: !uuid 'feb476cdd9b4b9f9ca079aed844724a604c1fff6'
+    oldFile: null
+  /README.md:
+    newFile: !uuid 'c570ddfdc1a6b9a7457e611a1b041d13943435bf'
+    oldFile: !uuid '21f1f276775d85a20211b269aed67dde06ba3049'
+  /docs:
+    newFile: !uuid 'd1c71478f492f55c5ea88fd2ec02640e06fb6c99'
+    oldFile: !uuid '6e8156a8404a3220defe7669be316ed5ed645367'
+  /docs/build_guide.md:
+    newFile: !uuid '0bcb0ff7ea68c1b7862c0c61b7853bd32c6ec7bc'
+    oldFile: !uuid 'cb4f3803de107240e365980c77f56f02f19bef07'
+gitCommitId: !uuid '0972edcf2aacdf1eda644eb30b66ce78edf64b52'
 renames: {
   }
-revisionId: 25
+revisionId: 26
