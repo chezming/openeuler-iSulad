@@ -295,7 +295,16 @@ static int restore_state(container_t *cont)
     const char *runtime = cont->runtime;
     rt_status_params_t params = { 0 };
     struct engine_container_status_info real_status = { 0 };
-    Container_Status status = state_get_status(cont->state);
+    Container_Status status = CONTAINER_STATUS_UNKNOWN;
+
+    params.rootpath = cont->root_path;
+    params.state = cont->state_path;
+    nret = runtime_status(id, runtime, &params, &real_status);
+    if (nret != 0) {
+        ERROR("Failed to restore container %s, due to can not load container status", id);
+        ret = -1;
+        goto out;
+    }
 
     (void)container_exit_on_next(cont); /* cancel restart policy */
 
