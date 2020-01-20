@@ -47,7 +47,7 @@ static void send_msg_to_syslog(int argc, const char **argv)
     for (; target_command[i] != NULL; i++) {
         if (strcmp(argv[1], target_command[i]) == 0) {
             found = true;
-        }
+    }
     }
     if (!found) {
         return;
