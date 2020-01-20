@@ -2,13 +2,10 @@
 branches: {
   }
 fileChange:
-  /docs:
-    newFile: !uuid '44a94176d6bd1ebb9df1f85f247963a345416cce'
-    oldFile: !uuid '090184e34ddf209ba2c3d946feac6e0d41c5357c'
-  /docs/build_guide.md:
-    newFile: !uuid '07fbe3c47679df3cfae3888a4337ee952bf38080'
-    oldFile: !uuid '0bcb0ff7ea68c1b7862c0c61b7853bd32c6ec7bc'
-gitCommitId: !uuid '686c066914b822a71e3acb8f34c692da9f9e1f6a'
+  /README.md:
+    newFile: !uuid '066e9ddf997f5a63e5242136c1aa3010606361fb'
+    oldFile: !uuid '747289edd5735905514043584107504e329fe698'
+gitCommitId: !uuid '1ddb2a7334a38b9f1d1f2885d51faf570749ffc6'
 renames: {
   }
-revisionId: 30
+revisionId: 31
