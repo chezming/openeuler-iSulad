@@ -3,24 +3,12 @@ branches: {
   }
 fileChange:
   /docs:
-    newFile: !uuid '090184e34ddf209ba2c3d946feac6e0d41c5357c'
-    oldFile: !uuid 'd1c71478f492f55c5ea88fd2ec02640e06fb6c99'
-  /docs/architecture.md:
-    newFile: null
-    oldFile: !uuid 'f849492aec3b653b35ec8d93a36f6c2978019914'
-  /docs/architecture_en.md:
-    newFile: !uuid '3ce891a4ed8466f6d47a4cafb547115de774fc0b'
-    oldFile: null
-  /docs/architecture_zh.md:
-    newFile: !uuid '8820fb94eb3a088d1601ee582d40cf8f230d82a9'
-    oldFile: null
-  /docs/design:
-    newFile: !uuid '5f509b915f1c0168d483695e796a26f8b67b269c'
-    oldFile: !uuid 'd6f06977e644a0cf2642b9d29215fec8e730175d'
-  /docs/design/arch.jpg:
-    newFile: !uuid '5a764869f12c49b4cf0e950c8fb65b77e104388e'
-    oldFile: null
-gitCommitId: !uuid '115a97b647bdb2a0f9c71b4385b6c3b0e47e880c'
+    newFile: !uuid '44a94176d6bd1ebb9df1f85f247963a345416cce'
+    oldFile: !uuid '090184e34ddf209ba2c3d946feac6e0d41c5357c'
+  /docs/build_guide.md:
+    newFile: !uuid '07fbe3c47679df3cfae3888a4337ee952bf38080'
+    oldFile: !uuid '0bcb0ff7ea68c1b7862c0c61b7853bd32c6ec7bc'
+gitCommitId: !uuid '686c066914b822a71e3acb8f34c692da9f9e1f6a'
 renames: {
   }
-revisionId: 29
+revisionId: 30
