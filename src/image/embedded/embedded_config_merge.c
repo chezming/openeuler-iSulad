@@ -156,12 +156,12 @@ static int gen_one_mount(const embedded_manifest *manifest, char *mount, char *r
     }
     if (strcmp(manifest->layers[i]->media_type, MediaTypeEmbeddedLayerSquashfs) == 0) {
         nret = snprintf(mount, PATH_MAX * 3,
-                        "type=squashfs,ro=true,src=%s,dst=%s",
-                        real_path, manifest->layers[i]->path_in_container);
+                         "type=squashfs,ro=true,src=%s,dst=%s",
+                         real_path, manifest->layers[i]->path_in_container);
     } else {
         nret = snprintf(mount, PATH_MAX * 3,
-                        "type=bind,ro=true,bind-propagation=rprivate,src=%s,dst=%s",
-                        real_path, manifest->layers[i]->path_in_container);
+                         "type=bind,ro=true,bind-propagation=rprivate,src=%s,dst=%s",
+                         real_path, manifest->layers[i]->path_in_container);
     }
     if (nret < 0 || nret >= (PATH_MAX * 3)) {
         ERROR("print string for mounts failed");

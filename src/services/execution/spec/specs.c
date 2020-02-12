@@ -194,34 +194,17 @@ out:
 
 static int make_annotations_cgroup_dir(const container_config *container_spec, const host_config *host_spec)
 {
-    int ret = 0;
     char cleaned[PATH_MAX] = { 0 };
-    char *default_cgroup_parent = NULL;
-    char *path = NULL;
 
-    default_cgroup_parent = conf_get_isulad_cgroup_parent();
-    if (host_spec->cgroup_parent != NULL) {
-        path = host_spec->cgroup_parent;
-    } else if (default_cgroup_parent != NULL) {
-        path = default_cgroup_parent;
+    if (host_spec->cgroup_parent == NULL) {
+        return 0;
     }
-    if (path == NULL) {
-        goto out;
-    }
-    if (cleanpath(path, cleaned, sizeof(cleaned)) == NULL) {
-        ERROR("Failed to clean path: %s", path);
-        ret = -1;
-        goto out;
-    }
+
     if (append_json_map_string_string(container_spec->annotations, "cgroup.dir", cleaned)) {
         ERROR("Realloc annotations failed");
-        ret = -1;
-        goto out;
+        return -1;
     }
-
-out:
-    free(default_cgroup_parent);
-    return ret;
+    return 0;
 }
 
 static int make_annotations_oom_score_adj(const container_config *container_spec, const host_config *host_spec)
@@ -286,49 +269,11 @@ static int make_sure_container_spec_annotations(container_config *container_spec
     return 0;
 }
 
-static inline bool is_valid_umask_value(const char *value)
-{
-    return (strcmp(value, UMASK_NORMAL) == 0 || strcmp(value, UMASK_SECURE) == 0);
-}
-
-static int add_native_umask(const container_config *container_spec)
+static int make_annotations(oci_runtime_spec *oci_spec, container_config *container_spec, host_config *host_spec)
 {
     int ret = 0;
     size_t i = 0;
     char *umask = NULL;
-
-    for (i = 0; i < container_spec->annotations->len; i++) {
-        if (strcmp(container_spec->annotations->keys[i], ANNOTATION_UMAKE_KEY) == 0) {
-            if (!is_valid_umask_value(container_spec->annotations->values[i])) {
-                ERROR("native.umask option %s not supported", container_spec->annotations->values[i]);
-                isulad_set_error_message("native.umask option %s not supported", container_spec->annotations->values[i]);
-                ret = -1;
-            }
-            goto out;
-        }
-    }
-
-    umask = conf_get_isulad_native_umask();
-    if (umask == NULL) {
-        ERROR("Failed to get default native umask");
-        ret = -1;
-        goto out;
-    }
-
-    if (append_json_map_string_string(container_spec->annotations, ANNOTATION_UMAKE_KEY, umask)) {
-        ERROR("Failed to append annotations: native.umask=%s", umask);
-        ret = -1;
-        goto out;
-    }
-
-out:
-    free(umask);
-    return ret;
-}
-
-static int make_annotations(oci_runtime_spec *oci_spec, container_config *container_spec, host_config *host_spec)
-{
-    int ret = 0;
 
     ret = make_sure_container_spec_annotations(container_spec);
     if (ret < 0) {
@@ -368,20 +313,6 @@ static int make_annotations(oci_runtime_spec *oci_spec, container_config *contai
     ret = make_annotations_log_console(container_spec);
     if (ret != 0) {
         ret = -1;
-        goto out;
-    }
-
-    /* add rootfs.mount */
-    ret = add_rootfs_mount(container_spec);
-    if (ret != 0) {
-        ERROR("Failed to add rootfs mount");
-        goto out;
-    }
-
-    /* add native.umask */
-    ret = add_native_umask(container_spec);
-    if (ret != 0) {
-        ERROR("Failed to add native umask");
         goto out;
     }
 
@@ -1761,6 +1692,77 @@ int merge_all_specs(host_config *host_spec, const char *real_rootfs,
     }
 
 out:
+    return ret;
+}
+
+static inline bool is_valid_umask_value(const char *value)
+{
+    return (strcmp(value, UMASK_NORMAL) == 0 || strcmp(value, UMASK_SECURE) == 0);
+}
+
+static int add_native_umask(const oci_runtime_spec *container)
+{
+    int ret = 0;
+    size_t i = 0;
+    char *umask = NULL;
+
+    for (i = 0; i < container->annotations->len; i++) {
+        if (strcmp(container->annotations->keys[i], ANNOTATION_UMAKE_KEY) == 0) {
+            if (!is_valid_umask_value(container->annotations->values[i])) {
+                ERROR("native.umask option %s not supported", container->annotations->values[i]);
+                isulad_set_error_message("native.umask option %s not supported", container->annotations->values[i]);
+                ret = -1;
+            }
+            goto out;
+        }
+    }
+
+    umask = conf_get_isulad_native_umask();
+    if (umask == NULL) {
+        ERROR("Failed to get default native umask");
+        ret = -1;
+        goto out;
+    }
+
+    if (append_json_map_string_string(container->annotations, ANNOTATION_UMAKE_KEY, umask)) {
+        ERROR("Failed to append annotations: native.umask=%s", umask);
+        ret = -1;
+        goto out;
+    }
+
+out:
+    free(umask);
+    return ret;
+}
+
+int merge_oci_cgroups_path(const char *id, const oci_runtime_spec *oci_spec,
+                           const host_config *host_spec)
+{
+    int ret = 0;
+    char cleaned[PATH_MAX] = { 0 };
+    char *default_cgroup_parent = NULL;
+    char *path = NULL;
+
+    default_cgroup_parent = conf_get_isulad_cgroup_parent();
+    path = default_cgroup_parent;
+    if (host_spec->cgroup_parent != NULL) {
+        path = host_spec->cgroup_parent;
+    }
+
+    if (path == NULL) {
+        oci_spec->linux->cgroups_path = util_add_path("/isulad", id);
+        return 0;
+    }
+
+    if (cleanpath(path, cleaned, sizeof(cleaned)) == NULL) {
+        ERROR("Failed to clean path: %s", path);
+        ret = -1;
+        goto out;
+    }
+    oci_spec->linux->cgroups_path = util_add_path(cleaned, id);
+
+out:
+    UTIL_FREE_AND_SET_NULL(default_cgroup_parent);
     return ret;
 }
 

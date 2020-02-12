@@ -2086,7 +2086,7 @@ out:
     return ret;
 }
 
-int add_rootfs_mount(const container_config *container_spec)
+int add_rootfs_mount(const oci_runtime_spec *container)
 {
     int ret = 0;
     char *mntparent = NULL;

@@ -16,6 +16,7 @@
 #include "log.h"
 #include "utils.h"
 #include "error.h"
+#include "isulad_config.h"
 
 int ContainerServiceImpl::version_request_from_grpc(const VersionRequest *grequest, container_version_request **request)
 {
@@ -120,6 +121,7 @@ int ContainerServiceImpl::info_response_to_grpc(const host_info_response *respon
 int ContainerServiceImpl::create_request_from_grpc(const CreateRequest *grequest, container_create_request **request)
 {
     container_create_request *tmpreq = nullptr;
+    struct service_arguments *args = nullptr;
 
     tmpreq = (container_create_request *)util_common_calloc_s(sizeof(container_create_request));
     if (tmpreq == nullptr) {
@@ -138,7 +140,16 @@ int ContainerServiceImpl::create_request_from_grpc(const CreateRequest *grequest
     }
     if (!grequest->runtime().empty()) {
         tmpreq->runtime = util_strdup_s(grequest->runtime().c_str());
+    } else {
+        if (isulad_server_conf_rdlock() == 0) {
+            args = conf_get_server_conf();
+            if (args != NULL && args->json_confs != NULL) {
+                tmpreq->runtime = util_strdup_s(args->json_confs->default_runtime);
+            }
+            (void)isulad_server_conf_unlock();
+        }
     }
+
     if (!grequest->hostconfig().empty()) {
         tmpreq->hostconfig = util_strdup_s(grequest->hostconfig().c_str());
     }
