@@ -3,30 +3,66 @@ branches: {
   }
 fileChange:
   /src:
-    newFile: !uuid 'cc48c8448664d77a26abe4f8763819114d26067b'
-    oldFile: !uuid '76581b415618bdcc6e3498b0d3a8bf4088f762d4'
-  /src/cmd:
-    newFile: !uuid '1e1a832b5f22ccc39dd03473b935054d153cac76'
-    oldFile: !uuid '11c5c383a098e5dcd241a9ef5e350f129d3f536f'
-  /src/cmd/isulad-shim:
-    newFile: !uuid '991adcf3fcfc1a758023195877551a557317e3e7'
-    oldFile: !uuid 'ec52462993883c6b2f00e15154a7888593370c42'
-  /src/cmd/isulad-shim/process.c:
-    newFile: !uuid 'e2289755be92f794d49013d5a6332db758b23975'
-    oldFile: !uuid '51fef91a4f95a12e362dfb5c31792609597c9391'
+    newFile: !uuid '536575add573d9e44597bff6780471fff3f55068'
+    oldFile: !uuid 'cc48c8448664d77a26abe4f8763819114d26067b'
   /src/services:
-    newFile: !uuid 'be02c4c1429c24382e6077f379bbdfd4930243b6'
-    oldFile: !uuid 'dc6b5b7479da32195ab956af77204b03f928822f'
+    newFile: !uuid '5c9808af57331891ff01fc7acb6c700a86db66e8'
+    oldFile: !uuid 'be02c4c1429c24382e6077f379bbdfd4930243b6'
   /src/services/execution:
-    newFile: !uuid '718aa7f3c9283804599ef43fbb6852a606bb0a39'
-    oldFile: !uuid '7f1541e7ae55641e633cfe660668436d67c5c578'
+    newFile: !uuid 'b782821b50290b7297a5ba172683413a738d5d5f'
+    oldFile: !uuid '718aa7f3c9283804599ef43fbb6852a606bb0a39'
   /src/services/execution/execute:
-    newFile: !uuid '62e20c157dec070f0ed53e3b7dc04de74fda1a56'
-    oldFile: !uuid '7763fbbf15396ee1af10f1d76f5d16fffe0ab2de'
-  /src/services/execution/execute/execution_create.c:
-    newFile: !uuid 'bdf4548ecbc4cbddaf5e202dc246ddef9dbd65cb'
-    oldFile: !uuid '0f38ac72aa352f724806675cc38a4a3e7bb6d5e3'
-gitCommitId: !uuid 'eb7a020bd504956faa4662fcd65576b1fd759984'
+    newFile: !uuid '4e39cc6153f27e0ffd1a90f9549974d63db28593'
+    oldFile: !uuid '62e20c157dec070f0ed53e3b7dc04de74fda1a56'
+  /src/services/execution/execute/execution_extend.c:
+    newFile: !uuid '7246d7a43880edea62d745fafbe292c8fa3a9472'
+    oldFile: !uuid 'd75786dfa97d4e7b1e9883d7f6875dbea131a58e'
+  /src/services/execution/spec:
+    newFile: !uuid '002dec8e889add1c24d06d0f483f7d899c19d752'
+    oldFile: !uuid '1a5bd28ee436af7fdf54e0e3617acda6c830c769'
+  /src/services/execution/spec/specs.c:
+    newFile: !uuid 'd0a67881c7af4dce8b47902e54f96ab9b9bc1391'
+    oldFile: !uuid '5b3f8dd68a3ae1101c603d7600242adfd0abc185'
+  /src/services/execution/spec/specs.h:
+    newFile: !uuid 'b2f596c4aad5d3122c2456fcc95df39ba0cbf48b'
+    oldFile: !uuid 'c0be87b5e96922e603e2a10ea64f7243e825b92d'
+  /test:
+    newFile: !uuid 'ac2d4f37355f6dc4a25c4a42486d900cfb1935ef'
+    oldFile: !uuid '24806373f67b7b1e07e94ec6d5a90e7083125124'
+  /test/CMakeLists.txt:
+    newFile: !uuid 'ef1c52e5180633fa4ebeb36bc919cc6a73d90291'
+    oldFile: !uuid 'f462eea135c9c62879e0b9e48851b5e9d8e1f524'
+  /test/mocks:
+    newFile: !uuid '634ffb6ad4e51c2620246b13b19078eee1100d0b'
+    oldFile: !uuid 'd5a30858a268ec3b80299d180dc0d3bc641bc22f'
+  /test/mocks/isulad_config_mock.cc:
+    newFile: !uuid 'd7b8324138bce25825d3a958c5a649b0ba7f98a1'
+    oldFile: !uuid '9d3f86b6e094e8774ea9ed881dd12cd774fe9477'
+  /test/mocks/isulad_config_mock.h:
+    newFile: !uuid 'bcdd6b2bc622fc6cc164a28ed922d623dfa29fd8'
+    oldFile: !uuid 'cf3d02d90c4ecd848303795982509231a0e3c166'
+  /test/specs:
+    newFile: !uuid '92c1223d0ed68746313e6284c1a3017ee37aed66'
+    oldFile: null
+  /test/specs/CMakeLists.txt:
+    newFile: !uuid '2cd439b6b1bab360469779d167791b1840993cf5'
+    oldFile: null
+  /test/specs/specs:
+    newFile: !uuid 'dfd054b9d03c37f2a3ee9a5460785288a6e5898e'
+    oldFile: null
+  /test/specs/specs/CMakeLists.txt:
+    newFile: !uuid '8b2287dee908a1bffaabde06b47aba3f1af3323f'
+    oldFile: null
+  /test/specs/specs/hostconfig.json:
+    newFile: !uuid '41255d6c9c091d2711fdc49ab878371598cc3226'
+    oldFile: null
+  /test/specs/specs/oci_runtime_spec.json:
+    newFile: !uuid 'cdc3a4e2c22dc3133f31a5991567ee0adaaa63b4'
+    oldFile: null
+  /test/specs/specs/specs_llt.cc:
+    newFile: !uuid '66ca31914471622c02a5336142269dad43dfb0e5'
+    oldFile: null
+gitCommitId: !uuid '3dc8fa8d8687515bde79f901eafbb599e26d3930'
 renames: {
   }
-revisionId: 51
+revisionId: 52
