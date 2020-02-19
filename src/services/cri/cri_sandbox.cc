@@ -469,7 +469,8 @@ void CRIRuntimeServiceImpl::StartSandboxContainer(const std::string &response_id
 void CRIRuntimeServiceImpl::SetupUserDefinedNetworkPlane(const runtime::v1alpha2::PodSandboxConfig &config,
                                                          const std::string &response_id,
                                                          container_inspect *inspect_data,
-                                                         std::map<std::string, std::string> &stdAnnos, Errors &error)
+                                                         std::map<std::string, std::string> &stdAnnos,
+                                                         std::map<std::string, std::string> &options, Errors &error)
 {
     google::protobuf::Map<std::string, std::string> annotations;
     CRIHelpers::ExtractAnnotations(inspect_data->config->annotations, annotations);
@@ -486,7 +487,7 @@ void CRIRuntimeServiceImpl::SetupUserDefinedNetworkPlane(const runtime::v1alpha2
             strcmp(networks[i]->name, Network::DEFAULT_NETWORK_PLANE_NAME.c_str()) != 0) {
             INFO("SetupPod net: %s", networks[i]->name);
             m_pluginManager->SetUpPod(config.metadata().namespace_(), config.metadata().name(), networks[i]->name,
-                                      networks[i]->interface, response_id, stdAnnos, error);
+                                      networks[i]->interface, response_id, stdAnnos, options, error);
             if (error.Empty()) {
                 continue;
             }
@@ -508,6 +509,8 @@ void CRIRuntimeServiceImpl::SetupSandboxNetwork(const runtime::v1alpha2::PodSand
                                                 Errors &error)
 {
     std::map<std::string, std::string> stdAnnos;
+    std::map<std::string, std::string> networkOptions;
+
     container_inspect *inspect_data = InspectContainer(response_id, error);
     if (error.NotEmpty()) {
         return;
@@ -530,9 +533,11 @@ void CRIRuntimeServiceImpl::SetupSandboxNetwork(const runtime::v1alpha2::PodSand
     // Setup networking for the sandbox.
     CRIHelpers::ProtobufAnnoMapToStd(config.annotations(), stdAnnos);
     stdAnnos[CRIHelpers::Constants::POD_CHECKPOINT_KEY] = jsonCheckpoint;
+    networkOptions["UID"] = config.metadata().uid();
+
     m_pluginManager->SetUpPod(config.metadata().namespace_(), config.metadata().name(),
                               Network::DEFAULT_NETWORK_PLANE_NAME, Network::DEFAULT_NETWORK_INTERFACE_NAME, response_id,
-                              stdAnnos, error);
+                              stdAnnos, networkOptions, error);
     if (error.NotEmpty()) {
         ERROR("SetupPod failed: %s", error.GetCMessage());
         StopContainerHelper(response_id, error);
@@ -541,7 +546,7 @@ void CRIRuntimeServiceImpl::SetupSandboxNetwork(const runtime::v1alpha2::PodSand
 
     // Multi network plane featrue
     // Set up user defined network plane
-    SetupUserDefinedNetworkPlane(config, response_id, inspect_data, stdAnnos, error);
+    SetupUserDefinedNetworkPlane(config, response_id, inspect_data, stdAnnos, networkOptions, error);
     if (error.NotEmpty()) {
         ERROR("failed to user defined network plane");
         goto cleanup;

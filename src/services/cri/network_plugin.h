@@ -104,7 +104,8 @@ public:
 
     virtual void SetUpPod(const std::string &ns, const std::string &name, const std::string &networkPlane,
                           const std::string &interfaceName, const std::string &podSandboxID,
-                          const std::map<std::string, std::string> &annotations, Errors &error) = 0;
+                          const std::map<std::string, std::string> &annotations,
+                          const std::map<std::string, std::string> &options, Errors &error) = 0;
 
     virtual void TearDownPod(const std::string &ns, const std::string &name, const std::string &networkPlane,
                              const std::string &interfaceName, const std::string &podSandboxID,
@@ -138,7 +139,8 @@ public:
 
     void SetUpPod(const std::string &ns, const std::string &name, const std::string &networkPlane,
                   const std::string &interfaceName, const std::string &podSandboxID,
-                  const std::map<std::string, std::string> &annotations, Errors &error) override;
+                  const std::map<std::string, std::string> &annotations,
+                  const std::map<std::string, std::string> &options, Errors &error) override;
 
     void TearDownPod(const std::string &ns, const std::string &name, const std::string &networkPlane,
                      const std::string &interfaceName, const std::string &podSandboxID,
@@ -203,7 +205,8 @@ public:
                              const std::string &podSandboxID, PodNetworkStatus &status, Errors &error);
     void SetUpPod(const std::string &ns, const std::string &name, const std::string &networkPlane,
                   const std::string &interfaceName, const std::string &podSandboxID,
-                  std::map<std::string, std::string> &annotations, Errors &error);
+                  std::map<std::string, std::string> &annotations,
+                  const std::map<std::string, std::string> &options, Errors &error);
     void TearDownPod(const std::string &ns, const std::string &name, const std::string &networkPlane,
                      const std::string &interfaceName, const std::string &podSandboxID,
                      std::map<std::string, std::string> &annotations, Errors &error);
