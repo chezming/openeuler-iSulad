@@ -3,33 +3,69 @@ branches: {
   }
 fileChange:
   /src:
-    newFile: !uuid '4b626d619705dd4e73d477dc29a93bef625b61e0'
-    oldFile: !uuid '44a1f247d571b969122fc42d47fe5e393209e33e'
-  /src/http:
-    newFile: !uuid '49e3a4f92f86ecbde1c7e203444bf99a3525ea28'
-    oldFile: !uuid '3d00cd10172e2d98e41150fc55fa5a22b3178fe2'
-  /src/http/rest_common.h:
-    newFile: !uuid 'e969ece95862263943ce4b78c899e6f308e66f33'
-    oldFile: !uuid '8cefc8529294483319d3fe532726dfe7655e2cbc'
+    newFile: !uuid '5daaf6b0d355cf4f515cd7c20c9970bfd6fbc222'
+    oldFile: !uuid '4b626d619705dd4e73d477dc29a93bef625b61e0'
   /src/services:
-    newFile: !uuid '8dd0d916d4f5c7ce33a05a5ec15cec870731e1ef'
-    oldFile: !uuid 'd2b7aac92a2a9362b3f7f8ac875a141acf9ff25d'
-  /src/services/cri:
-    newFile: !uuid '275dfe0aed3a8da34e5e630606552989a3c401a1'
-    oldFile: !uuid '7947bf4e00f9908e96a1eaba3df5ba7296bff064'
-  /src/services/cri/cri_sandbox.cc:
-    newFile: !uuid '60db1c9e868d1fbb591213b198a28871a435bfa7'
-    oldFile: !uuid '395d413621c58c624c4e2728d366161af7a03054'
+    newFile: !uuid '686715dedf06e956640f9bc01c9971b7990ef481'
+    oldFile: !uuid '8dd0d916d4f5c7ce33a05a5ec15cec870731e1ef'
   /src/services/execution:
-    newFile: !uuid '5e9d5277007985dd83737f90d416a4afb4a15ae3'
-    oldFile: !uuid '6ba9d07e8e39c8ff0fe0d69f7af31c2b8a0f12b1'
-  /src/services/execution/execute:
-    newFile: !uuid '4795444440dcea0b107d19d77ce3dd00bc64dcd4'
-    oldFile: !uuid '0ef36e9f6431d90093eef3ffb04dc3b9731b61ae'
-  /src/services/execution/execute/execution_stream.c:
-    newFile: !uuid 'b5dbbc9d03be2161c18c692b8017a4428dbf8432'
-    oldFile: !uuid '366275f1ad3ad0a3558998766cc2ed51c2b3f51a'
-gitCommitId: !uuid '3ac539664ae399ff37a967ae7dd58cf433f6fb1a'
+    newFile: !uuid 'd47a4c0a09533bf0f86c2afc2a0537c4fd183a6f'
+    oldFile: !uuid '5e9d5277007985dd83737f90d416a4afb4a15ae3'
+  /src/services/execution/spec:
+    newFile: !uuid '0ad745fc79300b9fa11bd846359af14b8f0e844e'
+    oldFile: !uuid '59e39c5066fd6b5816c9a290906c8ab0590cf69c'
+  /src/services/execution/spec/selinux_label.c:
+    newFile: !uuid '54b1ab004a7eab0e511f376ea7555bafa753463e'
+    oldFile: !uuid '76e2a0965acbaaef316e6ffee07fd23c505c59ee'
+  /test:
+    newFile: !uuid 'c6e763722f2979622a63c3c1c90ef066a327ff44'
+    oldFile: !uuid 'ea673a21d4fc2d6dcceffdaa56269325d49bb12c'
+  /test/cmd:
+    newFile: !uuid 'ffff39c58cb343e876c67db77557c23ef489d7e4'
+    oldFile: !uuid '071f7f1735bf7f9a3fab848e9a0ff8423cf730b7'
+  /test/cmd/isula:
+    newFile: !uuid '5e577e31b7a023caf9b7007d8727800ff80b388b'
+    oldFile: !uuid 'bbb314d321b539ce89eb0263ee7c57547bfc6b99'
+  /test/cmd/isula/infomation:
+    newFile: !uuid '4654ab765dd1dc1419df861d70983d5d5788d07d'
+    oldFile: !uuid 'bd18cce032b706c6791b77f7770d0a6fa934b88f'
+  /test/cmd/isula/infomation/info:
+    newFile: !uuid '132bd4063572655b47463a646720cd194bae7fe1'
+    oldFile: !uuid 'ff9c2790d7f745f793edf0bd74c7200881db06b7'
+  /test/cmd/isula/infomation/info/CMakeLists.txt:
+    newFile: !uuid 'bb93fb2b1f0a7e7a79629a80427be78552f01cc8'
+    oldFile: !uuid 'c9ff6b62825fd6d569e6fe10be593a43ed9204e0'
+  /test/image:
+    newFile: !uuid '57ea60c8ba0655e175207a650c3c84aa1ad3e8a0'
+    oldFile: !uuid '0ef20a5358bf7dd05edb94c5e2bd6cc1caeb6c57'
+  /test/image/oci:
+    newFile: !uuid '1044dafa2b9aed06f69162b1cc5bf618b6c683f1'
+    oldFile: !uuid 'fef638065124ea18305842aa55498bc0aa7ca8bc'
+  /test/image/oci/oci_config_merge:
+    newFile: !uuid '4753d66e5ce40278cd051fb6306a870408c6cdfd'
+    oldFile: !uuid 'e392fc9e4aad33afc77c77fe398754d5d5210aaf'
+  /test/image/oci/oci_config_merge/CMakeLists.txt:
+    newFile: !uuid '1dee365589adb1edecfafc56e3f5ffa312d75dbd'
+    oldFile: !uuid '7561b95e375ee88c8fb23a1e2009eb3804b0eada'
+  /test/runtime:
+    newFile: !uuid 'a4185098a56009dbd56cf0e2bc80e696d207dbdb'
+    oldFile: !uuid '0da083aead573dd8f2e146e215564cc0f1252c11'
+  /test/runtime/lcr:
+    newFile: !uuid '906878174d22621869f94c10aa87e81dc6fc1e41'
+    oldFile: !uuid '570fc5af566c61fcae2dd4bf17927d04d7045df7'
+  /test/runtime/lcr/CMakeLists.txt:
+    newFile: !uuid '32ad5ffbc55891f76530668b918fe93a29e58076'
+    oldFile: !uuid 'd64497152db2e082209f13b4bf2f701b998b7d04'
+  /test/specs:
+    newFile: !uuid 'ea90dc003c5bbf5151d37f1557281b4dd18c40af'
+    oldFile: !uuid '92c1223d0ed68746313e6284c1a3017ee37aed66'
+  /test/specs/specs:
+    newFile: !uuid 'd9286f57279af7075d4331dd49051ffd08d0666e'
+    oldFile: !uuid 'dfd054b9d03c37f2a3ee9a5460785288a6e5898e'
+  /test/specs/specs/CMakeLists.txt:
+    newFile: !uuid '1d8e981ff8288f998f185530b1dcf5b07fcde26c'
+    oldFile: !uuid '8b2287dee908a1bffaabde06b47aba3f1af3323f'
+gitCommitId: !uuid 'd8644267f3a36f6141c740c3f8541d937eef7c8c'
 renames: {
   }
-revisionId: 59
+revisionId: 60
