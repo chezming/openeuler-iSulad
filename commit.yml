@@ -3,18 +3,54 @@ branches: {
   }
 fileChange:
   /src:
-    newFile: !uuid 'bd6bdcbfb8fcb56aea2ed25f596b7f859ef137c9'
-    oldFile: !uuid 'f90921d58cbff8c1ad819567581cb7824b0cca63'
-  /src/cmd:
-    newFile: !uuid '5dcb78cd2a4ce3651e616c0dff3038702ee1a9c2'
-    oldFile: !uuid 'd00066407dbed527661a8f557b1e1549611ff269'
-  /src/cmd/isulad-shim:
-    newFile: !uuid '3a4875d870c7d85155f41d86a841f4b41982410b'
-    oldFile: !uuid '4ef6a52c614f15a1549377d43f2f6bf008fe47bb'
-  /src/cmd/isulad-shim/process.c:
-    newFile: !uuid '974a7f2422c4c40207c2d22d1e9a83e58540b131'
-    oldFile: !uuid '4fb512b6e055d42d2e1821bd74e6fba0abe68aca'
-gitCommitId: !uuid 'af92f7ea05a12f7cd7c190ca0e0a8d8ebf5eeb10'
+    newFile: !uuid '9a266cb513019b5e44d8e678a72654aa847af0cb'
+    oldFile: !uuid 'bd6bdcbfb8fcb56aea2ed25f596b7f859ef137c9'
+  /src/json:
+    newFile: !uuid '3fe0476b02d05ba0a1e0068fc6c504626bf29b59'
+    oldFile: !uuid 'af60324508f8a4f5a7639e2240335fd95d44f309'
+  /src/json/oci_runtime_hooks.h:
+    newFile: !uuid 'f31054adfdc5e0e20d6de6b59416666cb1e3a010'
+    oldFile: !uuid 'dac9925302ebc65286db529f5412779f0a4e7603'
+  /src/services:
+    newFile: !uuid 'e0adc4c7891f7fd6e44847d6addcaa70b260c965'
+    oldFile: !uuid '80179455a4efa12bd02332feec8853fe9e0c2641'
+  /src/services/execution:
+    newFile: !uuid 'a64e76cc0769ff63854a4548a8b05f0ac09dd03b'
+    oldFile: !uuid '6a41a82f0d7b7db2a1494914ac7b88a0879afb32'
+  /src/services/execution/spec:
+    newFile: !uuid 'b49adea54906ab78b5c54a1df0e92f0606e48a39'
+    oldFile: !uuid '613482b8bbab0b073f1577f5d6f7c8e01e23c412'
+  /src/services/execution/spec/specs_extend.c:
+    newFile: !uuid 'def3978ba27e5570a4c40eb83fa69f62cd1ea3a2'
+    oldFile: !uuid '2b832cfc46d42ae0185fa287d9adea0651cfa79f'
+  /test:
+    newFile: !uuid '3cd9aeb57c16a25e1513bbfddd506e9d7e95f641'
+    oldFile: !uuid '0fc80fa2c1b52a2998f708949ffed49a13071b03'
+  /test/specs:
+    newFile: !uuid '67eddb26d0e3d6c1d90aee07baa151f76fc3cc7b'
+    oldFile: !uuid 'ea90dc003c5bbf5151d37f1557281b4dd18c40af'
+  /test/specs/CMakeLists.txt:
+    newFile: !uuid '12817971a8553b9843656fbc7bfdc0e91787b91f'
+    oldFile: !uuid '2cd439b6b1bab360469779d167791b1840993cf5'
+  /test/specs/specs_extend:
+    newFile: !uuid 'fe899d949ac66311e015497816cbbff4641ed662'
+    oldFile: null
+  /test/specs/specs_extend/CMakeLists.txt:
+    newFile: !uuid '197352cca3898f4d8ef2381b442381b5a5e7a831'
+    oldFile: null
+  /test/specs/specs_extend/hooks.json:
+    newFile: !uuid '2a6d261d8848fb21197f0e8dd72ce2379d0c32ad'
+    oldFile: null
+  /test/specs/specs_extend/hostconfig.json:
+    newFile: !uuid '41255d6c9c091d2711fdc49ab878371598cc3226'
+    oldFile: null
+  /test/specs/specs_extend/oci_runtime_spec.json:
+    newFile: !uuid 'cdc3a4e2c22dc3133f31a5991567ee0adaaa63b4'
+    oldFile: null
+  /test/specs/specs_extend/specs_extend_llt.cc:
+    newFile: !uuid 'cefee3032378980d4be72a4a3b7d155514e6a219'
+    oldFile: null
+gitCommitId: !uuid 'd6546d40d1ca1b1b0c7f688da61f71ee98a637e5'
 renames: {
   }
-revisionId: 65
+revisionId: 66
