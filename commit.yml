@@ -2,31 +2,19 @@
 branches: {
   }
 fileChange:
-  /iSulad.spec:
-    newFile: !uuid 'd33b3b32ac4b7cbb84f70aaf6a71a76233376ad8'
-    oldFile: !uuid '3c3c36f5c1fce6ee4b390cfd97c168223654eeb7'
   /src:
-    newFile: !uuid 'db2a3b18adfcd0225932a4b01a92cc95f59e6cdf'
-    oldFile: !uuid '2dd1ea880404bbf30c6cbd061e134c671a4f3a70'
-  /src/services:
-    newFile: !uuid 'f741e77936397aa4cc334c2438f4136731142f21'
-    oldFile: !uuid '27a33070631254b455a38ce8e126d0474f651101'
-  /src/services/execution:
-    newFile: !uuid '55bbda267cbc7b83dcad79cb5b50923db8980aa0'
-    oldFile: !uuid '15422fdd119828fe10cd877b801bdfcc2256431c'
-  /src/services/execution/execute:
-    newFile: !uuid '3dcf621c5d7c2d078d8e8961a24acda3f1cf58a4'
-    oldFile: !uuid '58c31494883eb3b7145b91b0b690053537a5a024'
-  /src/services/execution/execute/execution.c:
-    newFile: !uuid '824a0a28e8497df8c8dfd1a794c86cebcdba30a7'
-    oldFile: !uuid 'd2f87ef17bfa85fbe3c26823ba35093f9e35afef'
-  /src/services/execution/execute/execution_create.c:
-    newFile: !uuid '7134b91e986fb78f2fefcf004c8f8e748a9726db'
-    oldFile: !uuid '336187ab9da5c50e764ce29fffff5245798c231f'
-  /src/services/execution/execute/execution_create.h:
-    newFile: !uuid '5100b7bbec726bcbffbbf4ee42123c04a666cf83'
-    oldFile: !uuid '73d5230fded2b88b14a116ed85cb22b2c26d3417'
-gitCommitId: !uuid '3e9a64281cb108a9652c503a9d92c633518b485b'
+    newFile: !uuid '953d427c83c40439d31b5544449d7543b13afbac'
+    oldFile: !uuid 'db2a3b18adfcd0225932a4b01a92cc95f59e6cdf'
+  /src/runtime:
+    newFile: !uuid 'b717f8deb8c48f9f670a6396fb64370eb44f67e3'
+    oldFile: !uuid 'b991f1e24af91469f2423fa10c5c1f990fc2b174'
+  /src/runtime/isula:
+    newFile: !uuid '67daf456eb0baabeca0abd501498d38edef0088d'
+    oldFile: !uuid '8feac93bebab7511de962823f54df69d4f07cea0'
+  /src/runtime/isula/isula_rt_ops.c:
+    newFile: !uuid '13ac2a5d1736102498efbcf8d6c5c5c0c2800083'
+    oldFile: !uuid 'ee52c39a3544f834843a14c812a0cad1899e0650'
+gitCommitId: !uuid 'f689cb78dcf6ed8dda0acae57d8a1df0b1edf229'
 renames: {
   }
-revisionId: 70
+revisionId: 71
