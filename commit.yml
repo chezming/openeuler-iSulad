@@ -2,40 +2,28 @@
 branches: {
   }
 fileChange:
+  /cmake:
+    newFile: !uuid 'fd23d711d5d62cedbbe44db8dc39a2500b31bc60'
+    oldFile: !uuid '6e4aaf444876e4b3db3b8e7c19ed5069b88b110d'
+  /cmake/checker.cmake:
+    newFile: !uuid 'e10c4cf8b3237035a567981331bbdad4ea1f8de4'
+    oldFile: !uuid 'c7ada9bfdabe8432a568561777c77289141e7bef'
+  /iSulad.spec:
+    newFile: !uuid '59f65d292067d6633921127d95edd770addb57c7'
+    oldFile: !uuid 'd33b3b32ac4b7cbb84f70aaf6a71a76233376ad8'
   /src:
-    newFile: !uuid '32d4ea89ca347777c5a43ec339ec19038a3b6be2'
-    oldFile: !uuid '487b2b30bd5a2f317d49c385e71f5fe4f9887279'
-  /src/cmd:
-    newFile: !uuid '45b3c36b90d99e47a15b737db465d12e41c9f598'
-    oldFile: !uuid '5dcb78cd2a4ce3651e616c0dff3038702ee1a9c2'
-  /src/cmd/isulad-shim:
-    newFile: !uuid '923ef4ec9f0dffe47096216dd4baa32432821157'
-    oldFile: !uuid '3a4875d870c7d85155f41d86a841f4b41982410b'
-  /src/cmd/isulad-shim/common.h:
-    newFile: !uuid '2a6c914c15cdfaf00ebb6997cc083d9c742fdaac'
-    oldFile: !uuid 'a1ee0dbc51ed2a075a8949711ed47d0241bedb9a'
-  /src/cmd/isulad-shim/process.h:
-    newFile: !uuid '71eca2e97571537fdf58822d31f3b8f76a7069b7'
-    oldFile: !uuid 'e641813c12664dc5089f0b8b6862fc99e04cfc40'
-  /test:
-    newFile: !uuid '3b5b52bd2fcb00e81165062156369a8df1837450'
-    oldFile: !uuid '483c39330c069859c3281cc4d5e1dbaed5c88301'
-  /test/cmd:
-    newFile: !uuid '22cf19e28b7c80ea5e0dba53da84ffe18fbb2021'
-    oldFile: !uuid '7df69661d1c07e9b33b3cd38c5ad6f8a650457f9'
-  /test/cmd/CMakeLists.txt:
-    newFile: !uuid '69dac71eb7b5b77ae5bca21defad07e94566ba02'
-    oldFile: !uuid '69a7c3d6ad230a6d888d91e06fef206a7dc9f811'
-  /test/cmd/isulad-shim:
-    newFile: !uuid 'b963de1f870cb37873e3c01ffb290bfc761be3c6'
-    oldFile: null
-  /test/cmd/isulad-shim/CMakeLists.txt:
-    newFile: !uuid '8757c7eacb270a3f13ba878fcaaa301100dcc026'
-    oldFile: null
-  /test/cmd/isulad-shim/isulad-shim_llt.cc:
-    newFile: !uuid 'e1295194f84211111895b1ade09d53db4df92c51'
-    oldFile: null
-gitCommitId: !uuid '51a212b75a3d445acf31703426338b0096c75f24'
+    newFile: !uuid '2b767558a8d31ef077235d19239935af235dfe8d'
+    oldFile: !uuid '32d4ea89ca347777c5a43ec339ec19038a3b6be2'
+  /src/json:
+    newFile: !uuid 'ff3acf5fe668e52d7f4befb29072dca947ed4682'
+    oldFile: !uuid '3fe0476b02d05ba0a1e0068fc6c504626bf29b59'
+  /src/json/schema:
+    newFile: !uuid '7addbdf249e43a757dbf31331df3f5b960cb8660'
+    oldFile: !uuid '662c24b1fc32da149dad6befb5f1890f789ced31'
+  /src/json/schema/CMakeLists.txt:
+    newFile: !uuid '31836016a9caa93e1932787aa626ea7ea2f9470d'
+    oldFile: !uuid '66cb000ba9a1f051bf95bb53919528409ae7d8e1'
+gitCommitId: !uuid 'd33b7c7bd29cb20dfac18991205f9f2108d22ba7'
 renames: {
   }
-revisionId: 73
+revisionId: 74
