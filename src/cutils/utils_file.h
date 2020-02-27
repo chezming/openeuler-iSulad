@@ -79,6 +79,8 @@ char *util_path_base(const char *path);
 
 int util_atomic_write_file(const char *fname, const char *content, size_t content_len, mode_t mode);
 
+int64_t util_calculate_dir_size(const char *dirpath, int recursive_depth);
+
 #ifdef __cplusplus
 }
 #endif
