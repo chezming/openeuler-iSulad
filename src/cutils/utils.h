@@ -432,6 +432,9 @@ void add_array_elem(char **array, size_t total, size_t *pos, const char *elem);
 void add_array_kv(char **array, size_t total, size_t *pos, const char *k, const char *v);
 
 int util_check_inherited_exclude_fds(bool closeall, int *fds_to_ignore, size_t len_fds);
+
+int get_cpu_num_cores(void);
+
 #ifdef __cplusplus
 }
 #endif
