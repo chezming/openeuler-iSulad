@@ -131,6 +131,8 @@ int new_log(const struct log_object_metadata *meta, const char *format, ...);
         (void)fprintf(stderr, fmt "\n", ##args);  \
     } while (0)
 
+int log_get_log_fd(void);
+
 #ifdef __cplusplus
 }
 #endif
