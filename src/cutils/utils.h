@@ -25,12 +25,16 @@
 #include <sys/syscall.h>
 #include <stdint.h>
 #include <time.h>
+#include <string.h>
+#include <sys/types.h>
+
 #include "utils_string.h"
 #include "utils_array.h"
 #include "utils_file.h"
 #include "utils_convert.h"
 #include "utils_verify.h"
 #include "utils_regex.h"
+#include "utils_fs.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -412,7 +416,6 @@ bool check_sysctl_valid(const char *sysctl_key);
 bool pid_max_kernel_namespaced();
 void free_sensitive_string(char *str);
 void memset_sensitive_string(char *str);
-bool detect_mount(const char *path);
 
 int util_input_readall(char *buf, size_t maxlen);
 int util_input_echo(char *buf, size_t maxlen);
@@ -428,6 +431,7 @@ void add_array_elem(char **array, size_t total, size_t *pos, const char *elem);
 
 void add_array_kv(char **array, size_t total, size_t *pos, const char *k, const char *v);
 
+int util_check_inherited_exclude_fds(bool closeall, int *fds_to_ignore, size_t len_fds);
 #ifdef __cplusplus
 }
 #endif

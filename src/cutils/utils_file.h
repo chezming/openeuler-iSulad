@@ -75,6 +75,10 @@ char *verify_file_and_get_real_path(const char *file);
 
 int util_copy_file(const char *src_file, const char *dst_file, mode_t mode);
 
+char *util_path_base(const char *path);
+
+int64_t util_calculate_dir_size(const char *dirpath, int recursive_depth);
+
 #ifdef __cplusplus
 }
 #endif
