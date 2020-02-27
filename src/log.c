@@ -43,6 +43,11 @@ static int g_log_level = ISULA_LOG_DEBUG;
 static int g_log_driver = LOG_DRIVER_STDOUT;
 int g_isulad_log_fd = -1;
 
+int log_get_log_fd(void)
+{
+    return g_isulad_log_fd;
+}
+
 /* set log prefix */
 void set_log_prefix(const char *prefix)
 {

@@ -577,7 +577,59 @@ char *util_path_dir(const char *path)
         }
     }
 
+    if (i == 0 && dir[0] == '/') {
+        free(dir);
+        return util_strdup_s("/");
+    }
+
     return dir;
+}
+
+char *util_path_base(const char *path)
+{
+    char *dir = NULL;
+    int len = 0;
+    int i = 0;
+
+    if (path == NULL) {
+        ERROR("invalid NULL param");
+        return NULL;
+    }
+
+    len = (int)strlen(path);
+    if (len == 0) {
+        return util_strdup_s(".");
+    }
+
+    dir = util_strdup_s(path);
+
+    // strip last slashes
+    for (i = len - 1; i >= 0; i--) {
+        if (dir[i] != '/') {
+            break;
+        }
+        dir[i] = '\0';
+    }
+
+    len = (int)strlen(dir);
+    if (len == 0) {
+        free(dir);
+        return util_strdup_s("/");
+    }
+
+    for (i = len - 1; i >= 0; i--) {
+        if (dir[i] == '/') {
+            break;
+        }
+    }
+
+    if (i < 0) {
+        return dir;
+    }
+
+    char *result = util_strdup_s(&dir[i + 1]);
+    free(dir);
+    return result;
 }
 
 char *util_add_path(const char *path, const char *name)
@@ -613,7 +665,7 @@ char *util_read_text_file(const char *path)
 
     filp = util_fopen(path, "r");
     if (filp == NULL) {
-        ERROR("open file %s failed", path);
+        SYSERROR("open file %s failed", path);
         goto err_out;
     }
 
@@ -934,3 +986,76 @@ free_out:
     return ret;
 }
 
+static void recursive_cal_dir_size_helper(const char *dirpath, int recursive_depth, int64_t *total_size)
+{
+    int nret = 0;
+    struct dirent *pdirent = NULL;
+    DIR *directory = NULL;
+    char fname[MAXPATHLEN];
+
+    directory = opendir(dirpath);
+    if (directory == NULL) {
+        ERROR("Failed to open %s", dirpath);
+        return;
+    }
+    pdirent = readdir(directory);
+    for (; pdirent != NULL; pdirent = readdir(directory)) {
+        struct stat fstat;
+        int pathname_len;
+
+        if (!strcmp(pdirent->d_name, ".") || !strcmp(pdirent->d_name, "..")) {
+            continue;
+        }
+
+        (void)memset(fname, 0, sizeof(fname));
+
+        pathname_len = snprintf(fname, MAXPATHLEN, "%s/%s", dirpath, pdirent->d_name);
+        if (pathname_len < 0 || pathname_len >= MAXPATHLEN) {
+            ERROR("Pathname too long");
+            continue;
+        }
+
+        nret = lstat(fname, &fstat);
+        if (nret) {
+            ERROR("Failed to stat %s", fname);
+            continue;
+        }
+
+        if (S_ISDIR(fstat.st_mode)) {
+            *total_size = *total_size + util_calculate_dir_size(fname, (recursive_depth + 1));
+        } else {
+            *total_size = *total_size + fstat.st_size;
+        }
+    }
+
+    nret = closedir(directory);
+    if (nret) {
+        ERROR("Failed to close directory %s", dirpath);
+    }
+
+    return;
+}
+
+int64_t util_calculate_dir_size(const char *dirpath, int recursive_depth)
+{
+    int64_t total_size = 0;
+
+    if (dirpath == NULL) {
+        return 0;
+    }
+
+    if ((recursive_depth + 1) > MAX_PATH_DEPTH) {
+        ERROR("Reach max path depth: %s", dirpath);
+        goto out;
+    }
+
+    if (!util_dir_exists(dirpath)) {
+        ERROR("dir not exists: %s", dirpath);
+        goto out;
+    }
+
+    recursive_cal_dir_size_helper(dirpath, recursive_depth, &total_size);
+
+out:
+    return total_size;
+}
