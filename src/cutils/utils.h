@@ -435,6 +435,9 @@ typedef int (*mount_info_call_back_t)(const char *, const char *);
 bool util_deal_with_mount_info(mount_info_call_back_t cb, const char *);
 
 int util_check_inherited_exclude_fds(bool closeall, int *fds_to_ignore, size_t len_fds);
+
+int get_cpu_num_cores(void);
+
 #ifdef __cplusplus
 }
 #endif
