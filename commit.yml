@@ -3,18 +3,18 @@ branches: {
   }
 fileChange:
   /src:
-    newFile: !uuid '26bb6ee6c045f0df4f74a1b188630e4d94a2c747'
-    oldFile: !uuid 'b50c6711fc97cd0c8719dc0ddcbf1d7aaa918eab'
-  /src/runtime:
-    newFile: !uuid '82d0531b6b17c2dc169696e782c6659d5518e4cd'
-    oldFile: !uuid '89021a49a689a39c14c54d4980d38283f5093e94'
-  /src/runtime/isula:
-    newFile: !uuid '42e1ae194d37bbee4e09fc46b82f781fbcbd98a9'
-    oldFile: !uuid '66774b9bdcf189abb70c4ad6b16db86fffcbe955'
-  /src/runtime/isula/isula_rt_ops.c:
-    newFile: !uuid '6c98adb7234b536c3ca9353635bb4a1bd4095e93'
-    oldFile: !uuid '10e57c7ec3d49e2257ecfbeb558bdc01f82dfda6'
-gitCommitId: !uuid 'fa6a99287b460913941080c87db60ea3dda64ccc'
+    newFile: !uuid 'e624774e1676a530d3267ddbaef7f3028742fd55'
+    oldFile: !uuid '26bb6ee6c045f0df4f74a1b188630e4d94a2c747'
+  /src/cmd:
+    newFile: !uuid '42a6313cf00c6faddc764d2a441543a1f5dd5b29'
+    oldFile: !uuid '45b3c36b90d99e47a15b737db465d12e41c9f598'
+  /src/cmd/isulad-shim:
+    newFile: !uuid 'e243185d66c869049e9937f9a13fcc23915e4504'
+    oldFile: !uuid '923ef4ec9f0dffe47096216dd4baa32432821157'
+  /src/cmd/isulad-shim/process.c:
+    newFile: !uuid '5f929b768bd22eb7a54a5c3fa447160426de1639'
+    oldFile: !uuid '974a7f2422c4c40207c2d22d1e9a83e58540b131'
+gitCommitId: !uuid '4327f540a492df450b2edeaefbe9c620cc09a7a5'
 renames: {
   }
-revisionId: 79
+revisionId: 80
