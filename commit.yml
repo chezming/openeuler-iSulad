@@ -3,84 +3,15 @@ branches: {
   }
 fileChange:
   /src:
-    newFile: !uuid '844eebe8a803b3d28c275bd6cb535207985cfb75'
-    oldFile: !uuid '99d1d966004652500f1605c2e97774ae32e34300'
-  /src/connect:
-    newFile: !uuid '1bcb888653f9bf4d1b230d9e2a2138a535fabc1f'
-    oldFile: !uuid 'f0261f3e58f8ccab50cc97676b255844d585c01e'
-  /src/connect/client:
-    newFile: !uuid '6d2fe85e32ca2acf6640fa022929f8abd378da8f'
-    oldFile: !uuid 'a091e80d8cefe7a7096d034a3a369478aef5328b'
-  /src/connect/client/grpc:
-    newFile: !uuid 'b9c5c907ec2f8e59b608c1f91f383e42d7b94830'
-    oldFile: !uuid 'c3c9caf1dad8c0844e29ca83821f67b632cdf4c8'
-  /src/connect/client/grpc/client_base.h:
-    newFile: !uuid 'dabf0e449b4cb4e901e407d6aa9db6532a2de482'
-    oldFile: !uuid 'b7d200cfda29a505ef1d65e7f09cb83fc1e3b5a3'
-  /src/constants.h:
-    newFile: !uuid '55fb03cb3df64233a305edb67dd04d5f68b7afa3'
-    oldFile: !uuid '973b006d8a6b59f8f1325a50d44d1da3a5fff923'
-  /src/cutils:
-    newFile: !uuid '67e86ed99ba9f20a24763b7edc1c5f4821f08b8e'
-    oldFile: !uuid '35df91e33d7189df1c435b9b61d06839f1832f70'
-  /src/cutils/utils_file.c:
-    newFile: !uuid 'd63dc3ab1774b2e015083c81e6afba92a6ab1ebb'
-    oldFile: !uuid '182570d46ada17826eb4ac744c7681646865b383'
-  /src/cutils/utils_file.h:
-    newFile: !uuid '83aead75ab21b82e03ebfa5e75f85f5cb3e24055'
-    oldFile: !uuid 'd868fa722df856f3c40e1df1cd3b7e31797598f9'
-  /src/runtime:
-    newFile: !uuid 'aaf98b6fd25295e41fbf7d670c7287b864300eb4'
-    oldFile: !uuid '82d0531b6b17c2dc169696e782c6659d5518e4cd'
-  /src/runtime/isula:
-    newFile: !uuid '4dfee9cb178f067a7f511dcaa2ea46f936e393f4'
-    oldFile: !uuid '42e1ae194d37bbee4e09fc46b82f781fbcbd98a9'
-  /src/runtime/isula/isula_rt_ops.c:
-    newFile: !uuid 'ad3dcd1da51fdb003b67c273711b9a89faf5bbb2'
-    oldFile: !uuid '6c98adb7234b536c3ca9353635bb4a1bd4095e93'
-  /src/services:
-    newFile: !uuid '9cc27e95e135555cb9584b0ce42907f1eb5dfb87'
-    oldFile: !uuid '863c146df7840ba7753010a5cd7ac4c9f9818840'
-  /src/services/cri:
-    newFile: !uuid '02422090a09520c62a6a7c4ef35d4af6d8cc37a7'
-    oldFile: !uuid 'd2acfaf045f6344e9df7657e5fcbacb28dc29277'
-  /src/services/cri/cni_network_plugin.cc:
-    newFile: !uuid 'c34ce044b294587305ccd8d7f396cf26584d39c9'
-    oldFile: !uuid '8c7f286a9ccd2b836046349263af1873288da781'
-  /src/services/cri/cri_sandbox.cc:
-    newFile: !uuid 'a8fe3a5084fdc6bb1dd44e1a9eeee7d983594ae7'
-    oldFile: !uuid '60db1c9e868d1fbb591213b198a28871a435bfa7'
-  /src/services/execution:
-    newFile: !uuid '35e537df4d299ba824a75e76f58b076e2e50d27f'
-    oldFile: !uuid '64fb8047f42f68075f8f4335ead26bd9872138fb'
-  /src/services/execution/execute:
-    newFile: !uuid '2af480b14ff81e56142f697022e810996f8c3b04'
-    oldFile: !uuid 'd5aa760932c056095ce94b9b1a397a2cc615279f'
-  /src/services/execution/execute/execution_network.c:
-    newFile: !uuid 'd70d921c259b1f14d9620c05dcd217b5e73286b5'
-    oldFile: !uuid '5376fbb4b250138a10439cc915a1586812458cbe'
-  /src/services/execution/spec:
-    newFile: !uuid '81baa991c88dd3d23441c125e4f5bcea867e3675'
-    oldFile: !uuid '1c4fd86f529c1bdc6f14d9964626c1c957a68fe2'
-  /src/services/execution/spec/specs.c:
-    newFile: !uuid 'bf399b5e9b13add9769071b3a078e159e37628ab'
-    oldFile: !uuid '075bd2871dcfa399cc841618e44b07009132dbd2'
-  /test:
-    newFile: !uuid '9965ff4f895446863a8cb3a43a61aa635ba5317a'
-    oldFile: !uuid '197f804ff5827707d39c4637e911aea22322d633'
-  /test/services:
-    newFile: !uuid '0e39b475399c45d6988f3882888addd021821f24'
-    oldFile: !uuid '11de741ab8da008d107e787ae2e5c028335f5cda'
-  /test/services/execution:
-    newFile: !uuid '639ead1b0a420b636a3386b2bd71963483b1a8fc'
-    oldFile: !uuid '422d2593fa47fc0701e5d5be9d2144380d0d79d6'
-  /test/services/execution/spec:
-    newFile: !uuid 'e4412b026b82c2c80098919ed5adeb84734db42e'
-    oldFile: !uuid '2bb354e23186f0cef42b48b5c3018381bd125c0b'
-  /test/services/execution/spec/selinux_label_mock_llt.cc:
-    newFile: !uuid 'da719bdd55ff76c6d3655aa28e8f156058324850'
-    oldFile: !uuid 'a8ce4a5e3a0998e2b07f4af9e917a161f6440d94'
-gitCommitId: !uuid '3781e38dd269dcf67cb6c80f420ba89285ecf0e0'
+    newFile: !uuid '1785c0573599148b9d54f8f93d93a917228a972b'
+    oldFile: !uuid '844eebe8a803b3d28c275bd6cb535207985cfb75'
+  /src/config:
+    newFile: !uuid '35475fb19221ea1daa069fae5778db092bb92b28'
+    oldFile: !uuid '2a892d6d9995b57390cda6f5877555f61d64a588'
+  /src/config/isulad_config.c:
+    newFile: !uuid 'd5c3953adf88b0d314a0ac3f3a6fc318c926917e'
+    oldFile: !uuid '3f5536e442e7df26ebe406d44762c6a22ce1e733'
+gitCommitId: !uuid '530cb6231705f4230c47decc3ffe5b67843bb30d'
 renames: {
   }
-revisionId: 85
+revisionId: 86
