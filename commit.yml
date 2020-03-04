@@ -3,15 +3,69 @@ branches: {
   }
 fileChange:
   /src:
-    newFile: !uuid '1785c0573599148b9d54f8f93d93a917228a972b'
-    oldFile: !uuid '844eebe8a803b3d28c275bd6cb535207985cfb75'
-  /src/config:
-    newFile: !uuid '35475fb19221ea1daa069fae5778db092bb92b28'
-    oldFile: !uuid '2a892d6d9995b57390cda6f5877555f61d64a588'
-  /src/config/isulad_config.c:
-    newFile: !uuid 'd5c3953adf88b0d314a0ac3f3a6fc318c926917e'
-    oldFile: !uuid '3f5536e442e7df26ebe406d44762c6a22ce1e733'
-gitCommitId: !uuid '530cb6231705f4230c47decc3ffe5b67843bb30d'
+    newFile: !uuid '216dc558353f5131ab9b5d77ebb121d19c79fc72'
+    oldFile: !uuid '1785c0573599148b9d54f8f93d93a917228a972b'
+  /src/connect:
+    newFile: !uuid '9cae7765d2bcec6135a88b21cf5bbaaa25cc7e07'
+    oldFile: !uuid '1bcb888653f9bf4d1b230d9e2a2138a535fabc1f'
+  /src/connect/client:
+    newFile: !uuid '6ee3d51e8630ccff5c9c3498cdbbf257aa809518'
+    oldFile: !uuid '6d2fe85e32ca2acf6640fa022929f8abd378da8f'
+  /src/connect/client/grpc:
+    newFile: !uuid '82fa4c3e30ab59c59a242e13d2a3474e855c4a9e'
+    oldFile: !uuid 'b9c5c907ec2f8e59b608c1f91f383e42d7b94830'
+  /src/connect/client/grpc/grpc_isula_image_client.cc:
+    newFile: !uuid 'a7f6c60fc34cbbf6d05d3e3be166a114d272c47e'
+    oldFile: !uuid '236fe10006d9873ce9a096a322cf52460d124ca4'
+  /src/image:
+    newFile: !uuid 'a6f3e409e981503ead138f5ddd19192d1a85250d'
+    oldFile: !uuid '34e437beba99c2535108463dab09ee633e4e420c'
+  /src/image/image.c:
+    newFile: !uuid 'daa44e5b7feaebfeb252c31902e8bce7cf01bc92'
+    oldFile: !uuid 'e3e8fcca48fdee4d4baa10c9bac13b8645529ab2'
+  /src/image/oci:
+    newFile: !uuid 'add652e456d6b6bf3a4dc2344395894e0b01da3c'
+    oldFile: !uuid '39e727c00d861e7fa65c6c5a42941eaa6a2a5da3'
+  /src/image/oci/isula_image_fs_info.c:
+    newFile: !uuid 'df2754a326f28206cad6b53368a4d614ed3194d5'
+    oldFile: !uuid '6710433b20fb8e0f747ed112a8820fe8f8ad8f9e'
+  /src/image/oci/isula_image_pull.c:
+    newFile: !uuid '23184d5a8326c113bc4b55588566b708b31549fb'
+    oldFile: !uuid 'bdf50e0150aeceeaa088d86af30401daf67cb812'
+  /src/image/oci/isula_image_rmi.c:
+    newFile: !uuid 'a6b9b11cbbdb78039e7cba6ffa20f3459308c02d'
+    oldFile: !uuid 'c981a850a557b4d15947ed8de661f3aa2a438389'
+  /src/image/oci/isula_image_status.c:
+    newFile: !uuid 'd237c5f05be5feafd3608b574c01713a643777c2'
+    oldFile: !uuid '7e4318992cc10b4352f970b9e8576c9ab7b4c024'
+  /src/image/oci/isula_images_list.c:
+    newFile: !uuid '10f656faffaa1e8b59dff2a81bd1820ab78ce423'
+    oldFile: !uuid 'b9cf8b0a6ce39b78a878e4a01e3fe8fc58ba14f3'
+  /src/image/oci/isula_login.c:
+    newFile: !uuid '6617b0a8a43582dfc4becae3626d78ad9fb437ae'
+    oldFile: !uuid '89d9328ed903a4050e752e295f02b217bbc7191c'
+  /src/image/oci/isula_rootfs_mount.c:
+    newFile: !uuid '1beea06d5e28a28c2050d33bf545509f10e43cb6'
+    oldFile: !uuid 'a12707ed187e5890c6561f438d617b8b7d6b4e67'
+  /src/image/oci/isula_rootfs_remove.c:
+    newFile: !uuid '04c0545efcdaeede39fec7159eec8eacd4f0f21e'
+    oldFile: !uuid '9b359623c6b2e3440501c6a23b3ae60b16842dc2'
+  /src/image/oci/isula_rootfs_umount.c:
+    newFile: !uuid '2cf4d5d79c73d645502c02b9800ac2d69651dd8d'
+    oldFile: !uuid 'd468a5866864be1120f72ffccfe8f67177167678'
+  /test:
+    newFile: !uuid 'e61e0392c2cd439f12e0998be071b27f209ee4c3'
+    oldFile: !uuid '9965ff4f895446863a8cb3a43a61aa635ba5317a'
+  /test/cutils:
+    newFile: !uuid 'b756a1a0eec3f9ef3524e308373512545e5a1d57'
+    oldFile: !uuid '150bd7a2c8cfeb5ac40db37681a1d37f71739a0f'
+  /test/cutils/utils_convert:
+    newFile: !uuid 'dc7652c5ac8b55a56f2abb82bc28e49e542b280a'
+    oldFile: !uuid 'e8566b5582dd441ab22d0d94ec3f0230348733f1'
+  /test/cutils/utils_convert/utils_convert_llt.cc:
+    newFile: !uuid 'd7c944d9351e1ff56861ec72740de5390c48d17f'
+    oldFile: !uuid '0ad48f8e4f30c75491f9a8f846adc5a3d483e618'
+gitCommitId: !uuid 'a3b58d4755d418a2405eab3b1f661195bd1979cd'
 renames: {
   }
-revisionId: 86
+revisionId: 87
