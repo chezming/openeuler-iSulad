@@ -2,70 +2,31 @@
 branches: {
   }
 fileChange:
+  /iSulad.spec:
+    newFile: !uuid 'a0865312489859702ca24d2a9918ca712c5386ea'
+    oldFile: !uuid 'f288054bf5ced18e7d0608ae2201ea5ed9f45913'
   /src:
-    newFile: !uuid '96ea4149c5d396a3b21947c1285024c9254dfe32'
-    oldFile: !uuid 'e24c1d3b0f8a20420ee65f050197f133df00b923'
-  /src/cmd:
-    newFile: !uuid '171ef2903d53d4ecabd452f2da19086bfe845b1f'
-    oldFile: !uuid '103ed4e8aa5c7c4c13a8bd44c72308c32a42cb9d'
-  /src/cmd/commander.c:
-    newFile: !uuid 'cfd1b18fbf224fb404758409753fb2c88170c25c'
-    oldFile: !uuid 'a133956c72dc0a8d2d77de15577d026f6b395cfb'
-  /src/cmd/commander.h:
-    newFile: !uuid 'a7b13def6e206f8cb448d26b24e64108a535faef'
-    oldFile: !uuid 'd1feb5c71c49e60c7a668786c3bad2e6b93dc8c0'
-  /src/cmd/isula:
-    newFile: !uuid '5f982392275ca3800fa72219beb80adfca8056c2'
-    oldFile: !uuid '103d26b71f7d83d3494e14376c4fb6382de3efbc'
-  /src/cmd/isula/arguments.c:
-    newFile: !uuid '853239f755f8c78708cbe017ab3cb2a8fc142bb8'
-    oldFile: !uuid '335c25e474a3498cd7ae2bf3a9f53956d3d27819'
-  /src/cmd/isula/arguments.h:
-    newFile: !uuid 'fcf57ae253c64d72f642de79159218444f17645b'
-    oldFile: !uuid '568f5d77a2f21fdc6c40aab469dcca9e14742a0f'
-  /src/cmd/isula/base:
-    newFile: !uuid '126a28c4e45f819aabe4fd6396b61390932d4ff3'
-    oldFile: !uuid '9bf5ee6de01f037f1258f5255f0bb6f65c549837'
-  /src/cmd/isula/base/create.c:
-    newFile: !uuid '0a662d6326a69c0c931f6c8d7d45d475c8330437'
-    oldFile: !uuid 'ec6fdb3bb426399491b0a074cd48d2fe38104dbe'
-  /src/cmd/isula/base/create.h:
-    newFile: !uuid 'bbfa53c143cf912311922888767a0190ef0f9e14'
-    oldFile: !uuid '62e32fb7802734f8d7706f55c9e187799ed44390'
-  /src/container_def.h:
-    newFile: !uuid '16a589fd62855fbea5a9d063a952e14d7e07510b'
-    oldFile: !uuid '9fecb1182cca21a5667647471963e9a880a025ff'
-  /src/json:
-    newFile: !uuid '133d2b25451f1da5fb745e49f52947e41ab3af0c'
-    oldFile: !uuid 'ff3acf5fe668e52d7f4befb29072dca947ed4682'
-  /src/json/schema:
-    newFile: !uuid 'bae7db2a75f13ec45e3e557488d340a268416b2e'
-    oldFile: !uuid '7addbdf249e43a757dbf31331df3f5b960cb8660'
-  /src/json/schema/schema:
-    newFile: !uuid '04422e47130f10ad0be0c598058f5d79fa868192'
-    oldFile: !uuid '1dae996ab180e1c64d523f8830169ddb35b82f93'
-  /src/json/schema/schema/host-config.json:
-    newFile: !uuid '725c1e784379918c5d219a5528f5f7674f15354d'
-    oldFile: !uuid '9f8d44bd303f46427f134b1f4a76ab5e25db55d6'
-  /src/pack_config.c:
-    newFile: !uuid '3b7bdef6fb2fbd7cd6e608d40060ef2b4c5501fa'
-    oldFile: !uuid '93e06b8e26326310b0b7c3835715d6907e7663ed'
+    newFile: !uuid 'c2df2fe7981848d31a1f0e2115de88bc410725c9'
+    oldFile: !uuid '96ea4149c5d396a3b21947c1285024c9254dfe32'
   /src/services:
-    newFile: !uuid '05ef0c983df92932a2f7ce2b3bf539f0f44b65c2'
-    oldFile: !uuid '4fc5ca532c5e83515afe943b9c4d06c44421a3e2'
+    newFile: !uuid 'fcdc44febb492d024b3e6d7eadefddb9f3dfe2ad'
+    oldFile: !uuid '05ef0c983df92932a2f7ce2b3bf539f0f44b65c2'
   /src/services/execution:
-    newFile: !uuid 'dd9188c83479faca91458f6a72f72f6ae50effce'
-    oldFile: !uuid 'f0095f42fdbc8882bbc5715469e0ce05f79136d0'
-  /src/services/execution/spec:
-    newFile: !uuid 'dc390e1bfa87960d62c2cfdd8f4e40d19d403230'
-    oldFile: !uuid '22ec461ed196d797872a9086b0c0832e28808df7'
-  /src/services/execution/spec/specs.c:
-    newFile: !uuid 'e0cf75b3c7727f601046fdbb58c663b1a14145df'
-    oldFile: !uuid 'bf399b5e9b13add9769071b3a078e159e37628ab'
-  /src/services/execution/spec/verify.c:
-    newFile: !uuid '80054b07ac77c7a9f68321d41e674a6046cc70d6'
-    oldFile: !uuid '17d11de4d1d1fb387eaef1633d154a89341ec87c'
-gitCommitId: !uuid 'b83d1ed809e572f3012129a07962b01285cbf9f0'
+    newFile: !uuid '17505824dd9f3d833c176116819c8c01e9417f10'
+    oldFile: !uuid 'dd9188c83479faca91458f6a72f72f6ae50effce'
+  /src/services/execution/execute:
+    newFile: !uuid 'ad51a6e085b75cd1b68f91ba3dd40d485a01786a'
+    oldFile: !uuid '1de5669fbdba01611057757beaec61876c5d9717'
+  /src/services/execution/execute/execution_create.c:
+    newFile: !uuid '15180da5be7d4fece931427da01f691234147056'
+    oldFile: !uuid 'd2af57ec86eb28e2e4e69930f9efde005d11ffda'
+  /src/services/execution/manager:
+    newFile: !uuid '8283021a2851a5bf2f6d0d5f16ba3d9cbd00d110'
+    oldFile: !uuid 'e84e96b4dc065e4b4b21a246d17b84455230dab2'
+  /src/services/execution/manager/container_unix.c:
+    newFile: !uuid '11d4c041fc4289410e2fcf2cf98112acb27c8737'
+    oldFile: !uuid '18653620a9769e18e9cb4dd0db2d52d31af3b79a'
+gitCommitId: !uuid '6a48fa40ee77ae5263cb2243841f4db653b8c544'
 renames: {
   }
-revisionId: 91
+revisionId: 92
