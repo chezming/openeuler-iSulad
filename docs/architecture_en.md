@@ -8,9 +8,9 @@ iSulad is an OCI-compliant container runtime engine that emphasizes simplicity, 
 
 As a daemon process, it manages the entire container life cycle of the host system, including image transmission and storage, container execution and monitoring management, container resource management, and network management. iSulad provides Docker-like CLI for users.
 
-You can use Docker-like commands to manage container images and iSulad provides gRPC APIs which comply with the CRI standard for Kubernetes. 
+You can use Docker-like commands to manage container images and life cycles. The iSulad provides gRPC APIs which comply with the CRI interface which make it easy to be integrated with k8s. 
 
-iSulad is divided into different modules, and the modules are organized into subsystems. Understanding these modules, subsystems, and their relationships is important to modify and extend iSulad. 
+The iSulad provide flexible module mechanism, and the modules are organized into subsystems. It's easy to extend iSulad by understanding these modules, subsystems, and their relationships. 
 
 This document describes the high-level system architecture design. For more information about each module, please refer to the relevant design documents. 
 
