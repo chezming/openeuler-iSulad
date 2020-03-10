@@ -2,55 +2,10 @@
 branches: {
   }
 fileChange:
-  /src:
-    newFile: !uuid 'e17964b4ddd222ddb89c26f573870a5617b5d45e'
-    oldFile: !uuid 'a10fa4677b97ef8b2685ff5c6f57fc8cbc52e817'
-  /src/cmd:
-    newFile: !uuid 'f1bb4abf65b01564b160b4aecf8ae82c188834cb'
-    oldFile: !uuid '4393afc863344281e9d3cfc805f3df3f238781e8'
-  /src/cmd/isulad:
-    newFile: !uuid 'a0675591532199fc4534f7ebc704ef3ab24b3404'
-    oldFile: !uuid '8dccca3ee7e93336e8dcbbb25970c1552e29d42a'
-  /src/cmd/isulad/arguments.c:
-    newFile: !uuid '3f116db46f794762a56e0ac80f409cfc21d960a2'
-    oldFile: !uuid '4c1ecde6e9682287cbfda0b2490d10de46dabc42'
-  /src/connect:
-    newFile: !uuid '8dc3f81432f0a10747b1d444a010a444a99532ca'
-    oldFile: !uuid 'e0a92d85afe8080a6663ce3c05f10f1fa4983d58'
-  /src/connect/client:
-    newFile: !uuid '70992367c938d4ece3f0e06c2458e5c57d3272b6'
-    oldFile: !uuid '766186dab4aa1f0ae53437a1933322ddfd5d8ec6'
-  /src/connect/client/isula_image_connect.c:
-    newFile: !uuid 'e2767300af41df08e6f849e4d9158613ba9b16ac'
-    oldFile: !uuid 'b5ff790c8ca17026621665652c52f7cd08913825'
-  /src/libisula.c:
-    newFile: !uuid '4ea923efca7d706f1bdf91572c1f1edb6bb9f511'
-    oldFile: !uuid '58b1ee0a7b9e2c113452e87145a6fbb8de23db31'
-  /src/services:
-    newFile: !uuid '533d0873c1c7e8e7749878d3384751061033dbc1'
-    oldFile: !uuid '86f979db4fabc63f07743d04480f4eacee9eaace'
-  /src/services/execution:
-    newFile: !uuid '857a6b5cbc0c6a596195790d60a9102c891f7f79'
-    oldFile: !uuid 'bf75c9224072410fa9153bc071f737db6cdb40b9'
-  /src/services/execution/events:
-    newFile: !uuid '27f6d34ed67c7c60da9d9e6adf5eea95ddde9b39'
-    oldFile: !uuid '30450f4025717ab50291ddfc8a8b89fd1a8cef08'
-  /src/services/execution/events/collector.c:
-    newFile: !uuid 'b4270b0f2c7626956199f6bec74013345005ea18'
-    oldFile: !uuid '80d5cc90295c6fdddc7994a65064aa023e6101c9'
-  /src/services/execution/execute:
-    newFile: !uuid '95b505c629c7b30be97b227c0bb3813f7c551f42'
-    oldFile: !uuid 'e3e5e57f73580103367edb9c049a1acff2124aad'
-  /src/services/execution/execute/execution_information.c:
-    newFile: !uuid '01a2e6eecdafa46eff27612f048023cf8d0c69ac'
-    oldFile: !uuid '36e4e6df776ff7755edcf0fd84872bedba6fe8fa'
-  /src/services/execution/spec:
-    newFile: !uuid '242438d844be894f831d6ccdf4076fa47e7f410d'
-    oldFile: !uuid 'dc390e1bfa87960d62c2cfdd8f4e40d19d403230'
-  /src/services/execution/spec/specs_mount.c:
-    newFile: !uuid '62498cdf3bfad358b8b0bf1579f2422f98fffbe8'
-    oldFile: !uuid '2c1afd104b32c8f225221a9f478e39a34d62596b'
-gitCommitId: !uuid '5853c0c1094d56e3a0375149c6b072d9c6d2fa8f'
+  /Dockerfile:
+    newFile: !uuid '5df22555c9317a09ca7e35096d951b3ec8232962'
+    oldFile: !uuid 'd575a485a1b38f2da7fc700cbc12e43f5a6d1e27'
+gitCommitId: !uuid '948240b53f73b4ea10a7696ceaba5ff6d3067760'
 renames: {
   }
-revisionId: 96
+revisionId: 97
