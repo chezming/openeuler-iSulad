@@ -2,25 +2,58 @@
 branches: {
   }
 fileChange:
-  /iSulad.spec:
-    newFile: !uuid 'd504ffe22e0d3a1549867740403f74edfedacf7d'
-    oldFile: !uuid 'a0865312489859702ca24d2a9918ca712c5386ea'
   /src:
-    newFile: !uuid 'c0f07f94fa6415c4cc1431ba024b1480ff0d455e'
-    oldFile: !uuid 'e17964b4ddd222ddb89c26f573870a5617b5d45e'
-  /src/services:
-    newFile: !uuid '47e8e98d76a27751392f6e37c9febb7d894d151b'
-    oldFile: !uuid '533d0873c1c7e8e7749878d3384751061033dbc1'
-  /src/services/execution:
-    newFile: !uuid '6f563dc7d4e2f3de078f88ff656f03146b611b06'
-    oldFile: !uuid '857a6b5cbc0c6a596195790d60a9102c891f7f79'
-  /src/services/execution/execute:
-    newFile: !uuid '9fcbd2db798673505e43ed2c7b84806c6768de48'
-    oldFile: !uuid '95b505c629c7b30be97b227c0bb3813f7c551f42'
-  /src/services/execution/execute/execution.c:
-    newFile: !uuid '0a99965e9da04a227b1a92dfc90f1ac48e681621'
-    oldFile: !uuid '90a3f566ce8c2d29051dc881918574b7606f55fc'
-gitCommitId: !uuid 'cc2e5f3bda3dd297ddca157c9642d3f88a3cdf57'
+    newFile: !uuid 'a1ecccd8bc1afe723f213619fa64a3cfb2102433'
+    oldFile: !uuid 'c0f07f94fa6415c4cc1431ba024b1480ff0d455e'
+  /src/CMakeLists.txt:
+    newFile: !uuid '7983cafcea3a47ffe07b6a1110a220e32edc83d6'
+    oldFile: !uuid '0c1b1db8e41a22d6f3d74a3647944d2d1a34a150'
+  /src/cmd:
+    newFile: !uuid 'cb1378ef4f33bdc41f4edc45c26710bcab959179'
+    oldFile: !uuid 'f1bb4abf65b01564b160b4aecf8ae82c188834cb'
+  /src/cmd/isulad-shim:
+    newFile: !uuid '0a9a5fd9f48e56ef41c1853e60c82cd41b3350dd'
+    oldFile: !uuid '0cf386d38c55b6e8daf5b4ced9fe45707d4f91f6'
+  /src/cmd/isulad-shim/process.c:
+    newFile: !uuid 'e0498f87756fe6af290bac9dbc10ee07e6c1f94f'
+    oldFile: !uuid '0861c5aede9328ab7ce003ef1280055fa0190b3b'
+  /src/cmd/isulad-shim/process.h:
+    newFile: !uuid '6033dbc07107c03b19ae9df8cf334dfacdee990d'
+    oldFile: !uuid 'a3671d94d5e63b4c63ea56b342941ece7dde7ba0'
+  /src/cmd/isulad-shim/terminal.c:
+    newFile: !uuid '5b094e35d05eb69f34af8767d9fefedd9f2ecdf8'
+    oldFile: null
+  /src/cmd/isulad-shim/terminal.h:
+    newFile: !uuid 'c66992a0c17a5e284c8e0b20022fdd4bfe9ecf24'
+    oldFile: null
+  /src/json:
+    newFile: !uuid 'a19e9d4d8895e00c980eae55d3769a122e419348'
+    oldFile: !uuid '133d2b25451f1da5fb745e49f52947e41ab3af0c'
+  /src/json/schema:
+    newFile: !uuid '09c3911d7554cb1f52e6563175ef25aaf1244a40'
+    oldFile: !uuid 'bae7db2a75f13ec45e3e557488d340a268416b2e'
+  /src/json/schema/schema:
+    newFile: !uuid '64a0a26373c4759a411d593b04f5098febbd7985'
+    oldFile: !uuid '04422e47130f10ad0be0c598058f5d79fa868192'
+  /src/json/schema/schema/shim:
+    newFile: !uuid 'db34f711b144115dc73a94a0f45072f06a201058'
+    oldFile: !uuid 'b04f9013e16dd23a3f121d874f2073fa5a00eddf'
+  /src/json/schema/schema/shim/client:
+    newFile: !uuid '7bed30d95d81cffeaca015d74cf4a757eb24d2c3'
+    oldFile: !uuid 'd71403b6270480367c6bbf4d080237fb1bff24f7'
+  /src/json/schema/schema/shim/client/process-state.json:
+    newFile: !uuid 'df2141674b3d99bdf1ede22b2888ab2c5d6ffb16'
+    oldFile: !uuid 'a80393df2845b43e3b93c6b72efac2ba61294764'
+  /src/runtime:
+    newFile: !uuid 'dadb344af9c43226c0cb74b470136f0b0bce9388'
+    oldFile: !uuid '020f05300252f685b560f1e3ffe51df42e177bd8'
+  /src/runtime/isula:
+    newFile: !uuid 'a94b925838e8a014856080d35e8c9c409d5cb9d2'
+    oldFile: !uuid '8701e1d168a558f47785acacfb29216621a64bf5'
+  /src/runtime/isula/isula_rt_ops.c:
+    newFile: !uuid 'a55e44b8e89add83e16ec3418b27ec4bd1661747'
+    oldFile: !uuid '16f78a59e4ba33100cefc74c71dd3349502d0144'
+gitCommitId: !uuid 'a452055fe32f4ec1fe978a3a7d9c75df8ccbcbd6'
 renames: {
   }
-revisionId: 99
+revisionId: 100
