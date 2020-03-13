@@ -2,19 +2,16 @@
 branches: {
   }
 fileChange:
-  /src:
-    newFile: !uuid 'c0c79fa6d2d9607907654b861eb4ddf40ebfc627'
-    oldFile: !uuid '21218184e60a4a4f064baec99fa397cbcfb6520a'
-  /src/cmd:
-    newFile: !uuid '13524367b2ccb5738d222c8aefe52100eecc8133'
-    oldFile: !uuid 'cb1378ef4f33bdc41f4edc45c26710bcab959179'
-  /src/cmd/isulad-shim:
-    newFile: !uuid 'db54c856951bef754d4931dbe22924e81796429d'
-    oldFile: !uuid '0a9a5fd9f48e56ef41c1853e60c82cd41b3350dd'
-  /src/cmd/isulad-shim/main.c:
-    newFile: !uuid '7591832b99783f14ee342b32d412a34527891b04'
-    oldFile: !uuid 'bda2305ee9bf3a84d4e4bbe7de63255742cbcfe6'
-gitCommitId: !uuid '69d9c8e56b6bcc737f2d38609a4f993efb0e07b3'
+  /Dockerfile:
+    newFile: !uuid 'aac2062883956adacb43034f943deb875079e98b'
+    oldFile: !uuid '5df22555c9317a09ca7e35096d951b3ec8232962'
+  /docs:
+    newFile: !uuid 'd553948809fee6f61261ada5cb00180d2ee6edf6'
+    oldFile: !uuid '2ec337edb4f7c51b3a420c442f5d1c23b1028997'
+  /docs/build_guide.md:
+    newFile: !uuid 'e569996894c375a3c6cf5949ee92e5e86457d56d'
+    oldFile: !uuid '07fbe3c47679df3cfae3888a4337ee952bf38080'
+gitCommitId: !uuid 'fdcdd1fbd0d1b73096ad1b31be561db26b81609c'
 renames: {
   }
-revisionId: 102
+revisionId: 103
