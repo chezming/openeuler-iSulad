@@ -2,13 +2,13 @@
 branches: {
   }
 fileChange:
-  /src:
-    newFile: !uuid 'ba67016548483931b6313f54b5aecbdcadbe3d08'
-    oldFile: !uuid '310cbf8328953636f9ac95e7bdcf07eff66d807a'
-  /src/libisula.c:
-    newFile: !uuid '3a6fdedb341d34b6ac328fbfe8dcf548914ca992'
-    oldFile: !uuid '4ea923efca7d706f1bdf91572c1f1edb6bb9f511'
-gitCommitId: !uuid '061028c6e564df409ffe78469956fe8de2419014'
+  /docs:
+    newFile: !uuid 'b60cc9631bbd288351b67ee48f8b7d0bae2582a3'
+    oldFile: !uuid 'd553948809fee6f61261ada5cb00180d2ee6edf6'
+  /docs/architecture_en.md:
+    newFile: !uuid 'cc35834c920374df6ef977aea7a51f18044ec5b7'
+    oldFile: !uuid '3ce891a4ed8466f6d47a4cafb547115de774fc0b'
+gitCommitId: !uuid 'e12329297f9182087590b7d23640bd6bb5c38012'
 renames: {
   }
-revisionId: 105
+revisionId: 106
