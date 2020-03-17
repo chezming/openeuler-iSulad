@@ -2,13 +2,22 @@
 branches: {
   }
 fileChange:
-  /docs:
-    newFile: !uuid 'b60cc9631bbd288351b67ee48f8b7d0bae2582a3'
-    oldFile: !uuid 'd553948809fee6f61261ada5cb00180d2ee6edf6'
-  /docs/architecture_en.md:
-    newFile: !uuid 'cc35834c920374df6ef977aea7a51f18044ec5b7'
-    oldFile: !uuid '3ce891a4ed8466f6d47a4cafb547115de774fc0b'
-gitCommitId: !uuid 'e12329297f9182087590b7d23640bd6bb5c38012'
+  /src:
+    newFile: !uuid 'd1d637aa82bb48f3b94ca046b1688f93b54469e7'
+    oldFile: !uuid 'ba67016548483931b6313f54b5aecbdcadbe3d08'
+  /src/services:
+    newFile: !uuid '8d11791c6c8fc6cecd5b6285d68e737af1d69e0d'
+    oldFile: !uuid 'fb32ffba20d8d54a3ecf30b2f70f0a7bb376b695'
+  /src/services/execution:
+    newFile: !uuid 'baac980eb538bcc7b1388d414c97adc86d37cf0b'
+    oldFile: !uuid '595db8bc1a4a53ded4561a63358718ad8939d5d3'
+  /src/services/execution/spec:
+    newFile: !uuid '9c165e3f4e38da73e4112bb840ba346fe54308f0'
+    oldFile: !uuid '242438d844be894f831d6ccdf4076fa47e7f410d'
+  /src/services/execution/spec/specs_security.c:
+    newFile: !uuid 'c940daa7f2ff9f4824b9acc2b9e14df9427bf0fa'
+    oldFile: !uuid 'd471a39387b1cbc1f74fbc487978cb06ae2de8c7'
+gitCommitId: !uuid '8c693e7514a61b4bf3003a0dbabcf8f466aeff85'
 renames: {
   }
-revisionId: 106
+revisionId: 107
