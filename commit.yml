@@ -2,40 +2,16 @@
 branches: {
   }
 fileChange:
+  /cmake:
+    newFile: !uuid '21dd9f4ab96f3b1d6775b1949cf052b315ad3e9b'
+    oldFile: !uuid 'fd23d711d5d62cedbbe44db8dc39a2500b31bc60'
+  /cmake/options.cmake:
+    newFile: !uuid '5677710fb0617924127fadb461373d13dd14a9e9'
+    oldFile: !uuid '0559a83ebc7617a48226fb9102fd986d5c2a271f'
   /iSulad.spec:
-    newFile: !uuid '22655b69ef2cd8f15db58c65be6122a0282411cc'
-    oldFile: !uuid 'd504ffe22e0d3a1549867740403f74edfedacf7d'
-  /src:
-    newFile: !uuid '4e52b2c51f4f0dd66bb504bff9c33908d0f45d72'
-    oldFile: !uuid 'd1d637aa82bb48f3b94ca046b1688f93b54469e7'
-  /src/contrib:
-    newFile: !uuid 'a44339063ed96e05548890187f0f80f59599891e'
-    oldFile: !uuid '3d900006acdb27312b7e2b849779d55e767aa832'
-  /src/contrib/config:
-    newFile: !uuid 'fbaf0fb961a42646322c1fa974f86b7ad00a7a01'
-    oldFile: !uuid '44b4fe1e33817de8fafb1aa9e32ff851fe684806'
-  /src/contrib/config/systemcontainer_config.json:
-    newFile: !uuid '36c4fb94be1b5b8831b082e826549d4fb97fe95c'
-    oldFile: !uuid 'dfef975eca69c46dba7f2705a2ee48adcd83130b'
-  /src/services:
-    newFile: !uuid '34eb521eeb25d427f2b41a9a9564287101cd92a9'
-    oldFile: !uuid '8d11791c6c8fc6cecd5b6285d68e737af1d69e0d'
-  /src/services/execution:
-    newFile: !uuid '9f6809b6fdfe97633578080ad77dd674630945ee'
-    oldFile: !uuid 'baac980eb538bcc7b1388d414c97adc86d37cf0b'
-  /src/services/execution/execute:
-    newFile: !uuid '14a7b6b17ed1c29ee606ddf7305b6c12c146f540'
-    oldFile: !uuid '5c575f7238e0f4326d39f1847b599c3fab1125b0'
-  /src/services/execution/execute/execution_create.c:
-    newFile: !uuid '037587559c4909bfc52bfec67744df14d10b78da'
-    oldFile: !uuid '02fb7995a1e02c54cc1b61d5879bebe406b857b7'
-  /src/services/execution/spec:
-    newFile: !uuid 'e1b808ce601d8faeac89ca16b44af0e687ff16d2'
-    oldFile: !uuid '9c165e3f4e38da73e4112bb840ba346fe54308f0'
-  /src/services/execution/spec/specs_mount.c:
-    newFile: !uuid '979be1e78137b33ded1ef328fc080bbfa9538e3b'
-    oldFile: !uuid '62498cdf3bfad358b8b0bf1579f2422f98fffbe8'
-gitCommitId: !uuid 'e3328fb3c6ed7e9b531e7340ab3ff516cb4430e7'
+    newFile: !uuid '73d7abfef178db4e60af6f7066adcee8c17ccc4b'
+    oldFile: !uuid '22655b69ef2cd8f15db58c65be6122a0282411cc'
+gitCommitId: !uuid '9c443e35befd7dcc9f788c3df59ac6e441f0a577'
 renames: {
   }
-revisionId: 108
+revisionId: 109
