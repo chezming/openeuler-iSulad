@@ -2,10 +2,22 @@
 branches: {
   }
 fileChange:
-  /iSulad.spec:
-    newFile: !uuid '8004d078d01cfb7174a6586fece44fbf31db4860'
-    oldFile: !uuid '73d7abfef178db4e60af6f7066adcee8c17ccc4b'
-gitCommitId: !uuid '1e0774492d31ff9809aeedb1d1df8c5868e8c3f0'
+  /src:
+    newFile: !uuid '5b90b75f25f2bc12cb17c827ebca14eeb3511fb5'
+    oldFile: !uuid '4e52b2c51f4f0dd66bb504bff9c33908d0f45d72'
+  /src/cmd:
+    newFile: !uuid '5fa8d77d074ab12610a57ae00bb90a3e149bcdb3'
+    oldFile: !uuid '13524367b2ccb5738d222c8aefe52100eecc8133'
+  /src/cmd/isula:
+    newFile: !uuid 'b7dd54b6dc89f4273e7ade9b135e9445c88dbddf'
+    oldFile: !uuid '5f982392275ca3800fa72219beb80adfca8056c2'
+  /src/cmd/isula/stream:
+    newFile: !uuid '83e0f9111f252d7693322a7e656a07e3a7045bd2'
+    oldFile: !uuid '5c24ace350aefcff656d942da9b573471e9cc12d'
+  /src/cmd/isula/stream/exec.c:
+    newFile: !uuid '140c1664f76c1aac5c447446787067e32cd1243d'
+    oldFile: !uuid 'e9c78ee7529536bc792406ff41ba8b4318229cb2'
+gitCommitId: !uuid 'e06e2c89f043832514e784c2f7e4e75b8acc0442'
 renames: {
   }
-revisionId: 110
+revisionId: 111
