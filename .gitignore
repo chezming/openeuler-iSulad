@@ -2,6 +2,7 @@ build
 *.pyc
 .deps
 .dirstamp
+.vscode
 GPATH
 GRTAGS
 GTAGS
