@@ -2,19 +2,19 @@
 branches: {
   }
 fileChange:
+  /iSulad.spec:
+    newFile: !uuid 'dd8b5945f2d7c3f208e7aac5866db5306c461a35'
+    oldFile: !uuid '8004d078d01cfb7174a6586fece44fbf31db4860'
   /src:
-    newFile: !uuid '388d9e49dd02ee4309899e3a6980ae27dc25c211'
-    oldFile: !uuid 'c3a43f9df6ef51839b052b1a90bc5afd63eedd3c'
-  /src/cmd:
-    newFile: !uuid '0dacede33f07a87b1d799788f9a3a2ff6f3b5d6f'
-    oldFile: !uuid '31f496c2d9b93a36e7f237f94078f7267713f9e8'
-  /src/cmd/isulad-shim:
-    newFile: !uuid '21a286c3a4b81bd0e3fa4bc64a1c94f788c358dc'
-    oldFile: !uuid '721b1118261e7ba7e48f42a9f6080ccd50bfb5ee'
-  /src/cmd/isulad-shim/terminal.c:
-    newFile: !uuid '6b261ebf129e5d15e9e2324c9931b9e3dede4f98'
-    oldFile: !uuid '5850e66b533e4b9a1268bd197495590c8e0543d1'
-gitCommitId: !uuid 'aec8336d5cec52420fade5cd6901dd4eacbca647'
+    newFile: !uuid '7f5fa09db495816599576027b169b2ea85664a38'
+    oldFile: !uuid '388d9e49dd02ee4309899e3a6980ae27dc25c211'
+  /src/http:
+    newFile: !uuid 'e2e1d1ffe87c073e2f4d0a01273fb74e9618f2c5'
+    oldFile: !uuid '49e3a4f92f86ecbde1c7e203444bf99a3525ea28'
+  /src/http/http.h:
+    newFile: !uuid '573a0ae6fa460d6dc33ab41d5209dbc0f56ee19e'
+    oldFile: !uuid 'd447ec247fd17bce906f08515f050da3d248f38b'
+gitCommitId: !uuid '4af28e6ac86115c03ed1b532cf363f9fac2fb57f'
 renames: {
   }
-revisionId: 114
+revisionId: 115
