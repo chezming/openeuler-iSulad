@@ -2,19 +2,13 @@
 branches: {
   }
 fileChange:
-  /iSulad.spec:
-    newFile: !uuid 'dd8b5945f2d7c3f208e7aac5866db5306c461a35'
-    oldFile: !uuid '8004d078d01cfb7174a6586fece44fbf31db4860'
-  /src:
-    newFile: !uuid '7f5fa09db495816599576027b169b2ea85664a38'
-    oldFile: !uuid '388d9e49dd02ee4309899e3a6980ae27dc25c211'
-  /src/http:
-    newFile: !uuid 'e2e1d1ffe87c073e2f4d0a01273fb74e9618f2c5'
-    oldFile: !uuid '49e3a4f92f86ecbde1c7e203444bf99a3525ea28'
-  /src/http/http.h:
-    newFile: !uuid '573a0ae6fa460d6dc33ab41d5209dbc0f56ee19e'
-    oldFile: !uuid 'd447ec247fd17bce906f08515f050da3d248f38b'
-gitCommitId: !uuid '4af28e6ac86115c03ed1b532cf363f9fac2fb57f'
+  /docs:
+    newFile: !uuid '7e956a2a7a3925d621224e930a977e4fd507dcb2'
+    oldFile: !uuid 'b60cc9631bbd288351b67ee48f8b7d0bae2582a3'
+  /docs/integration.md:
+    newFile: !uuid '4352ff19d8b6cd7ecfbcdd4a5b0335292949180b'
+    oldFile: !uuid '3df097d9def56d5313e5bc6cd09895728d7a1f75'
+gitCommitId: !uuid 'e54b3c819efaaf494b9686d05ebb42abc3a3f05e'
 renames: {
   }
-revisionId: 115
+revisionId: 116
