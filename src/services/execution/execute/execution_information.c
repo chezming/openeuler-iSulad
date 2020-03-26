@@ -1338,11 +1338,14 @@ static int pack_inspect_data(const container_t *cont, container_inspect **out_in
     }
 
 #ifdef ENABLE_OCI_IMAGE
+    // todo replace functions with layer get metadata function
+#if 0
     inspect->graph_driver = graphdriver_get_metadata(cont->common_config->id);
     if (inspect->graph_driver == NULL) {
         ret = -1;
         goto out;
     }
+#endif
 #endif
 
 out:
