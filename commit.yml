@@ -2,22 +2,16 @@
 branches: {
   }
 fileChange:
-  /src:
-    newFile: !uuid 'ee3574a1fc85ad7d02e87f888a68ab1b89ceaf9a'
-    oldFile: !uuid 'e47806b4498d1eae8d37ec2dd9c6d7d300319c9f'
-  /src/services:
-    newFile: !uuid 'd4a18cfbe2a1bf17f40fb9356fa50a210e2358f7'
-    oldFile: !uuid '52896feccc40ba2c8cf6e5a375702ef806493020'
-  /src/services/execution:
-    newFile: !uuid 'd8ed88d4efd52f0270e2dd9708e5bce05cc3f6a6'
-    oldFile: !uuid 'a9057b1c3ec81f43438fc7577a52c83ae1ad3ff7'
-  /src/services/execution/execute:
-    newFile: !uuid 'f5a0e5e4a76b559c22640badd283e0e1e0d6f56f'
-    oldFile: !uuid 'b0d5b81df9e654f62db01292a8596b55e11960bd'
-  /src/services/execution/execute/execution.c:
-    newFile: !uuid 'e6a2f7ba47b10523fe48a815baec149bc60db616'
-    oldFile: !uuid '0a99965e9da04a227b1a92dfc90f1ac48e681621'
-gitCommitId: !uuid '753af9761c5a3b0231f2555685d829209970ff5a'
+  /CMakeLists.txt:
+    newFile: !uuid 'c48f2b559ddb37cd421ec333f8b597f94b34b7ce'
+    oldFile: !uuid '498876807e1c09d3046bfffb2bf3606d15abce77'
+  /iSulad.spec:
+    newFile: !uuid '705e9607e21f18bf0cb12792d98bc4902f88990e'
+    oldFile: !uuid 'dd8b5945f2d7c3f208e7aac5866db5306c461a35'
+  /update-version.bash:
+    newFile: !uuid '6f497263bb0ec39ac6175fb9ef5d31d41f107ecd'
+    oldFile: !uuid 'dba43aa95de5bf0062862f9fd303bbba2d107d1a'
+gitCommitId: !uuid 'ee7781b21b391f3a23cbc5746f6077a956ac780f'
 renames: {
   }
-revisionId: 118
+revisionId: 119
