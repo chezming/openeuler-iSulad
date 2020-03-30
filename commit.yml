@@ -2,19 +2,13 @@
 branches: {
   }
 fileChange:
-  /src:
-    newFile: !uuid '2b70ca1a253dbcdfb452045ed0f7d5592b7e0d4d'
-    oldFile: !uuid 'ee3574a1fc85ad7d02e87f888a68ab1b89ceaf9a'
-  /src/image:
-    newFile: !uuid 'd353275d621e2ceff7a855db38f7a4b6d3ba1762'
-    oldFile: !uuid '1a4c4aab8acf91daa0e24be47ee907efc7eec487'
-  /src/image/oci:
-    newFile: !uuid 'ac387078d961149734dd9f96a62affa16eb3832b'
-    oldFile: !uuid '5c13742634d7df400b3293e555aa41ed696fed0c'
-  /src/image/oci/oci_config_merge.c:
-    newFile: !uuid '163f5fefda733600ae01ab075459772ac7737355'
-    oldFile: !uuid '8c8c4a5394f44170030a1c2e9d6e647fa0ccfe6b'
-gitCommitId: !uuid '7b5f0a399563b74cc2744bb6b19f68eb7d9c1faa'
+  /docs:
+    newFile: !uuid '500573ee738bbb13809e3f7867bf89a7e35d4b9e'
+    oldFile: !uuid '7e956a2a7a3925d621224e930a977e4fd507dcb2'
+  /docs/integration.md:
+    newFile: !uuid 'c5b52a3ae616bd243e1798e38338ec6c2b9ef152'
+    oldFile: !uuid '4352ff19d8b6cd7ecfbcdd4a5b0335292949180b'
+gitCommitId: !uuid '1297195c3fe4afc7775be179c0778615f24dbf67'
 renames: {
   }
-revisionId: 120
+revisionId: 121
