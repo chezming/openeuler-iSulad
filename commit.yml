@@ -2,49 +2,91 @@
 branches: {
   }
 fileChange:
-  /src:
-    newFile: !uuid '6d6a4c129505ce785007682a30b30a281af2ac31'
-    oldFile: !uuid '9163342fe61d9002f6eee981649b4b99b400f177'
-  /src/api:
-    newFile: !uuid '9f1c71f209a7e34fff77c2625b1d086b17cea849'
-    oldFile: !uuid '6f009de53bf80e0dc21436620c22143cb5c55ae0'
-  /src/api/image_client:
-    newFile: !uuid 'cf743566d900844e1e3b87f539fc2fc2acfaa103'
-    oldFile: !uuid 'ddbf6f62df7ffe0595a338e2322c9d760ff48aa6'
-  /src/api/image_client/isula_image.proto:
-    newFile: !uuid '77849c41a24b2896f9f7294a5817e53742ce8f92'
-    oldFile: !uuid 'aac3f4a1408ebfd914b2f87307e55180f498ff5d'
-  /src/connect:
-    newFile: !uuid 'ac7211f514d7ae0039865704289064c7e126bd19'
-    oldFile: !uuid '1d268d4cf9cd7f8bebe54c36f9841da01048c433'
-  /src/connect/client:
-    newFile: !uuid 'af75b61c82b4225f6c07567a6c97a2f4db5c82f5'
-    oldFile: !uuid '9b88e3314562bb5d688cfcdfb1209c70b05edf31'
-  /src/connect/client/grpc:
-    newFile: !uuid '33f6226c5e90279161056357539436d51ad4b56d'
-    oldFile: !uuid 'd18c31af278e50df1dc01b8cd01ba1563cdc868d'
-  /src/connect/client/grpc/grpc_isula_image_client.cc:
-    newFile: !uuid 'cf5f6b1bb1248cc736333d9a52d42698ae8520c1'
-    oldFile: !uuid '9c4fe9a67182a6a6f519457e17c701745cd428b5'
-  /src/connect/client/isula_image_connect.c:
-    newFile: !uuid '8df8981c4a57b10c0d64fe93b5c23b1488a535b1'
-    oldFile: !uuid '4fa088c343f48c57a43c9383b14767983dc53dee'
-  /src/connect/client/isula_image_connect.h:
-    newFile: !uuid '883c22a175eaad18e41a729a65c54955dd2e4fe9'
-    oldFile: !uuid 'da0f340f08960ec701a739e8558b335571cae514'
-  /src/image:
-    newFile: !uuid '30c19dc662171fa729d1c48742ca13c1b214e0a1'
-    oldFile: !uuid '42bc979410893de18456fc9a5780d74c57ac9786'
-  /src/image/oci:
-    newFile: !uuid '693b1f82afc157a0398bb4a1e55f55b22d7beae3'
-    oldFile: !uuid '8eaefc8d240d0cc9388360b4789ad1ca9b51a95d'
-  /src/image/oci/isula_image_status.c:
-    newFile: !uuid '0a847b0d9adc683dd30d10695fe5a7f910ad096f'
-    oldFile: !uuid 'd237c5f05be5feafd3608b574c01713a643777c2'
-  /src/image/oci/isula_images_list.c:
-    newFile: !uuid 'e4f60684d0841ce28a6e5cacff97717886114b9e'
-    oldFile: !uuid '10f656faffaa1e8b59dff2a81bd1820ab78ce423'
-gitCommitId: !uuid 'c29536d44300b87bf9c10998730f6ea1a5e6cd06'
+  /CI:
+    newFile: !uuid '1e6a1ef639c8a17a165765c8f55a64e1b61edf0c'
+    oldFile: null
+  /CI/Dockerfile:
+    newFile: !uuid '4bb063c8bc974268979ecfb71b5536d54d0523ba'
+    oldFile: null
+  /CI/build.sh:
+    newFile: !uuid '8b78276cfe6734882ed63eca5bfd280c3014549e'
+    oldFile: null
+  /CI/helper.sh:
+    newFile: !uuid '4d0b687c4ea834493aa971f5c586b3e6d524538f'
+    oldFile: null
+  /CI/install_depends.sh:
+    newFile: !uuid '151903ec7132a08db19c0adecc7d3fd7da977b7f'
+    oldFile: null
+  /CI/make-and-install.sh:
+    newFile: !uuid 'e58b18704b8bda5a0e62a02774cde26e03ae8e68'
+    oldFile: null
+  /CI/run-testcases.sh:
+    newFile: !uuid 'ace986c403e865ddf4b54a4451b72922f8f1ba98'
+    oldFile: null
+  /CI/test.sh:
+    newFile: !uuid 'd21ca89e9d60fd895ba92f06a45b2cf4e8122cb5'
+    oldFile: null
+  /CI/test_cases:
+    newFile: !uuid '160fb18d0c275595186131066988dffe2f005f13'
+    oldFile: null
+  /CI/test_cases/basic_cases:
+    newFile: !uuid 'b151917ff46513960164f900153a063b191fbaf3'
+    oldFile: null
+  /CI/test_cases/basic_cases/check_fd_leakage_of_isulad.bash:
+    newFile: !uuid '3ca2bab753d2b2452e213647542ba719db828fdf'
+    oldFile: null
+  /CI/test_cases/basic_cases/create.bash:
+    newFile: !uuid '3dea58dd5a99d09cde12e25adedc18c89b6777ee'
+    oldFile: null
+  /CI/test_cases/basic_cases/help.bash:
+    newFile: !uuid '57bd6622207a8161c7d8a8df2ffa86ceb9b5ec94'
+    oldFile: null
+  /CI/test_cases/basic_cases/helpers.bash:
+    newFile: !uuid '73852f95bdedf190acdcb1f1f07fc5ab5eee84a2'
+    oldFile: null
+  /CI/test_cases/basic_cases/kill.bash:
+    newFile: !uuid '15d97b4a9b7f8d29553c81f729fded9f97912787'
+    oldFile: null
+  /CI/test_cases/basic_cases/pause.bash:
+    newFile: !uuid '150367d01aebd1f4862d23989ffc8e57a7c73f14'
+    oldFile: null
+  /CI/test_cases/basic_cases/ps.bash:
+    newFile: !uuid '07d12277707304944c0c14e42950f4f3ced9bb3b'
+    oldFile: null
+  /CI/test_cases/basic_cases/restart.bash:
+    newFile: !uuid '7a1f022d1815d10e12c73d05c981f0be7f1d37d2'
+    oldFile: null
+  /CI/test_cases/basic_cases/restartpolicy.bash:
+    newFile: !uuid '7b7f5fcfeeea0e0bf88a639bb8dbff392ef7321a'
+    oldFile: null
+  /CI/test_cases/basic_cases/resume.bash:
+    newFile: !uuid '0000f9f76fb7b7dac4c9d625453dc49df2826822'
+    oldFile: null
+  /CI/test_cases/basic_cases/rm.bash:
+    newFile: !uuid '8754485c233e895a624f1a1681e57b2dd141cb5d'
+    oldFile: null
+  /CI/test_cases/basic_cases/run.bash:
+    newFile: !uuid 'c2a74d9df22fd12f62f13cdc1dbb333b4f593d36'
+    oldFile: null
+  /CI/test_cases/basic_cases/start.bash:
+    newFile: !uuid 'a91f420cf9a67fa4d14be359fa8c07197688acc9'
+    oldFile: null
+  /CI/test_cases/basic_cases/stop.bash:
+    newFile: !uuid '3dff3191a22ca55f00b1b2f5710785a00fc2a81c'
+    oldFile: null
+  /CI/test_cases/basic_cases/update.bash:
+    newFile: !uuid 'f5415e122b2651a7018d9044b6dccc5b24c2d76a'
+    oldFile: null
+  /CI/test_cases/basic_cases/version.bash:
+    newFile: !uuid 'f13d8d136bf163ab0f77d9138373c77ddcd70381'
+    oldFile: null
+  /CI/test_cases/ci_isula.bash:
+    newFile: !uuid '35ac06ecbebe6cde0e399743b59ecb809591ed2b'
+    oldFile: null
+  /update-version.bash:
+    newFile: !uuid 'b2cd46730db0ab14b678191c16b0543645a998ec'
+    oldFile: !uuid '6f497263bb0ec39ac6175fb9ef5d31d41f107ecd'
+gitCommitId: !uuid '3b2c1322c5c9c161ac6b125e6f847b8d7e60225d'
 renames: {
   }
-revisionId: 124
+revisionId: 125
