@@ -2,91 +2,58 @@
 branches: {
   }
 fileChange:
-  /CI:
-    newFile: !uuid '1e6a1ef639c8a17a165765c8f55a64e1b61edf0c'
+  /src:
+    newFile: !uuid '0722fd6c34882238594aee951c9fa4268f7f46d5'
+    oldFile: !uuid '6d6a4c129505ce785007682a30b30a281af2ac31'
+  /src/json:
+    newFile: !uuid '1556f8c35dac6a5bfd810049fbb1dcf91a340fc6'
+    oldFile: !uuid '5c5de999d606e34d6e6473e9c656e12df9e2633a'
+  /src/json/schema:
+    newFile: !uuid '0e4028ef630de2e58d7cd3d26eaa6ee1e56b71c8'
+    oldFile: !uuid 'e11e74e07ec1d6cf1f701cd6c03d8fe16ef7f47f'
+  /src/json/schema/schema:
+    newFile: !uuid '1f7dfed352183a7f9fd4c134eb949091897b5bb2'
+    oldFile: !uuid 'cefedc4a1156fe8c5151f4c4c057fafa7dfcc9a5'
+  /src/json/schema/schema/shim:
+    newFile: !uuid 'e461eb223d051c5134b93215891cfa18a9670828'
+    oldFile: !uuid 'db34f711b144115dc73a94a0f45072f06a201058'
+  /src/json/schema/schema/shim/client:
+    newFile: !uuid '93ea7195a489ce80c817f4457c55329bc6a0108d'
+    oldFile: !uuid '7bed30d95d81cffeaca015d74cf4a757eb24d2c3'
+  /src/json/schema/schema/shim/client/runtime-stats.json:
+    newFile: !uuid '707e58e0e7c77280719468ed35802e7fb6e71207'
     oldFile: null
-  /CI/Dockerfile:
-    newFile: !uuid '4bb063c8bc974268979ecfb71b5536d54d0523ba'
-    oldFile: null
-  /CI/build.sh:
-    newFile: !uuid '8b78276cfe6734882ed63eca5bfd280c3014549e'
-    oldFile: null
-  /CI/helper.sh:
-    newFile: !uuid '4d0b687c4ea834493aa971f5c586b3e6d524538f'
-    oldFile: null
-  /CI/install_depends.sh:
-    newFile: !uuid '151903ec7132a08db19c0adecc7d3fd7da977b7f'
-    oldFile: null
-  /CI/make-and-install.sh:
-    newFile: !uuid 'e58b18704b8bda5a0e62a02774cde26e03ae8e68'
-    oldFile: null
-  /CI/run-testcases.sh:
-    newFile: !uuid 'ace986c403e865ddf4b54a4451b72922f8f1ba98'
-    oldFile: null
-  /CI/test.sh:
-    newFile: !uuid 'd21ca89e9d60fd895ba92f06a45b2cf4e8122cb5'
-    oldFile: null
-  /CI/test_cases:
-    newFile: !uuid '160fb18d0c275595186131066988dffe2f005f13'
-    oldFile: null
-  /CI/test_cases/basic_cases:
-    newFile: !uuid 'b151917ff46513960164f900153a063b191fbaf3'
-    oldFile: null
-  /CI/test_cases/basic_cases/check_fd_leakage_of_isulad.bash:
-    newFile: !uuid '3ca2bab753d2b2452e213647542ba719db828fdf'
-    oldFile: null
-  /CI/test_cases/basic_cases/create.bash:
-    newFile: !uuid '3dea58dd5a99d09cde12e25adedc18c89b6777ee'
-    oldFile: null
-  /CI/test_cases/basic_cases/help.bash:
-    newFile: !uuid '57bd6622207a8161c7d8a8df2ffa86ceb9b5ec94'
-    oldFile: null
-  /CI/test_cases/basic_cases/helpers.bash:
-    newFile: !uuid '73852f95bdedf190acdcb1f1f07fc5ab5eee84a2'
-    oldFile: null
-  /CI/test_cases/basic_cases/kill.bash:
-    newFile: !uuid '15d97b4a9b7f8d29553c81f729fded9f97912787'
-    oldFile: null
-  /CI/test_cases/basic_cases/pause.bash:
-    newFile: !uuid '150367d01aebd1f4862d23989ffc8e57a7c73f14'
-    oldFile: null
-  /CI/test_cases/basic_cases/ps.bash:
-    newFile: !uuid '07d12277707304944c0c14e42950f4f3ced9bb3b'
-    oldFile: null
-  /CI/test_cases/basic_cases/restart.bash:
-    newFile: !uuid '7a1f022d1815d10e12c73d05c981f0be7f1d37d2'
-    oldFile: null
-  /CI/test_cases/basic_cases/restartpolicy.bash:
-    newFile: !uuid '7b7f5fcfeeea0e0bf88a639bb8dbff392ef7321a'
-    oldFile: null
-  /CI/test_cases/basic_cases/resume.bash:
-    newFile: !uuid '0000f9f76fb7b7dac4c9d625453dc49df2826822'
-    oldFile: null
-  /CI/test_cases/basic_cases/rm.bash:
-    newFile: !uuid '8754485c233e895a624f1a1681e57b2dd141cb5d'
-    oldFile: null
-  /CI/test_cases/basic_cases/run.bash:
-    newFile: !uuid 'c2a74d9df22fd12f62f13cdc1dbb333b4f593d36'
-    oldFile: null
-  /CI/test_cases/basic_cases/start.bash:
-    newFile: !uuid 'a91f420cf9a67fa4d14be359fa8c07197688acc9'
-    oldFile: null
-  /CI/test_cases/basic_cases/stop.bash:
-    newFile: !uuid '3dff3191a22ca55f00b1b2f5710785a00fc2a81c'
-    oldFile: null
-  /CI/test_cases/basic_cases/update.bash:
-    newFile: !uuid 'f5415e122b2651a7018d9044b6dccc5b24c2d76a'
-    oldFile: null
-  /CI/test_cases/basic_cases/version.bash:
-    newFile: !uuid 'f13d8d136bf163ab0f77d9138373c77ddcd70381'
-    oldFile: null
-  /CI/test_cases/ci_isula.bash:
-    newFile: !uuid '35ac06ecbebe6cde0e399743b59ecb809591ed2b'
-    oldFile: null
-  /update-version.bash:
-    newFile: !uuid 'b2cd46730db0ab14b678191c16b0543645a998ec'
-    oldFile: !uuid '6f497263bb0ec39ac6175fb9ef5d31d41f107ecd'
-gitCommitId: !uuid '3b2c1322c5c9c161ac6b125e6f847b8d7e60225d'
+  /src/runtime:
+    newFile: !uuid 'c318f3210b5ad677d08b9febbef7f736aa6a4743'
+    oldFile: !uuid 'dadb344af9c43226c0cb74b470136f0b0bce9388'
+  /src/runtime/isula:
+    newFile: !uuid '1fc5bef64753b1dc251bef401b4be3192f193393'
+    oldFile: !uuid 'a94b925838e8a014856080d35e8c9c409d5cb9d2'
+  /src/runtime/isula/isula_rt_ops.c:
+    newFile: !uuid 'a0ea31d64dc91a4a3252abcc647ca7e089b53492'
+    oldFile: !uuid 'a55e44b8e89add83e16ec3418b27ec4bd1661747'
+  /src/runtime/runtime.h:
+    newFile: !uuid '019863935adb92d66c16c6548f13b3e64c9178ae'
+    oldFile: !uuid '09780da9b2271547e8a18f0424f9938812539ba4'
+  /src/services:
+    newFile: !uuid 'cba375ec528b7a9ecf4beda7e91a8362bcb41377'
+    oldFile: !uuid 'a7a2d9b4a7f2ab2d7d545b5db21cd70999b2180e'
+  /src/services/cri:
+    newFile: !uuid '754e42ccbab0b0e9ef65bba72803b63d91407fac'
+    oldFile: !uuid '02422090a09520c62a6a7c4ef35d4af6d8cc37a7'
+  /src/services/cri/cri_container.cc:
+    newFile: !uuid 'abe65cc70e710a92d49b2e797f5ab6b892920980'
+    oldFile: !uuid 'c7c8201add2de3f0fd668f000c8d991741bc60f1'
+  /src/services/execution:
+    newFile: !uuid 'ca254719b1f39e440b35656c6f0fd426859ed7de'
+    oldFile: !uuid '1fa88ae8b96aaefa1c61c3d8d87503918237bede'
+  /src/services/execution/execute:
+    newFile: !uuid 'cf1fa09be18afc8845252ba4150cd8ac3e8ca31e'
+    oldFile: !uuid '1a3b7f511a27dae93ff7e2c9a176a6ec09acb19b'
+  /src/services/execution/execute/execution_extend.c:
+    newFile: !uuid '367281cac975fc54ca6912063049fe04ba593a92'
+    oldFile: !uuid '35c25e1584fe2f2144392ee3413750422eaf4e17'
+gitCommitId: !uuid '4724df19bcd0c05d75b6d14706139c3f372b5cac'
 renames: {
   }
-revisionId: 125
+revisionId: 126
