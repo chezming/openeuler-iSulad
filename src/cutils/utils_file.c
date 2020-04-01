@@ -507,7 +507,7 @@ FILE *util_fopen(const char *filename, const char *mode)
     return fp;
 }
 
-static char *util_file_digest(const char *filename)
+char *util_file_digest(const char *filename)
 {
     FILE *fp = NULL;
     char *digest = NULL;
