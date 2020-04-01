@@ -187,8 +187,8 @@ TEST_F(StorageImagesUnitTest, test_image_store_create)
     std::string metadata {"{}"};
     types_timestamp_t time {0x00};
     std::string searchableDigest {"manifest"};
-    auto created_image = image_store_create(id.c_str(), names, sizeof(names)/sizeof(names[0]),
-            layer.c_str(), metadata.c_str(), &time, searchableDigest.c_str());
+    auto created_image = image_store_create(id.c_str(), names, sizeof(names) / sizeof(names[0]),
+                                            layer.c_str(), metadata.c_str(), &time, searchableDigest.c_str());
     ASSERT_NE(created_image, nullptr);
 
     auto image = image_store_get_image(id.c_str());
