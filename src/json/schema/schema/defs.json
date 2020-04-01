@@ -259,6 +259,10 @@
                 }
             }
         },
+        "digest": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:[+._-][a-z0-9]+)*:[a-zA-Z0-9=_-]+$"
+        },
         "ociVersion": {
             "description": "The version of Open Container Runtime Specification that the document complies with",
             "type": "string"
