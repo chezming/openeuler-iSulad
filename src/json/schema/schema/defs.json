@@ -192,6 +192,14 @@
                 }
             }
         },
+        "mapStringInt64": {
+            "type": "object",
+            "patternProperties": {
+                ".{1,}": {
+                    "type": "int64"
+                }
+            }
+        },
         "mapStringBool": {
             "type": "object",
             "patternProperties": {
