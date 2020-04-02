@@ -1,5 +1,5 @@
 /******************************************************************************
- * Copyright (c) Huawei Technologies Co., Ltd. 2019. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2020. All rights reserved.
  * iSulad licensed under the Mulan PSL v1.
  * You can use this software according to the terms and conditions of the Mulan PSL v1.
  * You may obtain a copy of Mulan PSL v1 at:
@@ -8,24 +8,18 @@
  * IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY OR FIT FOR A PARTICULAR
  * PURPOSE.
  * See the Mulan PSL v1 for more details.
- * Author: tanyifeng
- * Create: 2019-04-02
- * Description: provide overlay2 function definition
+ * Author: wangfengtu
+ * Create: 2020-03-20
+ * Description: provide certs file process definition
  ******************************************************************************/
-#ifndef __GRAPHDRIVER_OVERLAY2_H
-#define __GRAPHDRIVER_OVERLAY2_H
-
-#include "driver.h"
+#ifndef __IMAGE_CERTS_H
+#define __IMAGE_CERTS_H
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int overlay2_init(struct graphdriver *driver);
-
-int overlay2_parse_options(struct graphdriver *driver, const char **options, size_t options_len);
-
-bool overlay2_is_quota_options(struct graphdriver *driver, const char *option);
+int certs_load(char *host, bool use_decrypted_key, char **ca_file, char **cert_file, char **key_file);
 
 #ifdef __cplusplus
 }

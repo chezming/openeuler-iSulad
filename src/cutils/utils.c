@@ -1222,78 +1222,6 @@ void memset_sensitive_string(char *str)
     (void)memset(str, 0, strlen(str));
 }
 
-static char *get_mtpoint(const char *line)
-{
-    int i;
-    const char *tmp = NULL;
-    char *pend = NULL;
-    char *sret = NULL;
-    size_t len;
-
-    if (line == NULL) {
-        goto err_out;
-    }
-
-    tmp = line;
-
-    for (i = 0; i < 4; i++) {
-        tmp = strchr(tmp, ' ');
-        if (tmp == NULL) {
-            goto err_out;
-        }
-        tmp++;
-    }
-    pend = strchr(tmp, ' ');
-    if ((pend == NULL) || pend == tmp) {
-        goto err_out;
-    }
-
-    /* stuck a \0 after the mountpoint */
-    len = (size_t)(pend - tmp);
-    sret = util_common_calloc_s(len + 1);
-    if (sret == NULL) {
-        goto err_out;
-    }
-    (void)memcpy(sret, tmp, len);
-    sret[len] = '\0';
-
-err_out:
-    return sret;
-}
-
-bool detect_mount(const char *path)
-{
-    FILE *fp = NULL;
-    char *line = NULL;
-    char *mountpoint = NULL;
-    size_t length = 0;
-    bool bret = false;
-
-    fp = util_fopen("/proc/self/mountinfo", "r");
-    if (fp == NULL) {
-        ERROR("Failed opening /proc/self/mountinfo");
-        return false;
-    }
-
-    while (getline(&line, &length, fp) != -1) {
-        mountpoint = get_mtpoint(line);
-        if (mountpoint == NULL) {
-            INFO("Error reading mountinfo: bad line '%s'", line);
-            continue;
-        }
-        if (strcmp(mountpoint, path) == 0) {
-            free(mountpoint);
-            bret = true;
-            goto out;
-        }
-        free(mountpoint);
-    }
-out:
-    fclose(fp);
-    free(line);
-    return bret;
-}
-
 static int set_echo_back(bool echo_back)
 {
     struct termios old, new;
@@ -1474,3 +1402,68 @@ void add_array_kv(char **array, size_t total, size_t *pos, const char *k, const 
     add_array_elem(array, total, pos, v);
 }
 
+int util_check_inherited_exclude_fds(bool closeall, int *fds_to_ignore, size_t len_fds)
+{
+    struct dirent *pdirent = NULL;
+    int fd, fddir;
+    DIR *directory = NULL;
+    size_t i = 0;
+
+restart:
+    directory = opendir("/proc/self/fd");
+    if (directory == NULL) {
+        WARN("Failed to open directory: %m.");
+        return -1;
+    }
+
+    fddir = dirfd(directory);
+    pdirent = readdir(directory);
+    for (; pdirent != NULL; pdirent = readdir(directory)) {
+        if (util_dir_skip_current(pdirent)) {
+            continue;
+        }
+
+        if (util_safe_int(pdirent->d_name, &fd) < 0) {
+            continue;
+        }
+
+        for (i = 0; i < len_fds; i++) {
+            if (fds_to_ignore[i] == fd) {
+                break;
+            }
+        }
+
+        if (i < len_fds && fd == fds_to_ignore[i]) {
+            continue;
+        }
+
+        if (util_is_std_fileno(fd) || fd == fddir) {
+            continue;
+        }
+
+        if (closeall) {
+            if (fd >= 0) {
+                close(fd);
+                fd = -1;
+            }
+            if (directory != NULL) {
+                closedir(directory);
+                directory = NULL;
+            }
+            goto restart;
+        }
+    }
+
+    closedir(directory);
+    return 0;
+}
+
+int get_cpu_num_cores(void)
+{
+    int ncpus = (int)sysconf(_SC_NPROCESSORS_ONLN);
+    if (ncpus < 1) {
+        ERROR("Cannot determine number of CPUs: assuming 1\n");
+        ncpus = 1;
+    }
+    return ncpus;
+}
