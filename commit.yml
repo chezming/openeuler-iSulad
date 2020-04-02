@@ -2,22 +2,94 @@
 branches: {
   }
 fileChange:
+  /CI:
+    newFile: !uuid '08664e21f1f109596777f97ef12098b7746f6436'
+    oldFile: !uuid '1e6a1ef639c8a17a165765c8f55a64e1b61edf0c'
+  /CI/build.sh:
+    newFile: !uuid '64f873b640c16e3c7890c4886e2e441122510d15'
+    oldFile: !uuid '8b78276cfe6734882ed63eca5bfd280c3014549e'
+  /CI/install_depends.sh:
+    newFile: !uuid 'ae48e7351f2dc018ffb74bb67144ac0ca8a1c3f7'
+    oldFile: !uuid '151903ec7132a08db19c0adecc7d3fd7da977b7f'
+  /CI/test_cases:
+    newFile: !uuid '7174cd052b3e4d05c65556284c68c1e4ba8ca59a'
+    oldFile: !uuid '160fb18d0c275595186131066988dffe2f005f13'
+  /CI/test_cases/basic_cases:
+    newFile: !uuid '7105f6f3bae8fdc3c8d8f27a1c385631143710a2'
+    oldFile: !uuid 'b151917ff46513960164f900153a063b191fbaf3'
+  /CI/test_cases/basic_cases/cni_test.bash:
+    newFile: !uuid '093d2123602b4ee8242598a46f88c51b1334a6de'
+    oldFile: null
+  /CI/test_cases/basic_cases/criconfigs:
+    newFile: !uuid 'ab5dab71d0238f7356f204a0d9dbf48d911379a2'
+    oldFile: null
+  /CI/test_cases/basic_cases/criconfigs/bins:
+    newFile: !uuid '4b792d946bc7414f89cf7045f602577d0e7e55a3'
+    oldFile: null
+  /CI/test_cases/basic_cases/criconfigs/bins/isulad-cni:
+    newFile: !uuid 'e4b7e598275721d89a0f451acfe18e0859678433'
+    oldFile: null
+  /CI/test_cases/basic_cases/criconfigs/bridge.json:
+    newFile: !uuid '4d19fa7994bcb9883ead9ac803ccfb54203cdb24'
+    oldFile: null
+  /CI/test_cases/basic_cases/criconfigs/container-config.json:
+    newFile: !uuid '87d66f77f41dcc989bae80d7df33a17a3aaa3963'
+    oldFile: null
+  /CI/test_cases/basic_cases/criconfigs/good.conflist:
+    newFile: !uuid '0940d271877405172587e4fd6ef9853117a12be3'
+    oldFile: null
+  /CI/test_cases/basic_cases/criconfigs/invalid.conflist:
+    newFile: !uuid '2b8ddb7007c444e9bfd75c057109f6db0f874554'
+    oldFile: null
+  /CI/test_cases/basic_cases/criconfigs/sandbox-config.json:
+    newFile: !uuid 'c63dc0e8cd54812c7c612d9ff70a06193bf3454f'
+    oldFile: null
+  /CI/test_cases/helpers.bash:
+    newFile: !uuid '7f9b3188aab6ec7e40c5fd543d5ce667a2d86dfe'
+    oldFile: null
   /src:
-    newFile: !uuid '7b2e2af0cbb5772dc778e5cd1d82686310c5c2a7'
-    oldFile: !uuid '0722fd6c34882238594aee951c9fa4268f7f46d5'
+    newFile: !uuid '70affc0256984533c1ce9e16036edb8eff12e23a'
+    oldFile: !uuid '7b2e2af0cbb5772dc778e5cd1d82686310c5c2a7'
   /src/services:
-    newFile: !uuid '71ac64e452a75d8437e27df7f7b046a98809e692'
-    oldFile: !uuid 'cba375ec528b7a9ecf4beda7e91a8362bcb41377'
-  /src/services/execution:
-    newFile: !uuid '1b1a35d7bb2f83605580da7ce37f41bc9865a771'
-    oldFile: !uuid 'ca254719b1f39e440b35656c6f0fd426859ed7de'
-  /src/services/execution/execute:
-    newFile: !uuid '826fb58fab31b34b6eaefb0b28783942dcd58e8c'
-    oldFile: !uuid 'cf1fa09be18afc8845252ba4150cd8ac3e8ca31e'
-  /src/services/execution/execute/execution_network.c:
-    newFile: !uuid '04db38b1a804655bb64650f74a0ce1d83e6bdf6b'
-    oldFile: !uuid 'd70d921c259b1f14d9620c05dcd217b5e73286b5'
-gitCommitId: !uuid '9c02d230b4c94b0ac17e7ea887f4c1a60ae95899'
+    newFile: !uuid 'b2ccfe331114faadbe14ae62df64fc7eba8bb033'
+    oldFile: !uuid '71ac64e452a75d8437e27df7f7b046a98809e692'
+  /src/services/cri:
+    newFile: !uuid '89bd3c1db56f460758dc0e4e2437bd21153a2740'
+    oldFile: !uuid '754e42ccbab0b0e9ef65bba72803b63d91407fac'
+  /src/services/cri/cni_network_plugin.cc:
+    newFile: !uuid 'c746cc7ca3ba9726f5baef67c303a8ffa0ff767d'
+    oldFile: !uuid 'c34ce044b294587305ccd8d7f396cf26584d39c9'
+  /src/services/cri/cni_network_plugin.h:
+    newFile: !uuid '755080c052d9dedfbd1579f12aa650c67c138282'
+    oldFile: !uuid 'abaa441b4d5802f143eb383e97e57012fb759706'
+  /src/services/cri/cri_helpers.cc:
+    newFile: !uuid 'ad81c814b5c049be92e3399d5d61984a59940ff8'
+    oldFile: !uuid '92d4054fdf1aff04ae7a6630614b1eb7afc0ef55'
+  /src/services/cri/cri_helpers.h:
+    newFile: !uuid '77157c3c9e7dfef803c98ac3e7be748adfda35f6'
+    oldFile: !uuid 'ce3c0071b50feacb0913e4cdcd15913c4198f9bd'
+  /src/services/cri/cri_runtime_service.cc:
+    newFile: !uuid '26236fb2cd4e078d281715efd912700463a8671a'
+    oldFile: !uuid '76d3d0ed26165531d802cdd2084d41aa90887257'
+  /src/services/cri/cri_runtime_service.h:
+    newFile: !uuid 'f8ffc80974060e5ce3657951a528d3345ddd164a'
+    oldFile: !uuid 'fdd254b34af39983ef5cd0b761f14d46276e17bf'
+  /src/services/cri/cri_sandbox.cc:
+    newFile: !uuid '7ac78fe70c444f3f11dc716d17145a6ede0648f0'
+    oldFile: !uuid 'a8fe3a5084fdc6bb1dd44e1a9eeee7d983594ae7'
+  /src/services/cri/network_plugin.cc:
+    newFile: !uuid '77f1de3871365f741c6b491583e8de09eb8dfce1'
+    oldFile: !uuid '520095ee956f9333406c430630b3e204351700ad'
+  /src/services/cri/network_plugin.h:
+    newFile: !uuid 'fc293bfecf78c88532709148a6d9c8c844bdeea4'
+    oldFile: !uuid 'ba90fc27b49595376cba0c9a9387f540babe8004'
+  /test:
+    newFile: !uuid 'a96464cd1e69a0c3a50cfc9a90cacf8688ad52ff'
+    oldFile: !uuid '2c34fbb2a28ccb4eafdd0348bad53bcc474abec5'
+  /test/test.sh:
+    newFile: !uuid '93ec1baa16081be7435fa9a796b5c6a0d992a4de'
+    oldFile: !uuid '282175470af69b1997ad46f1a6b534f447922678'
+gitCommitId: !uuid 'c043e010790d02f7c7e49193223a9c9c8731ca1f'
 renames: {
   }
-revisionId: 127
+revisionId: 128
