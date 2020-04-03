@@ -3,102 +3,27 @@ branches: {
   }
 fileChange:
   /CMakeLists.txt:
-    newFile: !uuid '64caa08e0dadc65840da712b0ab6357d21e03f1a'
-    oldFile: !uuid 'c48f2b559ddb37cd421ec333f8b597f94b34b7ce'
+    newFile: !uuid 'db7a6fc9af3a58dd68c0cac9a95002604aba63bb'
+    oldFile: !uuid '64caa08e0dadc65840da712b0ab6357d21e03f1a'
   /iSulad.spec:
-    newFile: !uuid '836e1891302df8cefc73d3fcc404c4c489995d63'
-    oldFile: !uuid '705e9607e21f18bf0cb12792d98bc4902f88990e'
+    newFile: !uuid 'e622943740a027e9a8dbb494fa058d5dec0b6db3'
+    oldFile: !uuid '836e1891302df8cefc73d3fcc404c4c489995d63'
   /src:
-    newFile: !uuid 'e9b7ee6026264d685282fb7915bf58e2c62080fe'
-    oldFile: !uuid '70affc0256984533c1ce9e16036edb8eff12e23a'
-  /src/cmd:
-    newFile: !uuid '15565c50e5814fe1a597bd3ea7cd77b663e82958'
-    oldFile: !uuid '0dacede33f07a87b1d799788f9a3a2ff6f3b5d6f'
-  /src/cmd/isula:
-    newFile: !uuid '1c476acc290d5227e84fd97b9894ffeea4919c71'
-    oldFile: !uuid 'b7dd54b6dc89f4273e7ade9b135e9445c88dbddf'
-  /src/cmd/isula/arguments.c:
-    newFile: !uuid 'b3c722c851d1cf86d32a840fc2102d8a4c9130d5'
-    oldFile: !uuid '853239f755f8c78708cbe017ab3cb2a8fc142bb8'
-  /src/cmd/isula/arguments.h:
-    newFile: !uuid '61a2dfff8134885b840735372d3e83a8e73d4db6'
-    oldFile: !uuid 'fcf57ae253c64d72f642de79159218444f17645b'
-  /src/cmd/isula/base:
-    newFile: !uuid '201f009abc79540ab2b3b45c72d06dd22f71af7c'
-    oldFile: !uuid '126a28c4e45f819aabe4fd6396b61390932d4ff3'
-  /src/cmd/isula/base/create.c:
-    newFile: !uuid '8831d29392dec1fb5d8d76af528cf38f870d4c67'
-    oldFile: !uuid '0a662d6326a69c0c931f6c8d7d45d475c8330437'
-  /src/cmd/isula/base/create.h:
-    newFile: !uuid '5f08f317f0ae7cb27b52138f78d05fc26d9b1819'
-    oldFile: !uuid 'bbfa53c143cf912311922888767a0190ef0f9e14'
-  /src/cmd/isula/base/run.c:
-    newFile: !uuid '7b792bf36bc4cdc2b5e08eba5176aba5dec95ecd'
-    oldFile: !uuid '7e846ba1772c993ae0ef6a0b83c05b78614a2b8b'
-  /src/constants.h:
-    newFile: !uuid '034bf61de278c3d9046ab27ddefa5f7c2ae535e4'
-    oldFile: !uuid '55fb03cb3df64233a305edb67dd04d5f68b7afa3'
-  /src/json:
-    newFile: !uuid '761f040b3bd459233012d186ca02892871c1d813'
-    oldFile: !uuid '1556f8c35dac6a5bfd810049fbb1dcf91a340fc6'
-  /src/json/schema:
-    newFile: !uuid '3b5c86cf90227eb78b2e4b9356fb78a4c2e42859'
-    oldFile: !uuid '0e4028ef630de2e58d7cd3d26eaa6ee1e56b71c8'
-  /src/json/schema/schema:
-    newFile: !uuid '39864043ba8d122a8058b8a7ec07594fb94e261d'
-    oldFile: !uuid '1f7dfed352183a7f9fd4c134eb949091897b5bb2'
-  /src/json/schema/schema/container:
-    newFile: !uuid '29c5b92ab13ac925926ca950fcb07e50d5d350e8'
-    oldFile: !uuid '025f66a1ad79390ebe33c47212d6f7e73bc4f153'
-  /src/json/schema/schema/container/config.json:
-    newFile: !uuid '54cad3f882b09e56820d5ee039c5038b269da8c7'
-    oldFile: !uuid 'ad1b24d637291b98ad62dd860d0046df2d369301'
-  /src/libisula.c:
-    newFile: !uuid 'df36d38610aaf93012334f1eefb2115f07d663fa'
-    oldFile: !uuid '3a6fdedb341d34b6ac328fbfe8dcf548914ca992'
-  /src/libisula.h:
-    newFile: !uuid 'beb48dfa6b3c24ffa26af84c8db2dd3557bc5204'
-    oldFile: !uuid 'd39a9e2e9f03b0bce1fc35708a5c8be74c6e3b47'
-  /src/libisulad.c:
-    newFile: !uuid '4d0a45db291e8f00b0365e468b6433c943d3f6ff'
-    oldFile: !uuid 'f35fd4f8d37225e1072ba12e4651aa4d37f6c2c4'
-  /src/libisulad.h:
-    newFile: !uuid 'e017117ac5e37668e2602892dcec9eaa38561712'
-    oldFile: !uuid '1f9e9ab6c141851c569c0929cea2a166a566ed7c'
-  /src/pack_config.c:
-    newFile: !uuid 'caa2219ca76ebb4d3eee8bef50b5356ecc42ce07'
-    oldFile: !uuid '3b7bdef6fb2fbd7cd6e608d40060ef2b4c5501fa'
+    newFile: !uuid '238f85772b8372d24fba5ab431cf7c2d8116788f'
+    oldFile: !uuid 'e9b7ee6026264d685282fb7915bf58e2c62080fe'
   /src/services:
-    newFile: !uuid '26912b70b7c8a018c82bca1f7d72315e30bd3b8a'
-    oldFile: !uuid 'b2ccfe331114faadbe14ae62df64fc7eba8bb033'
+    newFile: !uuid '037c42a0ba3356c922fe39ee2d018656d0af9d94'
+    oldFile: !uuid '26912b70b7c8a018c82bca1f7d72315e30bd3b8a'
   /src/services/execution:
-    newFile: !uuid '5268df97d0f79652a8ac647b88963f623cd62d91'
-    oldFile: !uuid '1b1a35d7bb2f83605580da7ce37f41bc9865a771'
+    newFile: !uuid '1bb341cb8d96f9581b2ed5ccce20465c95ce57ba'
+    oldFile: !uuid '5268df97d0f79652a8ac647b88963f623cd62d91'
   /src/services/execution/execute:
-    newFile: !uuid '0b89099db7e1bc7dea9eeb82ccb55cdc32508cce'
-    oldFile: !uuid '826fb58fab31b34b6eaefb0b28783942dcd58e8c'
-  /src/services/execution/execute/execution_create.c:
-    newFile: !uuid 'fcf72558b989990afa7917ded3326477624d56ad'
-    oldFile: !uuid '037587559c4909bfc52bfec67744df14d10b78da'
-  /src/services/execution/execute/execution_stream.c:
-    newFile: !uuid 'e3553ce0695f23d988a5730e3145e443d4805226'
-    oldFile: !uuid '03920ba8bd935247b72e1af997747a8d05f13226'
-  /src/services/execution/manager:
-    newFile: !uuid '35fa556dd73652f71afd792ae9246aa7253f1341'
-    oldFile: !uuid '8283021a2851a5bf2f6d0d5f16ba3d9cbd00d110'
-  /src/services/execution/manager/container_unix.c:
-    newFile: !uuid 'e28b82e2b41665f0444e59ad1c6d0f33ef3e691a'
-    oldFile: !uuid '11d4c041fc4289410e2fcf2cf98112acb27c8737'
-  /src/services/execution/manager/container_unix.h:
-    newFile: !uuid '9534c7a1e445b499dc53eee790421add97aef537'
-    oldFile: !uuid 'c50937386d35784167f13de7fcbbaae4c76b0d9c'
-  /src/services/execution/spec:
-    newFile: !uuid '434686a1a73b3ef59ca2d60af5999dd8713e5414'
-    oldFile: !uuid 'e1b808ce601d8faeac89ca16b44af0e687ff16d2'
-  /src/services/execution/spec/specs.c:
-    newFile: !uuid '9fec55220685ae4cbeb5873ca1cca7aa64acae0d'
-    oldFile: !uuid 'e0cf75b3c7727f601046fdbb58c663b1a14145df'
-gitCommitId: !uuid 'dc954683f56baa6e275926bc6c37b67afb2f053a'
+    newFile: !uuid 'bacf745e28bafd6c9ac6916c7650cf60e68496b6'
+    oldFile: !uuid '0b89099db7e1bc7dea9eeb82ccb55cdc32508cce'
+  /src/services/execution/execute/execution_information.c:
+    newFile: !uuid 'cc29e27b76f7b5d380aa6debcfe3772cb26ae2a9'
+    oldFile: !uuid '3199b8bdd388142b7d40a5f4c8046b982dd4cd0b'
+gitCommitId: !uuid '1352f7bd0fd4f17059d40306b4afb20972a51521'
 renames: {
   }
-revisionId: 129
+revisionId: 130
