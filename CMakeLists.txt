@@ -9,7 +9,7 @@ include(cmake/set_build_flags.cmake)
 
 #set(CMAKE_C_COMPILER "gcc" CACHE PATH "c compiler")
 
-set(GIT_COMMIT_HASH "5a0a558b84b26b6ccd9b3b203606cce1354d4554")
+set(GIT_COMMIT_HASH "d03048c03e5f83d8de4e6f164f354a9cb8316362")
 message("--  commit id: " ${GIT_COMMIT_HASH})
 add_definitions(-DISULAD_GIT_COMMIT="${GIT_COMMIT_HASH}")
 
