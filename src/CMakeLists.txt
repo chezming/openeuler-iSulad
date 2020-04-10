@@ -31,6 +31,7 @@ set(SHARED_INCS
     ${CMAKE_CURRENT_SOURCE_DIR}/sha256
     ${CMAKE_CURRENT_SOURCE_DIR}/tar
     ${CMAKE_CURRENT_SOURCE_DIR}/console
+    ${CMAKE_CURRENT_SOURCE_DIR}/map
     ${CMAKE_BINARY_DIR}/conf
     ${CHECKED_INCLUDE_DIRS}
     )
@@ -39,12 +40,14 @@ add_subdirectory(tar)
 add_subdirectory(sha256)
 add_subdirectory(cutils)
 add_subdirectory(console)
+add_subdirectory(map)
 
 set(SHARED_SRCS
     ${TAR_SRCS}
     ${SHA256_SRCS}
     ${CUTILS_SRCS}
     ${CONSOLE_SRCS}
+    ${MAP_SRCS}
     ${CMAKE_CURRENT_SOURCE_DIR}/container_def.c
     ${CMAKE_CURRENT_SOURCE_DIR}/types_def.c
     ${CMAKE_CURRENT_SOURCE_DIR}/error.c
@@ -161,7 +164,6 @@ endif()
 add_subdirectory(engines)
 
 add_subdirectory(plugin)
-add_subdirectory(map)
 add_subdirectory(config)
 
 add_executable(isulad
@@ -172,7 +174,7 @@ add_executable(isulad
     ${IMAGE_SRCS}
     ${RUNTIME_SRCS}
     ${PLUGIN_SRCS}
-    ${MAP_SRCS} ${CONFIG_SRCS}
+    ${CONFIG_SRCS}
     ${CMAKE_CURRENT_SOURCE_DIR}/filters.c
     ${CMAKE_CURRENT_SOURCE_DIR}/namespace.c
     ${CMAKE_CURRENT_SOURCE_DIR}/libisulad.c
@@ -189,7 +191,6 @@ target_include_directories(isulad PUBLIC
     ${ENGINES_INCS}
     ${ISULAD_INCS}
     ${CMAKE_CURRENT_SOURCE_DIR}/plugin
-    ${CMAKE_CURRENT_SOURCE_DIR}/map
     ${CMAKE_CURRENT_SOURCE_DIR}/config
     ${CMAKE_CURRENT_SOURCE_DIR}/http
     ${WEBSOCKET_SERVICE_INCS}
