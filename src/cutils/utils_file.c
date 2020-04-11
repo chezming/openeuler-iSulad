@@ -31,6 +31,7 @@
 #include "utils.h"
 #include "sha256.h"
 #include "path.h"
+#include "libtar.h"
 
 bool util_dir_exists(const char *path)
 {
@@ -523,7 +524,7 @@ char *util_file_digest(const char *filename)
         return NULL;
     }
 
-    digest = sha256_digest(fp, false);
+    digest = sha256_digest_file(filename, false);
     if (digest == NULL) {
         ERROR("calc digest for file %s failed: %s", filename, strerror(errno));
         goto err_out;
@@ -531,6 +532,39 @@ char *util_file_digest(const char *filename)
 
 err_out:
     fclose(fp);
+
+    return digest;
+}
+
+char *util_gzip_digest(const char *filename)
+{
+    int ret = 0;
+    char *digest = NULL;
+    bool gzip = false;
+
+    if (filename == NULL) {
+        ERROR("invalid NULL param");
+        return NULL;
+    }
+
+    ret = util_gzip_compressed(filename, &gzip);
+    if (ret != 0) {
+        ERROR("Failed to check if it's gzip compressed");
+        return NULL;
+    }
+
+    if (!gzip) {
+        ERROR("File %s is not gziped", filename);
+        return NULL;
+    }
+
+    digest = sha256_digest_file(filename, true);
+    if (digest == NULL) {
+        ERROR("calc digest for file %s failed: %s", filename, strerror(errno));
+        goto err_out;
+    }
+
+err_out:
 
     return digest;
 }
@@ -546,6 +580,65 @@ char *util_full_file_digest(const char *filename)
     }
 
     digest = util_file_digest(filename);
+    full_digest = util_full_digest(digest);
+    free(digest);
+
+    return full_digest;
+}
+
+int util_gzip_compressed(const char *filename, bool *gzip)
+{
+    const char gzip_key[GZIPHEADERLEN] = {0x1F, 0x8B, 0x08};
+    char data[GZIPHEADERLEN] = {0};
+    size_t size_read = 0;
+    int i = 0;
+    FILE *f = NULL;
+    int ret = 0;
+
+    f = fopen(filename, "rb");
+    if (f == NULL) {
+        ERROR("Failed to open file %s: %s", filename, strerror(errno));
+        return -1;
+    }
+
+    size_read = fread(data, 1, GZIPHEADERLEN, f);
+    if ((0 == size_read && !feof(f)) || size_read > GZIPHEADERLEN) {
+        ERROR("Failed to read file %s, size read %d", filename, (int)size_read);
+        ret = -1;
+        goto out;
+    }
+
+    if (size_read < GZIPHEADERLEN) {
+        *gzip = false;
+        goto out;
+    }
+
+    for (i = 0; i < GZIPHEADERLEN; i++) {
+        if (data[i] != gzip_key[i]) {
+            *gzip = false;
+            goto out;
+        }
+    }
+    *gzip = true;
+
+out:
+    fclose(f);
+    f = NULL;
+
+    return ret;
+}
+
+char *util_full_gzip_digest(const char *filename)
+{
+    char *digest = NULL;
+    char *full_digest = NULL;
+
+    if (filename == NULL) {
+        ERROR("invalid NULL param");
+        return NULL;
+    }
+
+    digest = util_gzip_digest(filename);
     full_digest = util_full_digest(digest);
     free(digest);
 
