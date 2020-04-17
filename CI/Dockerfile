@@ -68,6 +68,8 @@ RUN yum clean all && yum swap -y fakesystemd systemd && \
 			python \
 			python-pip \
 			device-mapper-devel \
+			libarchive \
+			libarchive-devel \
 			libcurl-devel \
 			zlib-devel \
 			glibc-headers \
