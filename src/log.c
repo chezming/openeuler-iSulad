@@ -76,16 +76,22 @@ void free_log_prefix()
 static ssize_t isulad_save_log(int fd, const void *buf, size_t count)
 {
     ssize_t nret = 0;
+    size_t nwritten = 0;
 
-    for (;;) {
-        nret = write(fd, buf, count);
-        if (nret < 0 && errno == EINTR) {
-            continue;
-        } else {
-            break;
+    while (nwritten < count) {
+        nret = write(fd, buf + nwritten, count - nwritten);
+        if (nret < 0) {
+            if (errno == EINTR || errno == EAGAIN) {
+                // break by signal, will got EINTR
+                // pipe buffer is full, will got EAGAIN
+                continue;
+            }
+            return nret;
         }
+        nwritten += (size_t)nret;
     }
-    return nret;
+
+    return nwritten;
 }
 
 void do_fifo_log(const struct log_object_metadata *meta, const char *timestamp, const char *msg);
