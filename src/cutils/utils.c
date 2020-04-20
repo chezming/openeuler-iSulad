@@ -44,6 +44,8 @@
 #include "log.h"
 #include "json_common.h"
 
+#define MAX_NUM_STR_LEN  21
+
 int mem_realloc(void **newptr, size_t newsize, void *oldptr, size_t oldsize)
 {
     void *tmp = NULL;
@@ -1466,4 +1468,30 @@ int get_cpu_num_cores(void)
         ncpus = 1;
     }
     return ncpus;
+}
+
+char *util_uint_to_string(long long unsigned int data)
+{
+    char numstr[MAX_NUM_STR_LEN] = { 0 };
+    int ret;
+
+    ret = snprintf(numstr, sizeof(numstr), "%llu", data);
+    if (ret < 0 || (size_t)ret >= sizeof(numstr)) {
+        return NULL;
+    }
+
+    return util_strdup_s(numstr);
+}
+
+char *util_int_to_string(long long int data)
+{
+    char numstr[MAX_NUM_STR_LEN] = { 0 };
+    int ret;
+
+    ret = snprintf(numstr, sizeof(numstr), "%lld", data);
+    if (ret < 0 || (size_t)ret >= sizeof(numstr)) {
+        return NULL;
+    }
+
+    return util_strdup_s(numstr);
 }
