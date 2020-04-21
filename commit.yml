@@ -2,10 +2,40 @@
 branches: {
   }
 fileChange:
-  /README.md:
-    newFile: !uuid 'b1734c498a36ac22ba777665f7282020d22ec11e'
-    oldFile: !uuid '8939e3cda2932f2da5922f55fb727171c5e66181'
-gitCommitId: !uuid '0e8cc4c5ba176a2d8ad48da2ffdb7f205d461fd9'
+  /CI:
+    newFile: !uuid '72d98f130eb9f974e9064d98d29e0aff19759cb3'
+    oldFile: !uuid 'e4e930716c8df0b19f4d16d1083f861f8ff2e465'
+  /CI/test_cases:
+    newFile: !uuid 'cf4f52e7bcc85e9e0f5c7183374dfe4de57cbc18'
+    oldFile: !uuid '99ed9c077316bcb822effa03073dbd6830bcbd34'
+  /CI/test_cases/basic_cases:
+    newFile: !uuid '42acf4f099cbf1de085d808ad8fbd57fb20562ac'
+    oldFile: !uuid '0caf62ea45dbbf63223490004126fbd729580ea6'
+  /CI/test_cases/basic_cases/cni_test.bash:
+    newFile: !uuid '082b0180f253e959b3d698f3b3d2ec7ae3cbe559'
+    oldFile: !uuid '093d2123602b4ee8242598a46f88c51b1334a6de'
+  /CMakeLists.txt:
+    newFile: !uuid '573dba628c3e1090b721bc3f32f26070a72bf966'
+    oldFile: !uuid '9c06828d7f1be8ed9932b3cc8c70842d52f5d4ff'
+  /iSulad.spec:
+    newFile: !uuid 'add90407be984ce7a3ef5dd941699e740127081f'
+    oldFile: !uuid '42f3efc9725b17246ed49b59fdac042cf64b07ba'
+  /src:
+    newFile: !uuid 'ca9b7f69d7e9ae8ccfc9f5c87e246b9b6f72b32a'
+    oldFile: !uuid '39e622386bc6eedb90b13786e97c2d7e8c5e2094'
+  /src/services:
+    newFile: !uuid '2f5adafb13025ddd0b9a6b610d2bdf3b432abba9'
+    oldFile: !uuid '00ecd6b65b271d29f6f1477facc2e6725e47c8a9'
+  /src/services/cri:
+    newFile: !uuid '5848f0d33e3bf389a0a8808e39980f4aca9bc0d7'
+    oldFile: !uuid 'b34962bcc9cef9e649c0dc8d1e2559b1c90a3be2'
+  /src/services/cri/cni_network_plugin.cc:
+    newFile: !uuid 'e8611de6c9fe3b1beb8a157901c15504f71bae14'
+    oldFile: !uuid '645503a373819d7ec175bfe23ae4f1ff580f817f'
+  /src/services/cri/cni_network_plugin.h:
+    newFile: !uuid '8be6d5a28e62ee8013458cd88b470b6c640fc776'
+    oldFile: !uuid '970bb7e7e5c8f699f364754573182c232b4f9988'
+gitCommitId: !uuid 'af6a85902ef20849fa9223e17712a22a939338e0'
 renames: {
   }
-revisionId: 142
+revisionId: 143
