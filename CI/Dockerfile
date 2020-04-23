@@ -24,8 +24,18 @@
 FROM	centos:7.6.1810
 MAINTAINER LiFeng <lifeng68@huawei.com>
 
+RUN echo "nameserver 8.8.8.8" > /etc/resolv.conf && \
+    echo "nameserver 8.8.4.4" >> /etc/resolv.conf && \
+    echo "search localdomain" >> /etc/resolv.conf
+
+RUN cd /etc/yum.repos.d && \
+    rm -rf *.repo
+
+ADD http://mirrors.163.com/.help/CentOS7-Base-163.repo /etc/yum.repos.d/
+ADD http://mirrors.aliyun.com/repo/epel-7.repo /etc/yum.repos.d/
+
 # Install dependency package
-RUN yum clean all && yum swap -y fakesystemd systemd && \
+RUN yum clean all && yum makecache && yum swap -y fakesystemd systemd && \
 	yum install -y epel-release \
 	yum update -y && \
 	yum install -y  automake \
@@ -88,8 +98,6 @@ RUN yum clean all && yum swap -y fakesystemd systemd && \
 			CUnit-devel \
 			valgrind \
 			e2fsprogs
-
-RUN pip install xlrd
 
 RUN yum clean all && \
     (cd /lib/systemd/system/sysinit.target.wants/; for i in *; \
