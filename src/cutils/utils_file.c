@@ -819,6 +819,39 @@ int64_t util_file_size(const char *filename)
     return (int64_t)st.st_size;
 }
 
+int util_scan_subdirs(const char *directory, subdir_callback_t cb)
+{
+    DIR *dir = NULL;
+    struct dirent *direntp = NULL;
+    int ret = 0;
+
+    if (directory == NULL || cb == NULL) {
+        return -1;
+    }
+
+    dir = opendir(directory);
+    if (dir == NULL) {
+        ERROR("Failed to open directory: %s error:%s", directory, strerror(errno));
+        return -1;
+    }
+
+    direntp = readdir(dir);
+    for (; direntp != NULL; direntp = readdir(dir)) {
+        if (strncmp(direntp->d_name, ".", 1) == 0) {
+            continue;
+        }
+
+        if (!cb(directory, direntp)) {
+            ERROR("Dealwith subdir: %s failed", direntp->d_name);
+            ret = -1;
+            break;
+        }
+    }
+
+    closedir(dir);
+    return ret;
+}
+
 int util_list_all_subdir(const char *directory, char ***out)
 {
     DIR *dir = NULL;
