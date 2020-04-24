@@ -2,19 +2,55 @@
 branches: {
   }
 fileChange:
+  /CI:
+    newFile: !uuid '92fead8ceaed434dbb311dc0313e4a54dfe6e30d'
+    oldFile: !uuid '6ba81e61004c899aeb6c4046a4357b3353935fbe'
+  /CI/test_cases:
+    newFile: !uuid 'd394205de713d103579b176497f1e01cb1f8fd51'
+    oldFile: !uuid 'cf4f52e7bcc85e9e0f5c7183374dfe4de57cbc18'
+  /CI/test_cases/basic_cases:
+    newFile: !uuid 'b56b884e2c782d1f6c541c525acd4b4d0cfe36fe'
+    oldFile: !uuid '42acf4f099cbf1de085d808ad8fbd57fb20562ac'
+  /CI/test_cases/basic_cases/share_ns_test.bash:
+    newFile: !uuid 'ae173989be816b074cd5a93dd34be5284b5e590b'
+    oldFile: null
   /src:
-    newFile: !uuid 'd0f1a6608e8e202e86b1d0082b4bf2ead0f9e98a'
-    oldFile: !uuid '99c3ae9a9557ec1f04a6e30c2e9082cac99f6ae2'
-  /src/plugin:
-    newFile: !uuid 'a1f045e532d407d28fd417a3d61b9265496ca5e9'
-    oldFile: !uuid 'f2e6bddb8189ee4d47699babad9d1de77f17d7f8'
-  /src/plugin/plugin.c:
-    newFile: !uuid 'f57486fe28d53759c9fca1b637b3200e3c3a5b13'
-    oldFile: !uuid '4074dba8f37edf81e66f993ccd5f41521962d673'
-  /src/plugin/plugin.h:
-    newFile: !uuid '478fb867daa3bfcf1cbb5f96ef348b45151819d0'
-    oldFile: !uuid '6efa5d9a853c8d881fc30f8b53bde4a2575b8ca5'
-gitCommitId: !uuid '623aa9efbf3ba46c2fd5700c6692b4f285ccc509'
+    newFile: !uuid '41d7d91afac1ae32089e566078dfefff63d40370'
+    oldFile: !uuid 'd0f1a6608e8e202e86b1d0082b4bf2ead0f9e98a'
+  /src/namespace.c:
+    newFile: !uuid '3deff6add134a4a0f2c45a778a7d7a4655b8c7be'
+    oldFile: !uuid 'e6900c18ee1f4c13e9fc5c2cc7d397a7a7364be1'
+  /src/namespace.h:
+    newFile: !uuid '51b632fb354a79f24de37d1dae9fc64ae4b3524e'
+    oldFile: !uuid '05af83f1f6721770c5ae7048c57cbf06740765f7'
+  /src/services:
+    newFile: !uuid '458ab5472c23d9a53253fbc4c9c5b11c1f606405'
+    oldFile: !uuid '944c757e72f1353c4a8d60ba9a3fd890816b1b50'
+  /src/services/execution:
+    newFile: !uuid 'beac677ce92923b78827a8e08176fe098d730217'
+    oldFile: !uuid '7e08db378289d5750757b789a027d35caac6ef51'
+  /src/services/execution/execute:
+    newFile: !uuid 'd8cc461128a9a0d6dd53876882e35472c52f7870'
+    oldFile: !uuid 'e6418fecbb2faedd1e9ec284b2a4a9eedad82041'
+  /src/services/execution/execute/execution.c:
+    newFile: !uuid 'd0c1f8dbb9c1a9aecdcf2834a04ae5c6d79e56af'
+    oldFile: !uuid '263c90385385af8c761d7bef4520ca9aa8ed1b61'
+  /src/services/execution/execute/execution_network.c:
+    newFile: !uuid 'b9c6af41ace2697f74138f9831376be23438b716'
+    oldFile: !uuid '1e09fb7d1a4b5b2c4c18ab9835d6bd3f3c797d67'
+  /src/services/execution/execute/execution_network.h:
+    newFile: !uuid '57f4b09268951d5497367c8b75b8b0f52fd2f38f'
+    oldFile: !uuid 'c0e8ee5c4be5c9b31880589457e7b92f269af221'
+  /src/services/execution/spec:
+    newFile: !uuid '4718cec278a18bd31c04e8340f50c66b2799e33a'
+    oldFile: !uuid '35cfdbcfc9c52bf3b25016e74e79e4ccb2b90acf'
+  /src/services/execution/spec/specs.c:
+    newFile: !uuid '04ce4bf31e2dbe99d21808c517202c1d94d245a6'
+    oldFile: !uuid 'd44a8a94961c020df4a779f0c785bc130adee98d'
+  /src/services/execution/spec/specs.h:
+    newFile: !uuid '0d315c8c33ae9ad491b5760a1c9a4f716ab0f2f1'
+    oldFile: !uuid '7eb531d738026bfba230453dc5779a67c8c333e0'
+gitCommitId: !uuid '90e802f865465943ed9fa45587f24f4239030986'
 renames: {
   }
-revisionId: 150
+revisionId: 151
