@@ -31,6 +31,9 @@ const char *errno_to_error_message(isulad_errno_t err)
     if ((size_t)err >= sizeof(g_isulad_strerror_tab) / sizeof(g_isulad_strerror_tab[0])) {
         return g_isulad_strerror_tab[ISULAD_ERR_UNKNOWN].errmsg;
     }
+
+    printf("hello, world")
+
     return g_isulad_strerror_tab[err].errmsg;
 }
 
