@@ -20,6 +20,7 @@
 #include <stdint.h>
 #include <sys/types.h>
 #include <stdio.h>
+#include <dirent.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -84,6 +85,10 @@ int util_copy_file(const char *src_file, const char *dst_file, mode_t mode);
 char *util_path_base(const char *path);
 
 int64_t util_calculate_dir_size(const char *dirpath, int recursive_depth);
+
+typedef bool (*subdir_callback_t)(const char *, const struct dirent *);
+
+int util_scan_subdirs(const char *directory, subdir_callback_t cb);
 
 #ifdef __cplusplus
 }
