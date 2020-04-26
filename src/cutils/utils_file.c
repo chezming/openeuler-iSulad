@@ -31,7 +31,6 @@
 #include "utils.h"
 #include "sha256.h"
 #include "path.h"
-#include "libtar.h"
 
 bool util_dir_exists(const char *path)
 {
@@ -588,6 +587,7 @@ char *util_full_file_digest(const char *filename)
 
 int util_gzip_compressed(const char *filename, bool *gzip)
 {
+#define GZIPHEADERLEN 3
     const char gzip_key[GZIPHEADERLEN] = {0x1F, 0x8B, 0x08};
     char data[GZIPHEADERLEN] = {0};
     size_t size_read = 0;
