@@ -1184,6 +1184,27 @@ out:
     return ret;
 }
 
+/* conf get image_server_monit */
+bool conf_get_image_server_monit()
+{
+    struct service_arguments *conf = NULL;
+    unsigned int ret = 0;
+    if (isulad_server_conf_rdlock() != 0) {
+        return 0;
+    }
+
+    conf = conf_get_server_conf();
+    if (conf == NULL) {
+        goto out;
+    }
+
+    ret = conf->json_confs->image_server_monit;
+
+out:
+    (void)isulad_server_conf_unlock();
+    return ret;
+}
+
 char *conf_get_im_server_sock_addr()
 {
     struct service_arguments *conf = NULL;
