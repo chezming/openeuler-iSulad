@@ -1112,7 +1112,8 @@ free_out:
     return ret;
 }
 
-static void recursive_cal_dir_size_helper(const char *dirpath, int recursive_depth, int64_t *total_size)
+static void recursive_cal_dir_size_helper(const char *dirpath, int recursive_depth, int64_t *total_size,
+                                          int64_t *total_inode)
 {
     int nret = 0;
     struct dirent *pdirent = NULL;
@@ -1148,9 +1149,14 @@ static void recursive_cal_dir_size_helper(const char *dirpath, int recursive_dep
         }
 
         if (S_ISDIR(fstat.st_mode)) {
-            *total_size = *total_size + util_calculate_dir_size(fname, (recursive_depth + 1));
+            int64_t subdir_size = 0;
+            int64_t subdir_inode = 0;
+            util_calculate_dir_size(fname, (recursive_depth + 1), &subdir_size, &subdir_inode);
+            *total_size = *total_size + subdir_size;
+            *total_inode = *total_inode + subdir_inode;
         } else {
             *total_size = *total_size + fstat.st_size;
+            *total_inode = *total_inode + 1;
         }
     }
 
@@ -1162,12 +1168,13 @@ static void recursive_cal_dir_size_helper(const char *dirpath, int recursive_dep
     return;
 }
 
-int64_t util_calculate_dir_size(const char *dirpath, int recursive_depth)
+void util_calculate_dir_size(const char *dirpath, int recursive_depth, int64_t *total_size, int64_t *total_inode)
 {
-    int64_t total_size = 0;
+    int64_t total_size_tmp = 0;
+    int64_t total_inode_tmp = 0;
 
     if (dirpath == NULL) {
-        return 0;
+        return;
     }
 
     if ((recursive_depth + 1) > MAX_PATH_DEPTH) {
@@ -1180,10 +1187,17 @@ int64_t util_calculate_dir_size(const char *dirpath, int recursive_depth)
         goto out;
     }
 
-    recursive_cal_dir_size_helper(dirpath, recursive_depth, &total_size);
+    recursive_cal_dir_size_helper(dirpath, recursive_depth, &total_size_tmp, &total_inode_tmp);
+
+    if (total_size != NULL) {
+        *total_size = total_size_tmp;
+    }
+    if (total_inode != NULL) {
+        *total_inode = total_inode_tmp;
+    }
 
 out:
-    return total_size;
+    return;
 }
 
 static char *get_random_tmp_file(const char *fname)
