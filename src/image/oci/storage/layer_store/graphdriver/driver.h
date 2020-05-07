@@ -22,6 +22,7 @@
 #include "console.h"
 #include "driver_overlay2_types.h"
 #include "storage.h"
+#include "container_inspect.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -118,6 +119,8 @@ void free_graphdriver_mount_opts(struct driver_mount_opts *opts);
 int graphdriver_cleanup(void);
 
 int graphdriver_try_repair_lowers(const char *id, const char *parent);
+
+container_inspect_graph_driver *graphdriver_get_metadata(const char *id);
 
 #ifdef __cplusplus
 }
