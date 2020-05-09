@@ -21,6 +21,7 @@
 #include "oci_pull.h"
 #include "oci_login.h"
 #include "oci_logout.h"
+#include "oci_tag.h"
 #include "registry.h"
 
 #include "containers_store.h"
@@ -234,8 +235,7 @@ int oci_tag(const im_tag_request *request)
         goto out;
     }
 
-    // TODO call storage rootfs tag interface
-    // ret = isula_image_tag(src_name, dest_name, &errmsg);
+    ret = oci_do_tag(src_name, dest_name, &errmsg);
     if (ret != 0) {
         isulad_set_error_message("Failed to tag image with error: %s", errmsg);
         ERROR("Failed to tag image '%s' to '%s' with error: %s", src_name, dest_name, errmsg);
