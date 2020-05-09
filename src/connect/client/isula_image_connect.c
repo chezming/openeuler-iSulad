@@ -525,3 +525,33 @@ void free_isula_health_check_response(struct isula_health_check_response *ptr)
     ptr->errmsg = NULL;
     free(ptr);
 }
+
+void free_isula_get_user_request(struct isula_get_user_request *ptr)
+{
+    if (ptr == NULL) {
+        return;
+    }
+    free(ptr->container_id);
+    ptr->container_id = NULL;
+    free(ptr->user_str);
+    ptr->user_str = NULL;
+
+    size_t i = 0;
+    for (; i < ptr->group_adds_len; i++) {
+        free(ptr->group_adds[i]);
+        ptr->group_adds[i] = NULL;
+    }
+    free(ptr);
+}
+
+void free_isula_get_user_response(struct isula_get_user_response *ptr)
+{
+    if (ptr == NULL) {
+        return;
+    }
+    free(ptr->errmsg);
+    ptr->errmsg = NULL;
+    free(ptr->additional_gids);
+    ptr->additional_gids = NULL;
+    free(ptr);
+}

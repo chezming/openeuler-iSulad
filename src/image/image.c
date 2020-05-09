@@ -765,7 +765,7 @@ out:
     return ret;
 }
 
-int im_get_user_conf(const char *image_type, const char *basefs, host_config *hc, const char *userstr,
+int im_get_user_conf(const char *id, const char *image_type, const char *basefs, host_config *hc, const char *userstr,
                      defs_process_user *puser)
 {
     int ret = 0;
@@ -788,7 +788,7 @@ int im_get_user_conf(const char *image_type, const char *basefs, host_config *hc
         goto out;
     }
 
-    ret = bim->ops->get_user_conf(basefs, hc, userstr, puser);
+    ret = bim->ops->get_user_conf(id, basefs, hc, userstr, puser);
     if (ret != 0) {
         ERROR("Failed to get user config");
         ret = -1;

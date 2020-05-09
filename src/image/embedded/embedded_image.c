@@ -163,7 +163,7 @@ umount:
     return ret;
 }
 
-int embedded_get_user_conf(const char *basefs, host_config *hc, const char *userstr, defs_process_user *puser)
+int embedded_get_user_conf(const char *id, const char *basefs, host_config *hc, const char *userstr, defs_process_user *puser)
 {
     if (puser == NULL) {
         ERROR("Empty basefs or puser");

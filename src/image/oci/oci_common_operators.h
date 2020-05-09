@@ -28,7 +28,7 @@ char *oci_normalize_image_name(const char *name);
 
 bool oci_detect(const char *image_name);
 char *oci_resolve_image_name(const char *name);
-int oci_get_user_conf(const char *basefs, host_config *hc, const char *userstr, defs_process_user *puser);
+int oci_get_user_conf(const char *id, const char *basefs, host_config *hc, const char *userstr, defs_process_user *puser);
 int oci_list_images(const im_list_request *request, imagetool_images_list **images);
 int oci_status_image(im_status_request *request, im_status_response **response);
 int oci_inspect_image(const im_inspect_request *request, char **inspected_json);

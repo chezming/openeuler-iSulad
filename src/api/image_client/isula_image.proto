@@ -91,6 +91,9 @@ service ImageService {
 
     // Add a tag to the image
     rpc TagImage(TagImageRequest) returns (TagImageResponse) {}
+
+    // Get user from mounted container rootfs
+    rpc GetUser (GetUserRequest) returns (GetUserResponse) {}
 }
 
 message HealthCheckRequest {}
@@ -595,4 +598,18 @@ message TagImageRequest {
 message TagImageResponse {
     string errmsg = 1;
     uint32 cc = 2;
+}
+
+message GetUserRequest {
+    string containerId = 1;
+    string userStr = 2;
+    repeated string groupAdds = 3;
+}
+
+message GetUserResponse {
+    uint32 uid = 1;
+    uint32 gid = 2;
+    repeated uint32 additionalGids = 3;
+    string errmsg = 4;
+    uint32 cc = 5;
 }

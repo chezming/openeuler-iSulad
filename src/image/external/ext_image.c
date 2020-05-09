@@ -181,7 +181,7 @@ out:
 }
 #endif
 
-int ext_get_user_conf(const char *basefs, host_config *hc, const char *userstr, defs_process_user *puser)
+int ext_get_user_conf(const char *id, const char *basefs, host_config *hc, const char *userstr, defs_process_user *puser)
 {
     if (basefs == NULL || puser == NULL) {
         ERROR("Empty basefs or puser");
