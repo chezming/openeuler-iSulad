@@ -63,8 +63,5 @@
     "computedID": {
       "type": "string"
     }
-  },
-  "required": [
-	  "config"
-  ]
+  }
 }
