@@ -1011,7 +1011,7 @@ int create_process(process_t *p)
     }
     nread = read_nointr(exec_fd[0], exec_buff, sizeof(exec_buff));
     if (nread > 0) {
-        write_message(g_log_fd, ERR_MSG, "runtime error");
+        write_message(g_log_fd, ERR_MSG, "runtime error:%s", exec_buff);
         ret = SHIM_ERR;
         goto out;
     }
