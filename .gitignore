@@ -6,3 +6,6 @@ build
 GPATH
 GRTAGS
 GTAGS
+compile_commands.json
+tags
+.clangd
