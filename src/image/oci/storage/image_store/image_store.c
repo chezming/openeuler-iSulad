@@ -2821,7 +2821,7 @@ out:
     return ret;
 }
 
-int image_store_get_images_number()
+size_t image_store_get_images_number()
 {
     size_t number = 0;
 
