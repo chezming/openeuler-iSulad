@@ -219,6 +219,8 @@ int append_json_map_string_string(json_map_string_string *map, const char *key, 
 
 char *json_marshal_string(const char *str, size_t strlen, const struct parser_context *ctx, parser_error *err);
 
+int dup_json_map_string_string(const json_map_string_string *src, json_map_string_string *dest);
+
 # ifdef __cplusplus
 }
 # endif
