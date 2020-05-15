@@ -1360,6 +1360,7 @@ static void free_items_not_inherit(docker_image_config_v2 *config)
         config->history[i] = NULL;
     }
     config->history = NULL;
+    config->history_len = 0;
 
     return;
 }
@@ -1446,10 +1447,8 @@ static int add_rootfs_and_history(pull_descriptor *desc, docker_image_config_v2 
         history->empty_layer = desc->layers[i].empty_layer;
 
         config->history[i] = history;
-        config->history_len++;
-
-        free_docker_image_history(history);
         history = NULL;
+        config->history_len++;
 
         free_image_manifest_v1_compatibility(v1config);
         v1config = NULL;
