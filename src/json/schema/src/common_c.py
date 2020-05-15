@@ -1255,6 +1255,49 @@ int append_json_map_string_string(json_map_string_string *map, const char *key, 
     return 0;
 }
 
+int dup_json_map_string_string(const json_map_string_string *src, json_map_string_string *dest)
+{
+    int ret = 0;
+    size_t i;
+
+    if (src == NULL) {
+        return 0;
+    }
+
+    if (src->len == 0) {
+        return 0;
+    }
+
+    if (dest == NULL) {
+        return -1;
+    }
+
+    if (src->len > SIZE_MAX / sizeof(char *)) {
+        ret = -1;
+        goto out;
+    }
+
+    dest->keys = safe_malloc(src->len * sizeof(char *));
+    if (dest->keys == NULL) {
+        ret = -1;
+        goto out;
+    }
+    dest->values = safe_malloc(src->len * sizeof(char *));
+    if (dest->values == NULL) {
+        free(dest->keys);
+        dest->keys = NULL;
+        ret = -1;
+        goto out;
+    }
+    for (i = 0; i < src->len; i++) {
+        dest->keys[i] = safe_strdup(src->keys[i] ? src->keys[i] : "");
+        dest->values[i] = safe_strdup(src->values[i] ? src->values[i] : "");
+        dest->len++;
+    }
+out:
+    return ret;
+}
+
 char *json_marshal_string(const char *str, size_t strlen, const struct parser_context *ctx, parser_error *err)
 {
     yajl_gen g = NULL;

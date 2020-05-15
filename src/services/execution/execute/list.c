@@ -243,44 +243,6 @@ cleanup:
     return filtered_ids;
 }
 
-
-int dup_json_map_string_string(const json_map_string_string *src, json_map_string_string *dest)
-{
-    int ret = 0;
-    size_t i;
-
-    if (src->len == 0) {
-        return 0;
-    }
-
-    if (src->len > SIZE_MAX / sizeof(char *)) {
-        ERROR("Container inspect container config is too much!");
-        ret = -1;
-        goto out;
-    }
-    dest->keys = util_common_calloc_s(src->len * sizeof(char *));
-    if (dest->keys == NULL) {
-        ERROR("Out of memory");
-        ret = -1;
-        goto out;
-    }
-    dest->values = util_common_calloc_s(src->len * sizeof(char *));
-    if (dest->values == NULL) {
-        ERROR("Out of memory");
-        free(dest->keys);
-        dest->keys = NULL;
-        ret = -1;
-        goto out;
-    }
-    for (i = 0; i < src->len; i++) {
-        dest->keys[i] = util_strdup_s(src->keys[i] ? src->keys[i] : "");
-        dest->values[i] = util_strdup_s(src->values[i] ? src->values[i] : "");
-        dest->len++;
-    }
-out:
-    return ret;
-}
-
 char *container_get_health_state(const container_config_v2_state *cont_state)
 {
     if (cont_state == NULL || cont_state->health == NULL || cont_state->health->status == NULL) {
