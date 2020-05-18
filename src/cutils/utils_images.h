@@ -40,6 +40,7 @@ int oci_split_image_name(const char *image_name, char **host, char **name, char 
 char *oci_full_image_name(const char *host, const char *name, const char *tag);
 char *oci_strip_dockerio_prefix(const char *name);
 char *make_big_data_base_name(const char *key);
+char *oci_calc_diffid(const char *file);
 
 #ifdef __cplusplus
 }
