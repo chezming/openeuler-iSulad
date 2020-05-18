@@ -194,26 +194,26 @@ int oci_rmi(const im_rmi_request *request)
 
     if (request == NULL || request->image.image == NULL) {
         ERROR("Invalid input arguments");
-        return -1;
-    }
+        return -1; 
+    }   
 
     real_image_name = oci_resolve_image_name(request->image.image);
     if (real_image_name == NULL) {
         ERROR("Failed to resolve image name");
-        ret = -1;
+        ret = -1; 
         goto out;
-    }
+    }   
 
     if (storage_img_get_names(real_image_name, &image_names, &image_names_len) != 0) {
         ERROR("Get image %s names failed", real_image_name);
-        ret = -1;
+        ret = -1; 
         goto out;
-    }
+    }   
 
     image_ID = storage_img_get_image_id(real_image_name);
     if (image_ID == NULL) {
         ERROR("Get id of image %s failed", real_image_name);
-        ret = -1;
+        ret = -1; 
         goto out;
     }
 
