@@ -323,8 +323,6 @@ void free_im_inspect_request(im_inspect_request *ptr);
 
 void free_im_inspect_response(im_inspect_response *ptr);
 
-int map_to_key_value_string(const json_map_string_string *map, char ***array, size_t *array_len);
-
 int im_load_image(const im_load_request *request, im_load_response **response);
 
 void free_im_load_request(im_load_request *ptr);
