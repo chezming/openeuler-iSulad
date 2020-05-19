@@ -173,7 +173,7 @@ function do_testcase_auto_assignment() {
         fi
 
         acc_time=$((acc_time + spend_time))
-        if [[ ${acc_time} -ge 600  ]]; then
+        if [[ ${acc_time} -ge 200  ]]; then
             acc_time=0
             CONTAINER_INDEX=$((CONTAINER_INDEX + 1))
         fi
