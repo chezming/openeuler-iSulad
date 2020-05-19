@@ -24,6 +24,7 @@
 #include "registry.h"
 #include "utils.h"
 #include "storage.h"
+#include "oci_load.h"
 
 #define IMAGE_NOT_KNOWN_ERR "image not known"
 
@@ -370,6 +371,8 @@ int oci_load_image(const im_load_request *request)
         ERROR("Invalid input arguments");
         return -1;
     }
+
+    ret = oci_do_load(request);
 
     // TODO call storage metadata load interface
     //ret = isula_image_load(request->file, request->tag, &refs);
