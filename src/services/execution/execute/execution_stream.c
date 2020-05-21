@@ -673,7 +673,7 @@ static int get_exec_user_info(const container_t *cont, const char *username, def
         ERROR("Out of memory");
         return -1;
     }
-    ret = im_get_user_conf(cont->common_config->image_type, cont->common_config->base_fs,
+    ret = im_get_user_conf(cont->common_config->id, cont->common_config->image_type, cont->common_config->base_fs,
                            cont->hostconfig, username, *puser);
     if (ret != 0) {
         ERROR("Get user failed with '%s'", username ? username : "");

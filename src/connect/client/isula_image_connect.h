@@ -299,6 +299,23 @@ struct isula_health_check_response {
     uint32_t server_errono;
 };
 
+struct isula_get_user_request {
+    char *container_id;
+    char *user_str;
+    char **group_adds;
+    size_t group_adds_len;
+};
+
+struct isula_get_user_response {
+    uint32_t uid;
+    uint32_t gid;
+    uint32_t *additional_gids;
+    size_t additional_gids_len;
+    char *errmsg;
+    uint32_t server_errono;
+    uint32_t cc;
+};
+
 typedef struct {
     int (*pull)(const struct isula_pull_request *req, struct isula_pull_response *resp, void *arg);
     int (*rmi)(const struct isula_rmi_request *req, struct isula_rmi_response *resp, void *arg);
@@ -331,6 +348,9 @@ typedef struct {
 
     int (*health_check)(const struct isula_health_check_request *req,
                         struct isula_health_check_response *resp, void *arg);
+
+    int (*get_user)(const struct isula_get_user_request *req,
+                        struct isula_get_user_response *resp, void *arg);
 } isula_image_ops;
 
 
@@ -393,6 +413,9 @@ void free_isula_storage_metadata_response(struct isula_storage_metadata_response
 
 void free_isula_health_check_request(struct isula_health_check_request *ptr);
 void free_isula_health_check_response(struct isula_health_check_response *ptr);
+
+void free_isula_get_user_request(struct isula_get_user_request *ptr);
+void free_isula_get_user_response(struct isula_get_user_response *ptr);
 
 #ifdef __cplusplus
 }

@@ -289,7 +289,7 @@ int check_args(struct service_arguments *args)
     }
 
 #ifdef ENABLE_OCI_IMAGE
-    if (!util_validate_unix_socket(args->json_confs->image_server_sock_addr)) {
+    if (!util_validate_socket(args->json_confs->image_server_sock_addr)) {
         COMMAND_ERROR("Invalid image server socket: %s", args->json_confs->image_server_sock_addr);
         ret = -1;
         goto out;

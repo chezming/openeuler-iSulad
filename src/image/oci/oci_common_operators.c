@@ -30,6 +30,7 @@
 #include "isula_image_status.h"
 #include "isula_images_list.h"
 #include "filters.h"
+#include "isula_get_user.h"
 
 #define DEFAULT_TAG ":latest"
 #define DEFAULT_HOSTNAME "docker.io/"
@@ -177,13 +178,9 @@ static void oci_strip_dockerio(const imagetool_image *image)
     return;
 }
 
-int oci_get_user_conf(const char *basefs, host_config *hc, const char *userstr, defs_process_user *puser)
+int oci_get_user_conf(const char *id, const char *basefs, host_config *hc, const char *userstr, defs_process_user *puser)
 {
-    if (basefs == NULL || puser == NULL) {
-        ERROR("Empty basefs or puser");
-        return -1;
-    }
-    return get_user(basefs, hc, userstr, puser);
+    return isula_get_user(id, basefs, hc, userstr, puser);
 }
 
 static int dup_oci_image_info(const imagetool_image *src, imagetool_image **dest)

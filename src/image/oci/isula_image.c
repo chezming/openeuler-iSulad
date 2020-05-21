@@ -64,6 +64,11 @@ void isula_exit(void)
 static int start_isula_image_server(void)
 {
 #define MIN_OPT_TIMEOUT 15
+    bool image_server_monit = conf_get_image_server_monit();
+    if (!image_server_monit) {
+        INFO("No need to start image server according to the config 'image-server-monit'");
+        return 0;
+    }
     struct server_monitor_conf sm_conf = { 0 };
     struct timespec ts = { 0 };
     sem_t wait_monitor_sem;

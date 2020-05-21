@@ -1189,6 +1189,74 @@ public:
     }
 };
 
+class ISulaGetUser : public ClientBase<isula::ImageService, isula::ImageService::Stub, isula_get_user_request,
+    isula::GetUserRequest, isula_get_user_response, isula::GetUserResponse> {
+public:
+    explicit ISulaGetUser(void *args) : ClientBase(args)
+    {
+    }
+
+    ~ISulaGetUser() = default;
+
+    int request_to_grpc(const isula_get_user_request *req, isula::GetUserRequest *grequest) override
+    {
+        if (req == nullptr) {
+            return -1;
+        }
+        if (req->container_id != nullptr) {
+            grequest->set_containerid(req->container_id);
+        }
+        if (req->user_str != nullptr) {
+            grequest->set_userstr(req->user_str);
+        }
+        if (req->group_adds != nullptr) {
+            for (size_t i = 0; i < req->group_adds_len; i++) {
+                grequest->add_groupadds(req->group_adds[i]);
+            }
+        }
+        return 0;
+    }
+
+    int response_from_grpc(isula::GetUserResponse *gresp, isula_get_user_response *resp) override
+    {
+        resp->uid = gresp->uid();
+        resp->gid = gresp->gid();
+        int agid_size = gresp->additionalgids_size();
+        if (agid_size > 0) {
+            resp->additional_gids = (uint32_t *) util_smart_calloc_s(sizeof(uint32_t), agid_size);
+            for (int i = 0; i < agid_size; i++) {
+                resp->additional_gids[i] = gresp->additionalgids(i);
+                resp->additional_gids_len++;
+            }
+        }
+        if (!gresp->errmsg().empty()) {
+            resp->errmsg = util_strdup_s(gresp->errmsg().c_str());
+        }
+        resp->server_errono = gresp->cc();
+        return 0;
+    }
+
+    int check_parameter(const isula::GetUserRequest &req) override
+    {
+        if (req.containerid().empty()) {
+            ERROR("Empty container id");
+            return -1;
+        }
+        if (req.userstr().empty()) {
+            ERROR("Empty user string");
+            return -1;
+        }
+        return 0;
+    }
+
+    Status grpc_call(ClientContext *context, const isula::GetUserRequest &req,
+                     isula::GetUserResponse *reply) override
+    {
+        return stub_->GetUser(context, req, reply);
+    }
+};
+
+
 int grpc_isula_image_client_ops_init(isula_image_ops *ops)
 {
     if (ops == nullptr) {
@@ -1222,6 +1290,8 @@ int grpc_isula_image_client_ops_init(isula_image_ops *ops)
          ISulaStorageMetadata>;
 
     ops->health_check = container_func<isula_health_check_request, isula_health_check_response, ISulaHealthCheck>;
+
+    ops->get_user = container_func<isula_get_user_request, isula_get_user_response, ISulaGetUser>;
 
     return 0;
 }

@@ -230,7 +230,7 @@ struct bim_ops {
                       const im_prepare_request *request, char **real_rootfs);
 
     /* get user config ops */
-    int (*get_user_conf)(const char *basefs, host_config *hc,
+    int (*get_user_conf)(const char *id, const char *basefs, host_config *hc,
                          const char *userstr, defs_process_user *puser);
 
     /* list images */
@@ -314,7 +314,7 @@ int im_merge_image_config(const char *id, const char *image_type, const char *im
                           const char *rootfs, host_config *host_spec, container_config *container_spec,
                           char **real_rootfs);
 
-int im_get_user_conf(const char *image_type, const char *basefs, host_config *hc, const char *userstr,
+int im_get_user_conf(const char *id, const char *image_type, const char *basefs, host_config *hc, const char *userstr,
                      defs_process_user *puser);
 
 int im_list_images(const im_list_request *request, im_list_response **response);

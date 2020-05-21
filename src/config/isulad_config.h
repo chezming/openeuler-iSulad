@@ -91,6 +91,8 @@ char *conf_get_isulad_cgroup_parent();
 
 unsigned int conf_get_im_opt_timeout();
 
+bool conf_get_image_server_monit();
+
 char *conf_get_im_server_sock_addr();
 
 char *conf_get_default_runtime();

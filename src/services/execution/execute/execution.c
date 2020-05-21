@@ -609,7 +609,7 @@ static int generate_user_and_groups_conf(const container_t *cont, defs_process_u
     }
 
     /* username may be NULL, we will handle it as UID 0 in get_user */
-    ret = im_get_user_conf(cont->common_config->image_type, cont->common_config->base_fs, cont->hostconfig, username,
+    ret = im_get_user_conf(cont->common_config->id, cont->common_config->image_type, cont->common_config->base_fs, cont->hostconfig, username,
                            *puser);
     if (ret != 0) {
         ERROR("Get user failed with '%s'", username ? username : "");
