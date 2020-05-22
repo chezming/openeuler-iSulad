@@ -106,6 +106,15 @@ cd $SRCDIR
 
 set +e
 set -x
+echo_success "===================RUN DT-LLT TESTCASE START========================="
+cd ./test
+./test.sh -m -c -r
+if [[ $? -ne 0 ]]; then
+    exit 1
+fi
+cd ../
+echo_success "===================RUN DT-LLT TESTCASE END========================="
+
 runflag=$(env | grep TESTCASE_RUNFLAG | awk -F '=' '{print $NF}')
 # run integration tests
 start_isulad_with_valgrind
