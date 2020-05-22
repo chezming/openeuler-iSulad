@@ -24,6 +24,9 @@
 
 #define MANIFEST_BIG_DATA_KEY "manifest"
 #define OCI_SCHEMA_VERSION 2
+#define OCI_LOAD_TMP_DIR_COMMON  "/var/tmp/isulad-oci-load-"
+#define OCI_LOAD_TMP_DIR         OCI_LOAD_TMP_DIR_COMMON"XXXXXX"
+#define OCI_LOAD_TMP_DIR_ALL     OCI_LOAD_TMP_DIR_COMMON"*"
 
 static image_manifest_items_element **load_manifest(const char *fname, size_t *length)
 {
@@ -792,6 +795,29 @@ out:
     return ret;
 }
 
+
+
+static void oci_load_remove_temp_dirs()
+{
+    int ret = 0;
+    int sret = 0;
+    char cmd[PATH_MAX] = {0};
+
+    sret = snprintf(cmd, sizeof(cmd), "/usr/bin/rm -rf %s", OCI_LOAD_TMP_DIR_ALL);
+    if (sret < 0 || (size_t)sret >= sizeof(cmd)) {
+        ERROR("Failed to sprintf cmd to remove temporary directory");
+        return;
+    }
+
+    ret = system(cmd);
+    if (ret != 0) {
+        ERROR("execute \"%s\" got result %d", cmd, ret);
+    }
+
+    return;
+}
+
+
 int oci_do_load(const im_load_request *request)
 {
     int ret = 0;
@@ -803,7 +829,9 @@ int oci_do_load(const im_load_request *request)
     size_t manifest_len = 0;
     load_image_t *im = NULL;
     char *digest = NULL;
-    char dstdir[] = "/var/tmp/isulad-load-XXXXXX";
+    char dstdir[] = OCI_LOAD_TMP_DIR;
+    
+    oci_load_remove_temp_dirs();
 
     if (mkdtemp(dstdir) == NULL) {
         ERROR("make temporary direcory failed: %s", strerror(errno));
@@ -890,5 +918,10 @@ out:
     if (reader.close != NULL) {
         reader.close(reader.context, NULL);
     }
+
+    if (util_recursive_rmdir(dstdir, 0)) {
+        WARN("failed to remove directory %s", dstdir);
+    }
+
     return ret;
 }
