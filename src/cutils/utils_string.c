@@ -486,7 +486,6 @@ const char *str_skip_str(const char *str, const char *skip)
     }
 }
 
-
 static char *util_string_delchar_inplace(char *s, unsigned char c)
 {
     size_t i = 0;
