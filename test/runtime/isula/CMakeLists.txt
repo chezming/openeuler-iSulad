@@ -13,6 +13,8 @@ add_executable(${EXE}
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/cutils/util_atomic.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/sha256/sha256.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/path.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/map/map.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/map/rb_tree.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/libisulad.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/services/execution/spec/sysinfo.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/cmd/commander.c

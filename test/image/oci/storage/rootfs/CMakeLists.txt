@@ -1,6 +1,6 @@
 project(iSulad_LLT)
 
-SET(EXE storage_images_llt)
+SET(EXE storage_rootfs_llt)
 
 add_executable(${EXE}
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/utils.c
@@ -18,10 +18,10 @@ add_executable(${EXE}
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/map/map.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/map/rb_tree.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/types_def.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/image/oci/storage/image_store/image_type.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/image/oci/storage/image_store/image_store.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/image/oci/storage/rootfs_store/rootfs.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/image/oci/storage/rootfs_store/rootfs_store.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../mocks/storage_mock.cc
-    storage_images_llt.cc)
+    storage_rootfs_llt.cc)
 
 target_include_directories(${EXE} PUBLIC
     ${GTEST_INCLUDE_DIR}
@@ -31,10 +31,11 @@ target_include_directories(${EXE} PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/map
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/sha256
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/json/schema/src
     ${CMAKE_BINARY_DIR}/conf
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../test/mocks
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/image/oci/storage
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/image/oci/storage/image_store
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/image/oci/storage/rootfs_store
     )
 
 target_link_libraries(${EXE} ${GTEST_BOTH_LIBRARIES} ${GMOCK_LIBRARY} ${GMOCK_MAIN_LIBRARY} ${CMAKE_THREAD_LIBS_INIT} ${ISULA_LIBUTILS_LIBRARY} -lcrypto -lyajl -lz)
