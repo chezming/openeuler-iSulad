@@ -13,7 +13,7 @@
  * Description: provide oci storage images unit test
  ******************************************************************************/
 #include "image_store.h"
-#include "imagetool_image.h"
+#include "isula_libutils/imagetool_image.h"
 #include "utils_array.h"
 #include <cstring>
 #include <iostream>
@@ -30,9 +30,9 @@
 #include <gtest/gtest.h>
 #include "utils.h"
 #include "path.h"
-#include "read_file.h"
+
 #include "storage.h"
-#include "imagetool_images_list.h"
+#include "isula_libutils/imagetool_images_list.h"
 
 std::string GetDirectory()
 {
@@ -271,8 +271,9 @@ TEST_F(StorageImagesUnitTest, test_image_store_create)
 
     ASSERT_EQ(image->repo_digests_len, 1);
 
-    ASSERT_STREQ(image->repo_digests[0],
-                 "docker.io/library/health_check@sha256:fdb7b1fccaaa535cb8211a194dd6314acc643f3a36d1a7d2b79c299a9173fa7e");
+    ASSERT_STREQ(
+        image->repo_digests[0],
+        "docker.io/library/health_check@sha256:fdb7b1fccaaa535cb8211a194dd6314acc643f3a36d1a7d2b79c299a9173fa7e");
 
     free_imagetool_image(image);
 

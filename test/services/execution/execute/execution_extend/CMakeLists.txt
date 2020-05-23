@@ -26,7 +26,7 @@ add_executable(${EXE}
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/map/rb_tree.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/services/execution/execute/execution_extend.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/json/oci_runtime_hooks.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/json/schema/src/read_file.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/json/schema/src/isula_utils_read_file.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../mocks/runtime_mock.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../mocks/containers_store_mock.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../mocks/collector_mock.cc
