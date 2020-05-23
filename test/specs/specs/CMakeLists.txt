@@ -12,7 +12,7 @@ add_executable(${EXE}
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/cutils/utils_file.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/cutils/util_atomic.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/sha256/sha256.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/cutils/path.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/path.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/map/map.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/map/rb_tree.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/services/execution/spec/specs.c
@@ -40,6 +40,7 @@ target_include_directories(${EXE} PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/cutils
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/map
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/cmd/isulad
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/services
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/services/execution
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/services/execution/spec
@@ -51,7 +52,6 @@ target_include_directories(${EXE} PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/http
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/engines
     ${ENGINES_INCS}
-    #${EXECUTION_INCS}
     ${RUNTIME_INCS}
     ${IMAGE_INCS}
     ${CMAKE_BINARY_DIR}/conf
@@ -64,5 +64,4 @@ target_include_directories(${EXE} PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../test/mocks
     )
 
-#set_target_properties(${EXE} PROPERTIES LINK_FLAGS)
 target_link_libraries(${EXE} ${GTEST_BOTH_LIBRARIES} ${GMOCK_LIBRARY} ${GMOCK_MAIN_LIBRARY} ${CMAKE_THREAD_LIBS_INIT} ${ISULA_LIBUTILS_LIBRARY} -lgrpc++ -lprotobuf -lcrypto -lyajl -lz)

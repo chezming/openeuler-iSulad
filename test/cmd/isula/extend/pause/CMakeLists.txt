@@ -11,21 +11,20 @@ add_executable(${EXE}
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/utils_verify.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/utils_regex.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/sha256/sha256.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/path.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/path.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/map/map.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/map/rb_tree.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/map/rb_tree.c    
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cmd/commander.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/console/console.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cmd/isula/arguments.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/libisulad.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/libisula.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/types_def.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/mainloop.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/types_def.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/mainloop.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/container_def.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/error.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/error.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/connect/client/isula_connect.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cmd/isula/extend/pause.c
-    # ${CMAKE_CURRENT_SOURCE_DIR}/../../../../mocks/LcrcConnectMock.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../mocks/grpc_client_mock.cc
     pause_llt.cc)
 

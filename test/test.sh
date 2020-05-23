@@ -1,6 +1,3 @@
-#! /bin/bash
-
-#set -xe
 #######################################################################
 ##- @Copyright (C) Huawei Technologies., Ltd. 2019. All rights reserved.
 # - iSulad licensed under the Mulan PSL v2.
@@ -15,7 +12,9 @@
 ##- @Author: wujing
 ##- @Create: 2019-04-25
 #######################################################################
+#! /bin/bash
 
+#set -xe
 
 function usage()
 {
@@ -147,7 +146,7 @@ function llt_compile()
 {
     ret=0
     echo ---------------------- llt compile begin ----------------------
-    make -j
+    make -j 
     ret=$?
     echo ---------------------- llt compile end ------------------------
     echo

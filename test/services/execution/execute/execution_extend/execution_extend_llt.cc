@@ -27,7 +27,6 @@
 #include "isulad_config_mock.h"
 #include "containers_gc_mock.h"
 #include "engine_mock.h"
-#include "driver_mock.h"
 #include "restartmanager_mock.h"
 #include "verify_mock.h"
 #include "specs_mock.h"
@@ -61,7 +60,6 @@ public:
         MockImage_SetMock(&m_image);
         MockSysinfo_SetMock(&m_sysinfo);
         MockEngine_SetMock(&m_engine);
-        MockDriver_SetMock(&m_driver);
         MockVerify_SetMock(&m_verify);
         MockRestartmanager_SetMock(&m_restartmanager);
         MockContainerState_SetMock(&m_containerState);
@@ -76,7 +74,6 @@ public:
         ::testing::Mock::AllowLeak(&m_isuladConf);
         ::testing::Mock::AllowLeak(&m_sysinfo);
         ::testing::Mock::AllowLeak(&m_engine);
-        ::testing::Mock::AllowLeak(&m_driver);
         ::testing::Mock::AllowLeak(&m_restartmanager);
         ::testing::Mock::AllowLeak(&m_containerState);
         ::testing::Mock::AllowLeak(&m_verify);
@@ -94,7 +91,6 @@ public:
         MockIsuladConf_SetMock(nullptr);
         MockSysinfo_SetMock(nullptr);
         MockEngine_SetMock(nullptr);
-        MockDriver_SetMock(nullptr);
         MockRestartmanager_SetMock(nullptr);
         MockContainerState_SetMock(nullptr);
         MockVerify_SetMock(nullptr);
@@ -111,7 +107,6 @@ public:
     NiceMock<MockIsuladConf> m_isuladConf;
     NiceMock<MockSysinfo> m_sysinfo;
     NiceMock<MockEngine> m_engine;
-    NiceMock<MockDriver> m_driver;
     NiceMock<MockRestartmanager> m_restartmanager;
     NiceMock<MockContainerState> m_containerState;
     NiceMock<MockVerify> m_verify;
