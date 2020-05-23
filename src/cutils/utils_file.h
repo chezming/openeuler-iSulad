@@ -101,4 +101,3 @@ int util_atomic_write_file(const char *fname, const char *content, size_t conten
 #endif
 
 #endif /* __UTILS_H */
-
