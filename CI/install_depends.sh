@@ -115,6 +115,8 @@ ldconfig
 cd ~
 git clone https://gitee.com/openeuler/iSula-libutils.git
 cd iSula-libutils
+# checkout to implement_image branch
+git checkout origin/implement_image
 mkdir -p build
 cd build
 cmake  -DLIB_INSTALL_DIR=${builddir}/lib -DCMAKE_INSTALL_PREFIX=${builddir} ../
