@@ -18,7 +18,7 @@ add_executable(${EXE}
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/path.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/map/map.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/map/rb_tree.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/json/schema/src/read_file.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/json/schema/src/isula_utils_read_file.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/types_def.c
     ${CMAKE_BINARY_DIR}/json/json_common.c
     ${CMAKE_BINARY_DIR}/json/defs.c
