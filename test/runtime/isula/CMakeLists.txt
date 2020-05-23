@@ -24,7 +24,7 @@ add_executable(${EXE}
     ${CMAKE_BINARY_DIR}/json/oci_runtime_config_linux.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/cmd/commander.c
     ${CMAKE_BINARY_DIR}/json/isulad_daemon_configs.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/json/schema/src/read_file.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/json/schema/src/isula_utils_read_file.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/cmd/isulad/arguments.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../test/image/oci/oci_llt_common.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../test/mocks/containers_store_mock.cc

@@ -24,7 +24,7 @@ add_executable(${EXE}
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/container_def.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/error.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/connect/client/isula_connect.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/json/schema/src/read_file.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/json/schema/src/isula_utils_read_file.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cmd/isula/information/info.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../mocks/grpc_client_mock.cc
     ${CMAKE_BINARY_DIR}/json/json_common.c
