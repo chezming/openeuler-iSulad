@@ -33,6 +33,7 @@ target_include_directories(${EXE} PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../include
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/map
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/json
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/sha256
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/connect/client
@@ -42,6 +43,7 @@ target_include_directories(${EXE} PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cmd/isula
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cmd/isula/information
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/connect/client/grpc
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/json/schema/src
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../mocks
     ${CMAKE_BINARY_DIR}/conf
     )
