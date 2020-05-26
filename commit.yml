@@ -2,19 +2,25 @@
 branches: {
   }
 fileChange:
+  /CI:
+    newFile: !uuid '1118536c229fc8e13000630d6d2c3cd3a3fcbd50'
+    oldFile: !uuid '213958cc05b992da3c3833b3a3497421f8f37688'
+  /CI/install_depends.sh:
+    newFile: !uuid 'e87319b46aacde3e7ae27bba972edbf42e240599'
+    oldFile: !uuid '4bc505144194ee0c97425b5fde48284553e57eb8'
   /CMakeLists.txt:
-    newFile: !uuid '082a3b10cfc0eb6498a68df151f3192d90df02bd'
-    oldFile: !uuid 'c475d25cdf92b3e59083e52e83f1bb8e01bf645d'
+    newFile: !uuid '6b8dc014cde8a90272d5b1d121954cf20f673977'
+    oldFile: !uuid '082a3b10cfc0eb6498a68df151f3192d90df02bd'
   /cmake:
-    newFile: !uuid 'c18cd48d93fa3026feec3ea1b180139e8921a86c'
-    oldFile: !uuid '0bab95e81b21e94de5cae7002d50c9d4d6e0faad'
-  /cmake/checker.cmake:
-    newFile: !uuid '1602a5be3698a17d209b268bc36b06cd231decb6'
-    oldFile: !uuid 'df9edf4fdde6518e2567f1165b4bee93ea29ff03'
+    newFile: !uuid 'f9216f7c527ce64f4d2dba6f378ef3af6cda6fb6'
+    oldFile: !uuid 'c18cd48d93fa3026feec3ea1b180139e8921a86c'
+  /cmake/options.cmake:
+    newFile: !uuid 'b64ba778a3f6a11fd9bbd5e41552765e2b5ee3bd'
+    oldFile: !uuid 'd17226be9366b2954a4f6a257f4e2f297b42ac6b'
   /iSulad.spec:
-    newFile: !uuid 'b6584d298fb72e52d12bd0535d3800d2b239aa0b'
-    oldFile: !uuid '4a3922351c9372abafc11d13c59e8230f4eef3f9'
-gitCommitId: !uuid '9014f8a4478a169f5426a27c8c1e58dcf14023ef'
+    newFile: !uuid '0c8c95736704fd078eef6ddd863f99b6d582e474'
+    oldFile: !uuid 'b6584d298fb72e52d12bd0535d3800d2b239aa0b'
+gitCommitId: !uuid '259d4126b9cfbf1ffce64ba3d65cc2de98298f76'
 renames: {
   }
-revisionId: 165
+revisionId: 166
