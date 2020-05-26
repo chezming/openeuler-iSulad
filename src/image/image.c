@@ -1593,6 +1593,7 @@ void free_im_image_count_request(im_image_count_request *ptr)
     free(ptr);
 }
 
+#ifdef ENABLE_OCI_IMAGE
 int im_container_export(const im_export_request *request)
 {
     int ret = 0;
@@ -1649,6 +1650,12 @@ out:
     bim_put(bim);
     return ret;
 }
+#else
+int im_container_export(const im_export_request *request)
+{
+    return 0;
+}
+#endif
 
 void free_im_export_request(im_export_request *ptr)
 {
