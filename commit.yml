@@ -2,25 +2,19 @@
 branches: {
   }
 fileChange:
-  /src:
-    newFile: !uuid '20b2cb6da67483c71377df8bcbf538b23c9b1596'
-    oldFile: !uuid '2e4bd0470db098d24da045391a074ad89a9d106b'
-  /src/constants.h:
-    newFile: !uuid 'fe58191d256ecae441559c722be030346495a9c8'
-    oldFile: !uuid '254a1c4288050225b07ce3ad142d6bf3942e1c60'
-  /src/services:
-    newFile: !uuid '094b703ed77cf2c29d523d4e6d1741bd0ff4b203'
-    oldFile: !uuid 'fcaab5e32e7ed44f2eee4c65a9322857ab92e771'
-  /src/services/execution:
-    newFile: !uuid '892d0ba813aadf99f37dd8bed7b96626d3905421'
-    oldFile: !uuid '31751a84c5396d1923dca30a1a2f0769b5206e48'
-  /src/services/execution/manager:
-    newFile: !uuid '48e81bf85826305cb8724fd8e5d4a95e1c35ebde'
-    oldFile: !uuid 'f8206491bdea1fcec7a3634371411329bf72ea48'
-  /src/services/execution/manager/container_unix.c:
-    newFile: !uuid 'f18ed158598e8af4300ba8e35bdae870a90f6542'
-    oldFile: !uuid '3b10bec824b1431271ca206db8512f843a8d2545'
-gitCommitId: !uuid 'b2dbba31897e9a76c042d5c359848d070cc87a98'
+  /CMakeLists.txt:
+    newFile: !uuid '082a3b10cfc0eb6498a68df151f3192d90df02bd'
+    oldFile: !uuid 'c475d25cdf92b3e59083e52e83f1bb8e01bf645d'
+  /cmake:
+    newFile: !uuid 'c18cd48d93fa3026feec3ea1b180139e8921a86c'
+    oldFile: !uuid '0bab95e81b21e94de5cae7002d50c9d4d6e0faad'
+  /cmake/checker.cmake:
+    newFile: !uuid '1602a5be3698a17d209b268bc36b06cd231decb6'
+    oldFile: !uuid 'df9edf4fdde6518e2567f1165b4bee93ea29ff03'
+  /iSulad.spec:
+    newFile: !uuid 'b6584d298fb72e52d12bd0535d3800d2b239aa0b'
+    oldFile: !uuid '4a3922351c9372abafc11d13c59e8230f4eef3f9'
+gitCommitId: !uuid '9014f8a4478a169f5426a27c8c1e58dcf14023ef'
 renames: {
   }
-revisionId: 164
+revisionId: 165
