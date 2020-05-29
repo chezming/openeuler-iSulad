@@ -250,16 +250,16 @@ ProcsFile=/sys/fs/cgroup/cpuset/docker/cgroup.clone_children
 function make_sure_cgroup()
 {
     image=`cat $DockerFile | grep FROM | awk '{print $2}'`
-    if [ ! -e $ProcsFile ];then
+    if [ ! -e $ProcsFile ]; then
         cid=`docker run -d $image`
-        if [ $? -ne 0 ];then
+        if [ $? -ne 0 ]; then
             echo "Can not run docker container"
             return 1
         fi
         docker rm -f $cid
     fi
     procsval=`cat $ProcsFile`
-    if [ $procsval -ne 1 ];then
+    if [ $procsval -ne 1 ]; then
         echo "warning: set $ProcsFile to 1"
         echo 1 > $ProcsFile
     fi
