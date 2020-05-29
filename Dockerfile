@@ -170,10 +170,12 @@ RUN export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH && \
 	cd ~ && \
 	git clone https://gitee.com/src-openeuler/libevhtp.git && \
 	cd libevhtp && \
-	tar -xzvf libevhtp-1.2.16.tar.gz && \
-	cd libevhtp-1.2.16 && \
-	patch -p1 -F1 -s < ../0001-support-dynamic-threads.patch && \
-	patch -p1 -F1 -s < ../0002-close-openssl.patch && \
+	tar -xzvf libevhtp-1.2.18.tar.gz && \
+	cd libevhtp-1.2.18 && \
+	patch -p1 -F1 -s < ../0001-decrease-numbers-of-fd-for-shared-pipe-mode.patch && \
+	patch -p1 -F1 -s < ../0002-evhtp-enable-dynamic-thread-pool.patch && \
+	patch -p1 -F1 -s < ../0003-close-open-ssl.-we-do-NOT-use-it-in-lcrd.patch && \
+	patch -p1 -F1 -s < ../0004-Use-shared-library-instead-static-one.patch && \
 	rm -rf build && \
 	mkdir build && \
 	cd build && \
