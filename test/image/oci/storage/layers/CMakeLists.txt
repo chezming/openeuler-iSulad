@@ -16,7 +16,7 @@ add_executable(${EXE}
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/utils_fs.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/util_atomic.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/log.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/tar/libtar.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/tar/isulad_tar.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/tar/util_archive.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/sha256/sha256.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/path.c
