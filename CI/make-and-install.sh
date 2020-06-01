@@ -73,6 +73,17 @@ make install
 sed -i 's/"log-driver": "stdout"/"log-driver": "file"/g' ${builddir}/etc/isulad/daemon.json
 sed -i "/registry-mirrors/a\        \"https://hub-mirror.c.163.com\"" ${builddir}/etc/isulad/daemon.json
 
+echo_success "===================RUN DT-LLT TESTCASE START========================="
+cd ../test
+./test.sh -e
+./test.sh -m -c -r
+if [[ $? -ne 0 ]]; then
+    exit 1
+fi
+./test.sh -e
+cd ../
+echo_success "===================RUN DT-LLT TESTCASE END========================="
+
 # build rest version
 cd $ISULAD_COPY_PATH
 rm -rf build
