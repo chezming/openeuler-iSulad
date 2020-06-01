@@ -2,19 +2,16 @@
 branches: {
   }
 fileChange:
-  /CI:
-    newFile: !uuid 'c546efd1c77ec1484356dead1dd3e54f8836f018'
-    oldFile: !uuid '30cdc349ce9d3dee403a5a32f32d15e9e69f5cd5'
-  /CI/run-testcases.sh:
-    newFile: !uuid '205224ddd5333a4c6e2296f3d5c5bff7af83d6a2'
-    oldFile: !uuid '3744ddea8bb66e56374291cd51fadd85fcfb3139'
-  /CI/test_cases:
-    newFile: !uuid '6217d9a40c6985d008ce4e38c9d90eab6548ee6c'
-    oldFile: !uuid '86fb5931d5b9af4fcef5565dbad603057d051d92'
-  /CI/test_cases/helpers.bash:
-    newFile: !uuid '5f582547363da726ca91e4cba0a05021d0c82386'
-    oldFile: !uuid '6804df30433fdf76716672f5ee7786b34223ab49'
-gitCommitId: !uuid '9e747eefd625051280025262ac11fe9510c1828e'
+  /README.md:
+    newFile: !uuid '1136ff4bb83a289e493f1aca450c5e44978de88e'
+    oldFile: !uuid 'b1734c498a36ac22ba777665f7282020d22ec11e'
+  /docs:
+    newFile: !uuid 'b9acb1dc457f184abd59594d90eb9a7e211d8f4b'
+    oldFile: !uuid '500573ee738bbb13809e3f7867bf89a7e35d4b9e'
+  /docs/integration.md:
+    newFile: !uuid 'ae7c6e4bfa4a922f38138c4a933e03ff6a41cf11'
+    oldFile: !uuid 'c5b52a3ae616bd243e1798e38338ec6c2b9ef152'
+gitCommitId: !uuid 'b4c3b025166ddecb8715a2d62000ccd5dc5b2300'
 renames: {
   }
-revisionId: 170
+revisionId: 171
