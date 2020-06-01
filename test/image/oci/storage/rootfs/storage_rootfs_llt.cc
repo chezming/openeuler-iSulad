@@ -127,7 +127,8 @@ TEST_F(StorageRootfsUnitTest, test_rootfs_store_create)
     std::string image { "e4db68de4ff27c2adfea0c54bbb73a61a42f5b667c326de4d7d5b19ab71c6a3b" };
     std::string layer { "f32ca140c6716a68d7bba0fe6529334e98de529bd8fb7a203a21f08e772629a9" };
     std::string metadata { "{}" };
-    char *created_container = rootfs_store_create(id.c_str(), names, sizeof(names) / sizeof(names[0]), image.c_str(), layer.c_str(), metadata.c_str(), nullptr);
+    char *created_container = rootfs_store_create(id.c_str(), names, sizeof(names) / sizeof(names[0]), image.c_str(),
+                                                  layer.c_str(), metadata.c_str(), nullptr);
 
     ASSERT_STREQ(created_container, id.c_str());
     ASSERT_EQ(rootfs_store_delete(id.c_str()), 0);
