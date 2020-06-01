@@ -78,7 +78,7 @@ cd $ISULAD_COPY_PATH
 rm -rf build
 mkdir build
 cd build
-cmake -DLIB_INSTALL_DIR=${restbuilddir}/lib -DCMAKE_INSTALL_PREFIX=${restbuilddir} -DCMAKE_INSTALL_SYSCONFDIR=${restbuilddir}/etc -DENABLE_EMBEDDED=ON -DENABLE_GRPC=OFF ..
+cmake -DLIB_INSTALL_DIR=${restbuilddir}/lib -DCMAKE_INSTALL_PREFIX=${restbuilddir} -DCMAKE_INSTALL_SYSCONFDIR=${restbuilddir}/etc -DENABLE_EMBEDDED=ON -DENABLE_GRPC=OFF -DDISABLE_OCI=ON ..
 make -j $(nproc)
 make install
 sed -i 's/"log-driver": "stdout"/"log-driver": "file"/g' ${restbuilddir}/etc/isulad/daemon.json
