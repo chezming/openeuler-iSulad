@@ -32,6 +32,7 @@ target_include_directories(${EXE} PUBLIC
     ${GTEST_INCLUDE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../include
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/map
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/json
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/sha256
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils
@@ -46,4 +47,4 @@ target_include_directories(${EXE} PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../mocks
     ${CMAKE_BINARY_DIR}/conf
     )
-target_link_libraries(${EXE} ${GTEST_BOTH_LIBRARIES} ${GMOCK_LIBRARY} ${GMOCK_MAIN_LIBRARY} ${CMAKE_THREAD_LIBS_INIT} -lgrpc++ -lprotobuf -lcrypto -lyajl -lz -lisula_libutils)
+target_link_libraries(${EXE} ${GTEST_BOTH_LIBRARIES} ${GMOCK_LIBRARY} ${GMOCK_MAIN_LIBRARY} ${CMAKE_THREAD_LIBS_INIT} ${ISULA_LIBUTILS_LIBRARY} -lgrpc++ -lprotobuf -lcrypto -lyajl -lz)
