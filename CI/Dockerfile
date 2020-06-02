@@ -82,7 +82,8 @@ RUN yum clean all && yum makecache && yum install -y epel-release && yum swap -y
 			CUnit \
 			CUnit-devel \
 			valgrind \
-			e2fsprogs
+			e2fsprogs \
+			lcov
 
 RUN yum clean all && \
     (cd /lib/systemd/system/sysinit.target.wants/; for i in *; \
