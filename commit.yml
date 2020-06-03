@@ -3,39 +3,18 @@ branches: {
   }
 fileChange:
   /CI:
-    newFile: !uuid 'e81b8432365d24663f4f625aa0113ac6609cc392'
-    oldFile: !uuid 'bace0c2c0b230dbfe2e9037e37c5b92f9b879847'
-  /CI/Dockerfile:
-    newFile: !uuid '12ad906924517add66e65c79625d8ded2efe8099'
-    oldFile: !uuid '2867caaa1aeeec9800d39a5bbd07bd8b2f406687'
-  /CI/build.sh:
-    newFile: !uuid '6929b241b00c7f77819f4d42025b237ec726cda7'
-    oldFile: !uuid '64f873b640c16e3c7890c4886e2e441122510d15'
-  /CI/generate_gcov.sh:
-    newFile: !uuid '41444c4c330a9a5d0a891ec507d3c65c61743592'
-    oldFile: null
+    newFile: !uuid '72631d96dc1d9fad41176d3450658ef120acb5a5'
+    oldFile: !uuid 'e81b8432365d24663f4f625aa0113ac6609cc392'
   /CI/make-and-install.sh:
-    newFile: !uuid '1e30a993ec7748f159bd99fdadabff21ec0f8e3b'
-    oldFile: !uuid 'd3c36388b7a152b971d3f7d0c75724e546938d5d'
-  /CMakeLists.txt:
-    newFile: !uuid '38eb54f6b99b25961457332610f7b9a2fef6b5a6'
-    oldFile: !uuid 'f788ae9ab2bf1e4fc05d40e6d4dda23df4671296'
-  /test:
-    newFile: !uuid 'ed73f5af528cdc1d4a310509344111103980ff53'
-    oldFile: !uuid '35e6141a5804417a6e45381fc3c2e981c4462977'
-  /test/runtime:
-    newFile: !uuid '1e120ce86633ab6b1edd87db447524d04be4e336'
-    oldFile: !uuid '97841e712159a9e194a6edc4f2ab426dfb285c25'
-  /test/runtime/isula:
-    newFile: !uuid '247374d8169561188f9ed1a9f154da1fd0e3ad7e'
-    oldFile: !uuid 'bafff471de3ce28a4ed25f3127cca765ff7ffcfd'
-  /test/runtime/isula/CMakeLists.txt:
-    newFile: !uuid '03cf2fda54a6fd29150390da83ea538b870efa8c'
-    oldFile: !uuid 'e4975031b0773f048dcdd95f51c3ba36cd4cb7ce'
-  /test/test.sh:
-    newFile: !uuid '4568fdd1a8c4eee97ab8acea2633b31c4469f799'
-    oldFile: !uuid '2d6782f8af183d4d1c6f0da5425f9e49eac031bf'
-gitCommitId: !uuid 'dc97992a4c871031c6e7da15afef4dde885fc0bf'
+    newFile: !uuid '1929863eb89738022e8760ccf5eb898caa32d1b4'
+    oldFile: !uuid '1e30a993ec7748f159bd99fdadabff21ec0f8e3b'
+  /docs:
+    newFile: !uuid '70beb03673d0909f1b2e265b331720a6b8429353'
+    oldFile: !uuid 'b9acb1dc457f184abd59594d90eb9a7e211d8f4b'
+  /docs/build_guide.md:
+    newFile: !uuid '41d48facff318be9cb738b8834c45cfe433e9d69'
+    oldFile: !uuid 'e569996894c375a3c6cf5949ee92e5e86457d56d'
+gitCommitId: !uuid '20a8367485a3311e8767dd51c1edbd9243018588'
 renames: {
   }
-revisionId: 173
+revisionId: 174
