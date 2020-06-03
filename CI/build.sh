@@ -401,6 +401,12 @@ if [[ "x${enable_gcov}" == "xON" ]]; then
   rm -rf /var/www/html/isulad-gcov.tar.gz
   mv ./tmp/isulad-gcov /var/www/html
   cp isulad-gcov.tar.gz /var/www/html
+
+  tar xf ./isulad-llt-gcov.tar.gz
+  rm -rf /var/www/html/isulad-llt-gcov
+  rm -rf /var/www/html/isulad-llt-gcov.tar.gz
+  mv ./coverage /var/www/html
+  cp isulad-llt-gcov.tar.gz /var/www/html
 fi
 
 if [[ -e $CIDIR/${CONTAINER_NAME}.runflag ]]; then
