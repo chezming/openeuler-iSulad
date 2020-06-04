@@ -429,3 +429,4 @@ else
     echo_error "Test failed!"
     exit -1;
 fi
+rm -rf /var/lib/isulad/isulad_*
