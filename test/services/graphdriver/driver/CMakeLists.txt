@@ -19,7 +19,12 @@ add_executable(${EXE}
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/services/graphdriver/driver.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/services/graphdriver/devmapper/driver_devmapper.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/libisulad.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/json/schema/src/read_file.c
     ${CMAKE_BINARY_DIR}/json/json_common.c
+    ${CMAKE_BINARY_DIR}/json/defs.c
+    ${CMAKE_BINARY_DIR}/json/host_config.c
+    ${CMAKE_BINARY_DIR}/json/docker_types_mount_point.c
+    ${CMAKE_BINARY_DIR}/json/container_inspect.c
     driver_llt.cc)
 
 target_include_directories(${EXE} PUBLIC
@@ -31,6 +36,8 @@ target_include_directories(${EXE} PUBLIC
     ${IMAGE_INCS}
     ${CMAKE_BINARY_DIR}/json
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/sha256
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../conf
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/json/schema/src
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/services/graphdriver/devmapper
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/services/graphdriver
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/services/graphdriver/overlay2
