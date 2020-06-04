@@ -3,21 +3,18 @@ branches: {
   }
 fileChange:
   /CI:
-    newFile: !uuid 'cb9b88739fc03340b19d457d10805d9158a6b5a5'
-    oldFile: !uuid '72631d96dc1d9fad41176d3450658ef120acb5a5'
+    newFile: !uuid '6d65a5d636bd6e7f214ec7f3d5efa91c06b1c77f'
+    oldFile: !uuid 'cb9b88739fc03340b19d457d10805d9158a6b5a5'
+  /CI/Dockerfile:
+    newFile: !uuid 'de273a5f48c524f74e3b7ba93c28cdbb9a8cc29e'
+    oldFile: !uuid '12ad906924517add66e65c79625d8ded2efe8099'
   /CI/build.sh:
-    newFile: !uuid '6950332d22c187c92bea129736566fdc700880ab'
-    oldFile: !uuid '6929b241b00c7f77819f4d42025b237ec726cda7'
-  /CI/generate_gcov.sh:
-    newFile: !uuid '0a5de6272c2e6a5faf28b2332b1c50bbbe0d567e'
-    oldFile: !uuid '41444c4c330a9a5d0a891ec507d3c65c61743592'
-  /docs:
-    newFile: !uuid 'f0577902225adecb475800436e7bc7e7c9d1d113'
-    oldFile: !uuid '70beb03673d0909f1b2e265b331720a6b8429353'
-  /docs/build_guide.md:
-    newFile: !uuid '6d19b878f469133f7a7608ea2a9cd937c34ae230'
-    oldFile: !uuid '41d48facff318be9cb738b8834c45cfe433e9d69'
-gitCommitId: !uuid '12096f2a843756383f0c7f4cefb0fe30725fc40d'
+    newFile: !uuid 'fddde51dd9d1ad3a404d239ef596f00a79eb7035'
+    oldFile: !uuid '6950332d22c187c92bea129736566fdc700880ab'
+  /CI/make-and-install.sh:
+    newFile: !uuid '6646bb2abacdbf30b72c2f29f5046153e5b3b235'
+    oldFile: !uuid '1929863eb89738022e8760ccf5eb898caa32d1b4'
+gitCommitId: !uuid '5b467d3600a219692ba0046daabbddd03812264c'
 renames: {
   }
-revisionId: 175
+revisionId: 176
