@@ -5,10 +5,12 @@ SET(EXE isulad-shim_llt)
 add_executable(${EXE}
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/cmd/isulad-shim/process.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/cmd/isulad-shim/common.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/cmd/isulad-shim/terminal.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/json/schema/src/read_file.c
     ${CMAKE_BINARY_DIR}/json/json_common.c
     ${CMAKE_BINARY_DIR}/json/host_config.c
     ${CMAKE_BINARY_DIR}/json/shim_client_process_state.c
+    ${CMAKE_BINARY_DIR}/json/logger_json_file.c
     isulad-shim_llt.cc)
 
 target_include_directories(${EXE} PUBLIC
