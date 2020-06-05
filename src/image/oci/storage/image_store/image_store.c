@@ -1923,7 +1923,7 @@ bool image_store_exists(const char *id)
 
     img = lookup(id);
     if (img == NULL) {
-        ERROR("Image not known");
+        ERROR("Image %s not known", id);
         ret = false;
         goto out;
     }
