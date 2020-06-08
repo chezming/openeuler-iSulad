@@ -2,10 +2,22 @@
 branches: {
   }
 fileChange:
-  /Dockerfile:
-    newFile: !uuid '67c227236f01673b5d3b4680c3397abc671c42dd'
-    oldFile: !uuid '0c418ebc37c9047bd64ecf7add0bb0a6cae1d60b'
-gitCommitId: !uuid '9331c67cdc4df19c17f284daeba67f4aad26b900'
+  /src:
+    newFile: !uuid '945ac01146faf4259668e8f34475edd133a65e22'
+    oldFile: !uuid '26b615dda4354e3ee37d4403de21fa5d6ba978da'
+  /src/cmd:
+    newFile: !uuid 'ed9ed02f27f67d8fd43aff3eb15207bbe81d2454'
+    oldFile: !uuid '30ec74b6d76a9dcf32c623b3069d3cfda197b315'
+  /src/cmd/isulad-shim:
+    newFile: !uuid '45ad597f091dca618be3250e0f59323cdd1faac3'
+    oldFile: !uuid 'b264b50dddd4dfe937762aee44fa270619d69137'
+  /src/cmd/isulad-shim/process.c:
+    newFile: !uuid 'cf3153596d64ce198f1164dfe474c650efed5d4c'
+    oldFile: !uuid 'a35dff88ad846cc230d348199b112d0f957148fe'
+  /src/cmd/isulad-shim/process.h:
+    newFile: !uuid '6d0fb1955e04f765d69bbc694c4a04a40a1b8d70'
+    oldFile: !uuid '8df0b59b815829696f00acb2e99dfde1c32edf8d'
+gitCommitId: !uuid '2448d4b492af60c4e91aa3d334ae2f2b84905340'
 renames: {
   }
-revisionId: 177
+revisionId: 178
