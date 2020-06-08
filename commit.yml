@@ -2,19 +2,10 @@
 branches: {
   }
 fileChange:
-  /CI:
-    newFile: !uuid '6d65a5d636bd6e7f214ec7f3d5efa91c06b1c77f'
-    oldFile: !uuid 'cb9b88739fc03340b19d457d10805d9158a6b5a5'
-  /CI/Dockerfile:
-    newFile: !uuid 'de273a5f48c524f74e3b7ba93c28cdbb9a8cc29e'
-    oldFile: !uuid '12ad906924517add66e65c79625d8ded2efe8099'
-  /CI/build.sh:
-    newFile: !uuid 'fddde51dd9d1ad3a404d239ef596f00a79eb7035'
-    oldFile: !uuid '6950332d22c187c92bea129736566fdc700880ab'
-  /CI/make-and-install.sh:
-    newFile: !uuid '6646bb2abacdbf30b72c2f29f5046153e5b3b235'
-    oldFile: !uuid '1929863eb89738022e8760ccf5eb898caa32d1b4'
-gitCommitId: !uuid '5b467d3600a219692ba0046daabbddd03812264c'
+  /Dockerfile:
+    newFile: !uuid '67c227236f01673b5d3b4680c3397abc671c42dd'
+    oldFile: !uuid '0c418ebc37c9047bd64ecf7add0bb0a6cae1d60b'
+gitCommitId: !uuid '9331c67cdc4df19c17f284daeba67f4aad26b900'
 renames: {
   }
-revisionId: 176
+revisionId: 177
