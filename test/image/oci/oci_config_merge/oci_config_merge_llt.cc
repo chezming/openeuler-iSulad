@@ -17,10 +17,10 @@
 #include <stdio.h>
 #include <gtest/gtest.h>
 #include "mock.h"
-#include "oci_runtime_spec.h"
+#include "isula_libutils/oci_runtime_spec.h"
 #include "oci_config_merge.h"
 #include "isula_libutils/imagetool_image.h"
-#include "container_config.h"
+#include "isula_libutils/container_config.h"
 #include "oci_llt_common.h"
 
 #define IMAGETOOL_IMAGE_FILE "image/oci/oci_config_merge/imagetool_image.json"
@@ -228,8 +228,8 @@ TEST(oci_config_merge_llt, test_oci_image_merge_config)
     custom_config->user = util_strdup_s("daemon");
     ASSERT_TRUE(custom_config->user != NULL);
 
-    custom_config->health_check = (defs_health_check *)util_common_calloc_s(sizeof(defs_health_check));
-    ASSERT_TRUE(custom_config->health_check != NULL);
+    custom_config->healthcheck = (defs_health_check *)util_common_calloc_s(sizeof(defs_health_check));
+    ASSERT_TRUE(custom_config->healthcheck != NULL);
 
     ASSERT_EQ(oci_image_merge_config(tool_image, custom_config), 0);
 
@@ -341,8 +341,8 @@ TEST(oci_config_merge_llt, test_oci_image_merge_config)
         // Test update_health_check_from_image executed failed caused by malloc failed.
         if (i == 3) {
             g_malloc_match = 2;
-            custom_config->health_check = (defs_health_check *)util_common_calloc_s(sizeof(defs_health_check));
-            ASSERT_TRUE(custom_config->health_check != NULL);
+            custom_config->healthcheck = (defs_health_check *)util_common_calloc_s(sizeof(defs_health_check));
+            ASSERT_TRUE(custom_config->healthcheck != NULL);
         }
         // Test do_duplicate_entrypoints executed failed caused by malloc failed.
         if (i == 4) {
@@ -400,7 +400,7 @@ TEST(oci_config_merge_llt, test_oci_image_merge_config)
     custom_config = (container_config *)util_common_calloc_s(sizeof(container_config));
     ASSERT_TRUE(custom_config != NULL);
 
-    ASSERT_NE(oci_image_merge_config(tool_image, custom_config), 0);
+    ASSERT_EQ(oci_image_merge_config(tool_image, custom_config), 0);
 
     free_imagetool_image(tool_image);
     tool_image = NULL;

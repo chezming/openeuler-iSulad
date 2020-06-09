@@ -49,5 +49,4 @@ target_include_directories(${EXE} PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../test/mocks
     )
 
-#set_target_properties(${EXE} PROPERTIES LINK_FLAGS)
 target_link_libraries(${EXE} ${GTEST_BOTH_LIBRARIES} ${GMOCK_LIBRARY} ${GMOCK_MAIN_LIBRARY} ${CMAKE_THREAD_LIBS_INIT} ${ISULA_LIBUTILS_LIBRARY} -lpthread -lgrpc++ -lprotobuf -lcrypto -lyajl -lz)
