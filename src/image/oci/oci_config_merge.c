@@ -221,6 +221,7 @@ static int dup_health_check_from_image(const defs_health_check *image_health_che
 {
     int ret = 0;
     size_t i;
+
     defs_health_check *health_check = (defs_health_check *)util_common_calloc_s(sizeof(defs_health_check));
     if (health_check == NULL) {
         ERROR("Invalid input arguments");
@@ -300,13 +301,8 @@ static int oci_image_merge_health_check(const defs_health_check *image_health_ch
 {
     int ret = 0;
 
-    if (image_health_check == NULL) {
+    if (image_health_check == NULL || image_health_check->test_len == 0) {
         return 0;
-    }
-
-    if (image_health_check->test_len == 0) {
-        ERROR("health check commands required");
-        return -1;
     }
 
     if (container_spec->healthcheck == NULL) {
