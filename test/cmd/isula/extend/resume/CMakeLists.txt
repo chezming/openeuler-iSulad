@@ -25,7 +25,6 @@ add_executable(${EXE}
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/error.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/connect/client/isula_connect.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cmd/isula/extend/resume.c
-    # ${CMAKE_CURRENT_SOURCE_DIR}/../../../../mocks/LcrcConnectMock.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../mocks/grpc_client_mock.cc
     resume_llt.cc)
 
