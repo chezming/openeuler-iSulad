@@ -3,21 +3,54 @@ branches: {
   }
 fileChange:
   /src:
-    newFile: !uuid '945ac01146faf4259668e8f34475edd133a65e22'
-    oldFile: !uuid '26b615dda4354e3ee37d4403de21fa5d6ba978da'
-  /src/cmd:
-    newFile: !uuid 'ed9ed02f27f67d8fd43aff3eb15207bbe81d2454'
-    oldFile: !uuid '30ec74b6d76a9dcf32c623b3069d3cfda197b315'
-  /src/cmd/isulad-shim:
-    newFile: !uuid '45ad597f091dca618be3250e0f59323cdd1faac3'
-    oldFile: !uuid 'b264b50dddd4dfe937762aee44fa270619d69137'
-  /src/cmd/isulad-shim/process.c:
-    newFile: !uuid 'cf3153596d64ce198f1164dfe474c650efed5d4c'
-    oldFile: !uuid 'a35dff88ad846cc230d348199b112d0f957148fe'
-  /src/cmd/isulad-shim/process.h:
-    newFile: !uuid '6d0fb1955e04f765d69bbc694c4a04a40a1b8d70'
-    oldFile: !uuid '8df0b59b815829696f00acb2e99dfde1c32edf8d'
-gitCommitId: !uuid '2448d4b492af60c4e91aa3d334ae2f2b84905340'
+    newFile: !uuid '177bad2193a8396dd857b324ba6e034f80cf1147'
+    oldFile: !uuid '945ac01146faf4259668e8f34475edd133a65e22'
+  /src/connect:
+    newFile: !uuid 'bd73ef2e7f61658f26484a1a0edf5b5daa56e72f'
+    oldFile: !uuid 'c142a821c8f62aec93d9cb6f9c0805fe8329d2c4'
+  /src/connect/client:
+    newFile: !uuid '05b0dee151a5c9d8a20b0005906bdd6a77448059'
+    oldFile: !uuid '16c9e5b8cf905e0ad9608b6510b4a591fab78491'
+  /src/connect/client/grpc:
+    newFile: !uuid '57c40320d1b492bcb5846b9b54ca99cfd5883f61'
+    oldFile: !uuid '6f8e46356c8bfbf14503c87bb65e986b101c06b4'
+  /src/connect/client/grpc/grpc_isula_image_client.cc:
+    newFile: !uuid '688f98d4b381790d1ba933613634bf496fbdce72'
+    oldFile: !uuid 'b968dba66ed1d2f9155e21b329b56380789a7ed4'
+  /src/image:
+    newFile: !uuid '403fb5732fa7011fd6b54f72487ff1076a9d0dfd'
+    oldFile: !uuid '4507876968bad3b4ce1841ce786c0857e24adbf1'
+  /src/image/oci:
+    newFile: !uuid 'e5b6e74c30abb0260af549f539d18b1ce019656a'
+    oldFile: !uuid '9dd863b74d621f4785cc911994a8c29decf02e18'
+  /src/image/oci/oci_config_merge.c:
+    newFile: !uuid 'bc2029d7f1b055349649b4c24af0319808f4fa0a'
+    oldFile: !uuid '911429d322d95baeb5378e8f2970ec5ccca43c79'
+  /test:
+    newFile: !uuid 'cbcc2b1639d8e70ee5b94c4f41cb32ae2eec282a'
+    oldFile: !uuid 'ed73f5af528cdc1d4a310509344111103980ff53'
+  /test/image:
+    newFile: !uuid '61101d09742ef4b490aa4ed364df7b62b0da7c02'
+    oldFile: !uuid 'ff2e49fffd327acbbb5c3ad4f16ecfee4a2ee4fc'
+  /test/image/oci:
+    newFile: !uuid 'b72a2a6edb9c3da80f323fd2ad34bb2b24ba3427'
+    oldFile: !uuid 'b10a46a4146f2ad7c2807461808a0ba4c526894b'
+  /test/image/oci/oci_config_merge:
+    newFile: !uuid 'bcdfc6d89e6e7c5934418ed5f52c9b367eef5f68'
+    oldFile: !uuid '690f49260f1a590ae9bcdeedf835aea3b5e98c0b'
+  /test/image/oci/oci_config_merge/oci_config_merge_llt.cc:
+    newFile: !uuid 'd7f7b72bb28e320aca374948173087c367ce8779'
+    oldFile: !uuid '6aeb3a192046fe48d9ceb947ecb6af42f64a4f09'
+  /test/test.sh:
+    newFile: !uuid '38e59ad172bdc094b82e3524d4d86e81a40de6d6'
+    oldFile: !uuid '4568fdd1a8c4eee97ab8acea2633b31c4469f799'
+  /tools:
+    newFile: !uuid 'd67117eabaef183d754d8d55a39f389feab45662'
+    oldFile: !uuid '7bcab8edeebc1fff1b82bc543a28cca883154a08'
+  /tools/static_check:
+    newFile: !uuid '5a1c4703cf0e385b21d02cc63e92f448659d9f9e'
+    oldFile: !uuid '51c4b018ec35fd5647624246629d917f892f89f3'
+gitCommitId: !uuid '8d83ffb166512e80305f8d530ecfab3134411bdc'
 renames: {
   }
-revisionId: 178
+revisionId: 179
