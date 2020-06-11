@@ -18,6 +18,7 @@
 
 #include <gmock/gmock.h>
 #include "namespace.h"
+#include "specs_namespace.h"
 
 class MockNamespace {
 public:
@@ -27,6 +28,6 @@ public:
     MOCK_METHOD1(GetContainerProcessLabel, char *(const char *path));
 };
 
-void MockNamespace_SetMock(MockNamespace* mock);
+void MockNamespace_SetMock(MockNamespace *mock);
 
-#endif  // NAMESPACE_MOCK_H_
+#endif // NAMESPACE_MOCK_H_
