@@ -14,10 +14,10 @@ add_executable(${EXE}
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/utils_base64.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/util_atomic.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/sha256/sha256.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/path.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/path.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/map/map.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/map/rb_tree.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/types_def.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/types_def.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/image/oci/storage/rootfs_store/rootfs.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/image/oci/storage/rootfs_store/rootfs_store.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../mocks/storage_mock.cc
