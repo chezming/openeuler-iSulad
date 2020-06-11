@@ -2,28 +2,10 @@
 branches: {
   }
 fileChange:
-  /src:
-    newFile: !uuid '548f7719a3a3dc7d986d031a4639e1b17ecebb41'
-    oldFile: !uuid '1f4b9492fd1ead3edda88cb1c19feab6e7f618ee'
-  /src/services:
-    newFile: !uuid '3e52ab7f1f97c28d5e43fa482c75684881d263ba'
-    oldFile: !uuid 'eb215bde04c3bcfd2176601f941bd037e52972c4'
-  /src/services/execution:
-    newFile: !uuid 'f6cde2f9a0d3feeaf865eabeefbf5b7306ac8441'
-    oldFile: !uuid '37df39bc08416e235a421184201c2e5e9de405ae'
-  /src/services/execution/events:
-    newFile: !uuid '838539237d56378fe06c6cd217cc6e400e3c42f6'
-    oldFile: !uuid 'e4cce9541c07c5fc50db51b38e96ebb0544e42bf'
-  /src/services/execution/events/collector.c:
-    newFile: !uuid 'fa05dd6afbd7425a95379046e0a59f46625dc655'
-    oldFile: !uuid '7d76e401e9c53841beb1f1551afe9249ae3a6010'
-  /src/services/execution/manager:
-    newFile: !uuid '71d53f7766f20c11314e4b9d957c79f3f8f85fd4'
-    oldFile: !uuid '48e81bf85826305cb8724fd8e5d4a95e1c35ebde'
-  /src/services/execution/manager/monitord.h:
-    newFile: !uuid 'b6b464c5523ca5f32fa77479357bad7eb2ab47c6'
-    oldFile: !uuid '67539e12eb97ff82ae50e494154220e1ec92d962'
-gitCommitId: !uuid 'b996e1e6d53d49b40b7f5975d482cc405b4dd15a'
+  /iSulad.spec:
+    newFile: !uuid '21df199cdde130869502b04a1897bc851d7b2202'
+    oldFile: !uuid '2ff08fc518303c2c89a9d081e3ed37f4837d41ea'
+gitCommitId: !uuid 'd943fc8e460c23e357de812d26eeaef4d1a1544a'
 renames: {
   }
-revisionId: 182
+revisionId: 183
