@@ -265,7 +265,7 @@ TEST_F(StorageImagesUnitTest, test_image_store_create)
     ASSERT_NE(image->repo_tags, nullptr);
     ASSERT_EQ(image->repo_tags_len, 1);
     ASSERT_STREQ(image->repo_tags[0], "docker.io/library/health_check:latest");
-    ASSERT_EQ(image->username, nullptr);
+    ASSERT_NE(image->username, nullptr);
     ASSERT_EQ(image->size, 0);
     ASSERT_EQ(image->spec->config->env_len, 1);
     ASSERT_STREQ(image->spec->config->env[0], "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin");
