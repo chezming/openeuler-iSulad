@@ -499,8 +499,17 @@ out:
 
 int devmapper_clean_up(const struct graphdriver *driver)
 {
+    int ret = 0;
+
     if (driver == NULL) {
         return -1;
     }
+
+    ret = device_set_shutdown(driver->home);
+    if (ret != 0) {
+        ERROR("devmapper: shutdown device set failed root is %s", driver->home);
+        return -1;
+    }
+
     return umount(driver->home);
 }
