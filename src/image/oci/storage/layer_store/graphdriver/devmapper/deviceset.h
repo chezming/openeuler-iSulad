@@ -63,6 +63,8 @@ struct device_set {
     int64_t udev_wait_timeout;
 
     image_devmapper_direct_lvm_config *lvm_setup_config;
+    pthread_mutex_t mutex;
+    bool init_mutex;
 };
 
 struct device_metadata {
@@ -120,6 +122,8 @@ int delete_device(const char *hash, bool sync_delete);
 int export_device_metadata(struct device_metadata *dev_metadata, const char *hash);
 struct status *device_set_status();
 void free_devmapper_status(struct status *st);
+
+int device_set_shutdown(const char *home);
 
 #ifdef __cplusplus
 }
