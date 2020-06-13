@@ -19,6 +19,8 @@ add_executable(${EXE}
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/map/rb_tree.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/types_def.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/image/oci/storage/image_store/image_type.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/image/oci/registry/registry_common.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/image/oci/registry/registry_type.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/image/oci/storage/image_store/image_store.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../mocks/storage_mock.cc
     storage_images_llt.cc)
@@ -31,10 +33,12 @@ target_include_directories(${EXE} PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/map
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/sha256
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/http
     ${CMAKE_BINARY_DIR}/conf
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../test/mocks
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/image/oci/storage
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/image/oci/storage/image_store
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/image/oci/registry
     )
 
 target_link_libraries(${EXE} ${GTEST_BOTH_LIBRARIES} ${GMOCK_LIBRARY} ${GMOCK_MAIN_LIBRARY} ${CMAKE_THREAD_LIBS_INIT} ${ISULA_LIBUTILS_LIBRARY} -lcrypto -lyajl -lz)
