@@ -125,7 +125,7 @@ int graphdriver_create_rw(const char *id, const char *parent, struct driver_crea
         ERROR("Invalid input arguments for driver create");
         return -1;
     }
-
+    
     return g_graphdriver->ops->create_rw(id, parent, g_graphdriver, create_opts);;
 }
 

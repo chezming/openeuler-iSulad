@@ -529,7 +529,7 @@ static image_devmapper_device_info *load_metadata(struct device_set *devset, con
     }
     info = image_devmapper_device_info_parse_file(metadata_file, NULL, &err);
     if (info == NULL) {
-        ERROR("load metadata file %s failed %s", metadata_file, err != NULL ? err : "");
+        DEBUG("Failed load metadata file %s  with err %s", metadata_file, err != NULL ? err : "");
         goto out;
     }
 
@@ -666,6 +666,7 @@ static image_devmapper_device_info *lookup_device(struct device_set *devset, con
         if (!res) {
             ERROR("devmapper: store device %s failed", hash);
             free_image_devmapper_device_info(info);
+            info = NULL;
         }
     }
 
@@ -695,7 +696,6 @@ static uint64_t get_base_device_size(struct device_set *devset)
         return 0;
     }
     res = info->size;
-    free_image_devmapper_device_info(info);
     return res;
 }
 
@@ -1492,8 +1492,6 @@ static image_devmapper_device_info *create_register_device(struct device_set *de
         }
 
         mark_device_id_free(devset, device_id);
-        // free_image_devmapper_device_info(info);
-        // info = NULL;
     }
 
 out:
@@ -2679,9 +2677,14 @@ static int parse_storage_opt(const json_map_string_string *opts, uint64_t *size)
     int ret = 0;
     size_t i = 0;
 
-    if (size == NULL || opts == NULL) {
-        ret = -1;
-        goto out;
+
+    if (size == NULL) {
+        ERROR("devmapper: invalid input params size is null");
+        return -1;
+    }
+
+    if (opts == NULL || opts->len == 0) {
+        return 0;
     }
 
     for (i = 0; i < opts->len; i++) {
@@ -2724,9 +2727,9 @@ int add_device(const char *hash, const char *base_hash, const json_map_string_st
         goto free_out;
     }
 
-    base_info = lookup_device(devset, base_hash);
+    base_info = lookup_device(devset, util_valid_str(base_hash)? base_hash:"base");
     if (base_info == NULL) {
-        ERROR("devmapper: lookup device %s failed", base_hash);
+        ERROR("devmapper: lookup device %s failed", util_valid_str(base_hash)? base_hash:"base");
         ret = -1;
         goto free_out;
     }
@@ -2738,14 +2741,15 @@ int add_device(const char *hash, const char *base_hash, const json_map_string_st
     }
 
     info = lookup_device(devset, hash);
-    if (info == NULL) {
-        ERROR("devmapper: lookup device %s failed", hash);
+    if (info != NULL) {
+        ERROR("devmapper: device %s already exists, deleted:%d", hash, info->deleted);
         ret = -1;
         goto free_out;
     }
 
     ret = parse_storage_opt(storage_opts, &size);
     if (ret != 0) {
+        ERROR("devmapper: parse storage opts for add device failed");
         goto free_out;
     }
 
@@ -2760,15 +2764,14 @@ int add_device(const char *hash, const char *base_hash, const json_map_string_st
 
     ret = take_snapshot(devset, hash, base_info, size);
     if (ret != 0) {
+        ERROR("devmapper: take snapshot for device %s failed", hash);
         goto free_out;
     }
 
     // Grow the container rootfs.
     if (size > base_info->size) {
-        free_image_devmapper_device_info(info);
-        info = NULL;
         info = lookup_device(devset, hash);
-        if (info == NULL) {
+        if (info != NULL) {
             ERROR("devmapper: lookup device %s failed", hash);
             ret = -1;
             goto free_out;
@@ -2785,8 +2788,6 @@ free_out:
         ERROR("unlock devmapper conf failed");
         return -1;
     }
-    free_image_devmapper_device_info(base_info);
-    free_image_devmapper_device_info(info);
     return ret;
 }
 
@@ -2873,7 +2874,7 @@ free_out:
         ERROR("unlock devmapper conf failed");
         ret = -1;
     }
-    free_image_devmapper_device_info(info);
+
     free(dev_fname);
     free(options);
     return ret;
@@ -2931,7 +2932,7 @@ free_out:
         ERROR("unlock devmapper conf failed");
         ret = -1;
     }
-    free_image_devmapper_device_info(info);
+
     return ret;
 }
 
@@ -2967,7 +2968,7 @@ free_out:
     if (devmapper_conf_unlock()) {
         ERROR("unlock devmapper conf failed");
     }
-    free_image_devmapper_device_info(info);
+
     return res;
 }
 
@@ -3006,7 +3007,6 @@ free_out:
         ret = -1;
         ERROR("unlock devmapper conf failed");
     }
-    free_image_devmapper_device_info(info);
     return ret;
 }
 
@@ -3055,7 +3055,6 @@ free_out:
         ret = -1;
         ERROR("unlock devmapper conf failed");
     }
-    free_image_devmapper_device_info(info);
     free(dm_name);
     return ret;
 }

@@ -93,8 +93,8 @@ bool metadata_store_add(const char *hash, image_devmapper_device_info *device)
     ret = map_replace(g_metadata_store->map, (void *)hash, (void *)device);
     if (pthread_rwlock_unlock(&g_metadata_store->rwlock)) {
         ERROR("devmapper: unlock metadata store failed");
-        return false;
     }
+    
     return ret;
 }
 
