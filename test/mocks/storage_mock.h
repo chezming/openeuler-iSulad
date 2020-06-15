@@ -28,4 +28,4 @@ public:
 
 void MockStorage_SetMock(MockStorage* mock);
 
-#endif
+#endif // STORAGE_MOCK_H_

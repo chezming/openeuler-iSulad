@@ -28,17 +28,17 @@ add_executable(${EXE}
 target_include_directories(${EXE} PUBLIC
     ${GTEST_INCLUDE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../include
+    ${CMAKE_BINARY_DIR}/conf
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/tar
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/map
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/sha256
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/http
-    ${CMAKE_BINARY_DIR}/conf
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../test/mocks
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/image/oci/storage
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/image/oci/storage/image_store
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/image/oci/registry
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../mocks
     )
 
 target_link_libraries(${EXE} ${GTEST_BOTH_LIBRARIES} ${GMOCK_LIBRARY} ${GMOCK_MAIN_LIBRARY} ${CMAKE_THREAD_LIBS_INIT} ${ISULA_LIBUTILS_LIBRARY} -lcrypto -lyajl -lz)
