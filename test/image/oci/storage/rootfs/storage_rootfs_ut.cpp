@@ -110,8 +110,12 @@ protected:
 
 TEST_F(StorageRootfsUnitTest, test_rootfs_load)
 {
+    std::string source = std::string(store_real_path) + "/overlay-containers/" + ids.at(0);
+    std::string backup = std::string(store_real_path) + "/overlay-containers/" + ids.at(0) + ".bak";
+    std::string cp_command = "cp -r " + source + " " + backup;
     auto cntr = rootfs_store_get_rootfs(ids.at(0).c_str());
 
+    ASSERT_EQ(system(cp_command.c_str()), 0);
     ASSERT_NE(cntr, nullptr);
     ASSERT_STREQ(cntr->created, "2020-05-27T08:55:26.273287183Z");
     ASSERT_STREQ(cntr->image, "e4db68de4ff27c2adfea0c54bbb73a61a42f5b667c326de4d7d5b19ab71c6a3b");
@@ -197,6 +201,10 @@ TEST_F(StorageRootfsUnitTest, test_rootfs_store_metadata)
 
 TEST_F(StorageRootfsUnitTest, test_rootfs_store_get_all_rootfs)
 {
+    std::string source = std::string(store_real_path) + "/overlay-containers/" + ids.at(0);
+    std::string backup = std::string(store_real_path) + "/overlay-containers/" + ids.at(0) + ".bak";
+    std::string rm_command = "rm -rf " + source;
+    std::string mv_command = "mv " + backup + " " + source;
     rootfs_list *rf_list = NULL;
 
     rf_list = (rootfs_list *)util_common_calloc_s(sizeof(rootfs_list));
@@ -219,6 +227,8 @@ TEST_F(StorageRootfsUnitTest, test_rootfs_store_get_all_rootfs)
     }
 
     free_rootfs_list(rf_list);
+    ASSERT_EQ(system(rm_command.c_str()), 0);
+    ASSERT_EQ(system(mv_command.c_str()), 0);
 }
 
 TEST_F(StorageRootfsUnitTest, test_rootfs_store_delete)

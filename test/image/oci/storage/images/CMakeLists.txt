@@ -1,6 +1,6 @@
-project(iSulad_LLT)
+project(iSulad_UT)
 
-SET(EXE storage_images_llt)
+SET(EXE storage_images_ut)
 
 add_executable(${EXE}
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/utils.c
@@ -23,7 +23,7 @@ add_executable(${EXE}
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/image/oci/registry/registry_type.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/image/oci/storage/image_store/image_store.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../mocks/storage_mock.cc
-    storage_images_llt.cc)
+    storage_images_ut.cpp)
 
 target_include_directories(${EXE} PUBLIC
     ${GTEST_INCLUDE_DIR}
