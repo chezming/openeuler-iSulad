@@ -2,10 +2,37 @@
 branches: {
   }
 fileChange:
-  /iSulad.spec:
-    newFile: !uuid '21df199cdde130869502b04a1897bc851d7b2202'
-    oldFile: !uuid '2ff08fc518303c2c89a9d081e3ed37f4837d41ea'
-gitCommitId: !uuid 'd943fc8e460c23e357de812d26eeaef4d1a1544a'
+  /CI:
+    newFile: !uuid 'e97836e69be74418d5e796f0a56e0a6dfe8fb135'
+    oldFile: !uuid '6d65a5d636bd6e7f214ec7f3d5efa91c06b1c77f'
+  /CI/test_cases:
+    newFile: !uuid 'dcbaf8c283bfd36fc0fee25fe05d5eb95175928c'
+    oldFile: !uuid '6217d9a40c6985d008ce4e38c9d90eab6548ee6c'
+  /CI/test_cases/basic_cases:
+    newFile: !uuid '4b854987c43e455d596a07102069969fb32f85ca'
+    oldFile: !uuid '2c987271d518e18f3f15bea9d93425bbdd489cd5'
+  /CI/test_cases/basic_cases/update.bash:
+    newFile: !uuid '1db9d8b0804e361d607d89b8dcbf4fffafe9a78b'
+    oldFile: !uuid '825eab2c363f500e380eec3f809a3b2b614ff0af'
+  /src:
+    newFile: !uuid '7bd5f41d5ee999f6eabc4edf91452339e13c9b8d'
+    oldFile: !uuid '548f7719a3a3dc7d986d031a4639e1b17ecebb41'
+  /src/services:
+    newFile: !uuid '318683f6e0546cd9ce1acbe52d043a971205874b'
+    oldFile: !uuid '3e52ab7f1f97c28d5e43fa482c75684881d263ba'
+  /src/services/execution:
+    newFile: !uuid '966c23fd6e4ac881199d142f45417953b6c5f0ca'
+    oldFile: !uuid 'f6cde2f9a0d3feeaf865eabeefbf5b7306ac8441'
+  /src/services/execution/execute:
+    newFile: !uuid 'cde786013b903c62655ee3bc937e01aee5972f5d'
+    oldFile: !uuid '84762a1ac7b4dcfbab88a6e8b3bf41357baf35fb'
+  /src/services/execution/execute/execution_create.c:
+    newFile: !uuid 'a32239218e1987c176f411b1d6e6c85e163b5806'
+    oldFile: !uuid 'bd5be9b2765b986338aa9df779af185bd7f5d1ec'
+  /src/services/execution/execute/execution_extend.c:
+    newFile: !uuid 'e02ff014895d1700997558f7f15f072d2febd200'
+    oldFile: !uuid '2addd5fa6f428eeeeed7e34fdb95cf4ad8b4da74'
+gitCommitId: !uuid '099de498c8b2d62697d156bf6b190cdc5c24fe78'
 renames: {
   }
-revisionId: 183
+revisionId: 184
