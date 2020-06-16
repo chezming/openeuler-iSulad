@@ -1,6 +1,6 @@
-project(iSulad_LLT)
+project(iSulad_UT)
 
-SET(EXE storage_layers_llt)
+SET(EXE storage_layers_ut)
 
 aux_source_directory(${CMAKE_BINARY_DIR}/json json_files)
 
@@ -40,7 +40,7 @@ add_executable(${EXE}
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/image/oci/storage/layer_store/graphdriver/devmapper/wrapper_devmapper.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/image/oci/storage/layer_store/graphdriver/devmapper/driver_devmapper.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../mocks/storage_mock.cc
-    storage_layers_llt.cc)
+    storage_layers_ut.cpp)
 
 target_include_directories(${EXE} PUBLIC
     ${GTEST_INCLUDE_DIR}
