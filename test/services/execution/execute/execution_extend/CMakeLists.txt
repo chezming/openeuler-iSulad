@@ -15,16 +15,16 @@ add_executable(${EXE}
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/sha256/sha256.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/error.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/path.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/map/map.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/map/rb_tree.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/map/map.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/map/rb_tree.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/mainloop.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/filters.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/libisulad.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/console/console.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/utils.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/utils_verify.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/map/map.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/map/rb_tree.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/map/map.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/map/rb_tree.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/services/execution/execute/execution_extend.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../mocks/runtime_mock.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../mocks/containers_store_mock.cc
@@ -50,7 +50,7 @@ target_include_directories(${EXE} PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cmd
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cmd/isulad
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/sha256
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/map
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/map
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/engines
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/console
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/config

@@ -13,8 +13,8 @@ add_executable(${EXE}
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/cutils/util_atomic.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/sha256/sha256.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/cutils/path.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/map/map.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/map/rb_tree.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/cutils/map/map.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/cutils/map/rb_tree.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/services/execution/spec/specs.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/services/execution/spec/specs_mount.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/services/execution/spec/specs_extend.c
@@ -39,7 +39,7 @@ target_include_directories(${EXE} PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/image
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/cutils
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/map
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/cutils/map
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/cmd/isulad
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/services
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/services/execution

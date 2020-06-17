@@ -10,14 +10,14 @@ add_executable(${EXE}
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/utils_string.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/utils_convert.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/utils_file.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/utils_images.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/utils_base64.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/util_atomic.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/sha256/sha256.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/path.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/map/map.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/map/rb_tree.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/map/map.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/map/rb_tree.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/types_def.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/image/oci/utils_images.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/image/oci/storage/rootfs_store/rootfs.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/image/oci/storage/rootfs_store/rootfs_store.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../mocks/storage_mock.cc
@@ -29,11 +29,12 @@ target_include_directories(${EXE} PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/tar
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/map
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/map
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/sha256
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/json/schema/src
     ${CMAKE_BINARY_DIR}/conf
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../test/mocks
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/image/oci
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/image/oci/storage
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/image/oci/storage/rootfs_store
     )

@@ -21,8 +21,8 @@ add_executable(${EXE}
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/sha256/sha256.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/path.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/mainloop.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/map/map.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/map/rb_tree.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/map/map.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/map/rb_tree.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/json/schema/src/isula_utils_read_file.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/types_def.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/console/console.c
@@ -48,7 +48,7 @@ target_include_directories(${EXE} PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/tar
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/map
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/map
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/sha256
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/console
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/json/schema/src
