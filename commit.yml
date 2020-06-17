@@ -1,20 +1,9 @@
 !revision
 branches: {
   }
-fileChange:
-  /CMakeLists.txt:
-    newFile: !uuid '456c27b445187f76173ebb33046cfc42c08e9de1'
-    oldFile: !uuid 'e867cde46e6d97a187d053bb109dc378d1e22143'
-  /cmake:
-    newFile: !uuid '6cc1e3a4e55146fdc0375421b316f0418fcdfbaf'
-    oldFile: !uuid 'f9216f7c527ce64f4d2dba6f378ef3af6cda6fb6'
-  /cmake/options.cmake:
-    newFile: !uuid '4a3f8e7340bf318155ac5cf58e046f6de7324188'
-    oldFile: !uuid 'b64ba778a3f6a11fd9bbd5e41552765e2b5ee3bd'
-  /iSulad.spec:
-    newFile: !uuid 'be5d8ad45a95d5a628710a5852fec732a7512869'
-    oldFile: !uuid '21df199cdde130869502b04a1897bc851d7b2202'
-gitCommitId: !uuid 'ef223d0ba57c660739555a5261c554882d1a34fa'
+fileChange: {
+  }
+gitCommitId: !uuid '370d765fe528c135e731363ef2ff908875a90429'
 renames: {
   }
-revisionId: 186
+revisionId: 187
