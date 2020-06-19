@@ -25,7 +25,7 @@ add_executable(${EXE}
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/utils_verify.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/map/map.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/map/rb_tree.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/services/execution/execute/execution_extend.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/daemon/services/execution/execute/execution_extend.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../mocks/runtime_mock.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../mocks/containers_store_mock.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../mocks/collector_mock.cc
@@ -46,23 +46,23 @@ target_include_directories(${EXE} PUBLIC
     ${GTEST_INCLUDE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../include
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/runtime
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/daemon/runtime
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cmd
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cmd/isulad
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/sha256
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/map
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/engines
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/daemon/engines
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/console
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/config
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/daemon
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/image
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/image/oci
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/services
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/services/execution/manager
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/services/execution/spec
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/services/execution/events
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/services/execution/execute
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/services/graphdriver
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/daemon/image
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/daemon/image/oci
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/daemon/services
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/daemon/services/execution/manager
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/daemon/services/execution/spec
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/daemon/services/execution/events
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/daemon/services/execution/execute
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/daemon/services/graphdriver
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../conf
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../mocks
     )

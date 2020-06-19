@@ -17,7 +17,7 @@ add_executable(${EXE}
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/cutils/map/rb_tree.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/libisulad.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../mocks/namespace_mock.cc
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/services/execution/spec/selinux_label.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/daemon/services/execution/spec/selinux_label.c
     selinux_label_ut.cpp)
 
 add_executable(${MOCK_EXE}
@@ -36,7 +36,7 @@ add_executable(${MOCK_EXE}
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../mocks/namespace_mock.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../mocks/syscall_mock.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../mocks/selinux_mock.cc
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/services/execution/spec/selinux_label.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/daemon/services/execution/spec/selinux_label.c
     selinux_label_mock_ut.cpp)
 
 target_include_directories(${EXE} PUBLIC
@@ -46,9 +46,9 @@ target_include_directories(${EXE} PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/cutils
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/sha256
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/cutils/map
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/services/execution/manager
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/daemon/services/execution/manager
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../mocks
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/services/execution/spec
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/daemon/services/execution/spec
     ${CMAKE_BINARY_DIR}/conf
     )
 
@@ -59,9 +59,9 @@ target_include_directories(${MOCK_EXE} PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/cutils
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/sha256
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/cutils/map
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/services/execution/manager
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/daemon/services/execution/manager
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../mocks
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/services/execution/spec
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/daemon/services/execution/spec
     ${CMAKE_BINARY_DIR}/conf
     )
 

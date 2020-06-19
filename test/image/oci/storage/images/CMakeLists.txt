@@ -17,11 +17,11 @@ add_executable(${EXE}
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/map/map.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/map/rb_tree.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/types_def.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/image/oci/utils_images.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/image/oci/storage/image_store/image_type.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/image/oci/registry/registry_common.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/image/oci/registry/registry_type.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/image/oci/storage/image_store/image_store.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/daemon/image/oci/utils_images.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/daemon/image/oci/storage/image_store/image_type.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/daemon/image/oci/registry/registry_common.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/daemon/image/oci/registry/registry_type.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/daemon/image/oci/storage/image_store/image_store.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../mocks/storage_mock.cc
     storage_images_ut.cpp)
 
@@ -35,10 +35,10 @@ target_include_directories(${EXE} PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/map
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/sha256
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/http
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/image/oci
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/image/oci/storage
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/image/oci/storage/image_store
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/image/oci/registry
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/daemon/image/oci
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/daemon/image/oci/storage
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/daemon/image/oci/storage/image_store
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/daemon/image/oci/registry
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../mocks
     )
 
