@@ -375,10 +375,18 @@ TEST_F(StorageImagesUnitTest, test_image_store_create)
     std::string layer { "6194458b07fcf01f1483d96cd6c34302ffff7f382bb151a6d023c4e80ba3050a" };
     std::string metadata { "{}" };
     types_timestamp_t time { 0x00 };
+    types_timestamp_t load_time = {
+        .has_seconds = true,
+        .seconds = 1,
+        .has_nanos = true,
+        .nanos = 1,
+    };
+
     char *created_image = image_store_create(id.c_str(), names, sizeof(names) / sizeof(names[0]), layer.c_str(),
                                              metadata.c_str(), &time, nullptr);
     std::cout << created_image << std::endl;
     ASSERT_STREQ(created_image, id.c_str());
+    ASSERT_EQ(image_store_set_load_time(id.c_str(), &load_time), 0);
 
     char real_path[PATH_MAX] = { 0x00 };
     std::string config_file =
@@ -583,6 +591,21 @@ TEST_F(StorageImagesUnitTest, test_image_store_get_all_images)
     }
 
     free_imagetool_images_list(images_list);
+}
+
+TEST_F(StorageImagesUnitTest, test_image_store_get_something)
+{
+    char **names = NULL;
+    size_t names_len = 0;
+    imagetool_fs_info fs_info;
+
+    ASSERT_EQ(image_store_get_images_number(), 2);
+    ASSERT_EQ(image_store_get_fs_info(&fs_info), 0);
+    ASSERT_EQ(image_store_get_names(ids.at(0).c_str(), &names, &names_len), 0);
+    ASSERT_EQ(names_len, 1);
+    ASSERT_STREQ(names[0], "imagehub.isulad.com/official/centos:latest");
+
+    util_free_array_by_len(names, names_len);
 }
 
 TEST_F(StorageImagesUnitTest, test_image_store_delete)

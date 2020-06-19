@@ -113,8 +113,11 @@ TEST_F(StorageRootfsUnitTest, test_rootfs_load)
     std::string source = std::string(store_real_path) + "/overlay-containers/" + ids.at(0);
     std::string backup = std::string(store_real_path) + "/overlay-containers/" + ids.at(0) + ".bak";
     std::string cp_command = "cp -r " + source + " " + backup;
-    auto cntr = rootfs_store_get_rootfs(ids.at(0).c_str());
+    storage_rootfs *cntr = NULL;
+    storage_rootfs *cntr_tmp = NULL;
+    cntrootfs_t cnrf;
 
+    cntr = rootfs_store_get_rootfs(ids.at(0).c_str());
     ASSERT_EQ(system(cp_command.c_str()), 0);
     ASSERT_NE(cntr, nullptr);
     ASSERT_STREQ(cntr->created, "2020-05-27T08:55:26.273287183Z");
@@ -127,7 +130,13 @@ TEST_F(StorageRootfsUnitTest, test_rootfs_load)
     ASSERT_STREQ(rootfs_store_big_data(ids.at(0).c_str(), "userdata"), BIG_DATA_CONTENT.c_str());
     ASSERT_EQ(rootfs_store_set_metadata(ids.at(0).c_str(), META_DATA_CONTENT.c_str()), 0);
 
+    cntr_tmp = rootfs_store_get_rootfs(ids.at(0).c_str());
+    cnrf.srootfs = cntr_tmp;
+    cnrf.refcnt = 0;
+    ASSERT_EQ(rootfs_store_save(&cnrf), 0);
+
     free_storage_rootfs(cntr);
+    free_storage_rootfs(cntr_tmp);
 }
 
 TEST_F(StorageRootfsUnitTest, test_rootfs_store_create)
@@ -206,6 +215,9 @@ TEST_F(StorageRootfsUnitTest, test_rootfs_store_get_all_rootfs)
     std::string rm_command = "rm -rf " + source;
     std::string mv_command = "mv " + backup + " " + source;
     rootfs_list *rf_list = NULL;
+    char *digest = NULL;
+    char **names = NULL;
+    size_t names_len = 0;
 
     rf_list = (rootfs_list *)util_common_calloc_s(sizeof(rootfs_list));
     ASSERT_NE(rf_list, nullptr);
@@ -222,11 +234,15 @@ TEST_F(StorageRootfsUnitTest, test_rootfs_store_get_all_rootfs)
             ASSERT_STREQ(cntr->names[0], "0e025f44cdca20966a5e5f11e1d9d8eb726aef2d38ed20f89ea986987c2010a9");
             ASSERT_EQ(cntr->names_len, 1);
             ASSERT_STREQ(cntr->big_data_names[0], "userdata");
-            ASSERT_EQ(*(cntr->big_data_sizes->values), BIG_DATA_CONTENT.size());
+            ASSERT_EQ(*(cntr->big_data_sizes->values), rootfs_store_big_data_size(ids.at(0).c_str(), "userdata"));
+            ASSERT_NE(digest = rootfs_store_big_data_digest(ids.at(0).c_str(), "userdata"), nullptr);
+            ASSERT_EQ(rootfs_store_big_data_names(ids.at(0).c_str(), &names, &names_len), 0);
         }
     }
 
+    util_free_array_by_len(names, names_len);
     free_rootfs_list(rf_list);
+    free(digest);
     ASSERT_EQ(system(rm_command.c_str()), 0);
     ASSERT_EQ(system(mv_command.c_str()), 0);
 }
