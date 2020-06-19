@@ -14,9 +14,9 @@ add_executable(${EXE}
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/path.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/map/map.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/map/rb_tree.c    
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cmd/commander.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cmd/command_parser.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/console/console.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cmd/isula/arguments.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cmd/isula/client_arguments.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/libisulad.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/libisula.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/types_def.c
