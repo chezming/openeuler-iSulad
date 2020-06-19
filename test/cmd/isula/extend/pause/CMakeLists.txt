@@ -23,7 +23,7 @@ add_executable(${EXE}
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/mainloop.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/container_def.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/error.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/connect/client/isula_connect.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/client/connect/isula_connect.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cmd/isula/extend/pause.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../mocks/grpc_client_mock.cc
     pause_ut.cpp)
@@ -34,14 +34,14 @@ target_include_directories(${EXE} PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/sha256
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/connect/client
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/client/connect
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cmd
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/map
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/http
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/console
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cmd/isula
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cmd/isula/extend
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/connect/client/grpc
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/client/connect/grpc
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../mocks
     ${CMAKE_BINARY_DIR}/conf
     )
