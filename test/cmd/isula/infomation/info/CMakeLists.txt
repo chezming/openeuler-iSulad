@@ -18,11 +18,10 @@ add_executable(${EXE}
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cmd/command_parser.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/console/console.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cmd/isula/client_arguments.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/libisulad.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/libisula.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/daemon/libisulad.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/client/libisula.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/types_def.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/mainloop.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/container_def.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/error.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/client/connect/isula_connect.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cmd/isula/information/info.c
@@ -33,6 +32,7 @@ target_include_directories(${EXE} PUBLIC
     ${GTEST_INCLUDE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../include
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/client
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/map
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/sha256
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils
