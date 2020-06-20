@@ -16,7 +16,7 @@ add_executable(${EXE}
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/path.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/map/map.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/map/rb_tree.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/types_def.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/utils_timestamp.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/daemon/image/oci/utils_images.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/daemon/image/oci/storage/rootfs_store/rootfs.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/daemon/image/oci/storage/rootfs_store/rootfs_store.c
