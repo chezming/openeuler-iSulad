@@ -17,7 +17,7 @@ add_executable(${EXE}
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/sha256/sha256.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/cutils/path.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/daemon/services/execution/spec/specs_extend.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/libisulad.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/daemon/libisulad.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/daemon/isulad_config.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/daemon/services/execution/spec/sysinfo.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/cmd/command_parser.c

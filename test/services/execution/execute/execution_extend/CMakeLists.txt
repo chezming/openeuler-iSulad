@@ -19,7 +19,7 @@ add_executable(${EXE}
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/map/rb_tree.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/mainloop.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/filters.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/libisulad.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/daemon/libisulad.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/console/console.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/utils.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/utils_verify.c

@@ -19,7 +19,7 @@ add_executable(${EXE}
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/daemon/services/execution/spec/specs_mount.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/daemon/services/execution/spec/specs_extend.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/daemon/services/execution/spec/specs_security.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/libisulad.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/daemon/libisulad.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/daemon/services/execution/spec/sysinfo.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/cmd/command_parser.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/daemon/daemon_arguments.c
