@@ -15,12 +15,12 @@ add_executable(${EXE}
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/cutils/path.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/cutils/map/map.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/cutils/map/rb_tree.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/daemon/services/execution/spec/specs.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/daemon/services/execution/spec/specs_mount.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/daemon/services/execution/spec/specs_extend.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/daemon/services/execution/spec/specs_security.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/daemon/spec//specs.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/daemon/spec//specs_mount.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/daemon/spec//specs_extend.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/daemon/spec//specs_security.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/daemon/libisulad.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/daemon/services/execution/spec/sysinfo.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/daemon/spec//sysinfo.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/cmd/command_parser.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/daemon/daemon_arguments.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../test/image/oci/oci_ut_common.cpp
@@ -42,11 +42,12 @@ target_include_directories(${EXE} PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/cutils/map
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/cmd/isulad
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/daemon
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/daemon/container
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/daemon/services
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/daemon/services/execution
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/daemon/services/execution/spec
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/daemon/spec/
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/daemon/services/execution/manager
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/daemon/services/execution/events
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/daemon/callback/container_cb/events
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/daemon/services/execution/execute
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/tar
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/plugin

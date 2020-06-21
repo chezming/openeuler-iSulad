@@ -25,7 +25,7 @@ add_executable(${EXE}
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/utils_verify.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/map/map.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/map/rb_tree.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/daemon/services/execution/execute/execution_extend.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/daemon/callback/container_cb/execute/execution_extend.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../mocks/runtime_mock.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../mocks/containers_store_mock.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../mocks/collector_mock.cc
@@ -56,13 +56,12 @@ target_include_directories(${EXE} PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/daemon
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/daemon/image
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/daemon/container
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/daemon/image/oci
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/daemon/services
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/daemon/services/execution/manager
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/daemon/services/execution/spec
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/daemon/services/execution/events
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/daemon/services/execution/execute
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/daemon/services/graphdriver
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/daemon/callback
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/daemon/spec/
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/daemon/callback/container_cb/events
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/daemon/callback/container_cb/execute
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../conf
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../mocks
     )
