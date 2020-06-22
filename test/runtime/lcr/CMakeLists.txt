@@ -16,7 +16,7 @@ add_executable(${EXE}
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/cutils/map/map.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/cutils/map/rb_tree.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/daemon/libisulad.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/daemon/services/execution/spec/sysinfo.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/daemon/spec//sysinfo.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/cmd/command_parser.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/daemon/daemon_arguments.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../test/image/oci/oci_ut_common.cpp
@@ -35,11 +35,12 @@ target_include_directories(${EXE} PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/cutils/map
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/daemon
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/daemon/container
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/daemon/services/execution/manager
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/daemon/services/execution/events
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/daemon/callback/container_cb/events
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/daemon/runtime
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/daemon/runtime/lcr
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/daemon/services/execution/spec
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/daemon/spec/
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/daemon/engines
     ${CMAKE_BINARY_DIR}/conf
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/sha256

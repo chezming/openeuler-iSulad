@@ -17,8 +17,8 @@
 
 #include <stdbool.h>
 #include <stdint.h>
-#include "types_def.h"
-#include "container_def.h"
+#include "utils_timestamp.h"
+#include "constants.h"
 
 #ifdef __cplusplus
 extern "C" {

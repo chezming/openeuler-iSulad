@@ -24,7 +24,7 @@ add_executable(${EXE}
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/map/map.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/map/rb_tree.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/json/schema/src/isula_utils_read_file.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/types_def.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/utils_timestamp.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/console/console.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/daemon/image/oci/storage/storage.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/daemon/image/oci/storage/image_store/image.c

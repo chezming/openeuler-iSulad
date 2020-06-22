@@ -16,17 +16,17 @@ add_executable(${EXE}
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/cutils/util_atomic.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/sha256/sha256.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/cutils/path.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/daemon/services/execution/spec/specs_extend.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/daemon/spec//specs_extend.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/daemon/libisulad.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/daemon/isulad_config.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/daemon/services/execution/spec/sysinfo.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/daemon/spec//sysinfo.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/cmd/command_parser.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/daemon/daemon_arguments.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../test/image/oci/oci_ut_common.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../test/mocks/containers_store_mock.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../test/mocks/namespace_mock.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../test/mocks/container_unix_mock.cc
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/daemon/services/execution/spec/specs_mount.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/daemon/spec//specs_mount.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../test/mocks/selinux_label_mock.cc
     oci_config_merge_ut.cpp)
 
@@ -39,9 +39,9 @@ target_include_directories(${EXE} PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/cutils/map
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/daemon
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/daemon/engines
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/daemon/services/execution/spec
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/daemon/services/execution/manager
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/daemon/services/execution/events
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/daemon/spec/
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/daemon/container/
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/daemon/callback/container_cb/events
     ${CMAKE_BINARY_DIR}/conf
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/sha256
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/config

@@ -20,7 +20,7 @@ add_executable(${EXE}
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cmd/isula/client_arguments.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/daemon/libisulad.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/client/libisula.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/types_def.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/utils_timestamp.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/mainloop.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/error.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/client/connect/isula_connect.c
