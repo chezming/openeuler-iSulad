@@ -41,7 +41,8 @@ target_include_directories(${EXE} PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/daemon/engines
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/daemon/spec/
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/daemon/container/
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/daemon/callback/container_cb/events
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/daemon/events
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/daemon/runtime
     ${CMAKE_BINARY_DIR}/conf
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/sha256
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/config

@@ -47,12 +47,13 @@ target_include_directories(${EXE} PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/daemon/services/execution
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/daemon/spec/
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/daemon/services/execution/manager
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/daemon/callback/container_cb/events
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/daemon/events
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/daemon/services/execution/execute
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/tar
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/plugin
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/http
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/daemon/engines
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/daemon/runtime
     ${ENGINES_INCS}
     ${RUNTIME_INCS}
     ${IMAGE_INCS}
