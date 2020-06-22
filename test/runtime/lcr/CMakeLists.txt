@@ -37,7 +37,7 @@ target_include_directories(${EXE} PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/daemon
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/daemon/container
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/daemon/services/execution/manager
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/daemon/callback/container_cb/events
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/daemon/events
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/daemon/runtime
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/daemon/runtime/lcr
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/daemon/spec/
