@@ -1,5 +1,5 @@
 /******************************************************************************
- * Copyright (c) Huawei Technologies Co., Ltd. 2017-2019. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2020. All rights reserved.
  * iSulad licensed under the Mulan PSL v2.
  * You can use this software according to the terms and conditions of the Mulan PSL v2.
  * You may obtain a copy of Mulan PSL v2 at:
@@ -8,24 +8,22 @@
  * IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY OR FIT FOR A PARTICULAR
  * PURPOSE.
  * See the Mulan PSL v2 for more details.
- * Author: tanyifeng
- * Create: 2017-11-22
- * Description: provide container list callback function definition
- *******************************************************************************/
+ * Author: jikui
+ * Create: 2020-02-25
+ * Description: provide containers_gc mock
+ ******************************************************************************/
 
-#ifndef __EXECUTION_H_
-#define __EXECUTION_H_
+#ifndef CONTAINERS_OPERATOR_MOCK_H_
+#define CONTAINERS_OPERATOR_MOCK_H_
 
-#include "callback.h"
+#include <gmock/gmock.h>
+#include "container_operator.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+class MockContainersOperator {
+public:
+    MOCK_METHOD1(IsGcProgress, bool(const char *id));
+};
 
-void container_callback_init(service_container_callback_t *cb);
-
-#ifdef __cplusplus
-}
-#endif
+void MockContainersOperator_SetMock(MockContainersOperator *mock);
 
 #endif

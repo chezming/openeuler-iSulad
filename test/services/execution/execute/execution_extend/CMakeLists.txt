@@ -20,6 +20,7 @@ add_executable(${EXE}
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/mainloop.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/filters.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/daemon/libisulad.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/daemon/events_sender/event_sender.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/console/console.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/utils.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/utils_verify.c
@@ -36,6 +37,7 @@ add_executable(${EXE}
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../mocks/isulad_config_mock.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../mocks/sysinfo_mock.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../mocks/container_state_mock.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../mocks/container_operator_mock.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../mocks/verify_mock.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../mocks/engine_mock.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../mocks/restartmanager_mock.cc
@@ -57,10 +59,14 @@ target_include_directories(${EXE} PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/daemon/image
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/daemon/container
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/daemon/container/restart_manager
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/daemon/container/health_check
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/daemon/container/container_gc
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/daemon/image/oci
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/daemon/callback
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/daemon/spec/
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/daemon/events
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/daemon/events_sender
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/daemon/callback/container_cb
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../conf
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../mocks
