@@ -51,7 +51,7 @@ target_include_directories(${EXE} PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cmd/isulad
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/sha256
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils/map
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/daemon/engines
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/daemon/runtime/engines
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/console
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/daemon
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/cutils

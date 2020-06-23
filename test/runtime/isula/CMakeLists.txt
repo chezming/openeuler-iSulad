@@ -39,7 +39,7 @@ target_include_directories(${EXE} PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/daemon/runtime
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/daemon/runtime/isula
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/daemon/spec/
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/daemon/engines
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/daemon/runtime/engines
     ${CMAKE_BINARY_DIR}/conf
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/sha256
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/config

@@ -53,7 +53,7 @@ target_include_directories(${EXE} PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/tar
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/plugin
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/http
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/daemon/engines
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/daemon/runtime/engines
     ${ENGINES_INCS}
     ${RUNTIME_INCS}
     ${IMAGE_INCS}
