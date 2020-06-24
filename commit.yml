@@ -3,21 +3,21 @@ branches: {
   }
 fileChange:
   /src:
-    newFile: !uuid 'b400b1038ebd5ef4ad61f419e06f37e7f145f562'
-    oldFile: !uuid '7bd5f41d5ee999f6eabc4edf91452339e13c9b8d'
+    newFile: !uuid '4074a533bf73694af8381a29e0c83f3763d0d309'
+    oldFile: !uuid 'b400b1038ebd5ef4ad61f419e06f37e7f145f562'
   /src/cmd:
-    newFile: !uuid 'b48d99f0752e1e82426fad6402414455efd9e0bc'
-    oldFile: !uuid '8d7e84d22fbe2dee890eedd0ae337e22993afd98'
-  /src/cmd/isulad-shim:
-    newFile: !uuid 'b10d8bcf7a81ff5e783d74e1c09e1c459599f169'
-    oldFile: !uuid '45ad597f091dca618be3250e0f59323cdd1faac3'
-  /src/cmd/isulad-shim/process.c:
-    newFile: !uuid 'da9bdb64e1d7bca984d469690695c142ff8f08ac'
-    oldFile: !uuid 'cf3153596d64ce198f1164dfe474c650efed5d4c'
-  /src/cmd/isulad-shim/process.h:
-    newFile: !uuid '71bc20cc46e2318c55a6a18a73dc0c414f212f3f'
-    oldFile: !uuid '6d0fb1955e04f765d69bbc694c4a04a40a1b8d70'
-gitCommitId: !uuid '1677ecb71b23ee7f0aa6568cbe2ae9b32075f6de'
+    newFile: !uuid '5dbc7271337e4e8e9e2eb88d8f6c411a3c100dec'
+    oldFile: !uuid 'b48d99f0752e1e82426fad6402414455efd9e0bc'
+  /src/cmd/isula:
+    newFile: !uuid '106750ed1ec52ff5fae47bcac8a25637d18bf711'
+    oldFile: !uuid 'fde413caf92a7fe6b9d7b8ae8c1034c472cbce7b'
+  /src/cmd/isula/information:
+    newFile: !uuid '94ee4ddbad3726dceec9c507cddc21ac252399c5'
+    oldFile: !uuid 'd7a037b76cf6745d6bfeacff49ed27274640520f'
+  /src/cmd/isula/information/inspect.c:
+    newFile: !uuid 'fe011ad9ef4cf045db9cf7d63f6d27cf944842ae'
+    oldFile: !uuid 'e9b6ff6d06978f07137c55198b7fd7861aa1c9bd'
+gitCommitId: !uuid '65926db53072b1f3dc6745cbbeaae42b0c507bf7'
 renames: {
   }
-revisionId: 189
+revisionId: 190
