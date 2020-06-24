@@ -10,40 +10,42 @@
  * See the Mulan PSL v2 for more details.
  * Author: tanyifeng
  * Create: 2017-11-22
- * Description: provide container collector definition
+ * Description: provide container supervisor definition
  ******************************************************************************/
-#ifndef __COLLECTOR_H
-#define __COLLECTOR_H
-
+#ifndef __ISULAD_CONTAINER_OPERATOR_H
+#define __ISULAD_CONTAINER_OPERATOR_H
 #include <pthread.h>
 #include <semaphore.h>
-#include "linked_list.h"
-#include "libisulad.h"
-#include "event_type.h"
+#include "container_unix.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-struct context_lists {
-    pthread_mutex_t context_mutex;
-    struct linked_list context_list;
-};
+int start_container(container_t *cont, const char *console_fifos[], bool reset_rm);
 
-int newcollector();
+int clean_container_resource(const char *id, const char *runtime, pid_t pid);
 
-void events_handler(struct monitord_msg *msg);
+int cleanup_container(container_t *cont, bool force);
 
-int add_monitor_client(char *name, const types_timestamp_t *since, const types_timestamp_t *until,
-                       const stream_func_wrapper *stream);
+int stop_container(container_t *cont, int timeout, bool force, bool restart);
 
-int events_subscribe(const char *name, const types_timestamp_t *since, const types_timestamp_t *until,
-                     const stream_func_wrapper *stream);
+int set_container_to_removal(const container_t *cont);
 
-struct isulad_events_format *dup_event(const struct isulad_events_format *event);
+int cleanup_mounts_by_id(const char *id, const char *engine_root_path);
+
+void umount_host_channel(const host_config_host_channel *host_channel);
+
+void umount_share_shm(container_t *cont);
+
+int kill_with_signal(container_t *cont, uint32_t signal);
+
+int force_kill(container_t *cont);
+
+bool container_in_gc_progress(const char *id);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* __COLLECTOR_H */
+#endif

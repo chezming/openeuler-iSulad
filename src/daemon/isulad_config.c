@@ -469,6 +469,32 @@ out:
     return path;
 }
 
+/* isulad monitor fifo name */
+char *conf_get_isulad_monitor_fifo_path()
+{
+    int ret;
+    char fifo_file_path[PATH_MAX] = { 0 };
+    char *rootpath = NULL;
+    char *result = NULL;
+
+    rootpath = conf_get_isulad_statedir();
+    if (rootpath == NULL) {
+        ERROR("Invalid parameter");
+        goto out;
+    }
+    ret = snprintf(fifo_file_path, PATH_MAX, "%s/monitord_fifo", rootpath);
+    if (ret < 0 || (size_t)ret >= PATH_MAX) {
+        ERROR("Create monitord fifo path failed");
+        goto out;
+    }
+
+    result = util_strdup_s(fifo_file_path);
+
+out:
+    free(rootpath);
+    return result;
+}
+
 /* conf get isulad mount rootfs */
 char *conf_get_isulad_mount_rootfs()
 {

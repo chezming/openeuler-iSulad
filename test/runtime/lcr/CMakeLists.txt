@@ -25,7 +25,7 @@ add_executable(${EXE}
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../test/mocks/container_unix_mock.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../test/mocks/engine_mock.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../test/mocks/isulad_config_mock.cc
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/daemon/runtime/lcr/lcr_rt_ops.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/daemon/runtime/engines/lcr/lcr_rt_ops.c
     lcr_rt_ops_ut.cpp)
 
 target_include_directories(${EXE} PUBLIC
@@ -35,12 +35,13 @@ target_include_directories(${EXE} PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/cutils/map
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/daemon
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/daemon/engines
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/daemon/container
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/daemon/services/execution/manager
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/daemon/container/restart_manager
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/daemon/container/health_check
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/daemon/events
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/daemon/runtime
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/daemon/runtime/lcr
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/daemon/runtime/engines
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/daemon/runtime/engines/lcr
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/daemon/spec/
     ${CMAKE_BINARY_DIR}/conf
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/sha256

@@ -38,9 +38,11 @@ target_include_directories(${EXE} PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../src
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/cutils/map
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/daemon
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/daemon/engines
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/daemon/runtime/engines
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/daemon/spec/
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/daemon/container/
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/daemon/container/restart_manager
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/daemon/container/health_check
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/daemon/events
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/daemon/runtime
     ${CMAKE_BINARY_DIR}/conf

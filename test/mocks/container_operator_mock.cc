@@ -13,17 +13,21 @@
  * Description: provide containers_gc mock
  ******************************************************************************/
 
-#ifndef CONTAINERS_GC_MOCK_H_
-#define CONTAINERS_GC_MOCK_H_
+#include "container_operator_mock.h"
 
-#include <gmock/gmock.h>
-#include "containers_gc.h"
+namespace {
+MockContainersOperator *g_containers_operator_mock = NULL;
+}
 
-class MockContainersGc {
-public:
-    MOCK_METHOD1(GcIsGcProgress, bool(const char *id));
-};
+void MockContainersOperator_SetMock(MockContainersOperator *mock)
+{
+    g_containers_operator_mock = mock;
+}
 
-void MockContainersGc_SetMock(MockContainersGc *mock);
-
-#endif
+bool container_in_gc_progress(const char *id)
+{
+    if (g_containers_operator_mock != nullptr) {
+        return g_containers_operator_mock->IsGcProgress(id);
+    }
+    return true;
+}

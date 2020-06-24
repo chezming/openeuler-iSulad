@@ -1,5 +1,5 @@
 /******************************************************************************
- * Copyright (c) Huawei Technologies Co., Ltd. 2017-2019. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2020. All rights reserved.
  * iSulad licensed under the Mulan PSL v2.
  * You can use this software according to the terms and conditions of the Mulan PSL v2.
  * You may obtain a copy of Mulan PSL v2 at:
@@ -8,24 +8,26 @@
  * IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY OR FIT FOR A PARTICULAR
  * PURPOSE.
  * See the Mulan PSL v2 for more details.
- * Author: tanyifeng
- * Create: 2017-11-22
- * Description: provide container list callback function definition
- *******************************************************************************/
+ * Author: lifeng
+ * Create: 2020-06-23
+ * Description: provide container collector definition
+ ******************************************************************************/
+#ifndef __EVENT_SENDER_H
+#define __EVENT_SENDER_H
 
-#ifndef __EXECUTION_H_
-#define __EXECUTION_H_
-
-#include "callback.h"
+#include "event_type.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void container_callback_init(service_container_callback_t *cb);
+int isulad_monitor_send_container_event(const char *name, runtime_state_t state, int pid, int exit_code,
+                                        const char *args, const char *extra_annations);
+
+int isulad_monitor_send_image_event(const char *name, image_state_t state);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif
+#endif /* __EVENT_SENDER_H */

@@ -8,42 +8,23 @@
  * IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY OR FIT FOR A PARTICULAR
  * PURPOSE.
  * See the Mulan PSL v2 for more details.
- * Author: tanyifeng
+ * Author: maoweiyong
  * Create: 2017-11-22
- * Description: provide container gc definition
+ * Description: provide monitord definition
  ******************************************************************************/
-#ifndef __ISULAD_CONTAINER_GC_H__
-#define __ISULAD_CONTAINER_GC_H__
-
+#ifndef __ISULAD_MONITORD_H
+#define __ISULAD_MONITORD_H
 #include <pthread.h>
-
+#include <semaphore.h>
+#include <limits.h>
 #include "libisulad.h"
-#include "linked_list.h"
-#include "container_unix.h"
+#include "utils.h"
 
-#if defined(__cplusplus) || defined(c_plusplus)
-extern "C" {
+struct monitord_sync_data {
+    sem_t *monitord_sem;
+    int *exit_code;
+};
+
+int new_monitord(struct monitord_sync_data *msync);
+
 #endif
-
-typedef struct _containers_gc_t_ {
-    pthread_mutex_t mutex;
-    struct linked_list containers_list;
-} containers_gc_t;
-
-int new_gchandler();
-
-int gc_add_container(const char *id, const char *runtime, const container_pid_t *pid_info);
-
-int gc_restore();
-
-int start_gchandler();
-
-bool gc_is_gc_progress(const char *id);
-
-
-#if defined(__cplusplus) || defined(c_plusplus)
-}
-#endif
-
-#endif /* __ISULAD_CONTAINER_GC_H__ */
-

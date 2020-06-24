@@ -12,7 +12,7 @@
  * Create: 2017-11-22
  * Description: provide container extend callback function definition
  *********************************************************************************/
-
+#include "execution_extend.h"
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/time.h>
@@ -27,19 +27,17 @@
 #include <sys/sysinfo.h>
 
 #include "isula_libutils/log.h"
+#include "event_sender.h"
 #include "collector.h"
 #include "console.h"
 #include "isulad_config.h"
 #include "config.h"
-#include "restartmanager.h"
 #include "image.h"
 #include "verify.h"
 #include "isula_libutils/container_inspect.h"
 #include "containers_store.h"
-#include "containers_gc.h"
-#include "execution_extend.h"
+#include "container_operator.h"
 #include "sysinfo.h"
-#include "health_check.h"
 #include "specs.h"
 #include "runtime.h"
 
@@ -643,7 +641,7 @@ static int container_resume_cb(const container_resume_request *request, containe
     isula_libutils_set_log_prefix(id);
     EVENT("Event: {Object: %s, Type: Resuming}", id);
 
-    if (gc_is_gc_progress(id)) {
+    if (container_in_gc_progress(id)) {
         isulad_set_error_message("You cannot resume container %s in garbage collector progress.", id);
         ERROR("You cannot resume container %s in garbage collector progress.", id);
         cc = ISULAD_ERR_EXEC;
@@ -783,7 +781,7 @@ static int container_pause_cb(const container_pause_request *request, container_
 
     EVENT("Event: {Object: %s, Type: Pausing}", id);
 
-    if (gc_is_gc_progress(id)) {
+    if (container_in_gc_progress(id)) {
         isulad_set_error_message("You cannot pause container %s in garbage collector progress.", id);
         ERROR("You cannot pause container %s in garbage collector progress.", id);
         cc = ISULAD_ERR_EXEC;
@@ -1238,7 +1236,7 @@ static int container_export_cb(const container_export_request *request, containe
     id = cont->common_config->id;
     isula_libutils_set_log_prefix(id);
 
-    if (gc_is_gc_progress(id)) {
+    if (container_in_gc_progress(id)) {
         isulad_set_error_message("You cannot export container %s in garbage collector progress.", id);
         ERROR("You cannot export container %s in garbage collector progress.", id);
         cc = ISULAD_ERR_EXEC;

@@ -10,40 +10,39 @@
  * See the Mulan PSL v2 for more details.
  * Author: tanyifeng
  * Create: 2017-11-22
- * Description: provide container collector definition
+ * Description: provide container gc definition
  ******************************************************************************/
-#ifndef __COLLECTOR_H
-#define __COLLECTOR_H
+#ifndef __ISULAD_CONTAINER_GC_H__
+#define __ISULAD_CONTAINER_GC_H__
 
 #include <pthread.h>
-#include <semaphore.h>
-#include "linked_list.h"
-#include "libisulad.h"
-#include "event_type.h"
 
-#ifdef __cplusplus
+#include "libisulad.h"
+#include "linked_list.h"
+
+#if defined(__cplusplus) || defined(c_plusplus)
 extern "C" {
 #endif
 
-struct context_lists {
-    pthread_mutex_t context_mutex;
-    struct linked_list context_list;
-};
+typedef struct _containers_gc_t_ {
+    pthread_mutex_t mutex;
+    struct linked_list containers_list;
+} containers_gc_t;
 
-int newcollector();
+int new_gchandler();
 
-void events_handler(struct monitord_msg *msg);
+int gc_add_container(const char *id, const char *runtime, const container_pid_t *pid_info);
 
-int add_monitor_client(char *name, const types_timestamp_t *since, const types_timestamp_t *until,
-                       const stream_func_wrapper *stream);
+int gc_restore();
 
-int events_subscribe(const char *name, const types_timestamp_t *since, const types_timestamp_t *until,
-                     const stream_func_wrapper *stream);
+int start_gchandler();
 
-struct isulad_events_format *dup_event(const struct isulad_events_format *event);
+bool gc_is_gc_progress(const char *id);
 
-#ifdef __cplusplus
+
+#if defined(__cplusplus) || defined(c_plusplus)
 }
 #endif
 
-#endif /* __COLLECTOR_H */
+#endif /* __ISULAD_CONTAINER_GC_H__ */
+

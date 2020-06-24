@@ -10,7 +10,7 @@ add_subdirectory(container)
 add_subdirectory(connect)
 add_subdirectory(log)
 add_subdirectory(events)
-add_subdirectory(engines)
+add_subdirectory(events_sender)
 
 set(local_daemon_srcs
     ${daemon_top_srcs}
@@ -23,7 +23,7 @@ set(local_daemon_srcs
     ${SERVER_CONNECT_SRCS}
     ${LOG_GATHER_SRCS}
     ${EVENTS_SRCS}
-    ${ENGINES_SRCS}
+    ${EVENTS_SENDER_SRCS}
     )
 
 set(local_daemon_incs
@@ -37,7 +37,7 @@ set(local_daemon_incs
     ${SERVER_CONNECT_INCS}
     ${LOG_GATHER_INCS}
     ${EVENTS_INCS}
-    ${ENGINES_INCS}
+    ${EVENTS_SENDER_INCS}
     )
 
 if (GRPC_CONNECTOR)
