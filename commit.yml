@@ -2,34 +2,19 @@
 branches: {
   }
 fileChange:
-  /src:
-    newFile: !uuid '78e3be1cbbf76c9950236a4d6f5d3f1559542e37'
-    oldFile: !uuid '37d05e443fb7e09b5be2b03d7e2286bb6e5f92e1'
-  /src/cmd:
-    newFile: !uuid 'a42e9a7c22a27f7b27511e83a7fa9b5bcb9ee6ca'
-    oldFile: !uuid '5dbc7271337e4e8e9e2eb88d8f6c411a3c100dec'
-  /src/cmd/isula:
-    newFile: !uuid '61eeeda89f73b806d4d32ef6769f0592b34fdb2b'
-    oldFile: !uuid '106750ed1ec52ff5fae47bcac8a25637d18bf711'
-  /src/cmd/isula/base:
-    newFile: !uuid 'e48976abfa13b0247e24ce95e98795431bb6feff'
-    oldFile: !uuid '59d486eaffc38f514362fae92e1ac45f5857bfee'
-  /src/cmd/isula/base/create.c:
-    newFile: !uuid '148eea1697ac27be9dc252852dd50a8a8b7e9690'
-    oldFile: !uuid '6fbc294ea8f38247ad4900ed46e1a45cfeaa1f68'
-  /src/services:
-    newFile: !uuid 'f83fe9df062247db92fcbdb1a9dcafef7e334e66'
-    oldFile: !uuid '3475ea2ce7f94c1454462a60e5c5d800f2f59cf2'
-  /src/services/execution:
-    newFile: !uuid '36cab614ce4727cbd36754792fc6de3553f36c93'
-    oldFile: !uuid '3276068df0f7d78f4e4aa02e8411f73b756ef040'
-  /src/services/execution/spec:
-    newFile: !uuid 'fe7b23457a775a4e8d5e41a82609c8a6a7f7e7bb'
-    oldFile: !uuid '0d7b54222e55edd8099672286c54953952cb5d61'
-  /src/services/execution/spec/selinux_label.c:
-    newFile: !uuid '5732880f6c08564a6a9b7239aa73a3fc6202acd0'
-    oldFile: !uuid '203ee29c97c14150159bdfb9ad71000524b817c5'
-gitCommitId: !uuid 'add4b8fb92058200861eec05b86587a43becd957'
+  /CI:
+    newFile: !uuid 'a4db703d0e1265fbf979f5835becf0a9a972f057'
+    oldFile: !uuid 'e97836e69be74418d5e796f0a56e0a6dfe8fb135'
+  /CI/test_cases:
+    newFile: !uuid '0672af1a73989ef61273568e759482518a801454'
+    oldFile: !uuid 'dcbaf8c283bfd36fc0fee25fe05d5eb95175928c'
+  /CI/test_cases/basic_cases:
+    newFile: !uuid '086ce767b4371e5d539a04d9a74cfdc0798c35a3'
+    oldFile: !uuid '4b854987c43e455d596a07102069969fb32f85ca'
+  /CI/test_cases/basic_cases/run.bash:
+    newFile: !uuid '8db3f1ee002a6f97484f43c249272f210d95584a'
+    oldFile: !uuid '9b57c2e69918c4ade785b92e1f5720aaa8e0129c'
+gitCommitId: !uuid '46ea3f775c8d816a82db00558480e277a2a99792'
 renames: {
   }
-revisionId: 193
+revisionId: 194
