@@ -30,7 +30,7 @@
 
 #include "constants.h"
 #include "isula_libutils/log.h"
-#include "console.h"
+#include "io_wrapper.h"
 #include "isulad_config.h"
 #include "config.h"
 #include "image.h"
@@ -42,6 +42,7 @@
 #include "execution_information.h"
 #include "execution_stream.h"
 #include "execution_create.h"
+#include "io_handler.h"
 #include "plugin.h"
 #include "execution_network.h"
 #include "runtime.h"
@@ -649,38 +650,6 @@ pack_response:
     return (cc == ISULAD_SUCCESS) ? 0 : -1;
 }
 
-static int kill_container(container_t *cont, uint32_t signal)
-{
-    int ret = 0;
-    char *id = NULL;
-
-    id = cont->common_config->id;
-
-    container_lock(cont);
-
-    if (!is_running(cont->state)) {
-        ERROR("Cannot kill container: Container %s is not running", id);
-        isulad_set_error_message("Cannot kill container: Container %s is not running", id);
-        ret = -1;
-        goto out;
-    }
-
-    if (signal == 0 || signal == SIGKILL) {
-        ret = force_kill(cont);
-    } else {
-        ret = kill_with_signal(cont, signal);
-    }
-
-    if (ret != 0) {
-        ret = -1;
-        goto out;
-    }
-
-out:
-    container_unlock(cont);
-    return ret;
-}
-
 static void pack_kill_response(container_kill_response *response, uint32_t cc, const char *id)
 {
     if (response == NULL) {
@@ -846,7 +815,7 @@ static int container_delete_cb(const container_delete_request *request, containe
         goto pack_response;
     }
 
-    if (cleanup_container(cont, force)) {
+    if (delete_container(cont, force)) {
         cc = ISULAD_ERR_EXEC;
         goto pack_response;
     }
