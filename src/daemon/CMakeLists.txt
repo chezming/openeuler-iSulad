@@ -1,50 +1,23 @@
 # get current directory sources files
 
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR} daemon_top_srcs)
-add_subdirectory(runtime)
-add_subdirectory(image)
-add_subdirectory(plugin)
 add_subdirectory(executor)
-add_subdirectory(spec)
-add_subdirectory(container)
-add_subdirectory(connect)
-add_subdirectory(log)
-add_subdirectory(events)
-add_subdirectory(events_sender)
+add_subdirectory(entry)
+add_subdirectory(modules)
 
 set(local_daemon_srcs
     ${daemon_top_srcs}
-    ${RUNTIME_SRCS}
-    ${IMAGE_SRCS}
-    ${PLUGIN_SRCS}
     ${EXECUTOR_SRCS}
-    ${SPEC_SRCS}
-    ${MANAGER_SRCS}
-    ${SERVER_CONNECT_SRCS}
-    ${LOG_GATHER_SRCS}
-    ${EVENTS_SRCS}
-    ${EVENTS_SENDER_SRCS}
+    ${ENTRY_SRCS}
+    ${MODULES_SRCS}
     )
 
 set(local_daemon_incs
     ${CMAKE_CURRENT_SOURCE_DIR}
-    ${RUNTIME_INCS}
-    ${IMAGE_INCS}
-    ${PLUGIN_INCS}
     ${EXECUTOR_INCS}
-    ${SPEC_INCS}
-    ${MANAGER_INCS}
-    ${SERVER_CONNECT_INCS}
-    ${LOG_GATHER_INCS}
-    ${EVENTS_INCS}
-    ${EVENTS_SENDER_INCS}
+    ${ENTRY_INCS}
+    ${MODULES_INCS}
     )
-
-if (GRPC_CONNECTOR)
-        add_subdirectory(cri)
-        list(APPEND local_daemon_srcs ${CRI_SRCS})
-        list(APPEND local_daemon_incs ${CRI_INCS})
-endif()
 
 set(DAEMON_SRCS
     ${local_daemon_srcs}

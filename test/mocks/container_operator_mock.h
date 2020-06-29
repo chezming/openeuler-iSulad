@@ -17,7 +17,7 @@
 #define CONTAINERS_OPERATOR_MOCK_H_
 
 #include <gmock/gmock.h>
-#include "container_operator.h"
+#include "service_container.h"
 
 class MockContainersOperator {
 public:

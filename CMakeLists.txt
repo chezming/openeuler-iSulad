@@ -85,13 +85,13 @@ install(FILES src/client/libisula.h
 	DESTINATION include/isulad)
 install(FILES src/client/connect/isula_connect.h
 	DESTINATION include/isulad)
-install(FILES src/cutils/utils_timestamp.h
+install(FILES src/utils/cutils/utils_timestamp.h
 	DESTINATION include/isulad)
-install(FILES src/cutils/error.h
+install(FILES src/utils/cutils/error.h
 	DESTINATION include/isulad)
-install(FILES src/daemon/runtime/engines/engine.h
+install(FILES src/daemon/modules/runtime/engines/engine.h
 	DESTINATION include/isulad)
-install(FILES src/daemon/image/image.h
+install(FILES src/daemon/modules/image/image.h
 	DESTINATION include/isulad)
 
 # install config files
