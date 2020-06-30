@@ -34,6 +34,8 @@ LXC_LOCK_DIR_HOST="/tmp/lxc_mount_dir"
 KEEP_CONTAINERS_ALIVE_DIR="/tmp/containerslock"
 TESTCASE_ASSIGN="${CIDIR}/testcase_assign"
 BASE_IMAGE=""
+devmapper_script="${TOPDIR}/CI/install_devmapper.sh"
+disk=NULL
 
 rm -rf ${TESTCASE_ASSIGN}_*
 
@@ -52,6 +54,7 @@ function usage() {
     echo "    -n, --container-num Multiple containers execute scripts in parallel"
     echo "    -g, --enable-gcov   Enable gcov for code coverage analysis"
     echo "    -i, --ignore-ci     Not running testcase"
+    echo "    -d, --disk          Specify the disk to create isulad-thinpool"
     echo "        --rm            Auto remove containers after testcase run success"
     echo "    -h, --help          Script help information"
 }
@@ -60,7 +63,7 @@ function err() {
     echo "[$(date +'%Y-%m-%dT%H:%M:%S%z')]: $@" >&2
 }
 
-args=`getopt -o m:n:g:i:h --long module:,container-num:,enable-gcov:,ignore-ci:,help -- "$@"`
+args=`getopt -o m:n:g:i:d:h --long module:,container-num:,enable-gcov:,ignore-ci:,disk:,help -- "$@"`
 if [ $? != 0 ] ; then echo "Terminating..." >&2 ; exit 1 ; fi
 eval set -- "$args"
 
@@ -70,6 +73,7 @@ while true; do
         -n|--container-num) container_nums=${2} ; shift 2 ;;
         -g|--enable-gcov)   enable_gcov=${2} ; shift 2 ;;
         -i|--ignore-ci)     ignore_ci=${2} ; shift 2 ;;
+        -d|--disk)          disk=${2} ; shift 2 ;;
         -h|--help)          usage ; exit 0 ;;
         --)                 shift ; break ;;
         *)                  err "invalid parameter" ; exit -1 ;;
@@ -308,7 +312,8 @@ function exec_script() {
     local log_path="/tmp/${1}.log"
     contname="${1}"
     # keep -i so testcases which read stdin can success
-    docker exec -itd -e TOPDIR=$src_code_dir -e TESTCASE_FLOCK=/tmp/runflag/${CONTAINER_NAME}.flock -e TESTCASE_SCRIPTS_LOG=/tmp/runflag/${CONTAINER_NAME}.scripts.log  -e TESTCASE_RUNFLAG=/tmp/runflag/${CONTAINER_NAME}.runflag -e TESTCASE_CONTNAME=${contname} ${contname} ${testcase_test} run ${2} ${log_path}
+    docker exec -itd -e TOPDIR=$src_code_dir -e TESTCASE_FLOCK=/tmp/runflag/${CONTAINER_NAME}.flock -e TESTCASE_SCRIPTS_LOG=/tmp/runflag/${CONTAINER_NAME}.scripts.log \
+     -e TESTCASE_RUNFLAG=/tmp/runflag/${CONTAINER_NAME}.runflag -e TESTCASE_CONTNAME=${contname} ${contname} ${testcase_test} run ${2} ${log_path}
     docker exec ${1} $testcase_test get
     if [[ $? -ne 0 ]]; then
         rm -rf ${CIDIR}/${CONTAINER_NAME}.runflag
@@ -352,6 +357,25 @@ do
     echo_success "Run container ${CONTAINER_NAME}_${suffix} success"
 done
 
+if [[ "x$disk" != "xNULL" ]]; then
+    # start container to test devicemapper
+    devmappercontainer=${CONTAINER_NAME}_devmapper
+    containers+=(${devmappercontainer})
+    tmpdir="${tmpdir_prefix}/${devmappercontainer}"
+    mkdir -p ${tmpdir}
+    docker run -tid -v /sys/fs/cgroup:/sys/fs/cgroup --tmpfs /tmp:exec,mode=777 --tmpfs /run:exec,mode=777 --name ${devmappercontainer} -v ${cptemp}:${cptemp} $env_gcov $env_ignore_ci \
+    -v ${CIDIR}:/tmp/runflag -v /lib/modules:/lib/modules -v $testcases_data_dir:$testcase_data -v $LXC_LOCK_DIR_HOST:$LXC_LOCK_DIR_CONTAINER \
+    -v $TOPDIR:$src_code_dir -v ${tmpdir}:/var/lib/isulad  -v=/dev:/dev --privileged -e login_username=$login_username -e login_passwd=$login_passwd $BASE_IMAGE
+
+    for index in $(seq 1 ${CONTAINER_INDEX})
+    do
+        suffix=$(ls ${CIDIR} | grep testcase_assign_ | grep -E "*[S|P]${index}$" | awk -F '_' '{print $NF}')
+        cat ${CIDIR}/testcase_assign_${suffix} >> ${CIDIR}/testcase_assign_devmapper
+    done
+    docker cp ${CIDIR}/testcase_assign_devmapper ${devmappercontainer}:/root
+    echo_success "Run container ${devmappercontainer} success"
+fi
+
 for container in ${containers[@]}
 do
     {
@@ -369,6 +393,19 @@ do
     }&
 done
 wait
+
+if [[ "x$disk" != "xNULL" ]]; then
+    # build devicemapper environment
+    docker exec -e TOPDIR=${src_code_dir} -e BUILDDIR=${cptemp} ${devmappercontainer} ${devmapper_script} ${disk}
+    if [ $? -ne 0 ]; then
+        echo_error "Build devicemapper env failed in container ${devmappercontainer}"
+        rm -rf ${cptemp}
+        exit 1
+    fi
+    echo_success "Finished build devicemapper in container ${devmappercontainer}"
+fi
+
+
 docker cp ${cptemp}/rest/bin ${copycontainer}:/usr
 docker cp ${cptemp}/rest/etc ${copycontainer}:/
 docker cp ${cptemp}/rest/include ${copycontainer}:/usr
@@ -384,6 +421,7 @@ do
     }&
     pids="$! $pids"
 done
+
 docker exec ${copycontainer} tail -f --retry /tmp/runflag/${CONTAINER_NAME}.scripts.log 2>/dev/null &
 tailpid=$!
 trap "kill -9 $tailpid; exit 0" 15 2
