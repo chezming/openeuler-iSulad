@@ -33,18 +33,17 @@
 #include "console.h"
 #include "isulad_config.h"
 #include "config.h"
-#include "image.h"
+#include "image_api.h"
 #include "path.h"
 #include "isulad_tar.h"
 #include "isula_libutils/container_inspect.h"
-#include "containers_store.h"
-#include "container_state.h"
+#include "container_api.h"
 #include "error.h"
 #include "isula_libutils/logger_json_file.h"
 #include "constants.h"
-#include "runtime.h"
-#include "event_sender.h"
-#include "service_container.h"
+#include "runtime_api.h"
+#include "events_sender_api.h"
+#include "service_container_api.h"
 
 static char *create_single_fifo(const char *statepath, const char *subpath, const char *stdflag)
 {

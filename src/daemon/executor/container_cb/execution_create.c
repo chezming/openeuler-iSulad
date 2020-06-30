@@ -32,20 +32,20 @@
 #include "io_wrapper.h"
 #include "isulad_config.h"
 #include "config.h"
-#include "specs.h"
+#include "specs_api.h"
 #include "verify.h"
-#include "containers_store.h"
+#include "container_api.h"
 #include "execution_network.h"
-#include "runtime.h"
-#include "plugin.h"
-#include "image.h"
+#include "runtime_api.h"
+#include "plugin_api.h"
+#include "image_api.h"
 #include "utils.h"
 #include "error.h"
 #include "constants.h"
 #include "namespace.h"
-#include "event_sender.h"
+#include "events_sender_api.h"
 #include "sysinfo.h"
-#include "service_container.h"
+#include "service_container_api.h"
 
 static int runtime_check(const char *name, bool *runtime_res)
 {
@@ -695,7 +695,7 @@ static host_config_host_channel *dup_host_channel(const host_config_host_channel
 
     dup_channel->path_on_host = channel->path_on_host != NULL ? util_strdup_s(channel->path_on_host) : NULL;
     dup_channel->path_in_container = channel->path_in_container != NULL ? util_strdup_s(channel->path_in_container) :
-                                     NULL;
+                                                                          NULL;
     dup_channel->permissions = channel->permissions != NULL ? util_strdup_s(channel->permissions) : NULL;
     dup_channel->size = channel->size;
 

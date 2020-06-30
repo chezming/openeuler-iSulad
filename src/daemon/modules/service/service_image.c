@@ -13,17 +13,17 @@
  * Description: provide container supervisor functions
  ******************************************************************************/
 #define _GNU_SOURCE
-#include "service_image.h"
+#include "service_image_api.h"
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <sys/mount.h>
 
 #include "isula_libutils/log.h"
-#include "image.h"
+#include "image_api.h"
 #include "utils.h"
-#include "containers_store.h"
-#include "event_sender.h"
+#include "container_api.h"
+#include "events_sender_api.h"
 
 static bool check_image_in_used(const char *image_ref)
 {
@@ -54,7 +54,7 @@ static bool check_image_in_used(const char *image_ref)
             in_used = true;
             goto unref_continue;
         }
-unref_continue:
+    unref_continue:
         container_unref(conts[i]);
         continue;
     }

@@ -1,5 +1,5 @@
 /******************************************************************************
- * Copyright (c) Huawei Technologies Co., Ltd. 2017-2019. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2020. All rights reserved.
  * iSulad licensed under the Mulan PSL v2.
  * You can use this software according to the terms and conditions of the Mulan PSL v2.
  * You may obtain a copy of Mulan PSL v2 at:
@@ -8,30 +8,24 @@
  * IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY OR FIT FOR A PARTICULAR
  * PURPOSE.
  * See the Mulan PSL v2 for more details.
- * Author: tanyifeng
- * Create: 2017-11-22
+ * Author: lifeng
+ * Create: 2020-06-22
  * Description: provide container events handler definition
  ******************************************************************************/
-#ifndef __EVENTS_HANDLER_H
-#define __EVENTS_HANDLER_H
+#ifndef __CONTAINER_EVENTS_HANDLER_H
+#define __CONTAINER_EVENTS_HANDLER_H
 
 #include <stdint.h>
 #include <pthread.h>
 #include "linked_list.h"
 
 #include "libisulad.h"
+#include "container_api.h"
 
-typedef struct _events_handler_t {
-    pthread_mutex_t mutex;
-    bool init_mutex;
-    struct linked_list events_list;
-    bool has_handler;
-} events_handler_t;
+container_events_handler_t *container_events_handler_new();
 
-events_handler_t *events_handler_new();
+void container_events_handler_free(container_events_handler_t *handler);
 
-void events_handler_free(events_handler_t *handler);
+int container_events_handler_post_events(const struct isulad_events_format *event);
 
-int events_handler_post_events(const struct isulad_events_format *event);
-
-#endif /* __EVENTS_HANDLER_H */
+#endif /* __CONTAINER_EVENTS_HANDLER_H */

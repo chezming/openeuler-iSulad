@@ -26,11 +26,11 @@
 #include "utils.h"
 #include "health_check.h"
 #include "callback.h"
-#include "service_container.h"
+#include "service_container_api.h"
 #include "isula_libutils/container_exec_request.h"
 #include "isula_libutils/container_exec_response.h"
-#include "containers_store.h"
-#include "log_gather.h"
+#include "log_gather_api.h"
+#include "container_state.h"
 
 /* container state lock */
 static void container_health_check_lock(health_check_manager_t *health)
@@ -145,15 +145,6 @@ void stop_health_checks(const char *container_id)
         close_health_check_monitor(cont);
     }
     container_unref(cont);
-}
-
-// If configuredValue is zero, use defaultValue instead.
-int64_t timeout_with_default(int64_t configured_value, int64_t default_value)
-{
-    if (configured_value == 0) {
-        return default_value;
-    }
-    return configured_value;
 }
 
 /* health check manager free */
@@ -278,7 +269,7 @@ static int shift_and_store_log_result(defs_health *health, const defs_health_log
             health->log[i]->end = util_strdup_s(health->log[i + 1]->end);
             health->log[i]->exit_code = health->log[i + 1]->exit_code;
             health->log[i]->output = health->log[i + 1]->output != NULL ? util_strdup_s(health->log[i + 1]->output) :
-                                     NULL;
+                                                                          NULL;
         } else {
             health->log[i]->start = util_strdup_s(result->start);
             health->log[i]->end = util_strdup_s(result->end);
@@ -357,8 +348,9 @@ static int handle_unhealthy_case(container_t *cont, const defs_health_log_elemen
     health_status = get_health_status(cont->state);
 
     if (strcmp(health_status, HEALTH_STARTING) == 0) {
-        int64_t start_period =
-            timeout_with_default(cont->common_config->config->healthcheck->start_period, DEFAULT_START_PERIOD);
+        int64_t start_period = (cont->common_config->config->healthcheck->start_period == 0) ?
+                                       DEFAULT_START_PERIOD :
+                                       cont->common_config->config->healthcheck->start_period;
         int64_t first, last;
         if (to_unix_nanos_from_str(cont->state->state->started_at, &first)) {
             ERROR("Parse container started time failed: %s", cont->state->state->started_at);
@@ -557,7 +549,8 @@ void *health_check_run(void *arg)
     container_req->attach_stdin = false;
     container_req->attach_stdout = true;
     container_req->attach_stderr = true;
-    container_req->timeout = timeout_with_default(config->healthcheck->timeout, DEFAULT_PROBE_TIMEOUT) / Time_Second;
+    container_req->timeout =
+            ((config->healthcheck->timeout == 0) ? DEFAULT_PROBE_TIMEOUT : config->healthcheck->timeout) / Time_Second;
     container_req->container_id = util_strdup_s(cont->common_config->id);
     container_req->argv = cmd_slice;
     container_req->argv_len = util_array_len((const char **)cmd_slice);
@@ -704,7 +697,9 @@ static void *health_check_monitor(void *arg)
         ERROR("Failed to monitor start time stamp");
         goto out;
     }
-    probe_interval = timeout_with_default(cont->common_config->config->healthcheck->interval, DEFAULT_PROBE_INTERVAL);
+    probe_interval = (cont->common_config->config->healthcheck->interval == 0) ?
+                             DEFAULT_PROBE_INTERVAL :
+                             cont->common_config->config->healthcheck->interval;
     set_monitor_idle_status(cont->health_check);
     while (true) {
         switch (get_health_check_monitor_state(cont->health_check)) {

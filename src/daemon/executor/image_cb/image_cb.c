@@ -29,12 +29,12 @@
 #include "error.h"
 #include "libisulad.h"
 #include "isula_libutils/log.h"
-#include "image.h"
+#include "image_api.h"
 #include "isulad_config.h"
 #include "mediatype.h"
 #include "filters.h"
-#include "event_sender.h"
-#include "service_image.h"
+#include "events_sender_api.h"
+#include "service_image_api.h"
 #ifdef ENABLE_OCI_IMAGE
 #include "oci_common_operators.h"
 #endif
@@ -529,7 +529,7 @@ out:
     return (ret < 0) ? ECOMMON : ret;
 }
 
-static bool valid_repo_tags(char * const * const repo_tags, size_t repo_index)
+static bool valid_repo_tags(char *const *const repo_tags, size_t repo_index)
 {
     if (repo_tags != NULL && repo_tags[repo_index] != NULL) {
         return true;
