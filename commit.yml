@@ -3,18 +3,12 @@ branches: {
   }
 fileChange:
   /CI:
-    newFile: !uuid 'a4db703d0e1265fbf979f5835becf0a9a972f057'
-    oldFile: !uuid 'e97836e69be74418d5e796f0a56e0a6dfe8fb135'
-  /CI/test_cases:
-    newFile: !uuid '0672af1a73989ef61273568e759482518a801454'
-    oldFile: !uuid 'dcbaf8c283bfd36fc0fee25fe05d5eb95175928c'
-  /CI/test_cases/basic_cases:
-    newFile: !uuid '086ce767b4371e5d539a04d9a74cfdc0798c35a3'
-    oldFile: !uuid '4b854987c43e455d596a07102069969fb32f85ca'
-  /CI/test_cases/basic_cases/run.bash:
-    newFile: !uuid '8db3f1ee002a6f97484f43c249272f210d95584a'
-    oldFile: !uuid '9b57c2e69918c4ade785b92e1f5720aaa8e0129c'
-gitCommitId: !uuid '46ea3f775c8d816a82db00558480e277a2a99792'
+    newFile: !uuid 'ac587a997100559de6467d350644a6c45156b029'
+    oldFile: !uuid 'a4db703d0e1265fbf979f5835becf0a9a972f057'
+  /CI/build.sh:
+    newFile: !uuid 'c599991824214a7f379ffcb65e44df980b098618'
+    oldFile: !uuid 'fddde51dd9d1ad3a404d239ef596f00a79eb7035'
+gitCommitId: !uuid '3e14fc533ccf45da6a15322b51efd25d56fd48c2'
 renames: {
   }
-revisionId: 194
+revisionId: 195
