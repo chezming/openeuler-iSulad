@@ -2,13 +2,34 @@
 branches: {
   }
 fileChange:
-  /CI:
-    newFile: !uuid 'ac587a997100559de6467d350644a6c45156b029'
-    oldFile: !uuid 'a4db703d0e1265fbf979f5835becf0a9a972f057'
-  /CI/build.sh:
-    newFile: !uuid 'c599991824214a7f379ffcb65e44df980b098618'
-    oldFile: !uuid 'fddde51dd9d1ad3a404d239ef596f00a79eb7035'
-gitCommitId: !uuid '3e14fc533ccf45da6a15322b51efd25d56fd48c2'
+  /src:
+    newFile: !uuid 'be0bbc560095aa11c86399f181b138de5cb8f64e'
+    oldFile: !uuid '78e3be1cbbf76c9950236a4d6f5d3f1559542e37'
+  /src/cmd:
+    newFile: !uuid '5a87502999ea5d9e75b4527c893a80b2b54a9fa0'
+    oldFile: !uuid 'a42e9a7c22a27f7b27511e83a7fa9b5bcb9ee6ca'
+  /src/cmd/isula:
+    newFile: !uuid '25b6ee8416343aa5a61c988ceea0da2596126c49'
+    oldFile: !uuid '61eeeda89f73b806d4d32ef6769f0592b34fdb2b'
+  /src/cmd/isula/information:
+    newFile: !uuid '73142dbe5d8c7e0ca55de367c6cff09c86c6cc05'
+    oldFile: !uuid '94ee4ddbad3726dceec9c507cddc21ac252399c5'
+  /src/cmd/isula/information/inspect.c:
+    newFile: !uuid 'c3b0f191dce0f71ab5d9317246a011311fbc6eac'
+    oldFile: !uuid 'fe011ad9ef4cf045db9cf7d63f6d27cf944842ae'
+  /src/services:
+    newFile: !uuid '0d065daf597f49326649bd1ba70c1c9699cf002a'
+    oldFile: !uuid 'f83fe9df062247db92fcbdb1a9dcafef7e334e66'
+  /src/services/execution:
+    newFile: !uuid '4a3a224a1977d26dc6dcc3ac6cf593b82ad75280'
+    oldFile: !uuid '36cab614ce4727cbd36754792fc6de3553f36c93'
+  /src/services/execution/execute:
+    newFile: !uuid '7f88532f2efe2e0653f40578a6ed24f01e83f5fa'
+    oldFile: !uuid '54daa5564bae6b858a71187db8eb10918e2bf964'
+  /src/services/execution/execute/execution_stream.c:
+    newFile: !uuid '4576898edd77bda86c79aaf6f2d4d99ea1f1d9b6'
+    oldFile: !uuid 'ea5740353816aaa6f4706ee41e5757c2b856e4ac'
+gitCommitId: !uuid '406e432af08a620d60ae13670ef14692e9272560'
 renames: {
   }
-revisionId: 195
+revisionId: 196
