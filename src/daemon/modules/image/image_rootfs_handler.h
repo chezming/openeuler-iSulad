@@ -1,5 +1,5 @@
 /******************************************************************************
- * Copyright (c) Huawei Technologies Co., Ltd. 2018-2019. All rights reserved.
+* Copyright (c) Huawei Technologies Co., Ltd. 2020. All rights reserved.
  * iSulad licensed under the Mulan PSL v2.
  * You can use this software according to the terms and conditions of the Mulan PSL v2.
  * You may obtain a copy of Mulan PSL v2 at:
@@ -8,30 +8,23 @@
  * IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY OR FIT FOR A PARTICULAR
  * PURPOSE.
  * See the Mulan PSL v2 for more details.
- * Author: maoweiyong
- * Create: 2018-11-08
- * Description: provide common service definition
- ******************************************************************************/
-#ifndef __SERVICE_COMMON_H
-#define __SERVICE_COMMON_H
+* Author: liuhao
+* Create: 2020-06-15
+* Description: provide isula image rootfs handler definition
+*******************************************************************************/
+#ifndef __IMAGE_ROOTFS_HANDLER_H
+#define __IMAGE_ROOTFS_HANDLER_H
 
-#include "daemon_arguments.h"
-#include "err_msg.h"
-
+#include "isula_libutils/oci_image_spec.h"
+#include "isula_libutils/host_config.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int server_common_init(const struct service_arguments *args);
-
-void server_common_start(void);
-
-void server_common_shutdown(void);
-
-void event_monitor_exit_callback(void *arg);
+int get_user_from_image_roofs(const char *basefs, const host_config *hc, const char *userstr, defs_process_user *puser);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif
+#endif /* __IMAGE_ROOTFS_HANDLER_H */

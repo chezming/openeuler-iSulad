@@ -23,7 +23,7 @@
 #include "isula_libutils/log.h"
 #include "utils.h"
 #include "mainloop.h"
-#include "libisulad.h"
+#include "err_msg.h"
 #include "events_sender_api.h"
 #include "image_api.h"
 #include "specs_api.h"
@@ -158,7 +158,7 @@ static int generate_user_and_groups_conf(const container_t *cont, defs_process_u
         username = cont->common_config->config->user;
     }
 
-    /* username may be NULL, we will handle it as UID 0 in get_user */
+    /* username may be NULL, we will handle it as UID 0 in im_get_user_conf */
     ret = im_get_user_conf(cont->common_config->image_type, cont->common_config->base_fs, cont->hostconfig, username,
                            *puser);
     if (ret != 0) {
@@ -231,7 +231,7 @@ static void clean_resources_on_failure(const container_t *cont, const char *engi
 }
 
 static int do_post_start_on_success(const char *id, const char *runtime, const char *pidfile, int exit_fifo_fd,
-                                    const container_pid_t *pid_info)
+                                    const pid_ppid_info_t *pid_info)
 {
     int ret = 0;
 
@@ -583,7 +583,7 @@ static int umount_dev_tmpfs_for_system_container(const container_t *cont)
     return 0;
 }
 
-static int do_start_container(container_t *cont, const char *console_fifos[], bool reset_rm, container_pid_t *pid_info)
+static int do_start_container(container_t *cont, const char *console_fifos[], bool reset_rm, pid_ppid_info_t *pid_info)
 {
     int ret = 0;
     int nret = 0;
@@ -755,7 +755,7 @@ out:
 int start_container(container_t *cont, const char *console_fifos[], bool reset_rm)
 {
     int ret = 0;
-    container_pid_t pid_info = { 0 };
+    pid_ppid_info_t pid_info = { 0 };
     int exit_code = 125;
 
     if (cont == NULL || console_fifos == NULL) {

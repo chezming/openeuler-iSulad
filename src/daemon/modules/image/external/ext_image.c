@@ -24,7 +24,8 @@
 #include "isula_libutils/log.h"
 #include "utils.h"
 #include "ext_image.h"
-#include "libisulad.h"
+#include "image_rootfs_handler.h"
+#include "err_msg.h"
 
 #ifdef ENABLE_OCI_IMAGE
 #include "storage.h"
@@ -134,7 +135,7 @@ int ext_get_user_conf(const char *basefs, host_config *hc, const char *userstr, 
         ERROR("Empty basefs or puser");
         return -1;
     }
-    return get_user(basefs, hc, userstr, puser);
+    return get_user_from_image_roofs(basefs, hc, userstr, puser);
 }
 
 int ext_list_images(const im_list_request *request, imagetool_images_list **list)
