@@ -113,14 +113,23 @@ RUN echo "export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH" >> /
 # disalbe sslverify
 RUN git config --global http.sslverify false
 
+ENV CMAKE_VERSION=3.12.1 \
+    PROTOBUF_VERSION=3.9.0 \
+    CARES_VERSION=1.15.0 \
+    GRPC_VERSION=1.28.1 \
+    LIBEVENT_VERSION=2.1.11-stable \
+    LIBEVHTP_VERSION=1.2.18 \
+    HTTP_PARSER_VERSION=2.9.4 \
+    LIBWEBSOCKET_VERSION=4.0.1
+
 # install cmake
 RUN set -x && \
 	cd ~ && \
 	git clone https://gitee.com/src-openeuler/cmake.git && \
 	cd cmake && \
 	git checkout origin/openEuler-20.03-LTS && \
-	tar -xzvf cmake-3.12.1.tar.gz && \
-	cd cmake-3.12.1 && \
+	tar -xzvf cmake-${CMAKE_VERSION}.tar.gz && \
+	cd cmake-${CMAKE_VERSION} && \
 	./bootstrap && make && make install && \
 	ldconfig
 
@@ -131,8 +140,8 @@ RUN set -x && \
 	cd ~ && \
 	git clone https://gitee.com/src-openeuler/protobuf.git && \
 	cd protobuf && \
-	tar -xzvf protobuf-all-3.9.0.tar.gz && \
-	cd protobuf-3.9.0 && \
+	tar -xzvf protobuf-all-${PROTOBUF_VERSION}.tar.gz && \
+	cd protobuf-${PROTOBUF_VERSION} && \
 	./autogen.sh && \
 	./configure && \
 	make -j $(nproc) && \
@@ -145,8 +154,8 @@ RUN export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH && \
 	cd ~ && \
 	git clone https://gitee.com/src-openeuler/c-ares.git && \
 	cd c-ares && \
-	tar -xzvf c-ares-1.15.0.tar.gz && \
-	cd c-ares-1.15.0 && \
+	tar -xzvf c-ares-${CARES_VERSION}.tar.gz && \
+	cd c-ares-${CARES_VERSION} && \
 	autoreconf -if && \
 	./configure --enable-shared --disable-dependency-tracking && \
 	make -j $(nproc) && \
@@ -159,8 +168,10 @@ RUN export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH && \
 	cd ~ && \
 	git clone https://gitee.com/src-openeuler/grpc.git && \
 	cd grpc && \
-	tar -xzvf grpc-1.22.0.tar.gz && \
-	cd grpc-1.22.0 && \
+	tar -xzvf grpc-${GRPC_VERSION}.tar.gz && \
+	# this line will probably stop work when version bumpped
+	tar -zxf abseil-cpp-b832dce8489ef7b6231384909fd9b68d5a5ff2b7.tar.gz --strip-components 1 -C grpc-${GRPC_VERSION}/third_party/abseil-cpp && \
+	cd grpc-${GRPC_VERSION} && \
 	make -j $(nproc) && \
 	make install && \
 	ldconfig
@@ -171,8 +182,8 @@ RUN export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH && \
 	cd ~ && \
 	git clone https://gitee.com/src-openeuler/libevent.git && \
 	cd libevent && \
-	tar -xzvf libevent-2.1.11-stable.tar.gz && \
-	cd libevent-2.1.11-stable && \
+	tar -xzvf libevent-${LIBEVENT_VERSION}.tar.gz && \
+	cd libevent-${LIBEVENT_VERSION} && \
 	./autogen.sh && \
 	./configure && \
 	make -j $(nproc) && \
@@ -185,8 +196,8 @@ RUN export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH && \
 	cd ~ && \
 	git clone https://gitee.com/src-openeuler/libevhtp.git && \
 	cd libevhtp && \
-	tar -xzvf libevhtp-1.2.18.tar.gz && \
-	cd libevhtp-1.2.18 && \
+	tar -xzvf libevhtp-${LIBEVHTP_VERSION}.tar.gz && \
+	cd libevhtp-${LIBEVHTP_VERSION} && \
 	patch -p1 -F1 -s < ../0001-decrease-numbers-of-fd-for-shared-pipe-mode.patch && \
 	patch -p1 -F1 -s < ../0002-evhtp-enable-dynamic-thread-pool.patch && \
 	patch -p1 -F1 -s < ../0003-close-open-ssl.-we-do-NOT-use-it-in-lcrd.patch && \
@@ -205,8 +216,8 @@ RUN export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH && \
 	cd ~ && \
 	git clone https://gitee.com/src-openeuler/http-parser.git && \
 	cd http-parser && \
-	tar -xzvf http-parser-2.9.2.tar.gz && \
-	cd http-parser-2.9.2 && \
+	tar -xzvf http-parser-${HTTP_PARSER_VERSION}.tar.gz && \
+	cd http-parser-${HTTP_PARSER_VERSION} && \
 	make -j CFLAGS="-Wno-error" && \
 	make CFLAGS="-Wno-error" install && \
 	ldconfig
@@ -217,9 +228,10 @@ RUN export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH && \
 	cd ~ && \
 	git clone https://gitee.com/src-openeuler/libwebsockets.git && \
 	cd libwebsockets && \
-	tar -xzvf libwebsockets-2.4.2.tar.gz && \
-	cd libwebsockets-2.4.2 && \
-	patch -p1 -F1 -s < ../libwebsockets-fix-coredump.patch && \
+	tar -xzvf libwebsockets-${LIBWEBSOCKET_VERSION}.tar.gz && \
+	cd libwebsockets-${LIBWEBSOCKET_VERSION} && \
+	# this line will probably stop work when version bumpped
+	patch -p1 -F1 -s < ../0001-add-secure-compile-option-in-Makefile.patch && \
 	mkdir build && \
 	cd build && \
 	cmake -DLWS_WITH_SSL=0 -DLWS_MAX_SMP=32 -DCMAKE_BUILD_TYPE=Debug ../ && \
