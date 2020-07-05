@@ -9,3 +9,5 @@ GTAGS
 iSula-libutils
 compile_commands.json
 tags
+.idea
+:git s
