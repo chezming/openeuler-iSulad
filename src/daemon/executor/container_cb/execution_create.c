@@ -294,8 +294,7 @@ error_out:
     return NULL;
 }
 
-static oci_runtime_spec *generate_oci_config(host_config *host_spec, const char *real_rootfs,
-                                             container_config_v2_common_config *v2_spec)
+static oci_runtime_spec *generate_oci_config(host_config *host_spec, container_config_v2_common_config *v2_spec)
 {
     int ret = 0;
     oci_runtime_spec *oci_spec = NULL;
@@ -305,7 +304,7 @@ static oci_runtime_spec *generate_oci_config(host_config *host_spec, const char 
         goto error_out;
     }
 
-    ret = merge_all_specs(host_spec, real_rootfs, v2_spec, oci_spec);
+    ret = merge_all_specs(host_spec, v2_spec, oci_spec);
     if (ret != 0) {
         ERROR("Failed to merge config");
         goto error_out;
@@ -855,7 +854,7 @@ static int get_basic_spec(const container_create_request *request, const char *i
 }
 
 static int do_image_create_container_roofs_layer(const char *container_id, const char *image_type,
-                                                 const char *image_name, const char *rootfs,
+                                                 const char *image_name, const char *mount_label, const char *rootfs,
                                                  json_map_string_string *storage_opt, char **real_rootfs)
 {
     int ret = 0;
@@ -870,6 +869,7 @@ static int do_image_create_container_roofs_layer(const char *container_id, const
     request->container_id = util_strdup_s(container_id);
     request->image_name = util_strdup_s(image_name);
     request->image_type = util_strdup_s(image_type);
+    request->mount_label = util_strdup_s(mount_label);
     request->rootfs = util_strdup_s(rootfs);
     if (storage_opt != NULL) {
         request->storage_opt = util_common_calloc_s(sizeof(json_map_string_string));
@@ -893,6 +893,51 @@ static int do_image_create_container_roofs_layer(const char *container_id, const
 out:
     free_im_prepare_request(request);
     return ret;
+}
+
+static int make_sure_oci_spec_root(oci_runtime_spec *oci_spec)
+{
+    if (oci_spec->root == NULL) {
+        oci_spec->root = util_common_calloc_s(sizeof(oci_runtime_spec_root));
+        if (oci_spec->root == NULL) {
+            return -1;
+        }
+    }
+    return 0;
+}
+
+static int merge_root(oci_runtime_spec *oci_spec, const char *rootfs, const host_config *host_spec)
+{
+    int ret = 0;
+
+    ret = make_sure_oci_spec_root(oci_spec);
+    if (ret < 0) {
+        goto out;
+    }
+
+    // fill root path properties
+    if (rootfs != NULL) {
+        free(oci_spec->root->path);
+        oci_spec->root->path = util_strdup_s(rootfs);
+    }
+    if (host_spec->readonly_rootfs) {
+        oci_spec->root->readonly = host_spec->readonly_rootfs;
+    }
+
+out:
+    return ret;
+}
+
+static int merge_real_rootfs(const char *real_rootfs, oci_runtime_spec *oci_spec,
+                             host_config *host_spec, container_config_v2_common_config *v2_spec)
+{
+    if (merge_root(oci_spec, real_rootfs, host_spec) != 0) {
+        ERROR("Failed to merge root");
+        return -1;
+    }
+    v2_spec->base_fs = util_strdup_s(real_rootfs);
+
+    return 0;
 }
 
 /*
@@ -971,14 +1016,6 @@ int container_create_cb(const container_create_request *request, container_creat
         goto clean_container_root_dir;
     }
 
-    ret = do_image_create_container_roofs_layer(id, image_type, image_name, request->rootfs, host_spec->storage_opt,
-                                                &real_rootfs);
-    if (ret != 0) {
-        ERROR("Can not create container %s rootfs layer", id);
-        cc = ISULAD_ERR_EXEC;
-        goto clean_container_root_dir;
-    }
-
     ret = im_merge_image_config(image_type, image_name, v2_spec->config);
     if (ret != 0) {
         ERROR("Can not merge container_spec with image config");
@@ -991,8 +1028,21 @@ int container_create_cb(const container_create_request *request, container_creat
         goto clean_rootfs;
     }
 
-    oci_spec = generate_oci_config(host_spec, real_rootfs, v2_spec);
+    oci_spec = generate_oci_config(host_spec, v2_spec);
     if (oci_spec == NULL) {
+        cc = ISULAD_ERR_EXEC;
+        goto umount_shm;
+    }
+
+    ret = do_image_create_container_roofs_layer(id, image_type, image_name, oci_spec->linux->mount_label,
+                                                request->rootfs, host_spec->storage_opt, &real_rootfs);
+    if (ret != 0) {
+        ERROR("Can not create container %s rootfs layer", id);
+        cc = ISULAD_ERR_EXEC;
+        goto umount_shm;
+    }
+
+    if (merge_real_rootfs(real_rootfs, oci_spec, host_spec, v2_spec) != 0) {
         cc = ISULAD_ERR_EXEC;
         goto umount_shm;
     }

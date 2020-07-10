@@ -1014,8 +1014,8 @@ out:
     return ret;
 }
 
-int storage_rootfs_create(const char *container_id, const char *image, json_map_string_string *storage_opts,
-                          char **mountpoint)
+int storage_rootfs_create(const char *container_id, const char *image, const char *mount_label,
+                          json_map_string_string *storage_opts, char **mountpoint)
 {
     int ret = 0;
     char *rootfs_id = NULL;

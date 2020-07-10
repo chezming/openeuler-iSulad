@@ -26,7 +26,7 @@
 extern "C" {
 #endif
 
-int merge_all_specs(host_config *host_spec, const char *real_rootfs, container_config_v2_common_config *v2_spec,
+int merge_all_specs(host_config *host_spec, container_config_v2_common_config *v2_spec,
                     oci_runtime_spec *oci_spec);
 int merge_oci_cgroups_path(const char *id, oci_runtime_spec *oci_spec, const host_config *host_spec);
 int merge_global_config(oci_runtime_spec *oci_spec);
