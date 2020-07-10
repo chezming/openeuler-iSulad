@@ -389,39 +389,6 @@ out:
     return oci_spec;
 }
 
-static int make_sure_oci_spec_root(oci_runtime_spec *oci_spec)
-{
-    if (oci_spec->root == NULL) {
-        oci_spec->root = util_common_calloc_s(sizeof(oci_runtime_spec_root));
-        if (oci_spec->root == NULL) {
-            return -1;
-        }
-    }
-    return 0;
-}
-
-static int merge_root(oci_runtime_spec *oci_spec, const char *rootfs, const host_config *host_spec)
-{
-    int ret = 0;
-
-    ret = make_sure_oci_spec_root(oci_spec);
-    if (ret < 0) {
-        goto out;
-    }
-
-    // fill root path properties
-    if (rootfs != NULL) {
-        free(oci_spec->root->path);
-        oci_spec->root->path = util_strdup_s(rootfs);
-    }
-    if (host_spec->readonly_rootfs) {
-        oci_spec->root->readonly = host_spec->readonly_rootfs;
-    }
-
-out:
-    return ret;
-}
-
 static int merge_blkio_weight(oci_runtime_spec *oci_spec, uint16_t blkio_weight)
 {
     int ret = 0;
@@ -1976,17 +1943,10 @@ out:
     return ret;
 }
 
-int merge_all_specs(host_config *host_spec, const char *real_rootfs, container_config_v2_common_config *v2_spec,
+int merge_all_specs(host_config *host_spec, container_config_v2_common_config *v2_spec,
                     oci_runtime_spec *oci_spec)
 {
     int ret = 0;
-
-    ret = merge_root(oci_spec, real_rootfs, host_spec);
-    if (ret != 0) {
-        ERROR("Failed to merge root");
-        goto out;
-    }
-    v2_spec->base_fs = util_strdup_s(real_rootfs);
 
     ret = merge_security_conf(oci_spec, host_spec, v2_spec);
     if (ret != 0) {
