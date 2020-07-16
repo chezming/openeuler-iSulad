@@ -46,6 +46,7 @@ RUN yum clean all && yum makecache && yum install -y epel-release && yum swap -y
 			docbook2X \
 			libselinux \
 			libselinux-devel \
+			container-selinux \
 			libseccomp \
 			libseccomp-devel \
 			yajl-devel \
@@ -63,8 +64,7 @@ RUN yum clean all && yum makecache && yum install -y epel-release && yum swap -y
 			python3 \
 			python3-pip \
 			device-mapper-devel \
-			libarchive \
-			libarchive-devel \
+			xz-devel \
 			libtar \
 			libtar-devel \
 			libcurl-devel \
@@ -86,7 +86,8 @@ RUN yum clean all && yum makecache && yum install -y epel-release && yum swap -y
 			valgrind \
 			e2fsprogs \
 			lcov \
-			libasan
+			libasan \
+			lvm2
 
 RUN yum clean all && \
     (cd /lib/systemd/system/sysinit.target.wants/; for i in *; \
@@ -116,7 +117,7 @@ RUN set -x && \
 	git checkout origin/openEuler-20.03-LTS && \
 	tar -xzvf cmake-3.12.1.tar.gz && \
 	cd cmake-3.12.1 && \
-	./bootstrap && make -j && make install && \
+	./bootstrap && make && make install && \
 	ldconfig
 
 # Centos has no protobuf, protobuf-devel, grpc, grpc-devel, grpc-plugin
@@ -154,6 +155,7 @@ RUN export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH && \
 	cd ~ && \
 	git clone https://gitee.com/src-openeuler/grpc.git && \
 	cd grpc && \
+	git checkout -b openEuler-20.03-LTS-tag openEuler-20.03-LTS-tag && \
 	tar -xzvf grpc-1.22.0.tar.gz && \
 	cd grpc-1.22.0 && \
 	make -j $(nproc) && \
@@ -200,8 +202,8 @@ RUN export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH && \
 	cd ~ && \
 	git clone https://gitee.com/src-openeuler/http-parser.git && \
 	cd http-parser && \
-	tar -xzvf http-parser-2.9.2.tar.gz && \
-	cd http-parser-2.9.2 && \
+	tar -xzvf http-parser-2.9.4.tar.gz && \
+	cd http-parser-2.9.4 && \
 	make -j CFLAGS="-Wno-error" && \
 	make CFLAGS="-Wno-error" install && \
 	ldconfig
@@ -212,9 +214,8 @@ RUN export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH && \
 	cd ~ && \
 	git clone https://gitee.com/src-openeuler/libwebsockets.git && \
 	cd libwebsockets && \
-	tar -xzvf libwebsockets-2.4.2.tar.gz && \
-	cd libwebsockets-2.4.2 && \
-	patch -p1 -F1 -s < ../libwebsockets-fix-coredump.patch && \
+	tar -xzvf libwebsockets-4.0.1.tar.gz && \
+	cd libwebsockets-4.0.1 && \
 	mkdir build && \
 	cd build && \
 	cmake -DLWS_WITH_SSL=0 -DLWS_MAX_SMP=32 -DCMAKE_BUILD_TYPE=Debug ../ && \
@@ -240,6 +241,22 @@ RUN export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH && \
 	make -j $(nproc) && \
 	make install && \
 	ldconfig
+
+# install libarchive
+RUN export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH && \
+        set -x && \
+        cd ~ && \
+        git clone https://gitee.com/src-openeuler/libarchive.git && \
+        cd libarchive && \
+        tar -zxvf libarchive-3.4.1.tar.gz && \
+        cd libarchive-3.4.1 && \
+        patch -p1 -F1 -s < ../libarchive-uninitialized-value.patch && \
+        patch -p1 -F1 -s < ../CVE-2020-9308.patch && \
+        cd build && \
+        cmake -DCMAKE_USE_SYSTEM_LIBRARIES=ON ../ && \
+        make -j $(nproc) && \
+        make install && \
+        ldconfig
 
 VOLUME [ "/sys/fs/cgroup" ]
 CMD ["/usr/sbin/init"]
