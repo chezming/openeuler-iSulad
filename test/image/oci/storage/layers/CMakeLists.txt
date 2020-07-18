@@ -41,6 +41,7 @@ target_include_directories(${DRIVER_EXE} PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/utils/cutils/map
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/utils/sha256
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/utils/console
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/utils/buffer
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/daemon/config
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/daemon/common
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/daemon/modules/api
@@ -84,7 +85,7 @@ add_executable(${LAYER_EXE}
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/utils/cutils/path.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/utils/cutils/map/map.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/utils/cutils/map/rb_tree.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/utils/http/buffer.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/utils/buffer/buffer.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/utils/tar/util_archive.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/utils/tar/util_gzip.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/utils/sha256/sha256.c
@@ -111,6 +112,7 @@ target_include_directories(${LAYER_EXE} PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/utils/http
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/utils/sha256
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/utils/console
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/utils/buffer
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/daemon/config
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/daemon/common
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/daemon/modules/api
