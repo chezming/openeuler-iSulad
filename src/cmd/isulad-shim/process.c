@@ -179,6 +179,8 @@ static int add_io_dispatch(int epfd, io_thread_t *io_thd, int from, int to)
             }
             tmp->next = fn;
         }
+    } else {
+        free(fn);
     }
     pthread_mutex_unlock(&(ioc->mutex));
 
