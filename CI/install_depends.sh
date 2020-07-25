@@ -95,8 +95,10 @@ ldconfig
 
 # install lcr
 cd ~
-git clone https://gitee.com/openeuler/lcr.git
+#git clone https://gitee.com/openeuler/lcr.git
+git clone https://gitee.com/duguhaotian/lcr.git
 cd lcr
+git checkout origin/change -b change
 sed -i 's/fd == STDIN_FILENO || fd == STDOUT_FILENO || fd == STDERR_FILENO/fd == 0 || fd == 1 || fd == 2 || fd >= 1000/g' ./src/utils.c
 mkdir -p build
 cd build
