@@ -107,6 +107,7 @@ $ sudo -E ./autogen.sh
 $ sudo -E ./configure
 $ sudo -E make -j
 $ sudo -E make install
+$ yum install -y lxc-devel
 ```
 
 ### build and install lcr
@@ -129,6 +130,7 @@ $ cd build
 $ sudo -E cmake ..
 $ sudo -E make -j
 $ sudo -E make install
+$ yum install -y clibcni-devel
 ```
 
 ### build and install iSulad
