@@ -30,6 +30,7 @@
 #include "isula_libutils/cri_pod_network.h"
 #include "isula_libutils/host_config.h"
 #include "network_plugin.h"
+#include "isula_libutils/container_update_annotations_ips_request.h"
 
 namespace CRIRuntimeService {
 class Constants {
@@ -246,7 +247,7 @@ private:
                                std::unique_ptr<runtime::v1alpha2::ContainerStatus> &contStatus);
 
     void SetupSandboxNetwork(const runtime::v1alpha2::PodSandboxConfig &config, const std::string &response_id,
-                             const std::string &jsonCheckpoint, Errors &error);
+                             const std::string &jsonCheckpoint, std::vector<std::string> &ips, Errors &error);
     void SetupUserDefinedNetworkPlane(const runtime::v1alpha2::PodSandboxConfig &config, const std::string &response_id,
                                       container_inspect *inspect_data, std::map<std::string, std::string> &stdAnnos,
                                       std::map<std::string, std::string> &options, Errors &error);
@@ -259,6 +260,10 @@ private:
                                                std::string &jsonCheckpoint,
                                                const std::string &runtimeHandler,
                                                Errors &error) -> container_create_request *;
+    auto GenerateSandboxUpdateAnnotaionsIPsRequest(const std::vector<std::string> &ips,
+                                                   const std::string &runtimeHandler,
+                                                   const std::string &response_id,
+                                                   Errors &error) -> container_update_annotations_ips_request *;
     static auto PackCreateContainerRequest(const runtime::v1alpha2::PodSandboxConfig &config,
                                            const std::string &image, host_config *hostconfig,
                                            container_config *custom_config,

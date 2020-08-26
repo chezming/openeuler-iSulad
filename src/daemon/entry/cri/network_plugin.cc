@@ -150,6 +150,11 @@ std::string GetPodIP(const std::string &nsenterPath, const std::string &netnsPat
     return ip;
 }
 
+std::vector<std::string> GetFakeIPs()
+{
+    return  {"127.0.0.1", "0.0.0.0", "1.1.1.1"};
+}
+
 void InitNetworkPlugin(std::vector<std::shared_ptr<NetworkPlugin>> *plugins, std::string networkPluginName,
                        CRIRuntimeServiceImpl *criImpl, std::string hairpinMode, std::string nonMasqueradeCIDR, int mtu,
                        std::shared_ptr<NetworkPlugin> *result, Errors &err)
@@ -403,7 +408,7 @@ void PluginManager::GetPodNetworkStatus(const std::string &ns, const std::string
 
 void PluginManager::SetUpPod(const std::string &ns, const std::string &name, const std::string &interfaceName,
                              const std::string &podSandboxID, std::map<std::string, std::string> &annotations,
-                             const std::map<std::string, std::string> &options, Errors &error)
+                             const std::map<std::string, std::string> &options, std::vector<std::string> &ips, Errors &error)
 {
     if (m_plugin == nullptr) {
         return;
@@ -417,7 +422,9 @@ void PluginManager::SetUpPod(const std::string &ns, const std::string &name, con
     INFO("Calling network plugin %s to set up pod %s", m_plugin->Name().c_str(), fullName.c_str());
 
     Errors tmpErr;
-    m_plugin->SetUpPod(ns, name, interfaceName, podSandboxID, annotations, options, tmpErr);
+    m_plugin->SetUpPod(ns, name, interfaceName, podSandboxID, annotations, options, ips, tmpErr);
+    // TODO : get ip from network plugins
+    ips = GetFakeIPs();
     if (tmpErr.NotEmpty()) {
         error.Errorf("NetworkPlugin %s failed to set up pod %s network: %s", m_plugin->Name().c_str(), fullName.c_str(),
                      tmpErr.GetCMessage());
@@ -501,7 +508,7 @@ std::map<int, bool> *NoopNetworkPlugin::Capabilities()
 
 void NoopNetworkPlugin::SetUpPod(const std::string &ns, const std::string &name, const std::string &interfaceName,
                                  const std::string &podSandboxID, const std::map<std::string, std::string> &annotations,
-                                 const std::map<std::string, std::string> &options, Errors &error)
+                                 const std::map<std::string, std::string> &options, std::vector<std::string> &ips, Errors &error)
 {
     return;
 }

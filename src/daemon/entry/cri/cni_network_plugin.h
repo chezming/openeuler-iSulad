@@ -101,7 +101,8 @@ public:
     void SetUpPod(const std::string &ns, const std::string &name,
                   const std::string &interfaceName, const std::string &podSandboxID,
                   const std::map<std::string, std::string> &annotations,
-                  const std::map<std::string, std::string> &options, Errors &error) override;
+                  const std::map<std::string, std::string> &options,
+                  std::vector<std::string> &ips, Errors &error) override;
 
     void TearDownPod(const std::string &ns, const std::string &name,
                      const std::string &interfaceName, const std::string &podSandboxID,
