@@ -69,6 +69,7 @@
 #include "utils_file.h"
 #include "utils_string.h"
 #include "utils_verify.h"
+#include "volume.h"
 
 #ifdef GRPC_CONNECTOR
 #include "clibcni/api.h"
@@ -1067,6 +1068,7 @@ static int isulad_server_init_common()
     struct service_arguments *args = NULL;
     char *log_full_path = NULL;
     char *fifo_full_path = NULL;
+    char *isulad_rootdir = NULL;
 
     if (isulad_get_log_path(&log_full_path, &fifo_full_path) != 0) {
         goto out;
@@ -1079,6 +1081,12 @@ static int isulad_server_init_common()
     }
 
     if (isulad_server_pre_init(args, log_full_path, fifo_full_path) != 0) {
+        goto out;
+    }
+
+    isulad_rootdir = conf_get_isulad_rootdir();
+    if (volume_init(isulad_rootdir) != 0) {
+        ERROR("Failed to init volume");
         goto out;
     }
 
@@ -1100,6 +1108,7 @@ static int isulad_server_init_common()
     ret = 0;
 
 out:
+    free(isulad_rootdir);
     free(log_full_path);
     free(fifo_full_path);
     return ret;
