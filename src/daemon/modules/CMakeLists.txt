@@ -11,6 +11,7 @@ add_subdirectory(events)
 add_subdirectory(events_sender)
 add_subdirectory(service)
 add_subdirectory(api)
+add_subdirectory(network)
 
 set(local_modules_srcs
     ${modules_top_srcs}
@@ -47,3 +48,13 @@ set(MODULES_INCS
     ${local_modules_incs}
     PARENT_SCOPE
     )
+
+set(DAEMON_NETWORK_SRCS
+    ${NETWORK_SRCS}
+    PARENT_SCOPE
+    )
+set(DAEMON_NETWORK_INCS
+    ${NETWORK_INCS}
+    PARENT_SCOPE
+    )
+
