@@ -901,9 +901,38 @@ static int merge_hostname(oci_runtime_spec *oci_spec, const host_config *host_sp
     return 0;
 }
 
+static int merge_nanocpus(oci_runtime_spec *oci_spec, int64_t nanocpus)
+{
+    int ret = 0;
+    uint64_t period = 0;
+    int64_t quota = 0;
+
+    ret = make_sure_oci_spec_linux_resources_cpu(oci_spec);
+    if (ret < 0) {
+        goto out;
+    }
+
+    period = (uint64_t)(100 * Time_Milli / Time_Micro);
+    quota = nanocpus * (int64_t)period / 1e9;
+
+    oci_spec->linux->resources->cpu->quota = quota;
+    oci_spec->linux->resources->cpu->period = period;
+
+out:
+    return ret;
+}
+
 static int merge_conf_cgroup_cpu_int64(oci_runtime_spec *oci_spec, const host_config *host_spec)
 {
     int ret = 0;
+
+    if (host_spec->nano_cpus > 0) {
+        ret = merge_nanocpus(oci_spec, host_spec->nano_cpus);
+        if (ret != 0) {
+            ERROR("Failed to merge cgroup nano cpus");
+            goto out;
+        }
+    }
 
     /* cpu shares */
     if (host_spec->cpu_shares != 0) {
@@ -1962,6 +1991,44 @@ out:
     return ret;
 }
 
+int merge_oci_cgroups_path(const char *id, oci_runtime_spec *oci_spec, const host_config *host_spec)
+{
+    int ret = 0;
+    char *default_cgroup_parent = NULL;
+    char *path = NULL;
+
+    if (id == NULL || oci_spec == NULL || host_spec == NULL) {
+        ERROR("Invalid arguments");
+        ret = -1;
+        goto out;
+    }
+
+    if (make_sure_oci_spec_linux(oci_spec) != 0) {
+        ERROR("Failed to make oci spec linux");
+        ret = -1;
+        goto out;
+    }
+
+    default_cgroup_parent = conf_get_isulad_cgroup_parent();
+    path = default_cgroup_parent;
+    if (host_spec->cgroup_parent != NULL) {
+        path = host_spec->cgroup_parent;
+    }
+
+    if (path == NULL) {
+        free(oci_spec->linux->cgroups_path);
+        oci_spec->linux->cgroups_path = util_path_join("/isulad", id);
+        return 0;
+    }
+
+    free(oci_spec->linux->cgroups_path);
+    oci_spec->linux->cgroups_path = util_path_join(path, id);
+
+out:
+    free(default_cgroup_parent);
+    return ret;
+}
+
 int merge_all_specs(host_config *host_spec, const char *real_rootfs, container_config_v2_common_config *v2_spec,
                     oci_runtime_spec *oci_spec)
 {
@@ -2029,45 +2096,13 @@ int merge_all_specs(host_config *host_spec, const char *real_rootfs, container_c
         goto out;
     }
 
-out:
-    return ret;
-}
-
-int merge_oci_cgroups_path(const char *id, oci_runtime_spec *oci_spec, const host_config *host_spec)
-{
-    int ret = 0;
-    char *default_cgroup_parent = NULL;
-    char *path = NULL;
-
-    if (id == NULL || oci_spec == NULL || host_spec == NULL) {
-        ERROR("Invalid arguments");
-        ret = -1;
+    ret = merge_oci_cgroups_path(v2_spec->id, oci_spec, host_spec);
+    if (ret != 0) {
+        ERROR("Failed to make cgroup parent");
         goto out;
     }
 
-    if (make_sure_oci_spec_linux(oci_spec) != 0) {
-        ERROR("Failed to make oci spec linux");
-        ret = -1;
-        goto out;
-    }
-
-    default_cgroup_parent = conf_get_isulad_cgroup_parent();
-    path = default_cgroup_parent;
-    if (host_spec->cgroup_parent != NULL) {
-        path = host_spec->cgroup_parent;
-    }
-
-    if (path == NULL) {
-        free(oci_spec->linux->cgroups_path);
-        oci_spec->linux->cgroups_path = util_path_join("/isulad", id);
-        return 0;
-    }
-
-    free(oci_spec->linux->cgroups_path);
-    oci_spec->linux->cgroups_path = util_path_join(path, id);
-
 out:
-    UTIL_FREE_AND_SET_NULL(default_cgroup_parent);
     return ret;
 }
 

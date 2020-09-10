@@ -504,6 +504,9 @@ out:
 
 static void to_engine_resources(const host_config *hostconfig, struct engine_cgroup_resources *cr)
 {
+    uint64_t period = 0;
+    int64_t quota = 0;
+
     if (hostconfig == NULL || cr == NULL) {
         return;
     }
@@ -518,6 +521,15 @@ static void to_engine_resources(const host_config *hostconfig, struct engine_cgr
     cr->memory_swap = (uint64_t)hostconfig->memory_swap;
     cr->memory_reservation = (uint64_t)hostconfig->memory_reservation;
     cr->kernel_memory_limit = (uint64_t)hostconfig->kernel_memory;
+    cr->cpurt_period = hostconfig->cpu_realtime_period;
+    cr->cpurt_runtime = hostconfig->cpu_realtime_runtime;
+
+    if (hostconfig->nano_cpus > 0) {
+        period = (uint64_t)(100 * Time_Milli / Time_Micro);
+        quota = hostconfig->nano_cpus * (int64_t)period / 1e9;
+        cr->cpu_period = period;
+        cr->cpu_quota = (uint64_t)quota;
+    }
 }
 
 int rt_lcr_update(const char *id, const char *runtime, const rt_update_params_t *params)

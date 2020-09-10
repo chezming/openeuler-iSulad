@@ -68,10 +68,6 @@
 #include "utils_string.h"
 #include "utils_verify.h"
 
-#ifdef GRPC_CONNECTOR
-#include "clibcni/api.h"
-#endif
-
 sem_t g_daemon_shutdown_sem;
 sem_t g_daemon_wait_shutdown_sem;
 
@@ -992,14 +988,6 @@ static int isulad_server_init_log(const struct service_arguments *args, const ch
         goto out;
     }
 
-#ifdef GRPC_CONNECTOR
-    /* init clibcni log */
-    if (cni_log_init(FIFO_DRIVER, fifo_full_path, args->json_confs->log_level) != 0) {
-        ERROR("Failed to init cni log");
-        goto out;
-    }
-#endif
-
     lconf.driver = args->json_confs->log_driver;
     if (init_log_gather_thread(log_full_path, &lconf, args)) {
         ERROR("Log gather start failed");
@@ -1395,11 +1383,6 @@ int main(int argc, char **argv)
     }
 
     if (isulad_server_init_common() != 0) {
-        goto failure;
-    }
-
-    if (init_cgroups_path("/lxc", 0)) {
-        msg = g_isulad_errmsg ? g_isulad_errmsg : "Failed to init cgroups path";
         goto failure;
     }
 
