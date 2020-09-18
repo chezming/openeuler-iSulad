@@ -57,9 +57,9 @@ typedef enum {
 typedef enum { IM_LOAD, IM_REMOVE, IM_PULL, IM_LOGIN, IM_LOGOUT, IM_IMPORT } image_state_t;
 
 typedef enum { CONTAINER_EVENT, IMAGE_EVENT } msg_event_type_t;
-typedef enum { MONITORD_MSG_STATE, MONITORD_MSG_PRIORITY, MONITORD_MSG_EXIT_CODE } msg_type_t;
+typedef enum { MONITORED_MSG_STATE, MONITORED_MSG_PRIORITY, MONITORED_MSG_EXIT_CODE } msg_type_t;
 
-struct monitord_msg {
+struct monitored_msg {
     msg_type_t type;
     msg_event_type_t event_type;
     char name[CONTAINER_ID_MAX_LEN + 1];

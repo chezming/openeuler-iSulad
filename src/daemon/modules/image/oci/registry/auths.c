@@ -322,7 +322,7 @@ static int write_auth_file(char *content)
     ret = util_mkdir_p(auths_dir, 0700);
     if (ret != 0) {
         ERROR("mkdir for aeskey failed");
-        isulad_try_set_error_message("create direcotry for auths failed");
+        isulad_try_set_error_message("create directory for auths failed");
         goto out;
     }
 

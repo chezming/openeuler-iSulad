@@ -292,9 +292,9 @@ void CRIRuntimeServiceImpl::SetupSandboxFiles(const std::string &resolvPath,
         resolvContentStrs.push_back("nameserver " + CXXUtils::StringsJoin(servers, "\nnameserver "));
     }
 
-    std::vector<std::string> searchs(config.dns_config().searches().begin(), config.dns_config().searches().end());
+    std::vector<std::string> searches(config.dns_config().searches().begin(), config.dns_config().searches().end());
     if (!searchs.empty()) {
-        resolvContentStrs.push_back("search " + CXXUtils::StringsJoin(searchs, " "));
+        resolvContentStrs.push_back("search " + CXXUtils::StringsJoin(searches, " "));
     }
 
     std::vector<std::string> options(config.dns_config().options().begin(), config.dns_config().options().end());

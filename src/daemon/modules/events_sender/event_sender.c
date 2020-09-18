@@ -29,7 +29,7 @@
 #include "utils_file.h"
 
 /* isulad monitor fifo send */
-static void isulad_monitor_fifo_send(const struct monitord_msg *msg)
+static void isulad_monitor_fifo_send(const struct monitored_msg *msg)
 {
     int fd = -1;
     ssize_t ret = 0;
@@ -57,11 +57,11 @@ static void isulad_monitor_fifo_send(const struct monitord_msg *msg)
     }
 
     do {
-        ret = util_write_nointr(fd, msg, sizeof(struct monitord_msg));
-        if (ret != sizeof(struct monitord_msg)) {
+        ret = util_write_nointr(fd, msg, sizeof(struct monitored_msg));
+        if (ret != sizeof(struct monitored_msg)) {
             usleep_nointerupt(1000);
         }
-    } while (ret != sizeof(struct monitord_msg));
+    } while (ret != sizeof(struct monitored_msg));
 
 out:
     free(fifo_path);
@@ -75,7 +75,7 @@ int isulad_monitor_send_container_event(const char *name, runtime_state_t state,
                                         const char *args, const char *extra_annations)
 {
     int ret = 0;
-    struct monitord_msg msg = { .type = MONITORD_MSG_STATE,
+    struct monitored_msg msg = { .type = MONITORED_MSG_STATE,
                .event_type = CONTAINER_EVENT,
                .value = state,
                .pid = -1,
@@ -121,7 +121,7 @@ int isulad_monitor_send_image_event(const char *name, image_state_t state)
 {
     int ret = 0;
 
-    struct monitord_msg msg = { .type = MONITORD_MSG_STATE,
+    struct monitored_msg msg = { .type = MONITORED_MSG_STATE,
                .event_type = IMAGE_EVENT,
                .value = state,
                .args = { 0x00 },
