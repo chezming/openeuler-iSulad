@@ -1175,14 +1175,72 @@ out:
     return ret;
 }
 
-static int do_tail_find(FILE *fp, int64_t require_line, int64_t *get_line, long *get_pos)
+/*
+    compare the record time with since
+    1:  large
+    0:  equal
+    -1: smaller
+    -2: failed
+*/
+static int time_cmp(char *buffer, const char *since)
 {
-#define SECTION_SIZE 4096
-    char buffer[SECTION_SIZE] = { 0 };
-    size_t read_size, i;
-    long len, pos, step_size;
-    int ret = -1;
+    int ret = -2;
+    parser_error jerr = NULL;
+    logger_json_file *logentry = NULL;
+    struct parser_context ctx = { OPT_GEN_SIMPLIFY | OPT_GEN_NO_VALIDATE_UTF8, stderr };
 
+    logentry = logger_json_file_parse_data(buffer, &ctx, &jerr);
+    if (logentry == NULL) {
+        ERROR("parse logentry: %s, failed: %s", buffer, jerr);
+        goto out;
+    }
+
+    if (strcmp(logentry->time, since) > 0) {
+        ret = 1;
+    } else if (strcmp(logentry->time, since) == 0) {
+        ret = 0;
+    } else {
+        ret = -1;
+    }
+
+out:
+    free_logger_json_file(logentry);
+    free(jerr);
+    return ret;
+}
+
+static int cmp_file_with_since(FILE *fp, char *since)
+{
+#define SECTION_SIZE 8192
+    char buffer[SECTION_SIZE] = { 0 };
+    size_t read_size = 0;
+    size_t i = 0;
+    long len = 0;
+    long pos = 0;
+    long step_size = 0;
+    int ret = -1;
+    int cret = 0;
+    long get_pos = 0;
+
+    // read the first line of file
+    if (fseek(fp, 0L, SEEK_SET) != 0) {
+        ERROR("Fseek failed: %s", strerror(errno));
+        goto out;
+    }
+    if (fgets(buffer, SECTION_SIZE, fp) != NULL) {
+        cret = time_cmp(buffer, since);
+        if (cret == -2) {
+            ret = -1;
+            goto out;
+        }
+        // All records in this file record time is greater than or equal to since
+        if (cret >= 0) {
+            ret = 0;
+            goto out;
+        }
+    }
+
+    // get length of file
     if (fseek(fp, 0L, SEEK_END) != 0) {
         ERROR("Fseek failed: %s", strerror(errno));
         goto out;
@@ -1192,34 +1250,318 @@ static int do_tail_find(FILE *fp, int64_t require_line, int64_t *get_line, long 
         ERROR("Ftell failed: %s", strerror(errno));
         goto out;
     }
+
+    // The data size obtained by fread each time must be less than or equal to the file size
     if (len < SECTION_SIZE) {
-        pos = len;
         step_size = len;
     } else {
         step_size = SECTION_SIZE;
-        pos = len - step_size;
     }
+    pos = len - step_size;
+    // break util get the first position of last line
+    int cnt_n = 0;
+    get_pos = len;
     while (true) {
+        if (fseek(fp, pos, SEEK_SET) != 0) {
+            return ret;
+        }
+        read_size = fread(buffer, sizeof(char), (size_t)step_size, fp);
+        for (i = read_size; i > 0; i--) {
+            if (buffer[i - 1] == '\n') {
+                cnt_n++;
+                get_pos = pos + (long)i;
+            }
+            if (cnt_n == 2) {
+                break;
+            }
+        }
+        // at least 2 records
+        if (cnt_n == 2) {
+            break;
+        }
+        // only 1 records
+        if (pos == 0) {
+            get_pos = 0;
+            break;
+        }
+        if (pos < step_size) {
+            step_size = pos;
+        }
+        pos -= step_size;
+    }
+
+    // Read the last line of the current log
+    if (fseek(fp, get_pos, SEEK_SET) != 0) {
+        ERROR("Fseek failed: %s", strerror(errno));
+        goto out;
+    }
+    if (fgets(buffer, SECTION_SIZE, fp) != NULL) {
+        cret = time_cmp(buffer, since);
+        if (cret == -2) {
+            ret = -1;
+            goto out;
+        }
+        // All records in this file record time is less than since
+        if (cret < 0) {
+            ret = 1;
+            goto out;
+        }
+    }
+
+    // current file is the last file satisfy  the query time
+    ret = 2;
+out:
+    return ret;
+}
+
+static int util_cmp_file_with_time(const char *file_name, char *since)
+{
+    FILE *fp = NULL;
+    int ret = -1;
+
+    if (file_name == NULL) {
+        return 0;
+    }
+
+    fp = util_fopen(file_name, "rb");
+    if (fp == NULL) {
+        ERROR("open file: %s failed: %s", file_name, strerror(errno));
+        return -1;
+    }
+
+    ret = cmp_file_with_since(fp, since);
+    fclose(fp);
+    return ret;
+}
+
+static int util_find_best_file_id_by_since(const struct container_log_config *conf, char *since)
+{
+    int ret = 0;
+    int nret = 0;
+    int i = 0;
+    char log_path[PATH_MAX] = { 0 };
+    /* the best file defination: 
+    Among all log files, the best file satisfy:
+    1.Record time of all records of files written before this file is smaller than since
+    2.Record time of all records of files written after this file is larger than since
+    3.file_id can be -1(all time are smaller than since) or conf->rotate - 1(all tiem is larger than since or since is in last file)  
+    best = -2  if any error occurs!! 
+    special case : if the file don't exist
+    */
+    int best = 0;
+
+    /* 
+    ret value :
+    -1 : error occurs
+    0  : The creation time of all records in the current file is greater than the query time \
+         and the latest record creation event or the file does not exist
+    1  : The creation time of all records of the current file is less than the query time
+    2  : The query time is between the earliest record creation time of the current file 
+    */
+    for (i = 0; i < conf->rotate; ++i) {
+        if (i == 0) {
+            nret = snprintf(log_path, PATH_MAX, "%s", conf->path);
+        } else {
+            nret = snprintf(log_path, PATH_MAX, "%s.%d", conf->path, i);
+        }
+        if (nret >= PATH_MAX || nret < 0) {
+            ERROR("Sprintf failed");
+            best = -2;
+            goto out;
+        }
+        ret = util_cmp_file_with_time(log_path, since);
+        switch (ret) {
+            case -1:
+                // any error occurs
+                if (errno == ENOENT) {
+                    // special case :  no such file
+                    best = i - 1;
+                } else {
+                    // other cases : error can not be ignored
+                    best = -2;
+                }
+                goto out;
+            case 0:
+                //continue to find best file
+                best = i;
+                break;
+            case 1:
+                // this file has no record written after since
+                best = i - 1;
+                goto out;
+            case 2:
+                // this file has no record written after since
+                best = i;
+                goto out;
+        }
+    }
+
+out:
+    return best;
+}
+
+static int do_tail_and_since_find(FILE *fp, int64_t require_line, int64_t *get_line, long *get_pos, bool tail,
+                                  bool timecmp, char *since)
+{
+    // SECTION SIZE ensure it must read at least 2 logs every time
+#define SECTION_SIZE 8192
+    char buffer[SECTION_SIZE] = { 0 };
+    size_t read_size;
+    size_t i;
+    long len = 0;
+    long pos = 0;
+    long step_size = SECTION_SIZE;
+    int ret = -1;
+    int tret = 0;
+
+    // len : total size of the log file
+    if (fseek(fp, 0L, SEEK_END) != 0) {
+        ERROR("Fseek failed: %s", strerror(errno));
+        goto out;
+    }
+    len = ftell(fp);
+    if (len < 0) {
+        ERROR("Ftell failed: %s", strerror(errno));
+        goto out;
+    }
+    // determine the stepsize (read stepsize size data each time)
+    if (len < SECTION_SIZE) {
+        step_size = len;
+    } else {
+        step_size = SECTION_SIZE;
+    }
+    pos = len - step_size;
+
+    // the actual start index of buffer which ensure log completeness
+    int start = 0;
+    // the origin value of pos
+    int tmppos = pos;
+
+    while (true) {
+        // read logs from log file [Size = step_size] each time
         if (fseek(fp, pos, SEEK_SET) != 0) {
             ERROR("Fseek failed: %s", strerror(errno));
             goto out;
         }
+
         read_size = fread(buffer, sizeof(char), (size_t)step_size, fp);
-        for (i = read_size; i > 0; i--) {
+        tmppos = pos;
+        if (timecmp) {
+            // pos = 0 : the log must be complete
+            // pos > 0 : may be incomplete, try to replace pos in order to ensure completeness of logs
+            // it ensure the last element of buffer must be \n
+            i = 0;
+            if (pos > 0) {
+                for (; i < read_size; ++i) {
+                    if (buffer[i] == '\n') {
+                        break;
+                    }
+                }
+                start = i + 1;
+                // tmppos is used to record the getpos
+                pos = pos + (long)start;
+                pos++;
+            } else {
+                // pos == 0 : complete log
+                start = 0;
+            }
+            // convert the last \n to \0
+            buffer[read_size - 1] = '\0';
+        } else {
+            start = 0;
+        }
+
+        for (i = read_size; i > start; i--) {
+            // if timecmp is true, the last \n of this file become \0, the statement will run
             if (buffer[i - 1] != '\n') {
                 continue;
             }
-            (*get_line) += 1;
-            if ((*get_line) > require_line) {
-                (*get_pos) = pos + (long)i;
-                (*get_line) = require_line;
-                ret = 0;
-                goto out;
+            // since no matter tail
+            if (timecmp) {
+                if (i > 0) {
+                    buffer[i - 1] = '\0';
+                }
+                // buffer[i, ... , the first \0 ] is a complete log
+                // since is not null
+                tret = time_cmp(buffer + i, since);
+                // log is written before since
+                if (tret == -1) {
+                    ret = 0;
+                    goto out;
+                } else if (tret == -2) {
+                    // falid to compare
+                    ret = -1;
+                    goto out;
+                }
+                // this log satisfy since time
+                (*get_pos) = tmppos + (long)i;
+
+                /* 
+                tail need to check
+                In this case, we use the \n separator at the end of the previous sentence of the current log as the log judgment standard 
+                (so the first sentence needs to be additionally judged)
+                */
+                if (tail) {
+                    (*get_line) += 1;
+                    // exit program when get require line
+                    if ((*get_line) == require_line) {
+                        (*get_pos) = tmppos + (long)i;
+                        (*get_line) = require_line;
+                        ret = 0;
+                        goto out;
+                    }
+                }
+            }
+            // tail without since
+            // In this case, we use the \n separator at the end of the log as the log judgment criterion
+            else {
+                if (tail) {
+                    (*get_line) += 1;
+                    // exit program when get require line
+                    if ((*get_line) > require_line) {
+                        (*get_pos) = tmppos + (long)i;
+                        (*get_line) = require_line;
+                        ret = 0;
+                        goto out;
+                    }
+                }
             }
         }
+
+        // In the timecmp mode, the first log of buffer must be considered
+        if (timecmp) {
+            // buffer[start, ... , the first \0 ] is a complete log
+            tret = time_cmp(buffer + start, since);
+            // log is written before since
+            if (tret == -1) {
+                ret = 0;
+                goto out;
+            } else if (tret == -2) {
+                // falid to compare
+                ret = -1;
+                goto out;
+            }
+            // this log satisfy since time
+            (*get_pos) = tmppos + (long)start;
+            // tail need to check
+            if (tail) {
+                (*get_line) += 1;
+                // exit program when get require line
+                if ((*get_line) == require_line) {
+                    (*get_pos) = tmppos + (long)i;
+                    (*get_line) = require_line;
+                    ret = 0;
+                    goto out;
+                }
+            }
+        }
+
+        // whether to end the loop
         if (pos == 0) {
             break;
         }
+
+        // determine the stepsize (read stepsize size data each time)
         if (pos < step_size) {
             step_size = pos;
             pos = 0;
@@ -1233,7 +1575,8 @@ out:
     return ret;
 }
 
-static int util_find_tail_position(const char *file_name, int64_t require_line, int64_t *get_line, long *pos)
+static int util_find_tail_and_since_position(const char *file_name, int64_t require_line, int64_t *get_line, long *pos,
+                                             bool tail, bool timecmp, char *since)
 {
     FILE *fp = NULL;
     int ret = -1;
@@ -1251,54 +1594,107 @@ static int util_find_tail_position(const char *file_name, int64_t require_line, 
         ERROR("open file: %s failed: %s", file_name, strerror(errno));
         return -1;
     }
-
-    ret = do_tail_find(fp, require_line, get_line, pos);
+    
+    ret = do_tail_and_since_find(fp, require_line, get_line, pos, tail, timecmp, since);
 
     fclose(fp);
     return ret;
 }
 
-static int do_tail_container_logs(int64_t require_line, const struct container_log_config *conf,
-                                  const stream_func_wrapper *stream, struct last_log_file_position *last_pos)
+static int do_tail_container_logs_with_since(int64_t require_line, const struct container_log_config *conf,
+                                             const stream_func_wrapper *stream, struct last_log_file_position *last_pos,
+                                             char *since)
 {
-    int i, ret;
+    int i = 0;
+    int ret = 0;
+    int nret = 0;
     int64_t left = require_line;
     int64_t get_line = 0;
     long pos = 0;
     char log_path[PATH_MAX] = { 0 };
+    int file_range = 0;
+    bool timecmp = false;
+    bool tail = false;
 
-    if (require_line < 0) {
+    // find best file id
+    if (since == NULL) {
+        file_range = conf->rotate;
+    } else {
+        file_range = util_find_best_file_id_by_since(conf, since);
+        if (file_range == -2) {
+            return -1;
+        }
+    }
+
+    // case 1: no since and no tail
+    if (require_line < 0 && file_range == conf->rotate) {
         /* read all logs */
         return do_show_all_logs(conf, stream, last_pos);
     }
-    if (require_line == 0) {
+
+    // special case
+    if (require_line == 0 || file_range < 0) {
         /* require empty logs */
         return 0;
     }
-    ret = util_find_tail_position(conf->path, left, &get_line, &pos);
-    if (ret != 0) {
-        return -1;
+
+    // require tail
+    if (require_line > 0) {
+        tail = true;
+    } else {
+        tail = false;
     }
-    if (pos != 0) {
-        /* first line in first log file */
-        get_line = do_read_log_file(conf->path, require_line, pos, stream, &(last_pos->pos));
-        last_pos->file_index = 0;
-        return get_line < 0 ? -1 : 0;
-    }
-    for (i = 1; i < conf->rotate; i++) {
+
+    for (i = 0; i <= file_range && i < conf->rotate; i++) {
+        // get file name
+        if (i == 0) {
+            nret = snprintf(log_path, PATH_MAX, "%s", conf->path);
+        } else {
+            nret = snprintf(log_path, PATH_MAX, "%s.%d", conf->path, i);
+        }
+        if (nret >= PATH_MAX || nret < 0) {
+            ERROR("Sprintf failed");
+            goto out;
+        }
+
+        // case 2: since without tail
+        if (tail == false) {
+            // only need search last file
+            if (i == file_range) {
+                ret = util_find_tail_and_since_position(log_path, left, &get_line, &pos, false, true, since);
+                // Need special handling when there is no document
+                if (ret != 0) {
+                    if (errno == ENOENT) {
+                        i--;
+                        break;
+                    }
+                    goto out;
+                }
+                break;
+            } else {
+                continue;
+            }
+        }
+
+        // case 3/4 : tail no matter since
         if (left <= get_line) {
             i--;
             break;
         }
         left -= get_line;
         get_line = 0;
-        int nret = snprintf(log_path, PATH_MAX, "%s.%d", conf->path, i);
-        if (nret >= PATH_MAX || nret < 0) {
-            ERROR("Sprintf failed");
-            goto out;
+
+        // timecmp = false ====> case 3: tail without since
+        // timecmp = true  ====> case 4: tail and since
+        if (i == file_range) {
+            timecmp = true;
         }
-        ret = util_find_tail_position(log_path, left, &get_line, &pos);
+
+        // Here, tail must be true
+        ret = util_find_tail_and_since_position(log_path, left, &get_line, &pos, tail, timecmp, since);
+
         if (ret != 0) {
+            // Need special handling when there is no document
             if (errno == ENOENT) {
                 i--;
                 break;
@@ -1313,7 +1709,7 @@ static int do_tail_container_logs(int64_t require_line, const struct container_l
 
     last_pos->pos = pos;
     last_pos->file_index = i;
-    ret = do_read_all_container_logs(require_line, conf->path, stream, last_pos);
+    ret = do_read_all_container_logs(-1, conf->path, stream, last_pos);
 out:
     return ret;
 }
@@ -1654,8 +2050,8 @@ static int container_logs_cb(const struct isulad_logs_request *request, stream_f
         goto out;
     }
 
-    EVENT("Event: {Object: %s, Content: path: %s, rotate: %d, size: %ld }", id, log_config->path, log_config->rotate,
-          log_config->size);
+    EVENT("Event: {Object: %s, Content: path: %s, rotate: %d, size: %ld ,request since : %s}", id, log_config->path,
+          log_config->rotate, log_config->size, request->since);
 
     nret = check_log_config(log_config);
     if (nret != 0) {
@@ -1663,9 +2059,9 @@ static int container_logs_cb(const struct isulad_logs_request *request, stream_f
         goto out;
     }
 
-    /* tail of container log file */
-    if (do_tail_container_logs(request->tail, log_config, stream, &last_pos) != 0) {
-        isulad_set_error_message("do tail log file failed");
+    /* tail of container log file before since*/
+    if (do_tail_container_logs_with_since(request->tail, log_config, stream, &last_pos, request->since) != 0) {
+        isulad_set_error_message("do tail log file before since failed");
         cc = ISULAD_ERR_EXEC;
         goto out;
     }

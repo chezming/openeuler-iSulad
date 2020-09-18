@@ -90,6 +90,17 @@ function show_result() {
     msg_ok "TESTSUIT: $2 SUCCESS"
 }
 
+function wait_container_exit() {
+    
+    while [ 1 ]
+    do 
+        st=`isula inspect -f '{{json .State.Status}}' "$1"`
+        if [[ "${st}" =~ "exited" ]];then
+            break
+        fi
+    done
+}
+
 function wait_isulad_running() {
     echo "-------waiting iSulad running--------"
     waitcnt=0
