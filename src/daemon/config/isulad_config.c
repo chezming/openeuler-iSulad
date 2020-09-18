@@ -512,9 +512,9 @@ char *conf_get_isulad_monitor_fifo_path()
         ERROR("Invalid parameter");
         goto out;
     }
-    ret = snprintf(fifo_file_path, PATH_MAX, "%s/monitord_fifo", rootpath);
+    ret = snprintf(fifo_file_path, PATH_MAX, "%s/monitored_fifo", rootpath);
     if (ret < 0 || (size_t)ret >= PATH_MAX) {
-        ERROR("Create monitord fifo path failed");
+        ERROR("Create monitored fifo path failed");
         goto out;
     }
 

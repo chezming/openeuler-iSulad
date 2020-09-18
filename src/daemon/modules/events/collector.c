@@ -165,7 +165,7 @@ static const char *isulad_image_event_sta2str(image_events_type_t sta)
     return g_isulad_image_event_strtype[sta];
 }
 
-static void supplement_msg_for_events_handler(const struct monitord_msg *msg, struct isulad_events_format *format_msg)
+static void supplement_msg_for_events_handler(const struct monitored_msg *msg, struct isulad_events_format *format_msg)
 {
     if (msg->pid != -1) {
         format_msg->has_pid = true;
@@ -184,7 +184,7 @@ static void supplement_msg_for_events_handler(const struct monitord_msg *msg, st
     }
 }
 
-static int supplement_operator_for_container_msg(const struct monitord_msg *msg,
+static int supplement_operator_for_container_msg(const struct monitored_msg *msg,
                                                  struct isulad_events_format *format_msg)
 {
 #define CONTAINER_OPERATOR_MAX_LEN 300
@@ -206,7 +206,7 @@ static int supplement_operator_for_container_msg(const struct monitord_msg *msg,
     return 0;
 }
 
-static int supplement_pid_for_container_msg(const container_t *cont, const struct monitord_msg *msg,
+static int supplement_pid_for_container_msg(const container_t *cont, const struct monitored_msg *msg,
                                             struct isulad_events_format *format_msg)
 {
     int nret = 0;
@@ -229,7 +229,7 @@ static int supplement_pid_for_container_msg(const container_t *cont, const struc
     return 0;
 }
 
-static int supplement_exitcode_for_container_msg(const container_t *cont, const struct monitord_msg *msg,
+static int supplement_exitcode_for_container_msg(const container_t *cont, const struct monitored_msg *msg,
                                                  struct isulad_events_format *format_msg)
 {
     int nret = 0;
@@ -259,7 +259,7 @@ static int supplement_exitcode_for_container_msg(const container_t *cont, const 
     return 0;
 }
 
-static int supplement_image_for_container_msg(const container_t *cont, const struct monitord_msg *msg,
+static int supplement_image_for_container_msg(const container_t *cont, const struct monitored_msg *msg,
                                               struct isulad_events_format *format_msg)
 {
     int nret = 0;
@@ -282,7 +282,7 @@ static int supplement_image_for_container_msg(const container_t *cont, const str
     return 0;
 }
 
-static int supplement_name_for_container_msg(const container_t *cont, const struct monitord_msg *msg,
+static int supplement_name_for_container_msg(const container_t *cont, const struct monitored_msg *msg,
                                              struct isulad_events_format *format_msg)
 {
     int nret = 0;
@@ -305,7 +305,7 @@ static int supplement_name_for_container_msg(const container_t *cont, const stru
     return 0;
 }
 
-static int supplement_labels_for_container_msg(const container_t *cont, const struct monitord_msg *msg,
+static int supplement_labels_for_container_msg(const container_t *cont, const struct monitored_msg *msg,
                                                struct isulad_events_format *format_msg)
 {
     size_t i;
@@ -332,7 +332,7 @@ static int supplement_labels_for_container_msg(const container_t *cont, const st
     return 0;
 }
 
-static int supplement_annotations_for_container_msg(const container_t *cont, const struct monitord_msg *msg,
+static int supplement_annotations_for_container_msg(const container_t *cont, const struct monitored_msg *msg,
                                                     struct isulad_events_format *format_msg)
 {
     if (supplement_pid_for_container_msg(cont, msg, format_msg) != 0) {
@@ -372,7 +372,7 @@ static int supplement_annotations_for_container_msg(const container_t *cont, con
     return 0;
 }
 
-static int supplement_msg_for_container(struct monitord_msg *msg, struct isulad_events_format *format_msg)
+static int supplement_msg_for_container(struct monitored_msg *msg, struct isulad_events_format *format_msg)
 {
     int ret = 0;
     container_t *cont = containers_store_get(msg->name);
@@ -406,7 +406,7 @@ out:
     return ret;
 }
 
-static int supplement_msg_for_image(struct monitord_msg *msg, struct isulad_events_format *format_msg)
+static int supplement_msg_for_image(struct monitored_msg *msg, struct isulad_events_format *format_msg)
 {
 #define IMAGE_OPERATOR_MAX_LEN 50
     int ret = 0;
@@ -428,7 +428,7 @@ out:
 }
 
 /* format_msg */
-static bool format_msg(struct isulad_events_format *r, struct monitord_msg *msg)
+static bool format_msg(struct isulad_events_format *r, struct monitored_msg *msg)
 {
     bool ret = false;
     int err = 0;
@@ -448,7 +448,7 @@ static bool format_msg(struct isulad_events_format *r, struct monitord_msg *msg)
 
     r->has_pid = false;
     switch (msg->type) {
-        case MONITORD_MSG_STATE:
+        case MONITORED_MSG_STATE:
             if (msg->event_type == CONTAINER_EVENT) {
                 supplement_msg_for_container(msg, r);
             } else if (msg->event_type == IMAGE_EVENT) {
@@ -456,8 +456,8 @@ static bool format_msg(struct isulad_events_format *r, struct monitord_msg *msg)
             }
             ret = true;
             break;
-        case MONITORD_MSG_PRIORITY:
-        case MONITORD_MSG_EXIT_CODE:
+        case MONITORED_MSG_PRIORITY:
+        case MONITORED_MSG_EXIT_CODE:
         default:
             /* ignore garbage */
             ret = false;
@@ -849,7 +849,7 @@ out:
 }
 
 /* events handler */
-void events_handler(struct monitord_msg *msg)
+void events_handler(struct monitored_msg *msg)
 {
     struct isulad_events_format *events = NULL;
 
@@ -988,23 +988,23 @@ out:
     return ret;
 }
 
-static int start_monitord()
+static int start_monitored()
 {
     int ret = 0;
-    int monitord_exitcode = 0;
-    sem_t monitord_sem;
-    struct monitord_sync_data msync = { 0 };
+    int monitored_exitcode = 0;
+    sem_t monitored_sem;
+    struct monitored_sync_data msync = { 0 };
 
-    msync.monitord_sem = &monitord_sem;
-    msync.exit_code = &monitord_exitcode;
+    msync.monitord_sem = &monitored_sem;
+    msync.exit_code = &monitored_exitcode;
     if (sem_init(msync.monitord_sem, 0, 0)) {
         isulad_set_error_message("Failed to init monitor sem");
         ret = -1;
         goto out;
     }
 
-    if (new_monitord(&msync)) {
-        isulad_set_error_message("Create monitord thread failed");
+    if (new_monitored(&msync)) {
+        isulad_set_error_message("Create monitored thread failed");
         ret = -1;
         sem_destroy(msync.monitord_sem);
         goto out;
@@ -1012,8 +1012,8 @@ static int start_monitord()
 
     sem_wait(msync.monitord_sem);
     sem_destroy(msync.monitord_sem);
-    if (monitord_exitcode) {
-        isulad_set_error_message("Monitord start failed");
+    if (monitored_exitcode) {
+        isulad_set_error_message("Monitored start failed");
         ret = -1;
         goto out;
     }
@@ -1032,7 +1032,7 @@ int events_module_init(char **msg)
         goto out;
     }
 
-    if (start_monitord()) {
+    if (start_monitored()) {
         *msg = g_isulad_errmsg ? g_isulad_errmsg : "Failed to init cgroups path";
         ret = -1;
         goto out;

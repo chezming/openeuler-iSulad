@@ -117,7 +117,7 @@ static int get_status(const container_t *cont)
 }
 
 /*
- * join , seperated string into one.
+ * join , separated string into one.
  */
 static char *join_enable_plugins(const char *plugins)
 {
@@ -139,9 +139,9 @@ static char *join_enable_plugins(const char *plugins)
         return util_strdup_s(plugins);
     }
 
-    tmp = util_string_append(ISULAD_ENABLE_PLUGINS_SEPERATOR, default_plugins);
+    tmp = util_string_append(ISULAD_ENABLE_PLUGINS_SEPARATOR, default_plugins);
     if (tmp == NULL) {
-        ERROR("string append failed %s -> %s", ISULAD_ENABLE_PLUGINS_SEPERATOR, default_plugins);
+        ERROR("string append failed %s -> %s", ISULAD_ENABLE_PLUGINS_SEPARATOR, default_plugins);
         goto out;
     }
 
@@ -176,7 +176,7 @@ static char *get_uniq_enable_plugins(const oci_runtime_spec *oci)
         goto failed;
     }
 
-    raw = util_string_split(full, ISULAD_ENABLE_PLUGINS_SEPERATOR_CHAR);
+    raw = util_string_split(full, ISULAD_ENABLE_PLUGINS_SEPARATOR_CHAR);
     if (raw == NULL) {
         ERROR("split plugin name failed");
         goto failed;
@@ -194,7 +194,7 @@ static char *get_uniq_enable_plugins(const oci_runtime_spec *oci)
         }
     }
 
-    names = util_string_join(ISULAD_ENABLE_PLUGINS_SEPERATOR, (const char **)arr, util_array_len((const char **)arr));
+    names = util_string_join(ISULAD_ENABLE_PLUGINS_SEPARATOR, (const char **)arr, util_array_len((const char **)arr));
     if (names == NULL) {
         ERROR("join uniq plugin name failed");
         goto failed;
@@ -266,7 +266,7 @@ static char **get_enable_plugins(const char *plugins)
         return dst;
     }
 
-    arr = util_string_split(plugins, ISULAD_ENABLE_PLUGINS_SEPERATOR_CHAR);
+    arr = util_string_split(plugins, ISULAD_ENABLE_PLUGINS_SEPARATOR_CHAR);
     if (arr == NULL) {
         ERROR("Out of memory");
         goto out;
@@ -691,7 +691,7 @@ static void *plugin_manager_routine(void *arg)
     // initilize inotify instance
     inotify_fd = inotify_init();
     if (inotify_fd < 0) {
-        ERROR("Failed to initalize inotify instance");
+        ERROR("Failed to initialize inotify instance");
         return NULL;
     }
     // add plugin_dir to watch
@@ -1129,7 +1129,7 @@ static int pm_init_plugin(const plugin_t *plugin)
         }
     }
     /*
-     * add elem to reqs, if no containers availabe add no elem.
+     * add elem to reqs, if no containers available add no elem.
      */
     for (i = 0; i < container_num; i++) {
         ret = pm_prepare_init_reqs(plugin, &reqs, cnames[i]);
@@ -1337,7 +1337,7 @@ bad:
     return -1;
 }
 
-static int plugin_event_handle_dispath_impl(const char *cid, const char *plugins, uint64_t pe)
+static int plugin_event_handle_dispatch_impl(const char *cid, const char *plugins, uint64_t pe)
 {
     int ret = 0;
     plugin_t *plugin = NULL;
@@ -1389,7 +1389,7 @@ out:
     return ret;
 }
 
-static int plugin_event_handle_dispath(const container_t *cont, uint64_t pe)
+static int plugin_event_handle_dispatch(const container_t *cont, uint64_t pe)
 {
     int ret = 0;
     char *cid = NULL;
@@ -1401,7 +1401,7 @@ static int plugin_event_handle_dispath(const container_t *cont, uint64_t pe)
     }
 
     plugins = container_get_env_nolock(cont, ISULAD_ENABLE_PLUGINS);
-    ret = plugin_event_handle_dispath_impl(cid, plugins, pe);
+    ret = plugin_event_handle_dispatch_impl(cid, plugins, pe);
     free(cid);
     free(plugins);
     return ret;
@@ -1696,7 +1696,7 @@ int plugin_event_container_pre_start(const container_t *cont)
         return 0;
     }
 
-    return plugin_event_handle_dispath(cont, (uint64_t)PLUGIN_EVENT_CONTAINER_PRE_START);
+    return plugin_event_handle_dispatch(cont, (uint64_t)PLUGIN_EVENT_CONTAINER_PRE_START);
 }
 
 static int unpack_event_post_stop_response(const struct parsed_http_message *message, void *arg)
@@ -1795,7 +1795,7 @@ int plugin_event_container_post_stop(const container_t *cont)
         return 0;
     }
 
-    return plugin_event_handle_dispath(cont, (uint64_t)PLUGIN_EVENT_CONTAINER_POST_STOP);
+    return plugin_event_handle_dispatch(cont, (uint64_t)PLUGIN_EVENT_CONTAINER_POST_STOP);
 }
 
 static int unpack_event_post_remove_response(const struct parsed_http_message *message, void *arg)
@@ -1894,7 +1894,7 @@ int plugin_event_container_post_remove(const container_t *cont)
         return 0;
     }
 
-    return plugin_event_handle_dispath(cont, (uint64_t)PLUGIN_EVENT_CONTAINER_POST_REMOVE);
+    return plugin_event_handle_dispatch(cont, (uint64_t)PLUGIN_EVENT_CONTAINER_POST_REMOVE);
 }
 
 int plugin_event_container_post_remove2(const char *cid, const oci_runtime_spec *oci)
@@ -1925,7 +1925,7 @@ int plugin_event_container_post_remove2(const char *cid, const oci_runtime_spec 
         goto out;
     }
 
-    ret = plugin_event_handle_dispath_impl(cidx, plugins, (uint64_t)PLUGIN_EVENT_CONTAINER_POST_REMOVE);
+    ret = plugin_event_handle_dispatch_impl(cidx, plugins, (uint64_t)PLUGIN_EVENT_CONTAINER_POST_REMOVE);
 
 out:
     free(cidx);

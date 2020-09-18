@@ -10,21 +10,21 @@
  * See the Mulan PSL v2 for more details.
  * Author: maoweiyong
  * Create: 2017-11-22
- * Description: provide monitord definition
+ * Description: provide monitored definition
  ******************************************************************************/
-#ifndef DAEMON_MODULES_EVENTS_MONITORD_H
-#define DAEMON_MODULES_EVENTS_MONITORD_H
+#ifndef DAEMON_MODULES_EVENTS_MONITORED_H
+#define DAEMON_MODULES_EVENTS_MONITORED_H
 #include <pthread.h>
 #include <semaphore.h>
 #include <limits.h>
 
 #include "utils.h"
 
-struct monitord_sync_data {
-    sem_t *monitord_sem;
+struct monitored_sync_data {
+    sem_t *monitored_sem;
     int *exit_code;
 };
 
-int new_monitord(struct monitord_sync_data *msync);
+int new_monitored(struct monitored_sync_data *msync);
 
 #endif

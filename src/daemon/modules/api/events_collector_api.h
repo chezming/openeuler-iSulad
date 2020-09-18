@@ -30,7 +30,7 @@ struct context_lists {
     struct linked_list context_list;
 };
 
-void events_handler(struct monitord_msg *msg);
+void events_handler(struct monitored_msg *msg);
 
 int add_monitor_client(char *name, const types_timestamp_t *since, const types_timestamp_t *until,
                        const stream_func_wrapper *stream);
