@@ -234,7 +234,7 @@ static int parser_chunk_complete_cb(http_parser *p)
      * both callbacks be the same, but they also should be interleaved
      * properly */
     if (m->num_chunks != m->num_chunks_complete + 1) {
-        ERROR("chunk_header_cb is not matched by chunk_complate_cb");
+        ERROR("chunk_header_cb is not matched by chunk_complacent_cb");
         return -1;
     }
 
