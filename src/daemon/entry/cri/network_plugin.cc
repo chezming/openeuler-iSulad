@@ -71,7 +71,6 @@ static std::string GetOnePodIP(std::string nsenterPath, std::string netnsPath, s
 {
     char *stderr_str { nullptr };
     char *stdout_str { nullptr };
-    char *strErr { nullptr };
     char **lines { nullptr };
     char **fields { nullptr };
     struct ipnet *ipnet_val {
@@ -118,8 +117,8 @@ static std::string GetOnePodIP(std::string nsenterPath, std::string netnsPath, s
         goto free_out;
     }
 
-    if (parse_cidr(fields[3], &ipnet_val, &strErr) != 0) {
-        error.Errorf("CNI failed to parse ip from output %s due to %s", stdout_str, strErr);
+    if (parse_cidr(fields[3], &ipnet_val) != 0) {
+        error.Errorf("CNI failed to parse ip from output %s due to %s", stdout_str);
         goto free_out;
     }
     cIP = ip_to_string(ipnet_val->ip, ipnet_val->ip_len);
