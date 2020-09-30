@@ -35,6 +35,8 @@ typedef struct {
     char *compressed_digest;
     char *chain_id;
     char *fpath;
+    // layer.tar file exist on local
+    bool file_exist;
 } load_layer_blob_t;
 
 typedef struct {
