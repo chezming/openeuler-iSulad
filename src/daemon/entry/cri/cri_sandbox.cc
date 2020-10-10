@@ -1078,7 +1078,7 @@ auto CRIRuntimeServiceImpl::GetIP(const std::string &podSandboxID, container_ins
     }
 
     if (inspect->network_settings->ip_address != nullptr) {
-        WARN("Use container inspect ip info: %s", error.GetCMessage());
+        WARN("Use container inspect ip info: %s, warn: %s", inspect->network_settings->ip_address, error.GetCMessage());
         error.Clear();
         return inspect->network_settings->ip_address;
     }
