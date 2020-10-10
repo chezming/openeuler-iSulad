@@ -103,6 +103,8 @@ int util_set_file_group(const char *fname, const char *group);
 // try to remove the path, path is file or dir
 int util_recursive_remove_path(const char *path);
 
+bool util_remove_file(const char *fname, int *saved_errno);
+
 #ifdef __cplusplus
 }
 #endif
