@@ -98,6 +98,8 @@ typedef bool (*read_line_callback_t)(const char *, void *context);
 
 int isula_utils_read_line(FILE *fp, read_line_callback_t cb, void *context);
 
+bool util_remove_file(const char *fname, int *saved_errno);
+
 #ifdef __cplusplus
 }
 #endif

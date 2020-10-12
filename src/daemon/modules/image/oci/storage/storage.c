@@ -124,7 +124,7 @@ static int fill_read_wrapper(const char *layer_data_path, struct io_read_wrapper
     reader_tmp->read = layer_archive_io_read;
     reader_tmp->close = layer_archive_io_close;
     *reader = reader_tmp;
-    
+
     fd_ptr = NULL;
     reader_tmp = NULL;
 
