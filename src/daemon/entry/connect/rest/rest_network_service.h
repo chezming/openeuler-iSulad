@@ -8,32 +8,24 @@
  * IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY OR FIT FOR A PARTICULAR
  * PURPOSE.
  * See the Mulan PSL v2 for more details.
- * Author: maoweiyong
- * Create: 2018-11-08
- * Description: provide rest client
+ * Author: zhangxiaoyu
+ * Create: 2020-09-17
+ * Description: provide network restful service definition
  ******************************************************************************/
-#include "rest_client.h"
-#include "rest_containers_client.h"
-#include "rest_images_client.h"
-#include "rest_network_client.h"
+#ifndef DAEMON_ENTRY_CONNECT_REST_REST_NETWORK_SERVICE_H
+#define DAEMON_ENTRY_CONNECT_REST_REST_NETWORK_SERVICE_H
 
-int rest_ops_init(isula_connect_ops *ops)
-{
-    if (ops == NULL) {
-        return -1;
-    }
+#include <evhtp.h>
 
-    /* Add all operator api at here */
-    if (rest_containers_client_ops_init(ops) != 0) {
-        return -1;
-    }
-    if (rest_images_client_ops_init(ops) != 0) {
-        return -1;
-    }
-    if (rest_network_client_ops_init(ops) != 0) {
-        return -1;
-    }
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-    return 0;
+int rest_register_network_handler(evhtp_t *htp);
+
+#ifdef __cplusplus
 }
+#endif
+
+#endif // DAEMON_ENTRY_CONNECT_REST_REST_NETWORK_SERVICE_H
 
