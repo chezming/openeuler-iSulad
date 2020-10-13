@@ -79,6 +79,8 @@
 #include "isula_libutils/image_login_response.h"
 #include "isula_libutils/image_logout_request.h"
 #include "isula_libutils/image_logout_response.h"
+#include <isula_libutils/container_update_annotations_ips_request.h>
+#include <isula_libutils/container_update_annotations_ips_response.h>
 #include "events_format.h"
 #include "stream_wrapper.h"
 #include "utils_timestamp.h"
@@ -175,6 +177,7 @@ void isulad_container_resize_request_free(struct isulad_container_resize_request
 void isulad_container_resize_response_free(struct isulad_container_resize_response *response);
 
 void isulad_logs_request_free(struct isulad_logs_request *request);
+
 void isulad_logs_response_free(struct isulad_logs_response *response);
 
 typedef struct {
@@ -238,6 +241,9 @@ typedef struct {
 
     int (*resize)(const struct isulad_container_resize_request *request,
                   struct isulad_container_resize_response **response);
+
+    int (*update_annotations_ips)(const container_update_annotations_ips_request *request,
+                                  container_update_annotations_ips_response **response);
 } service_container_callback_t;
 
 typedef struct {

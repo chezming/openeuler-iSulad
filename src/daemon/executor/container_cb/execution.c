@@ -31,6 +31,8 @@
 #include <isula_libutils/container_start_response.h>
 #include <isula_libutils/container_stop_request.h>
 #include <isula_libutils/container_stop_response.h>
+#include <isula_libutils/container_update_annotations_ips_request.h>
+#include <isula_libutils/container_update_annotations_ips_request.h>
 #include <isula_libutils/json_common.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -54,6 +56,9 @@
 #include "event_type.h"
 #include "utils_timestamp.h"
 #include "utils_verify.h"
+#include "isulad_config.h"
+#include "container_unix.h"
+#include "container_api.h"
 
 static int filter_by_label(const container_t *cont, const container_get_id_request *request)
 {
@@ -831,6 +836,46 @@ pack_response:
     return (cc == ISULAD_SUCCESS) ? 0 : -1;
 }
 
+static int container_update_annotations_ips_cb(const container_update_annotations_ips_request *request,
+                                               container_update_annotations_ips_response **response)
+{
+    int ret = 0;
+    char *ips = request->ips;
+    char *id = request->id;
+    char *key = "ips";
+    container_t *cont = NULL;
+
+    // 1. read container_t from memory
+    cont = (container_t *) containers_store_get(id);
+    if (cont == NULL) {
+        ERROR("No such container: %s", id);
+        isulad_set_error_message("No such container: %s", id);
+        ret = -1;
+        goto ip_fail_cleanup;
+    }
+
+    // 2. add ip_struct to annotations
+    container_lock(cont);
+    if (append_json_map_string_string(cont->common_config->config->annotations, key, ips) != 0) {
+        ERROR("Append Pod %s IP into annotations failed", id);
+        ret = -1;
+        goto ip_fail_cleanup;
+    }
+    container_unlock(cont);
+
+    // 3. save
+    if (container_to_disk_locking(cont)) {
+        ERROR("Failed to save container \"%s\" to disk", id);
+        ret = -1;
+        goto ip_fail_cleanup;
+    }
+
+    // 4. clean
+ip_fail_cleanup:
+    container_unref(cont);
+    return ret;
+}
+
 void container_callback_init(service_container_callback_t *cb)
 {
     cb->get_id = container_get_id_cb;
@@ -841,6 +886,7 @@ void container_callback_init(service_container_callback_t *cb)
     cb->restart = container_restart_cb;
     cb->kill = container_kill_cb;
     cb->remove = container_delete_cb;
+    cb->update_annotations_ips = container_update_annotations_ips_cb;
 
     container_information_callback_init(cb);
     container_stream_callback_init(cb);

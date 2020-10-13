@@ -105,7 +105,8 @@ public:
     virtual void SetUpPod(const std::string &ns, const std::string &name,
                           const std::string &interfaceName, const std::string &podSandboxID,
                           const std::map<std::string, std::string> &annotations,
-                          const std::map<std::string, std::string> &options, Errors &error) = 0;
+                          const std::map<std::string, std::string> &options,
+                          std::vector<std::string> &ips, Errors &error) = 0;
 
     virtual void TearDownPod(const std::string &ns, const std::string &name, const std::string &networkPlane,
                              const std::string &podSandboxID,
@@ -140,7 +141,8 @@ public:
     void SetUpPod(const std::string &ns, const std::string &name,
                   const std::string &interfaceName, const std::string &podSandboxID,
                   const std::map<std::string, std::string> &annotations,
-                  const std::map<std::string, std::string> &options, Errors &error) override;
+                  const std::map<std::string, std::string> &options,
+                  std::vector<std::string> &ips, Errors &error) override;
 
     void TearDownPod(const std::string &ns, const std::string &name, const std::string &networkPlane,
                      const std::string &podSandboxID,
@@ -206,7 +208,8 @@ public:
     void SetUpPod(const std::string &ns, const std::string &name,
                   const std::string &interfaceName, const std::string &podSandboxID,
                   std::map<std::string, std::string> &annotations,
-                  const std::map<std::string, std::string> &options, Errors &error);
+                  const std::map<std::string, std::string> &options,
+                  std::vector<std::string> &ips, Errors &error);
     void TearDownPod(const std::string &ns, const std::string &name, const std::string &networkPlane,
                      const std::string &podSandboxID,
                      std::map<std::string, std::string> &annotations, Errors &error);
@@ -229,6 +232,8 @@ void ProbeNetworkPlugins(const std::string &pluginDir, const std::string &binDir
 
 std::string GetPodIP(const std::string &nsenterPath, const std::string &netnsPath, const std::string &interfaceName,
                      Errors &error);
+
+std::vector<std::string> GetFakeIPs();
 
 const std::string &GetInterfaceName();
 } // namespace Network

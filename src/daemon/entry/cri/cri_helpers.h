@@ -28,6 +28,7 @@
 #include "isula_libutils/cri_pod_network.h"
 #include "isula_libutils/docker_seccomp.h"
 #include "isula_libutils/host_config.h"
+#include <isula_libutils/container_ip_struct.h>
 
 namespace CRIHelpers {
 class Constants {
@@ -119,6 +120,8 @@ auto GetSecurityOpts(const std::string &seccompProfile, const char &separator,
 auto CreateCheckpoint(cri::PodSandboxCheckpoint &checkpoint, Errors &error) -> std::string;
 
 void GetCheckpoint(const std::string &jsonCheckPoint, cri::PodSandboxCheckpoint &checkpoint, Errors &error);
+
+auto IPStruct2Json(const std::vector<std::string> &ips, Errors &error) -> char*;
 
 }; // namespace CRIHelpers
 

@@ -29,6 +29,7 @@ void container_reset_manually_stopped(container_t *cont);
 
 int save_host_config(const char *id, const char *rootpath, const char *hostconfigstr);
 int save_config_v2_json(const char *id, const char *rootpath, const char *v2configstr);
+container_config_v2 *read_config_v2(const char *rootpath, const char *id);
 
 #if defined(__cplusplus) || defined(c_plusplus)
 }

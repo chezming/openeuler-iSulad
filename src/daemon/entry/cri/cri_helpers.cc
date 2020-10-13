@@ -714,4 +714,48 @@ out:
     free_cri_checkpoint(criCheckpoint);
 }
 
+auto IPStruct2Json(const std::vector<std::string> &ips, Errors &error) -> char*
+{
+    container_ip_struct *ip_struct = nullptr;
+    struct parser_context ctx = { OPT_GEN_SIMPLIFY, 0 };
+    parser_error err;
+    char *ip_json = nullptr;
+
+    if (ips.size() == 0) {
+        error.Errorf("Empty Pods IP , size : %d", (int) ips.size());
+        return nullptr;
+    }
+
+    ip_struct = (container_ip_struct *)util_common_calloc_s(sizeof(container_ip_struct));
+    if (ip_struct == nullptr) {
+        error.Errorf("container_ip_struct Out of memory");
+        return nullptr;
+    }
+
+    ip_struct->default_ip = util_strdup_s(ips[0].c_str());
+    ip_struct->extra_ips_len = ips.size() - 1;
+
+    // maybe only one ip
+    if (ips.size() > 1) {
+        ip_struct->extra_ips = (char**) util_common_calloc_s((ips.size() - 1) * sizeof(char*));
+        // allocate memory fails
+        if (ip_struct->extra_ips == nullptr) {
+            error.Errorf("container_ip_struct extra ips Out of memory");
+            goto cleanup;
+        }
+        for (int i = 1; i < (int) ips.size(); ++i) {
+            ip_struct->extra_ips[i - 1] = util_strdup_s(ips[i].c_str());
+        }
+    }
+
+    ip_json = container_ip_struct_generate_json(ip_struct, &ctx, &err);
+    if (ip_json == nullptr) {
+        free(err);
+        error.Errorf("can not get ip struct json");
+        goto cleanup;
+    }
+cleanup:
+    free_container_ip_struct(ip_struct);
+    return ip_json;
+}
 } // namespace CRIHelpers

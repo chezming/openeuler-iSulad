@@ -22,6 +22,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <string>
 
 #include <grpc++/grpc++.h>
 #include <unistd.h>
@@ -32,6 +33,7 @@
 #include "cxxutils.h"
 #include "errors.h"
 #include "isula_libutils/host_config.h"
+#include "isula_libutils/container_update_annotations_ips_request.h"
 #include "isula_libutils/log.h"
 #include "naming.h"
 #include "utils.h"
@@ -471,6 +473,7 @@ void CRIRuntimeServiceImpl::SetupUserDefinedNetworkPlane(const runtime::v1alpha2
 {
     google::protobuf::Map<std::string, std::string> annotations;
     CRIHelpers::ExtractAnnotations(inspect_data->config->annotations, annotations);
+    std::vector<std::string> ips;
 
     size_t len = 0;
     cri_pod_network_element **networks = CRIHelpers::GetNetworkPlaneFromPodAnno(annotations, &len, error);
@@ -484,7 +487,7 @@ void CRIRuntimeServiceImpl::SetupUserDefinedNetworkPlane(const runtime::v1alpha2
             strcmp(networks[i]->name, Network::DEFAULT_NETWORK_PLANE_NAME.c_str()) != 0) {
             INFO("SetupPod net: %s", networks[i]->name);
             m_pluginManager->SetUpPod(config.metadata().namespace_(), config.metadata().name(), networks[i]->interface, response_id,
-                                      stdAnnos, options, error);
+                                      stdAnnos, options, ips, error);
             if (error.Empty()) {
                 continue;
             }
@@ -501,9 +504,29 @@ cleanup:
     free_cri_pod_network(networks, len);
 }
 
+auto CRIRuntimeServiceImpl::GenerateSandboxUpdateAnnotaionsIPsRequest(const std::vector<std::string> &ips,
+                                                                      const std::string &runtimeHandler,
+                                                                      const std::string &response_id, Errors &error)-> container_update_annotations_ips_request *
+{
+    container_update_annotations_ips_request *ips_request =
+        (container_update_annotations_ips_request *)util_common_calloc_s(sizeof(*ips_request));
+    if (ips_request == nullptr) {
+        error.Errorf("container_update_annotations_ips_request Out of memory");
+        return nullptr;
+    }
+    ips_request->id = util_strdup_s(response_id.c_str());
+    ips_request->runtime = util_strdup_s(runtimeHandler.c_str());
+    ips_request->ips = CRIHelpers::IPStruct2Json(ips, error);
+    if (ips_request->ips == nullptr) {
+        free_container_update_annotations_ips_request(ips_request);
+        return nullptr;
+    }
+    return ips_request;
+}
+
 void CRIRuntimeServiceImpl::SetupSandboxNetwork(const runtime::v1alpha2::PodSandboxConfig &config,
                                                 const std::string &response_id, const std::string &jsonCheckpoint,
-                                                Errors &error)
+                                                std::vector<std::string> &ips, Errors &error)
 {
     std::map<std::string, std::string> stdAnnos;
     std::map<std::string, std::string> networkOptions;
@@ -533,12 +556,13 @@ void CRIRuntimeServiceImpl::SetupSandboxNetwork(const runtime::v1alpha2::PodSand
     networkOptions["UID"] = config.metadata().uid();
 
     m_pluginManager->SetUpPod(config.metadata().namespace_(), config.metadata().name(),
-                              Network::DEFAULT_NETWORK_INTERFACE_NAME, response_id, stdAnnos, networkOptions, error);
+                              Network::DEFAULT_NETWORK_INTERFACE_NAME, response_id, stdAnnos, networkOptions, ips, error);
     if (error.NotEmpty()) {
         ERROR("SetupPod failed: %s", error.GetCMessage());
         StopContainerHelper(response_id, error);
         goto cleanup;
     }
+
 
 cleanup:
     free_container_inspect(inspect_data);
@@ -550,6 +574,10 @@ auto CRIRuntimeServiceImpl::RunPodSandbox(const runtime::v1alpha2::PodSandboxCon
 {
     std::string response_id;
     std::string jsonCheckpoint;
+    std::vector<std::string> ips;
+    container_update_annotations_ips_request *ips_request { nullptr };
+    container_update_annotations_ips_response *ips_response { nullptr };
+
     if (m_cb == nullptr || m_cb->container.create == nullptr || m_cb->container.start == nullptr) {
         error.SetError("Unimplemented callback");
         return response_id;
@@ -582,9 +610,17 @@ auto CRIRuntimeServiceImpl::RunPodSandbox(const runtime::v1alpha2::PodSandboxCon
         goto cleanup;
     }
     // Step 5: Setup networking for the sandbox.
-    SetupSandboxNetwork(config, response_id, jsonCheckpoint, error);
+    SetupSandboxNetwork(config, response_id, jsonCheckpoint, ips, error);
     if (error.NotEmpty()) {
         goto cleanup;
+    }
+
+    ips_request = GenerateSandboxUpdateAnnotaionsIPsRequest(ips, runtimeHandler, response_id, error);
+    if (ips_request != nullptr) {
+        if (m_cb->container.update_annotations_ips(ips_request, &ips_response) < 0) {
+            error.SetError("Failed to update container annotations ip");
+            goto cleanup;
+        }
     }
 
 cleanup:
@@ -593,6 +629,8 @@ cleanup:
         DEBUG("set %s ready", response_id.c_str());
         error.Clear();
     }
+    free_container_update_annotations_ips_request(ips_request);
+    free_container_update_annotations_ips_response(ips_response);
     return response_id;
 }
 
