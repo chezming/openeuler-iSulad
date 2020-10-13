@@ -130,6 +130,19 @@ void command_init(command_t *self, command_option_t *opts, int opts_len, int arg
     self->option_count = opts_len;
 }
 
+void command_network_init(command_t *self, command_option_t *opts, int opts_len, int argc, const char **argv,
+                          const char *description, const char *usage)
+{
+    (void)memset(self, 0, sizeof(command_t));
+    self->name = util_string_join(" ", argv, 2);
+    self->argc = argc - 3;
+    self->argv = argv + 3;
+    self->usage = usage;
+    self->description = description;
+    self->options = opts;
+    self->option_count = opts_len;
+}
+
 void command_option(command_t *self, command_option_type_t type, void *data, int small, const char *large,
                     const char *desc, command_callback_t cb)
 {

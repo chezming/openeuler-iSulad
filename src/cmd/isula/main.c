@@ -50,6 +50,7 @@
 #include "version.h"
 #include "rename.h"
 #include "utils.h"
+#include "network.h"
 
 // The list of our supported commands
 struct command g_commands[] = {
@@ -191,6 +192,10 @@ struct command g_commands[] = {
         "import", cmd_import_main, g_cmd_import_desc, NULL, &g_cmd_import_args
     },
 #endif
+    {
+        // `network` sub-command
+        "network", cmd_network_main, g_cmd_network_desc, NULL, NULL
+    },
     { NULL, NULL, NULL, NULL, NULL } // End of the list
 };
 
