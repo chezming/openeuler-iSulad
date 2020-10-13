@@ -255,6 +255,18 @@ void client_arguments_free(struct client_arguments *args)
 
     util_free_array(custom_conf->device_cgroup_rules);
     custom_conf->device_cgroup_rules = NULL;
+
+    free(custom_conf->driver);
+    custom_conf->driver = NULL;
+
+    free(custom_conf->gateway);
+    custom_conf->gateway = NULL;
+
+    free(custom_conf->subnet);
+    custom_conf->subnet = NULL;
+
+    free(args->network_name);
+    args->network_name = NULL;
 }
 
 /* print common help */
