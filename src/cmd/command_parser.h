@@ -78,7 +78,7 @@ void command_help(command_t *self);
 void command_option(command_t *self, command_option_type_t type, void *data, int small, const char *large,
                     const char *desc, command_callback_t cb);
 
-int command_parse_args(command_t *self, int *argc, char * const **argv);
+int command_parse_args(command_t *self, int *argc, char *const **argv);
 
 int have_short_options(command_t *self, char arg);
 

@@ -268,8 +268,10 @@ struct client_arguments {
     // delete
     bool volume;
 
-    // events
+    // events/logs
     char *since;
+    
+    // events
     char *until;
 
     // health check

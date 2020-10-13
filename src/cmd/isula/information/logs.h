@@ -25,22 +25,30 @@
 extern "C" {
 #endif
 
-#define LOGS_OPTIONS(cmdargs)                                                                  \
-    { CMD_OPT_TYPE_BOOL, false, "follow", 'f', &(cmdargs).follow, "Follow log output", NULL }, \
-    { CMD_OPT_TYPE_CALLBACK,                                                           \
-      false,                                                                           \
-      "tail",                                                                          \
-      0,                                                                               \
-      &(cmdargs).tail,                                                                 \
-      "Number of lines to show from the end of the logs",                              \
-      callback_tail },                                                                 \
-    { CMD_OPT_TYPE_BOOL, false, "timestamps", 't', &(cmdargs).timestamps, "Show timestamps", NULL },
+#define LOGS_OPTIONS(cmdargs)                                                                                                     \
+    { CMD_OPT_TYPE_BOOL, false, "follow", 'f', &(cmdargs).follow, "Follow log output", NULL },                                    \
+            { CMD_OPT_TYPE_CALLBACK,                                                                                              \
+              false,                                                                                                              \
+              "tail",                                                                                                             \
+              0,                                                                                                                  \
+              &(cmdargs).tail,                                                                                                    \
+              "Number of lines to show from the end of the logs",                                                                 \
+              callback_tail },                                                                                                    \
+            { CMD_OPT_TYPE_BOOL, false, "timestamps", 't', &(cmdargs).timestamps, "Show timestamps", NULL },                      \
+            { CMD_OPT_TYPE_STRING_DUP,                                                                                            \
+              false,                                                                                                              \
+              "since",                                                                                                            \
+              0,                                                                                                                  \
+              &(cmdargs).since,                                                                                                   \
+              "Show logs since timestamp (e.g. 2013-01-01T12:12:45) or relative (e.g. 1h42m30s for 1hour 42 minutes 30 seconds)", \
+              callback_since },
 
 extern const char g_cmd_logs_desc[];
 extern const char g_cmd_logs_usage[];
 extern struct client_arguments g_cmd_logs_args;
 
 int callback_tail(command_option_t *option, const char *arg);
+int callback_since(command_option_t *option, const char *arg);
 int cmd_logs_main(int argc, const char **argv);
 
 #ifdef __cplusplus

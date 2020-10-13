@@ -352,7 +352,7 @@ static int command_parse_long_arg(command_t *self, const char *arg)
     exit(EINVALIDARGS);
 }
 
-int command_parse_args(command_t *self, int *argc, char * const **argv)
+int command_parse_args(command_t *self, int *argc, char *const **argv)
 {
     int ret = 0;
 
@@ -389,7 +389,7 @@ int command_parse_args(command_t *self, int *argc, char * const **argv)
     }
     if (self->argc > 0) {
         *argc = self->argc;
-        *argv = (char * const *)self->argv;
+        *argv = (char *const *)self->argv;
     }
     return ret;
 }
