@@ -79,6 +79,15 @@
 #include "isula_libutils/image_login_response.h"
 #include "isula_libutils/image_logout_request.h"
 #include "isula_libutils/image_logout_response.h"
+#include "isula_libutils/network_create_request.h"
+#include "isula_libutils/network_create_response.h"
+#include "isula_libutils/network_inspect_request.h"
+#include "isula_libutils/network_inspect_response.h"
+#include "isula_libutils/network_list_request.h"
+#include "isula_libutils/network_list_response.h"
+#include "isula_libutils/network_remove_request.h"
+#include "isula_libutils/network_remove_response.h"
+
 #include "events_format.h"
 #include "stream_wrapper.h"
 #include "utils_timestamp.h"
@@ -259,8 +268,19 @@ typedef struct {
 } service_image_callback_t;
 
 typedef struct {
+    int (*create)(const network_create_request *request, network_create_response **response);
+
+    int (*inspect)(const network_inspect_request *request, network_inspect_response **response);
+
+    int (*list)(const network_list_request *request, network_list_response **response);
+
+    int (*remove)(const network_remove_request *request, network_remove_response **response);
+} service_network_callback_t;
+
+typedef struct {
     service_container_callback_t container;
     service_image_callback_t image;
+    service_network_callback_t network;
 } service_executor_t;
 
 int service_callback_init(void);
