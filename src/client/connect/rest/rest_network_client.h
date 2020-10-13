@@ -8,32 +8,24 @@
  * IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY OR FIT FOR A PARTICULAR
  * PURPOSE.
  * See the Mulan PSL v2 for more details.
- * Author: maoweiyong
- * Create: 2018-11-08
- * Description: provide rest client
+ * Author: zhangxiaoyu
+ * Create: 2020-09-09
+ * Description: provide network restful client definition
  ******************************************************************************/
-#include "rest_client.h"
-#include "rest_containers_client.h"
-#include "rest_images_client.h"
-#include "rest_network_client.h"
+#ifndef CLIENT_CONNECT_REST_REST_NETWORK_CLIENT_H
+#define CLIENT_CONNECT_REST_REST_NETWORK_CLIENT_H
 
-int rest_ops_init(isula_connect_ops *ops)
-{
-    if (ops == NULL) {
-        return -1;
-    }
+#include "isula_connect.h"
 
-    /* Add all operator api at here */
-    if (rest_containers_client_ops_init(ops) != 0) {
-        return -1;
-    }
-    if (rest_images_client_ops_init(ops) != 0) {
-        return -1;
-    }
-    if (rest_network_client_ops_init(ops) != 0) {
-        return -1;
-    }
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-    return 0;
+int rest_network_client_ops_init(isula_connect_ops *ops);
+
+#ifdef __cplusplus
 }
+#endif
+
+#endif // CLIENT_CONNECT_REST_REST_NETWORK_CLIENT_H
 
