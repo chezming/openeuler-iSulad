@@ -58,6 +58,7 @@
 #include "utils_fs.h"
 #include "utils_string.h"
 #include "utils_verify.h"
+#include "volume.h"
 
 int set_container_to_removal(const container_t *cont)
 {
@@ -943,6 +944,42 @@ out:
     return ret;
 }
 
+int release_volumes(container_config_v2_common_config_mount_points *mount_points,
+                    char *id, bool rm_anonymous_volumes)
+{
+    int ret = 0;
+    size_t i = 0;
+
+    // no mount point is valid
+    if (mount_points == NULL) {
+        return 0;
+    }
+
+    for (i = 0; i < mount_points->len; i++) {
+        // only volume have name
+        if (mount_points->values[i]->name == NULL) {
+            continue;
+        }
+
+        // release reference to this volume
+        if (volume_del_ref(mount_points->values[i]->name, id) != 0) {
+            ERROR("delete reference %s to volume %s failed", id, mount_points->values[i]->name);
+            ret = -1;
+            continue;
+        }
+
+        // --rm delete anonymous volumes only
+        if (!mount_points->values[i]->named && rm_anonymous_volumes) {
+            if (volume_remove(mount_points->values[i]->name) != 0) {
+                ERROR("remove anonymous volume %s failed", mount_points->values[i]->name);
+                ret = -1;
+            }
+        }
+    }
+
+    return ret;
+}
+
 static int do_delete_container(container_t *cont)
 {
     int ret = 0;
@@ -953,6 +990,7 @@ static int do_delete_container(container_t *cont)
     const char *runtime = NULL;
     const char *rootpath = NULL;
     container_t *cont_tmp = NULL;
+    bool rm_anonymous_volumes = false;
 
     container_lock(cont);
 
@@ -961,6 +999,7 @@ static int do_delete_container(container_t *cont)
     statepath = cont->state_path;
     runtime = cont->runtime;
     rootpath = cont->root_path;
+    rm_anonymous_volumes = (cont->hostconfig != NULL) && cont->hostconfig->auto_remove;
 
     /* check if container was deregistered by previous rm already */
     cont_tmp = containers_store_get(id);
@@ -1007,6 +1046,12 @@ static int do_delete_container(container_t *cont)
 
     if (do_runtime_rm_helper(id, runtime, rootpath) != 0) {
         ret = -1;
+        goto out;
+    }
+
+    ret = release_volumes(cont->common_config->mount_points, id, rm_anonymous_volumes);
+    if (ret != 0) {
+        ERROR("Failed to release volumes of container %s", name);
         goto out;
     }
 

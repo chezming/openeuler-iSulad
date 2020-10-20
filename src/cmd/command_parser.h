@@ -57,6 +57,7 @@ typedef struct _command {
     const char *usage;
     const char *description;
     const char *name;
+    const char *subname;
     const char *version;
     int option_count;
     command_option_t *options;
@@ -68,6 +69,10 @@ int command_valid_socket(command_option_t *option, const char *arg);
 
 void command_init(command_t *self, command_option_t *opts, int opts_len, int argc, const char **argv,
                   const char *description, const char *usage);
+
+// Use this function if command have two prefix key world, for example, isula volume ls
+void subcommand_init(command_t *self, command_option_t *opts, int opts_len, int argc, const char **argv,
+                     const char *description, const char *usage);
 
 int compare_options(const void *s1, const void *s2);
 

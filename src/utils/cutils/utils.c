@@ -1473,3 +1473,67 @@ void util_parse_user_group(const char *username, char **user, char **group, char
 
     return;
 }
+
+int get_cmd_name(const char * const name, const char * const subname, char *cmd_name, size_t cmd_name_buf_len)
+{
+    int sret = 0;
+    const char *progname = NULL;
+
+    progname = strrchr(name, '/');
+    if (progname == NULL) {
+        progname = name;
+    } else {
+        progname++;
+    }
+
+    if (subname != NULL) {
+        sret = snprintf(cmd_name, cmd_name_buf_len, "%s %s", progname, subname);
+    } else {
+        sret = snprintf(cmd_name, cmd_name_buf_len, "%s", progname);
+    }
+    if (sret < 0 || (size_t)sret >= cmd_name_buf_len) {
+        return -1;
+    }
+
+    return 0;
+}
+
+defs_map_string_object * dup_map_string_empty_object(defs_map_string_object *src)
+{
+    int ret = 0;
+    size_t i = 0;
+    defs_map_string_object *dst = NULL;
+
+    if (src == NULL) {
+        ERROR("invalid null param");
+        return NULL;
+    }
+
+    dst = util_common_calloc_s(sizeof(defs_map_string_object));
+    if (dst == NULL) {
+        ERROR("out of memory");
+        return NULL;
+    }
+
+    dst->keys = util_common_calloc_s(src->len * sizeof(char*));
+    dst->values = util_common_calloc_s(src->len * sizeof(defs_map_string_object_element*));
+    if (dst->keys == NULL || dst->values == NULL) {
+        ERROR("Out of memory");
+        ret = -1;
+        goto out;
+    }
+
+    for (i = 0; i < src->len; i++) {
+        dst->keys[i] = util_strdup_s(src->keys[i]);
+        dst->values[i] = NULL;
+    }
+    dst->len = src->len;
+
+out:
+    if (ret != 0) {
+        free_defs_map_string_object(dst);
+        dst = NULL;
+    }
+
+    return dst;
+}
