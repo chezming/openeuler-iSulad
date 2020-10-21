@@ -116,6 +116,31 @@ int util_path_remove(const char *path)
     return -1;
 }
 
+ssize_t util_write_nointr_for_fifo(int fd, const void *buf, size_t count)
+{
+    ssize_t nret = 0;
+    size_t nwritten;
+
+    if (buf == NULL) {
+        return -1;
+    }
+
+    for (nwritten = 0; nwritten < count;) {
+        nret = write(fd, buf + nwritten, count - nwritten);
+        if (nret < 0) {
+            if (errno == EINTR || errno == EAGAIN) {
+                continue;
+            } else {
+                return nret;
+            }
+        } else {
+            nwritten += nret;
+        }
+    }
+
+    return nret;
+}
+
 ssize_t util_write_nointr(int fd, const void *buf, size_t count)
 {
     ssize_t nret;

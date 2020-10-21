@@ -38,7 +38,11 @@ int util_path_remove(const char *path);
 
 ssize_t util_write_nointr(int fd, const void *buf, size_t count);
 
+ssize_t util_write_nointr_for_fifo(int fd, const void *buf, size_t count);
+
 ssize_t util_read_nointr(int fd, void *buf, size_t count);
+
+ssize_t util_read_nointr_for_fifo(int fd, void *buf, size_t count);
 
 int util_mkdir_p(const char *dir, mode_t mode);
 

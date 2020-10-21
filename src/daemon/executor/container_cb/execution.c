@@ -252,19 +252,20 @@ static int prepare_start_io(container_t *cont, const container_start_request *re
 {
     int ret = 0;
     char *id = NULL;
-    pthread_t tid = 0;
+    pthread_t reader_tid = 0;
+    pthread_t writer_tid = 0;
 
     id = cont->common_config->id;
 
     if (request->attach_stdin || request->attach_stdout || request->attach_stderr) {
         if (create_daemon_fifos(id, cont->runtime, request->attach_stdin, request->attach_stdout,
-                                request->attach_stderr, "start", fifos, fifopath)) {
+                                request->attach_stderr, "start", fifos, fifopath) != 0) {
             ret = -1;
             goto out;
         }
 
         if (ready_copy_io_data(-1, true, request->stdin, request->stdout, request->stderr, stdinfd, stdout_handler,
-                               stderr_handler, (const char **)fifos, &tid)) {
+                               stderr_handler, (const char **)fifos, &reader_tid, &writer_tid) != 0) {
             ret = -1;
             goto out;
         }

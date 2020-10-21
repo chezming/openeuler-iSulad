@@ -23,10 +23,19 @@
 
 #include "io_wrapper.h"
 #include "constants.h"
+#include "utils_queue.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+struct queue_buffers {
+    sem_t *io_sem;
+    int outfd;
+    circular_queue_buffer *stdout_queue_buffer;
+    int errfd;
+    circular_queue_buffer *stderr_queue_buffer;
+};
 
 struct tty_state {
     int sync_fd;
@@ -40,6 +49,7 @@ struct tty_state {
     int tty_exit;
     /* Flag to mark whether detected escape sequence. */
     int saw_tty_exit;
+    volatile struct queue_buffers *buffers;
 };
 
 int console_fifo_name(const char *rundir, const char *subpath, const char *stdflag, char *fifo_name,
@@ -58,7 +68,11 @@ void console_fifo_close(int fd);
 int console_loop_with_std_fd(int stdinfd, int stdoutfd, int stderrfd, int fifoinfd, int fifooutfd, int fifoerrfd,
                              int tty_exit, bool tty);
 
-int console_loop_io_copy(int sync_fd, const int *srcfds, struct io_write_wrapper *writers, size_t len);
+int console_loop_io_copy_reader(int sync_fd, const int *srcfds, volatile struct queue_buffers *buffers,
+                                struct io_write_wrapper *writers, size_t len);
+
+void console_loop_io_copy_writer(int sync_fd, const int *srcfds, volatile bool *iocopy_reader_finish,
+                                 volatile struct queue_buffers *buffers, struct io_write_wrapper *writers, size_t len);
 
 int setup_tios(int fd, struct termios *curr_tios);
 
