@@ -915,12 +915,15 @@ int clean_container_resource(const char *id, const char *runtime, pid_t pid)
         goto out;
     }
 
+    container_lock(cont);
     ret = do_clean_container(cont, pid);
+    container_unlock(cont);
     if (ret != 0) {
         ERROR("Runtime clean container resource failed");
         ret = -1;
         goto out;
     }
+
 out:
     container_unref(cont);
     return ret;
