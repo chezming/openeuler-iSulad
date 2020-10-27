@@ -1622,7 +1622,7 @@ static int copy_mode(char *copy_dst, struct stat *src_stat)
         return 0;
     }
 
-    if (chmod(copy_dst, src_stat->st_mode != 0)) {
+    if (chmod(copy_dst, src_stat->st_mode) != 0) {
         ERROR("chmod %s failed: %s", copy_dst, strerror(errno));
         return -1;
     }
@@ -1665,6 +1665,10 @@ static int do_copy_xattrs(char *copy_dst, char *copy_src, char *xattrs, ssize_t 
     int ret = 0;
 
     for (key = xattrs; key < xattrs + xattrs_len; key += strlen(key) + 1) {
+        if (*key == '\0') {
+            break;
+        }
+
         size = lgetxattr(copy_src, key, NULL, 0);
         if (size < 0) {
             if (errno == ENOTSUP) {
