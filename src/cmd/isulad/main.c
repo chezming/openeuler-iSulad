@@ -68,7 +68,7 @@
 #include "utils_convert.h"
 #include "utils_file.h"
 #include "utils_string.h"
-#include "utils_verify.h"
+#include "utils_verify11.h"
 
 #ifdef GRPC_CONNECTOR
 #include "clibcni/api.h"
@@ -77,7 +77,7 @@
 sem_t g_daemon_shutdown_sem;
 sem_t g_daemon_wait_shutdown_sem;
 
-static int create_client_run_path(const char *group)
+static int create_clientddd_run_path(const char *group)
 {
     int ret = 0;
     const char *rundir = "/var/run/isula";

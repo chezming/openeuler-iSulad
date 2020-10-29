@@ -281,6 +281,10 @@ function make_base_image()
     BASE_IMAGE=`docker build -q -f ${DockerFile} .`
 }
 
+git status
+
+git log
+
 make_sure_cgroup
 
 make_base_image
