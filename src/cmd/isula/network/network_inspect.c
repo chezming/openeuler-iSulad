@@ -1,5 +1,5 @@
 /******************************************************************************
- * Copyright (c) Huawei Technologies Co., Ltd. 2018-2019. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2020. All rights reserved.
  * iSulad licensed under the Mulan PSL v2.
  * You can use this software according to the terms and conditions of the Mulan PSL v2.
  * You may obtain a copy of Mulan PSL v2 at:
@@ -8,32 +8,21 @@
  * IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY OR FIT FOR A PARTICULAR
  * PURPOSE.
  * See the Mulan PSL v2 for more details.
- * Author: maoweiyong
- * Create: 2018-11-08
- * Description: provide rest client
+ * Author: zhangxiaoyu
+ * Create: 2020-09-02
+ * Description: provide network inspect functions
  ******************************************************************************/
-#include "rest_client.h"
-#include "rest_containers_client.h"
-#include "rest_images_client.h"
-#include "rest_network_client.h"
+#include "network_inspect.h"
 
-int rest_ops_init(isula_connect_ops *ops)
+const char g_cmd_network_inspect_desc[] = "Inspect networks";
+const char g_cmd_network_inspect_usage[] = "inspect [flags] NETWORK [NETWORK...]";
+
+struct client_arguments g_cmd_network_inspect_args = {
+    .format = NULL,
+};
+
+int cmd_network_inspect_main(int argc, const char **argv)
 {
-    if (ops == NULL) {
-        return -1;
-    }
-
-    /* Add all operator api at here */
-    if (rest_containers_client_ops_init(ops) != 0) {
-        return -1;
-    }
-    if (rest_images_client_ops_init(ops) != 0) {
-        return -1;
-    }
-    if (rest_network_client_ops_init(ops) != 0) {
-        return -1;
-    }
-
+    // TODO
     return 0;
 }
-

@@ -1,5 +1,5 @@
 /******************************************************************************
- * Copyright (c) Huawei Technologies Co., Ltd. 2018-2019. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2020. All rights reserved.
  * iSulad licensed under the Mulan PSL v2.
  * You can use this software according to the terms and conditions of the Mulan PSL v2.
  * You may obtain a copy of Mulan PSL v2 at:
@@ -8,32 +8,28 @@
  * IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY OR FIT FOR A PARTICULAR
  * PURPOSE.
  * See the Mulan PSL v2 for more details.
- * Author: lifeng
- * Create: 2018-11-08
- * Description: provide grpc ops functions
+ * Author: zhangxiaoyu
+ * Create: 2020-09-02
+ * Description: provide network definition
  ******************************************************************************/
+#ifndef CMD_ISULA_NETWORK_H
+#define CMD_ISULA_NETWORK_H
 
-#include "grpc_client.h"
-#include "grpc_containers_client.h"
-#include "grpc_images_client.h"
-#include "grpc_network_client.h"
+#include "network_create.h"
+#include "network_inspect.h"
+#include "network_list.h"
+#include "network_remove.h"
 
-int grpc_ops_init(isula_connect_ops *ops)
-{
-    if (ops == nullptr) {
-        return -1;
-    }
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-    if (grpc_containers_client_ops_init(ops)) {
-        return -1;
-    }
-    if (grpc_images_client_ops_init(ops)) {
-        return -1;
-    }
-    if (grpc_network_client_ops_init(ops)) {
-        return -1;
-    }
+extern const char g_cmd_network_desc[];
+extern const char g_cmd_network_usage[];
+int cmd_network_main(int argc, const char **argv);
 
-    return 0;
+#ifdef __cplusplus
 }
+#endif
 
+#endif // CMD_ISULA_NETWORK_H

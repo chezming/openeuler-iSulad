@@ -514,6 +514,11 @@ static int get_ipv6_mask(const struct ipnet *value, size_t iplen, uint8_t **mask
         (void)memcpy(*mask, (value->ip_mask + IPV4_TO_V6_EMPTY_PREFIX_BYTES), IPV4LEN);
         return IPV4LEN;
     } else {
+        *mask = util_smart_calloc_s(IPV6LEN, sizeof(uint8_t));
+        if (*mask == NULL) {
+            ERROR("Out of memory");
+            return 0;
+        }
         (void)memcpy(*mask, value->ip_mask, IPV6LEN);
         return IPV6LEN;
     }
@@ -837,3 +842,61 @@ free_out:
     return ret;
 }
 
+bool net_contain_ip(const struct ipnet *ipnet, const uint8_t *ip, const size_t ip_len, bool critical)
+{
+    bool ret = false;
+    bool is_first = true;
+    bool is_last = true;
+    size_t i = 0;
+    uint8_t *first_ip = NULL;
+    uint8_t *last_ip = NULL;
+
+    if (ipnet == NULL || ip == NULL || ip_len == 0) {
+        return ret;
+    }
+
+    if (ipnet->ip_len != ip_len || ipnet->ip_mask_len != ip_len) {
+        return ret;
+    }
+
+    first_ip = util_common_calloc_s(sizeof(uint8_t) * ip_len);
+    if (first_ip == NULL) {
+        ERROR("Out of memory");
+        return ret;
+    }
+    last_ip = util_common_calloc_s(sizeof(uint8_t) * ip_len);
+    if (last_ip == NULL) {
+        ERROR("Out of memory");
+        goto out;
+    }
+
+    for (i = 0; i < ip_len; i++) {
+        first_ip[i] = ipnet->ip[i] & ipnet->ip_mask[i];
+        last_ip[i] = ipnet->ip[i] | (~ipnet->ip_mask[i]);
+    }
+
+    for (i = 0; i < ip_len; i++) {
+        if (first_ip[i] <= ip[i] && ip[i] <= last_ip[i]) {
+            if (ip[i] != first_ip[i]) {
+                is_first = false;
+            }
+            if (ip[i] != last_ip[i]) {
+                is_last = false;
+            }
+            continue;
+        }
+        goto out;
+    }
+
+    // whether or not allow ip is critical value (frist_ip and last_ip)
+    if (critical) {
+        ret = true;
+    } else {
+        ret = !(is_first || is_last);
+    }
+
+out:
+    free(first_ip);
+    free(last_ip);
+    return ret;
+}
