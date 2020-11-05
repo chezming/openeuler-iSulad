@@ -20,6 +20,7 @@
 #include <pthread.h>
 #include <dirent.h>
 #include <limits.h>
+#include <sys/stat.h>
 
 #include "isula_libutils/log.h"
 #include "volume_api.h"
@@ -175,6 +176,7 @@ static char *build_and_valid_data_dir(const char *root_dir, const char *name)
     char *data_dir = NULL;
     char *vol_dir = NULL;
     char *tmp_dir = NULL;
+    struct stat st;
 
     if (!util_valid_volume_name(name)) {
         ERROR("Invalid volume dir %s, ignore", name);
@@ -210,6 +212,12 @@ static char *build_and_valid_data_dir(const char *root_dir, const char *name)
         goto out;
     }
 
+    if (lstat(tmp_dir, &st) != 0) {
+        ERROR("lstat %s: %s", tmp_dir, strerror(errno));
+        ret = -1;
+        goto out;
+    }
+
 out:
     free(tmp_dir);
     free(vol_dir);
@@ -231,7 +239,8 @@ static bool load_volume(const char *root_dir, const struct dirent *dir, void *us
     data_dir = build_and_valid_data_dir(root_dir, dir->d_name);
     if (data_dir == NULL) {
         ERROR("failed to load volume %s", dir->d_name);
-        return false;
+        // always return true so we can walk next subdir but not failed to start isulad
+        return true;
     }
 
     mutex_lock(&g_volumes->mutex);
@@ -258,7 +267,8 @@ out:
         free_volume(vol);
     }
 
-    return ret == 0;
+    // always return true so we can walk next subdir but not failed to start isulad
+    return true;
 }
 
 static int load_volumes(struct volumes_info *vols)
