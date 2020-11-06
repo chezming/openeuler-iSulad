@@ -380,9 +380,9 @@ static struct volume * volume_create_nolock(char *name)
 
 out:
     if (ret != 0) {
+        (void)util_recursive_rmdir(v->path, 0);
         free_volume(v);
         v = NULL;
-        (void)util_recursive_rmdir(v->path, 0);
     }
 
     return v;
@@ -410,9 +410,8 @@ struct volume * local_volume_create(char *name)
         goto out;
     }
     v_out = dup_volume(v->name, v->path);
-    mutex_unlock(&g_volumes->mutex);
-
 out:
+    mutex_unlock(&g_volumes->mutex);
 
     return v_out;
 }
