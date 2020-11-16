@@ -14,6 +14,7 @@
  ******************************************************************************/
 
 #define _GNU_SOURCE
+#include "common.h"
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -25,8 +26,6 @@
 #include <sys/stat.h>
 #include <stdbool.h>
 #include <stdarg.h>
-
-#include "common.h"
 
 extern int g_log_fd;
 
