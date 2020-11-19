@@ -789,6 +789,8 @@ void isula_network_inspect_response_free(struct isula_network_inspect_response *
 
 void isula_network_list_request_free(struct isula_network_list_request *request);
 
+void isula_network_info_free(struct isula_network_info *info);
+
 void isula_network_list_response_free(struct isula_network_list_response *response);
 
 void isula_network_remove_request_free(struct isula_network_remove_request *request);
