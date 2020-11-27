@@ -179,7 +179,7 @@ static void ModifyContainerNamespaceOptions(const runtime::v1alpha2::NamespaceOp
         hostConfig->pid_mode = util_strdup_s(sandboxNSMode.c_str());
     }
 
-    
+
     if (nsOpts.pid() == runtime::v1alpha2::NamespaceMode::TARGET) {
         std::string targetPidNsMode = "container:" + nsOpts.target_id();
         free(hostConfig->pid_mode);
