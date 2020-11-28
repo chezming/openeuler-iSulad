@@ -95,6 +95,8 @@ install(FILES ${CMAKE_BINARY_DIR}/conf/isulad.pc
   DESTINATION ${LIB_INSTALL_DIR_DEFAULT}/pkgconfig PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ GROUP_WRITE)
 install(FILES src/daemon/modules/api/image_api.h
 	DESTINATION include/isulad)
+install(FILES src/daemon/config/daemon_arguments.h
+	DESTINATION include/isulad)
 
 # install config files
 set(conf_prefix "/etc")

@@ -80,6 +80,7 @@ chrpath -d ./src/isulad
 
 install -d $RPM_BUILD_ROOT/%{_includedir}/isulad
 install -m 0644 ../src/daemon/modules/api/image_api.h         %{buildroot}/%{_includedir}/isulad/image_api.h
+install -m 0644 ../src/daemon/config/daemon_arguments.h       %{buildroot}/%{_includedir}/isulad/daemon_arguments.h
 
 install -d $RPM_BUILD_ROOT/%{_sysconfdir}/isulad
 install -m 0640 ../src/contrib/config/daemon.json           %{buildroot}/%{_sysconfdir}/isulad/daemon.json
