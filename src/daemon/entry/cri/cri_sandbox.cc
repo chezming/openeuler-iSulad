@@ -956,8 +956,7 @@ void CRIRuntimeServiceImpl::PodSandboxStatusToGRPC(container_inspect *inspect, c
 void CRIRuntimeServiceImpl::GetFormatIPsForMultNet(container_inspect *inspect, const std::string &defaultInterface,
                                                    const runtime::v1alpha2::PodSandboxMetadata &metadata, std::vector<std::string> &result, Errors &error)
 {
-    size_t len = 0;
-    cri_pod_network_element **elems { nullptr };
+    cri_pod_network_container *networks { nullptr };
     parser_error jerr { nullptr };
 
     if (inspect->config == nullptr || inspect->config->annotations == nullptr) {
@@ -968,8 +967,8 @@ void CRIRuntimeServiceImpl::GetFormatIPsForMultNet(container_inspect *inspect, c
         if (strcmp(inspect->config->annotations->keys[i], CRIHelpers::Constants::POD_NETWORK_ANNOTATION_KEY.c_str()) != 0) {
             continue;
         }
-        elems = cri_pod_network_parse_data(inspect->config->annotations->values[i], nullptr, &jerr, &len);
-        if (elems == nullptr) {
+        networks = cri_pod_network_container_parse_data(inspect->config->annotations->values[i], nullptr, &jerr);
+        if (networks == nullptr) {
             ERROR("parse mutlnetwork config failed: %s", jerr);
             error.SetError("parse mutlnetwork config failed");
             goto out;
@@ -977,15 +976,15 @@ void CRIRuntimeServiceImpl::GetFormatIPsForMultNet(container_inspect *inspect, c
         break;
     }
 
-    for (size_t i = 0; i < len; i++) {
-        if (elems[i]->interface == nullptr) {
+    for (size_t i = 0; networks != nullptr && i < networks->len; i++) {
+        if (networks->items[i]->interface == nullptr) {
             continue;
         }
         Network::PodNetworkStatus status;
-        m_pluginManager->GetPodNetworkStatus(metadata.namespace_(), metadata.name(), elems[i]->interface, inspect->id, status,
+        m_pluginManager->GetPodNetworkStatus(metadata.namespace_(), metadata.name(), networks->items[i]->interface, inspect->id, status,
                                              error);
         if (error.NotEmpty()) {
-            WARN("get status for network: %s failed: %s", elems[i]->name, error.GetCMessage());
+            WARN("get status for network: %s failed: %s", networks->items[i]->name, error.GetCMessage());
             error.Clear();
         }
         // add a sentry to make ips of mutlnetwork store from position 2
@@ -993,15 +992,11 @@ void CRIRuntimeServiceImpl::GetFormatIPsForMultNet(container_inspect *inspect, c
             result.push_back("");
         }
 
-        result.push_back(std::string(elems[i]->name) + "@" + std::string(elems[i]->interface) + "@[" + CXXUtils::StringsJoin(
+        result.push_back(std::string(networks->items[i]->name) + "@" + std::string(networks->items[i]->interface) + "@[" + CXXUtils::StringsJoin(
                              status.GetIPs(), ", ") + "]");
     }
 out:
-    for (size_t i = 0; i < len; i++) {
-        free_cri_pod_network_element(elems[i]);
-        elems[i] = nullptr;
-    }
-    free(elems);
+    free_cri_pod_network_container(networks);
     free(jerr);
 }
 
