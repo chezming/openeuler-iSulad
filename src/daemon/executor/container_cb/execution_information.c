@@ -1400,7 +1400,7 @@ static int inspect_container_helper(const char *id, int timeout, char **containe
     container_inspect *inspect = NULL;
     parser_error err = NULL;
     container_t *cont = NULL;
-    struct parser_context ctx = { OPT_GEN_KAY_VALUE | OPT_GEN_SIMPLIFY, 0 };
+    struct parser_context ctx = { OPT_GEN_KEY_VALUE | OPT_GEN_SIMPLIFY, 0 };
 
     if (!util_valid_container_id_or_name(id)) {
         ERROR("Inspect invalid name %s", id);
