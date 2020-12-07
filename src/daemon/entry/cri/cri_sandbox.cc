@@ -981,7 +981,8 @@ void CRIRuntimeServiceImpl::GetFormatIPsForMultNet(container_inspect *inspect, c
             continue;
         }
         Network::PodNetworkStatus status;
-        m_pluginManager->GetPodNetworkStatus(metadata.namespace_(), metadata.name(), networks->items[i]->interface, inspect->id, status,
+        m_pluginManager->GetPodNetworkStatus(metadata.namespace_(), metadata.name(), networks->items[i]->interface, inspect->id,
+                                             status,
                                              error);
         if (error.NotEmpty()) {
             WARN("get status for network: %s failed: %s", networks->items[i]->name, error.GetCMessage());
@@ -992,7 +993,8 @@ void CRIRuntimeServiceImpl::GetFormatIPsForMultNet(container_inspect *inspect, c
             result.push_back("");
         }
 
-        result.push_back(std::string(networks->items[i]->name) + "@" + std::string(networks->items[i]->interface) + "@[" + CXXUtils::StringsJoin(
+        result.push_back(std::string(networks->items[i]->name) + "@" + std::string(networks->items[i]->interface) + "@[" +
+                         CXXUtils::StringsJoin(
                              status.GetIPs(), ", ") + "]");
     }
 out:
