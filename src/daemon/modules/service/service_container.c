@@ -1759,7 +1759,7 @@ out:
 
 static int exec_prepare_console(const container_t *cont, const container_exec_request *request, int stdinfd,
                                 struct io_write_wrapper *stdout_handler, struct io_write_wrapper *stderr_handler,
-                                char **fifos, char **fifopath, int *sync_fd, pthread_t *thread_id)
+                                char **fifos, char **fifopath, int *sync_fd, pthread_t *reader_tid, pthread_t *writer_tid)
 {
     int ret = 0;
     const char *id = cont->common_config->id;
@@ -1778,7 +1778,7 @@ static int exec_prepare_console(const container_t *cont, const container_exec_re
             goto out;
         }
         if (ready_copy_io_data(*sync_fd, false, request->stdin, request->stdout, request->stderr, stdinfd,
-                               stdout_handler, stderr_handler, (const char **)fifos, thread_id)) {
+                               stdout_handler, stderr_handler, (const char **)fifos, reader_tid, writer_tid)) {
             ret = -1;
             goto out;
         }
@@ -1788,7 +1788,7 @@ out:
 }
 
 static void exec_container_end(container_exec_response *response, uint32_t cc, int exit_code, int sync_fd,
-                               pthread_t thread_id)
+                               pthread_t reader_tid, pthread_t writer_tid)
 {
     if (response != NULL) {
         response->cc = cc;
@@ -1803,11 +1803,17 @@ static void exec_container_end(container_exec_response *response, uint32_t cc, i
             ERROR("Failed to write eventfd: %s", strerror(errno));
         }
     }
-    if (thread_id > 0) {
-        if (pthread_join(thread_id, NULL) != 0) {
-            ERROR("Failed to join thread: %u", (unsigned int)thread_id);
+    if (reader_tid > 0) {
+        if (pthread_join(reader_tid, NULL) != 0) {
+            ERROR("Failed to join thread: %u", (unsigned int)reader_tid);
         }
     }
+    if (writer_tid > 0) {
+        if (pthread_join(writer_tid, NULL) != 0) {
+            ERROR("Failed to join thread: %u", (unsigned int)writer_tid);
+        }
+    }
+
     if (sync_fd >= 0) {
         close(sync_fd);
     }
@@ -1876,7 +1882,8 @@ int exec_container(const container_t *cont, const container_exec_request *reques
     char *id = NULL;
     char *fifos[3] = { NULL, NULL, NULL };
     char *fifopath = NULL;
-    pthread_t thread_id = 0;
+    pthread_t reader_tid = 0;
+    pthread_t writer_tid = 0;
     defs_process_user *puser = NULL;
     char exec_command[EVENT_ARGS_MAX] = { 0x00 };
 
@@ -1934,7 +1941,7 @@ int exec_container(const container_t *cont, const container_exec_request *reques
     }
 
     if (exec_prepare_console(cont, request, stdinfd, stdout_handler, stderr_handler, fifos, &fifopath, &sync_fd,
-                             &thread_id)) {
+                             &reader_tid, &writer_tid)) {
         cc = ISULAD_ERR_EXEC;
         goto pack_response;
     }
@@ -1948,7 +1955,7 @@ int exec_container(const container_t *cont, const container_exec_request *reques
     (void)isulad_monitor_send_container_event(id, EXEC_DIE, -1, 0, NULL, NULL);
 
 pack_response:
-    exec_container_end(response, cc, exit_code, sync_fd, thread_id);
+    exec_container_end(response, cc, exit_code, sync_fd, reader_tid, writer_tid);
     delete_daemon_fifos(fifopath, (const char **)fifos);
     free(fifos[0]);
     free(fifos[1]);

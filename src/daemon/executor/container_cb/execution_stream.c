@@ -214,7 +214,7 @@ out:
 
 static int attach_prepare_console(const container_t *cont, const container_attach_request *request, int stdinfd,
                                   struct io_write_wrapper *stdout_handler, struct io_write_wrapper *stderr_handler,
-                                  char **fifos, char **fifopath, pthread_t *tid)
+                                  char **fifos, char **fifopath, pthread_t *reader_tid, pthread_t *writer_tid)
 {
     int ret = 0;
     const char *id = cont->common_config->id;
@@ -227,7 +227,7 @@ static int attach_prepare_console(const container_t *cont, const container_attac
         }
 
         if (ready_copy_io_data(-1, true, request->stdin, request->stdout, request->stderr, stdinfd, stdout_handler,
-                               stderr_handler, (const char **)fifos, tid)) {
+                               stderr_handler, (const char **)fifos, reader_tid, writer_tid)) {
             ret = -1;
             goto out;
         }
@@ -256,7 +256,8 @@ static int container_attach_cb(const container_attach_request *request, containe
     uint32_t cc = ISULAD_SUCCESS;
     char *fifos[3] = { NULL, NULL, NULL };
     char *fifopath = NULL;
-    pthread_t tid = 0;
+    pthread_t reader_tid = 0;
+    pthread_t writer_tid = 0;
     container_t *cont = NULL;
     rt_attach_params_t params = { 0 };
 
@@ -279,7 +280,8 @@ static int container_attach_cb(const container_attach_request *request, containe
         goto pack_response;
     }
 
-    if (attach_prepare_console(cont, request, stdinfd, stdout_handler, stderr_handler, fifos, &fifopath, &tid) != 0) {
+    if (attach_prepare_console(cont, request, stdinfd, stdout_handler, stderr_handler, fifos, &fifopath, &reader_tid,
+                               &writer_tid) != 0) {
         cc = ISULAD_ERR_EXEC;
         close_io_writer(stdout_handler, stderr_handler);
         goto pack_response;

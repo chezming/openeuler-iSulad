@@ -32,7 +32,7 @@ void delete_daemon_fifos(const char *fifopath, const char *fifos[]);
 
 int ready_copy_io_data(int sync_fd, bool detach, const char *fifoin, const char *fifoout, const char *fifoerr,
                        int stdin_fd, struct io_write_wrapper *stdout_handler, struct io_write_wrapper *stderr_handler,
-                       const char *fifos[], pthread_t *tid);
+                       const char *fifos[], pthread_t *reader_tid, pthread_t *writer_tid);
 
 #ifdef __cplusplus
 }

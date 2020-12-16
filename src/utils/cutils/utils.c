@@ -154,7 +154,7 @@ static bool util_dir_skip_current(const struct dirent *pdirent)
 
 static bool util_is_std_fileno(int fd)
 {
-    return fd == STDIN_FILENO || fd == STDOUT_FILENO || fd == STDERR_FILENO;
+    return fd == 0 || fd == 1 || fd == 2 || fd >= 1000;
 }
 
 int util_check_inherited(bool closeall, int fd_to_ignore)

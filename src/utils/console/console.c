@@ -33,11 +33,13 @@
 static ssize_t fd_write_function(void *context, const void *data, size_t len)
 {
     ssize_t ret;
-    ret = util_write_nointr(*(int *)context, data, len);
+
+    ret = util_write_nointr_for_fifo(*(int *)context, data, len);
     if ((ret <= 0) || (ret != (ssize_t)len)) {
         ERROR("Failed to write: %s", strerror(errno));
         return -1;
     }
+
     return ret;
 }
 
@@ -98,15 +100,140 @@ static int console_writer_write_data(const struct io_write_wrapper *writer, cons
         ERROR("failed to write, error:%s", strerror(errno));
         return -1;
     }
+
     return 0;
 }
 
-/* console cb tty fifoin */
-static int console_cb_stdio_copy(int fd, uint32_t events, void *cbdata, struct epoll_descr *descr)
+struct forwarding_stragery {
+    int (*write_data)(int fd, struct tty_state *ts, const char *buf, ssize_t len);
+};
+
+struct console_writer_forwarding_data {
+    struct forwarding_stragery super;
+};
+
+static int console_writer_forward(int fd, struct tty_state *ts, const char *buf, ssize_t len)
+{
+    if (fd == ts->stdin_reader) {
+        return console_writer_write_data(&ts->stdin_writer, buf, len);
+    }
+
+    if (fd == ts->stdout_reader) {
+        return console_writer_write_data(&ts->stdout_writer, buf, len);
+    }
+
+    if (fd == ts->stderr_reader) {
+        return console_writer_write_data(&ts->stderr_writer, buf, len);
+    }
+
+    return 0;
+}
+
+static struct forwarding_stragery *console_writer_forwarding_data_init()
+{
+    struct console_writer_forwarding_data *op = util_common_calloc_s(sizeof(struct console_writer_forwarding_data));
+    if (op == NULL) {
+        ERROR("Out of memory");
+        return NULL;
+    }
+
+    op->super.write_data = console_writer_forward;
+
+    return &op->super;
+}
+
+struct queue_buffer_forwarding_data {
+    struct forwarding_stragery super;
+};
+
+static int queue_buffer_forward(int fd, struct tty_state *ts, const char *buf, ssize_t len)
+{
+    int ret = 0;
+
+    char *buffer = util_common_calloc_s(len);
+    if (buffer == NULL) {
+        ERROR("Out of memory");
+        return -1;
+    }
+
+    memcpy(buffer, buf, len);
+
+    if (fd == ts->stdin_reader) {
+        return console_writer_write_data(&ts->stdin_writer, buffer, len);
+    }
+
+    if (fd == ts->stdout_reader) {
+        ts->buffers->outfd = *(int *)ts->stdout_writer.context;
+        ret = circular_queue_push(ts->buffers->stdout_queue_buffer, buffer, len);
+        (void)sem_post(ts->buffers->io_sem);
+        return ret;
+    }
+
+    if (fd == ts->stderr_reader) {
+        ts->buffers->errfd = *(int *)ts->stderr_writer.context;
+        ret = circular_queue_push(ts->buffers->stderr_queue_buffer, buffer, len);
+        (void)sem_post(ts->buffers->io_sem);
+        return ret;
+    }
+
+    return ret;
+}
+
+static struct forwarding_stragery *queue_buffer_forwarding_data_init()
+{
+    struct queue_buffer_forwarding_data *op = util_common_calloc_s(sizeof(struct queue_buffer_forwarding_data));
+    if (op == NULL) {
+        ERROR("Out of memory");
+        return NULL;
+    }
+
+    op->super.write_data = queue_buffer_forward;
+
+    return &op->super;
+}
+
+struct forwarding_context {
+    struct forwarding_stragery *stragery;
+    int (*execute_stratery)(struct forwarding_context *ctx, int fd, struct tty_state *ts, char *buf, ssize_t len);
+};
+
+static int forwarding_context_execute(struct forwarding_context *ctx, int fd, struct tty_state *ts, char *buf,
+                                      ssize_t len)
+{
+    return ctx->stragery->write_data(fd, ts, buf, len);
+}
+
+static void forwarding_context_set_stratery(struct forwarding_context *ctx, struct forwarding_stragery *s)
+{
+    ctx->stragery = s;
+}
+
+static struct forwarding_context *forwarding_context_init()
+{
+    struct forwarding_context *ctx = util_common_calloc_s(sizeof(struct forwarding_context));
+    if (ctx == NULL) {
+        ERROR("Out of memory");
+        return NULL;
+    }
+
+    ctx->execute_stratery = forwarding_context_execute;
+
+    return ctx;
+}
+
+static bool console_cb_stdio_copy_check_parameter(int fd, struct tty_state *ts)
+{
+    return fd == ts->sync_fd || (fd != ts->stdin_reader && fd != ts->stdout_reader && fd != ts->stderr_reader);
+}
+
+typedef int (*execute_forwarding_data_fun)(int, struct tty_state *, char *, ssize_t);
+
+static int do_console_cb_stdio_copy(int fd, uint32_t events, void *cbdata, struct epoll_descr *descr,
+                                    execute_forwarding_data_fun execute)
 {
     struct tty_state *ts = cbdata;
     char *buf = NULL;
-    size_t buf_len = MAX_MSG_BUFFER_SIZE;
+    size_t buf_len = MAX_BUFFER_SIZE;
     int ret = 0;
     ssize_t r_ret;
 
@@ -116,12 +243,7 @@ static int console_cb_stdio_copy(int fd, uint32_t events, void *cbdata, struct e
         return -1;
     }
 
-    if (fd == ts->sync_fd) {
-        ret = 1;
-        goto out;
-    }
-
-    if (fd != ts->stdin_reader && fd != ts->stdout_reader && fd != ts->stderr_reader) {
+    if (console_cb_stdio_copy_check_parameter(fd, ts)) {
         ret = 1;
         goto out;
     }
@@ -132,30 +254,89 @@ static int console_cb_stdio_copy(int fd, uint32_t events, void *cbdata, struct e
         goto out;
     }
 
-    if (fd == ts->stdin_reader) {
-        if (console_writer_write_data(&ts->stdin_writer, buf, r_ret) != 0) {
-            ret = 1;
-            goto out;
-        }
-    }
-
-    if (fd == ts->stdout_reader) {
-        if (console_writer_write_data(&ts->stdout_writer, buf, r_ret) != 0) {
-            ret = 1;
-            goto out;
-        }
-    }
-
-    if (fd == ts->stderr_reader) {
-        if (console_writer_write_data(&ts->stderr_writer, buf, r_ret) != 0) {
-            ret = 1;
-            goto out;
-        }
+    if (execute(fd, ts, buf, r_ret) != 0) {
+        ret = 1;
+        goto out;
     }
 
 out:
     free(buf);
+    if (ret > 0) {
+        epoll_loop_del_handler(descr, fd);
+    }
     return ret;
+}
+
+static int execute_console_writer_forwarding_data(int fd, struct tty_state *ts, char *buf, ssize_t len)
+{
+    int ret = 0;
+    struct forwarding_context *ctx = NULL;
+    struct forwarding_stragery *s_console_writer_forwarding = NULL;
+
+    ctx = forwarding_context_init();
+    if (ctx == NULL) {
+        ret = -1;
+        goto out;
+    }
+
+    s_console_writer_forwarding = console_writer_forwarding_data_init();
+    if (s_console_writer_forwarding == NULL) {
+        ret = -1;
+        goto out;
+    }
+
+    forwarding_context_set_stratery(ctx, s_console_writer_forwarding);
+    if (ctx->execute_stratery(ctx, fd, ts, buf, len) != 0) {
+        ret = -1;
+        goto out;
+    }
+
+out:
+    free(s_console_writer_forwarding);
+    free(ctx);
+    return ret;
+}
+
+static int execute_queue_buffer_forwarding_data(int fd, struct tty_state *ts, char *buf, ssize_t len)
+{
+    int ret = 0;
+    struct forwarding_context *ctx = NULL;
+    struct forwarding_stragery *s_queue_buffer_forwarding = NULL;
+
+    ctx = forwarding_context_init();
+    if (ctx == NULL) {
+        ret = -1;
+        goto out;
+    }
+
+    s_queue_buffer_forwarding = queue_buffer_forwarding_data_init();
+    if (s_queue_buffer_forwarding == NULL) {
+        ret = -1;
+        goto out;
+    }
+
+    forwarding_context_set_stratery(ctx, s_queue_buffer_forwarding);
+    if (ctx->execute_stratery(ctx, fd, ts, buf, len) != 0) {
+        ret = -1;
+        goto out;
+    }
+
+out:
+    free(s_queue_buffer_forwarding);
+    free(ctx);
+    return ret;
+}
+
+/* console cb tty fifoin */
+static int console_cb_stdio_copy(int fd, uint32_t events, void *cbdata, struct epoll_descr *descr)
+{
+    return do_console_cb_stdio_copy(fd, events, cbdata, descr, execute_console_writer_forwarding_data);
+}
+
+/* console cb tty fifoin fro daemon*/
+static int console_cb_stdio_copy_from_runtime(int fd, uint32_t events, void *cbdata, struct epoll_descr *descr)
+{
+    return do_console_cb_stdio_copy(fd, events, cbdata, descr, execute_queue_buffer_forwarding_data);
 }
 
 /* console fifo name */
@@ -172,12 +353,10 @@ int console_fifo_name(const char *rundir, const char *subpath, const char *stdfl
         goto out;
     }
 
-    if (do_mkdirp) {
-        ret = util_mkdir_p(fifo_path, CONSOLE_FIFO_DIRECTORY_MODE);
-        if (ret < 0) {
-            COMMAND_ERROR("Unable to create console fifo directory %s: %s.", fifo_path, strerror(errno));
-            goto out;
-        }
+    if (do_mkdirp && util_mkdir_p(fifo_path, CONSOLE_FIFO_DIRECTORY_MODE) < 0) {
+        COMMAND_ERROR("Unable to create console fifo directory %s: %s.", fifo_path, strerror(errno));
+        ret = -1;
+        goto out;
     }
 
     nret = snprintf(fifo_name, fifo_name_sz, "%s/%s/%s-fifo", rundir, subpath, stdflag);
@@ -233,6 +412,7 @@ int console_fifo_delete(const char *fifo_path)
         WARN("Unlink %s failed", real_path);
         return -1;
     }
+
     return 0;
 }
 
@@ -241,7 +421,7 @@ int console_fifo_open(const char *fifo_path, int *fdout, int flags)
 {
     int fd = 0;
 
-    fd = util_open(fifo_path, O_RDONLY | O_NONBLOCK, (mode_t)0);
+    fd = util_open(fifo_path, flags, (mode_t)0);
     if (fd < 0) {
         ERROR("Failed to open fifo %s to send message: %s.", fifo_path, strerror(errno));
         return -1;
@@ -329,6 +509,24 @@ static void client_console_tty_state_close(struct epoll_descr *descr, const stru
     }
 }
 
+static int safe_epoll_loop(struct epoll_descr *descr)
+{
+    int ret;
+
+    ret = epoll_loop(descr, -1);
+    if (ret != 0) {
+        ERROR("Epoll_loop error");
+        return ret;
+    }
+
+    ret = epoll_loop(descr, 100);
+    if (ret != 0) {
+        ERROR("Repeat the epoll loop to ensure that all data is transferred");
+    }
+
+    return ret;
+}
+
 /* console loop */
 /* data direction: */
 /* read stdinfd, write fifoinfd */
@@ -342,7 +540,7 @@ int console_loop_with_std_fd(int stdinfd, int stdoutfd, int stderrfd, int fifoin
     struct tty_state ts;
 
     ret = epoll_loop_open(&descr);
-    if (ret) {
+    if (ret != 0) {
         ERROR("Create epoll_loop error");
         return ret;
     }
@@ -360,12 +558,12 @@ int console_loop_with_std_fd(int stdinfd, int stdoutfd, int stderrfd, int fifoin
         ts.stdin_writer.write_func = fd_write_function;
         if (tty) {
             ret = epoll_loop_add_handler(&descr, ts.stdin_reader, console_cb_tty_stdin_with_escape, &ts);
-            if (ret) {
+            if (ret != 0) {
                 INFO("Add handler for stdinfd faied. with error %s", strerror(errno));
             }
         } else {
             ret = epoll_loop_add_handler(&descr, ts.stdin_reader, console_cb_stdio_copy, &ts);
-            if (ret) {
+            if (ret != 0) {
                 INFO("Add handler for stdinfd faied. with error %s", strerror(errno));
             }
         }
@@ -376,7 +574,7 @@ int console_loop_with_std_fd(int stdinfd, int stdoutfd, int stderrfd, int fifoin
         ts.stdout_writer.context = &stdoutfd;
         ts.stdout_writer.write_func = fd_write_function;
         ret = epoll_loop_add_handler(&descr, ts.stdout_reader, console_cb_stdio_copy, &ts);
-        if (ret) {
+        if (ret != 0) {
             ERROR("Add handler for masterfd failed");
             goto err_out;
         }
@@ -387,19 +585,13 @@ int console_loop_with_std_fd(int stdinfd, int stdoutfd, int stderrfd, int fifoin
         ts.stderr_writer.context = &stderrfd;
         ts.stderr_writer.write_func = fd_write_function;
         ret = epoll_loop_add_handler(&descr, ts.stderr_reader, console_cb_stdio_copy, &ts);
-        if (ret) {
+        if (ret != 0) {
             ERROR("Add handler for masterfd failed");
             goto err_out;
         }
     }
 
-    ret = epoll_loop(&descr, -1);
-    if (ret) {
-        ERROR("Epoll_loop error");
-        goto err_out;
-    }
-
-    ret = 0;
+    ret = safe_epoll_loop(&descr);
 
 err_out:
     client_console_tty_state_close(&descr, &ts);
@@ -408,12 +600,14 @@ err_out:
 }
 
 /* console loop copy */
-int console_loop_io_copy(int sync_fd, const int *srcfds, struct io_write_wrapper *writers, size_t len)
+int console_loop_io_copy_reader(int sync_fd, const int *srcfds, volatile struct queue_buffers *buffers,
+                                struct io_write_wrapper *writers, size_t len)
 {
     int ret = 0;
     size_t i = 0;
     struct epoll_descr descr;
     struct tty_state *ts = NULL;
+
     if (len > (SIZE_MAX / sizeof(struct tty_state)) - 1) {
         ERROR("Invalid io size");
         return -1;
@@ -425,7 +619,7 @@ int console_loop_io_copy(int sync_fd, const int *srcfds, struct io_write_wrapper
     }
 
     ret = epoll_loop_open(&descr);
-    if (ret) {
+    if (ret != 0) {
         ERROR("Create epoll_loop error");
         free(ts);
         return ret;
@@ -437,7 +631,8 @@ int console_loop_io_copy(int sync_fd, const int *srcfds, struct io_write_wrapper
         ts[i].stdout_writer.context = writers[i].context;
         ts[i].stdout_writer.write_func = writers[i].write_func;
         ts[i].sync_fd = -1;
-        ret = epoll_loop_add_handler(&descr, ts[i].stdout_reader, console_cb_stdio_copy, &ts[i]);
+        ts[i].buffers = buffers;
+        ret = epoll_loop_add_handler(&descr, ts[i].stdout_reader, console_cb_stdio_copy_from_runtime, &ts[i]);
         if (ret != 0) {
             ERROR("Add handler for masterfd failed");
             goto err_out;
@@ -445,25 +640,60 @@ int console_loop_io_copy(int sync_fd, const int *srcfds, struct io_write_wrapper
     }
     if (sync_fd >= 0) {
         ts[i].sync_fd = sync_fd;
-        epoll_loop_add_handler(&descr, ts[i].sync_fd, console_cb_stdio_copy, &ts[i]);
-        if (ret) {
+        ret = epoll_loop_add_handler(&descr, ts[i].sync_fd, console_cb_stdio_copy, &ts[i]);
+        if (ret != 0) {
             ERROR("Add handler for syncfd failed");
             goto err_out;
         }
     }
 
-    ret = epoll_loop(&descr, -1);
-    if (ret != 0) {
-        ERROR("Epoll_loop error");
-        goto err_out;
-    }
+    ret = safe_epoll_loop(&descr);
 
 err_out:
-
     for (i = 0; i < (len + 1); i++) {
         epoll_loop_del_handler(&descr, ts[i].stdout_reader);
     }
     epoll_loop_close(&descr);
     free(ts);
     return ret;
+}
+
+static void forward_data_to_client(circular_queue_buffer *queue_buffer, int fd, struct io_write_wrapper *writers,
+                                   size_t len)
+{
+    size_t i;
+    size_t buff_len = 0;
+
+    if (circular_queue_length(queue_buffer) == 0) {
+        return;
+    }
+
+    for (i = 0; i < len; i++) {
+        if (*(int *)writers[i].context == fd) {
+            char *data = (char *)circular_queue_back(queue_buffer, &buff_len);
+            while (console_writer_write_data(&writers[i], data, buff_len) != 0) {
+                DEBUG("Failed to forward data to client, retring...");
+                return;
+            };
+            free(data);
+            data = NULL;
+            circular_queue_pop(queue_buffer);
+        }
+    }
+}
+
+/* console loop copy write */
+void console_loop_io_copy_writer(int sync_fd, const int *srcfds, volatile bool *iocopy_reader_finish,
+                                 volatile struct queue_buffers *buffers, struct io_write_wrapper *writers, size_t len)
+{
+    while (true) {
+        sem_wait(buffers->io_sem);
+
+        forward_data_to_client(buffers->stdout_queue_buffer, buffers->outfd, writers, len);
+        forward_data_to_client(buffers->stderr_queue_buffer, buffers->errfd, writers, len);
+
+        if (*iocopy_reader_finish) {
+            break;
+        }
+    }
 }

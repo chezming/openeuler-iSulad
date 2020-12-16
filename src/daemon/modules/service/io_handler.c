@@ -34,6 +34,7 @@
 #include "io_wrapper.h"
 #include "utils.h"
 #include "utils_file.h"
+#include "utils_queue.h"
 #include "err_msg.h"
 
 static char *create_single_fifo(const char *statepath, const char *subpath, const char *stdflag)
@@ -50,18 +51,19 @@ static char *create_single_fifo(const char *statepath, const char *subpath, cons
     nret = console_fifo_name(statepath, subpath, stdflag, fifo_name, PATH_MAX, fifo_path, sizeof(fifo_path), true);
     if (nret != 0) {
         ERROR("Failed to get console fifo name.");
-        free(fifo_name);
-        fifo_name = NULL;
         goto out;
     }
+
     if (console_fifo_create(fifo_name)) {
         ERROR("Failed to create console fifo.");
-        free(fifo_name);
-        fifo_name = NULL;
         goto out;
     }
-out:
+
     return fifo_name;
+
+out:
+    free(fifo_name);
+    return NULL;
 }
 
 static int do_create_daemon_fifos(const char *statepath, const char *subpath, bool attach_stdin, bool attach_stdout,
@@ -151,6 +153,7 @@ int create_daemon_fifos(const char *id, const char *runtime, bool attach_stdin, 
     }
 
     ret = 0;
+
 cleanup:
     free(statepath);
     return ret;
@@ -175,13 +178,15 @@ void delete_daemon_fifos(const char *fifopath, const char *fifos[])
     }
 }
 
-typedef enum { IO_FD, IO_FIFO, IO_FUNC, IO_MAX } io_type;
+typedef enum { IO_FD = 0, IO_FIFO, IO_FUNC, IO_MAX } io_type;
+typedef enum { IO_READ_FROM_ISULA = 0, IO_READ_FROM_LXC, IO_WRITE_TO_ISULA, IO_WRITE_TO_LXC, IO_RDWR_MAX } io_fifo_type;
 
 struct io_copy_arg {
     io_type srctype;
     void *src;
     io_type dsttype;
     void *dst;
+    io_fifo_type dstfifotype;
 };
 
 struct io_copy_thread_arg {
@@ -190,12 +195,40 @@ struct io_copy_thread_arg {
     size_t len;
     int sync_fd;
     sem_t wait_sem;
+    int *infds;
+    int *outfds; // recored fds to close
+    int *srcfds;
+    struct io_write_wrapper *writers;
+    volatile struct queue_buffers buffers;
+    volatile bool iocopy_reader_finish;
+    sem_t iocopy_writer_finish_sem;
 };
 
-static void io_copy_thread_cleanup(struct io_write_wrapper *writers, struct io_copy_thread_arg *thread_arg, int *infds,
-                                   int *outfds, int *srcfds, size_t len)
+static void free_queue_buffers(volatile struct queue_buffers *buffers)
+{
+    sem_destroy(buffers->io_sem);
+    free(buffers->io_sem);
+    buffers->io_sem = NULL;
+
+    circular_queue_destroy(buffers->stdout_queue_buffer);
+    buffers->stdout_queue_buffer = NULL;
+    circular_queue_destroy(buffers->stderr_queue_buffer);
+    buffers->stderr_queue_buffer = NULL;
+}
+
+static void io_copy_thread_cleanup(struct io_copy_thread_arg *thread_arg)
 {
     size_t i = 0;
+    struct io_write_wrapper *writers = thread_arg->writers;
+    int *infds = thread_arg->infds;
+    int *outfds = thread_arg->outfds;
+    int *srcfds = thread_arg->srcfds;
+    size_t len = thread_arg->len;
+
+
+    sem_destroy(&thread_arg->iocopy_writer_finish_sem);
+    free_queue_buffers(&thread_arg->buffers);
+
     for (i = 0; i < len; i++) {
         if (writers != NULL && writers[i].close_func != NULL) {
             (void)writers[i].close_func(writers[i].context, NULL);
@@ -213,65 +246,111 @@ static void io_copy_thread_cleanup(struct io_write_wrapper *writers, struct io_c
     free(infds);
     free(outfds);
     free(writers);
+    free(thread_arg);
 }
 
-static int io_copy_init_fds(size_t len, int **infds, int **outfds, int **srcfds, struct io_write_wrapper **writers)
+static int io_copy_init_fds(size_t len, struct io_copy_thread_arg *thread_arg)
 {
+    int ret = 0;
     size_t i;
 
     if (len > SIZE_MAX / sizeof(struct io_write_wrapper)) {
         ERROR("Invalid arguments");
         return -1;
     }
-    *srcfds = util_common_calloc_s(sizeof(int) * len);
-    if (*srcfds == NULL) {
+
+    thread_arg->srcfds = util_common_calloc_s(sizeof(int) * len);
+    if (thread_arg->srcfds == NULL) {
         ERROR("Out of memory");
-        return -1;
+        ret = -1;
+        goto out;
     }
 
-    *infds = util_common_calloc_s(sizeof(int) * len);
-    if (*infds == NULL) {
+    thread_arg->infds = util_common_calloc_s(sizeof(int) * len);
+    if (thread_arg->infds == NULL) {
         ERROR("Out of memory");
-        return -1;
+        ret = -1;
+        goto out;
     }
     for (i = 0; i < len; i++) {
-        (*infds)[i] = -1;
-    }
-    *outfds = util_common_calloc_s(sizeof(int) * len);
-    if (*outfds == NULL) {
-        ERROR("Out of memory");
-        return -1;
-    }
-    for (i = 0; i < len; i++) {
-        (*outfds)[i] = -1;
+        (thread_arg->infds)[i] = -1;
     }
 
-    *writers = util_common_calloc_s(sizeof(struct io_write_wrapper) * len);
-    if (*writers == NULL) {
+    thread_arg->outfds = util_common_calloc_s(sizeof(int) * len);
+    if (thread_arg->outfds == NULL) {
         ERROR("Out of memory");
-        return -1;
+        ret = -1;
+        goto out;
     }
+    for (i = 0; i < len; i++) {
+        (thread_arg->outfds)[i] = -1;
+    }
+
+    thread_arg->writers = util_common_calloc_s(sizeof(struct io_write_wrapper) * len);
+    if (thread_arg->writers == NULL) {
+        ERROR("Out of memory");
+        ret = -1;
+        goto out;
+    }
+
+out:
+    return ret;
+}
+
+typedef int (*io_type_handle)(int index, struct io_copy_arg *copy_arg, struct io_copy_thread_arg *thread_arg);
+
+struct io_copy_handler {
+    io_type type;
+    io_type_handle handle;
+};
+
+static int handle_src_io_fd(int index, struct io_copy_arg *copy_arg, struct io_copy_thread_arg *thread_arg)
+{
+    thread_arg->srcfds[index] = *(int *)(copy_arg[index].src);
+
     return 0;
 }
 
-static int io_copy_make_srcfds(size_t len, struct io_copy_arg *copy_arg, int *infds, int *srcfds)
+static int handle_src_io_fifo(int index, struct io_copy_arg *copy_arg, struct io_copy_thread_arg *thread_arg)
+{
+    if (console_fifo_open((const char *)copy_arg[index].src, &(thread_arg->infds[index]), O_RDONLY | O_NONBLOCK)) {
+        ERROR("failed to open console fifo.");
+        return -1;
+    }
+    thread_arg->srcfds[index] = thread_arg->infds[index];
+
+    return 0;
+}
+
+static int handle_src_io_fun(int index, struct io_copy_arg *copy_arg, struct io_copy_thread_arg *thread_arg)
+{
+    ERROR("Got invalid src fd type");
+    return -1;
+}
+
+static int handle_src_io_max(int index, struct io_copy_arg *copy_arg, struct io_copy_thread_arg *thread_arg)
+{
+    ERROR("Got invalid src fd type");
+    return -1;
+}
+
+static int io_copy_make_srcfds(size_t len, struct io_copy_arg *copy_arg, struct io_copy_thread_arg *thread_arg)
 {
     size_t i;
 
+    struct io_copy_handler src_handler_jump_table[] = {
+        { IO_FD,      handle_src_io_fd},
+        { IO_FIFO,    handle_src_io_fifo},
+        { IO_FUNC,    handle_src_io_fun},
+        { IO_MAX,     handle_src_io_max},
+    };
+
     for (i = 0; i < len; i++) {
-        if (copy_arg[i].srctype == IO_FIFO) {
-            if (console_fifo_open((const char *)copy_arg[i].src, &(infds[i]), O_RDONLY | O_NONBLOCK)) {
-                ERROR("failed to open console fifo.");
-                return -1;
-            }
-            srcfds[i] = infds[i];
-        } else if (copy_arg[i].srctype == IO_FD) {
-            srcfds[i] = *(int *)(copy_arg[i].src);
-        } else {
-            ERROR("Got invalid src fd type");
+        if (src_handler_jump_table[(int)(copy_arg[i].srctype)].handle(i, copy_arg, thread_arg) != 0) {
             return -1;
         }
     }
+
     return 0;
 }
 
@@ -281,12 +360,11 @@ static ssize_t write_to_fifo(void *context, const void *data, size_t len)
     int fd;
 
     fd = *(int *)context;
-    ret = util_write_nointr(fd, data, len);
+    ret = util_write_nointr_for_fifo(fd, data, len);
     // Ignore EAGAIN to prevent hang, do not report error
     if (errno == EAGAIN) {
         return (ssize_t)len;
     }
-
     if ((ret <= 0) || (ret != (ssize_t)len)) {
         ERROR("Failed to write %d: %s", fd, strerror(errno));
         return -1;
@@ -297,53 +375,80 @@ static ssize_t write_to_fifo(void *context, const void *data, size_t len)
 static ssize_t write_to_fd(void *context, const void *data, size_t len)
 {
     ssize_t ret;
+
     ret = util_write_nointr(*(int *)context, data, len);
     if ((ret <= 0) || (ret != (ssize_t)len)) {
         ERROR("Failed to write: %s", strerror(errno));
         return -1;
     }
+
     return ret;
 }
 
-static int io_copy_make_dstfds(size_t len, struct io_copy_arg *copy_arg, int *outfds, struct io_write_wrapper *writers)
+static int handle_dst_io_fd(int index, struct io_copy_arg *copy_arg, struct io_copy_thread_arg *thread_arg)
 {
-    size_t i;
+    thread_arg->writers[index].context = copy_arg[index].dst;
+    thread_arg->writers[index].write_func = write_to_fd;
 
-    for (i = 0; i < len; i++) {
-        if (copy_arg[i].dsttype == IO_FIFO) {
-            if (console_fifo_open_withlock((const char *)copy_arg[i].dst, &outfds[i], O_RDWR | O_NONBLOCK)) {
-                ERROR("Failed to open console fifo.");
-                return -1;
-            }
-            writers[i].context = &outfds[i];
-            writers[i].write_func = write_to_fifo;
-        } else if (copy_arg[i].dsttype == IO_FD) {
-            writers[i].context = copy_arg[i].dst;
-            writers[i].write_func = write_to_fd;
-        } else if (copy_arg[i].dsttype == IO_FUNC) {
-            struct io_write_wrapper *io_write = copy_arg[i].dst;
-            writers[i].context = io_write->context;
-            writers[i].write_func = io_write->write_func;
-            writers[i].close_func = io_write->close_func;
-        } else {
-            ERROR("Got invalid dst fd type");
-            return -1;
-        }
-    }
     return 0;
 }
 
-static void *io_copy_thread_main(void *arg)
+static int handle_dst_io_fifo(int index, struct io_copy_arg *copy_arg, struct io_copy_thread_arg *thread_arg)
+{
+    int *outfds = thread_arg->outfds;
+    struct io_write_wrapper *writers = thread_arg->writers;
+
+    int flag = copy_arg[index].dstfifotype == IO_WRITE_TO_LXC ? O_RDWR : O_WRONLY;
+    if (console_fifo_open_withlock((const char *)copy_arg[index].dst, &outfds[index], flag | O_NONBLOCK)) {
+        ERROR("Failed to open console fifo.");
+        return -1;
+    }
+    writers[index].context = &outfds[index];
+    writers[index].write_func = write_to_fifo;
+
+    return 0;
+}
+
+static int handle_dst_io_fun(int index, struct io_copy_arg *copy_arg, struct io_copy_thread_arg *thread_arg)
+{
+    struct io_write_wrapper *io_write = copy_arg[index].dst;
+    thread_arg->writers[index].context = io_write->context;
+    thread_arg->writers[index].write_func = io_write->write_func;
+    thread_arg->writers[index].close_func = io_write->close_func;
+
+    return 0;
+}
+
+static int handle_dst_io_max(int index, struct io_copy_arg *copy_arg, struct io_copy_thread_arg *thread_arg)
+{
+    ERROR("Got invalid dst fd type");
+    return -1;
+}
+
+static int io_copy_make_dstfds(size_t len, struct io_copy_arg *copy_arg, struct io_copy_thread_arg *thread_arg)
+{
+    size_t i;
+
+    struct io_copy_handler dst_handler_jump_table[] = {
+        { IO_FD,      handle_dst_io_fd},
+        { IO_FIFO,    handle_dst_io_fifo},
+        { IO_FUNC,    handle_dst_io_fun},
+        { IO_MAX,     handle_dst_io_max},
+    };
+
+    for (i = 0; i < len; i++) {
+        if (dst_handler_jump_table[(int)(copy_arg[i].dsttype)].handle(i, copy_arg, thread_arg) != 0) {
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
+static void *io_copy_producer_thread_main(void *arg)
 {
     int ret = -1;
     struct io_copy_thread_arg *thread_arg = (struct io_copy_thread_arg *)arg;
-    struct io_copy_arg *copy_arg = thread_arg->copy_arg;
-    size_t len = 0;
-    int *infds = NULL;
-    int *outfds = NULL; // recored fds to close
-    int *srcfds = NULL;
-    struct io_write_wrapper *writers = NULL;
-    int sync_fd = thread_arg->sync_fd;
     bool posted = false;
 
     if (thread_arg->detach) {
@@ -354,119 +459,256 @@ static void *io_copy_thread_main(void *arg)
         }
     }
 
-    (void)prctl(PR_SET_NAME, "IoCopy");
-
-    len = thread_arg->len;
-    if (io_copy_init_fds(len, &infds, &outfds, &srcfds, &writers) != 0) {
-        goto err;
-    }
-
-    if (io_copy_make_srcfds(len, copy_arg, infds, srcfds) != 0) {
-        goto err;
-    }
-
-    if (io_copy_make_dstfds(len, copy_arg, outfds, writers) != 0) {
-        goto err;
-    }
+    (void)prctl(PR_SET_NAME, "IoCopyReader");
 
     sem_post(&thread_arg->wait_sem);
     posted = true;
-    (void)console_loop_io_copy(sync_fd, srcfds, writers, len);
+
+    (void)console_loop_io_copy_reader(thread_arg->sync_fd, thread_arg->srcfds, &thread_arg->buffers, thread_arg->writers,
+                                      thread_arg->len);
+
 err:
     if (!posted) {
         sem_post(&thread_arg->wait_sem);
     }
-    io_copy_thread_cleanup(writers, thread_arg, infds, outfds, srcfds, len);
+    thread_arg->iocopy_reader_finish = true;
+    // Ensure that the consumer thread ends
+    sem_post(thread_arg->buffers.io_sem);
+
+    sem_wait(&thread_arg->iocopy_writer_finish_sem);
+
+    io_copy_thread_cleanup(thread_arg);
     DAEMON_CLEAR_ERRMSG();
     return NULL;
 }
 
-static int start_io_copy_thread(int sync_fd, bool detach, struct io_copy_arg *copy_arg, size_t len, pthread_t *tid)
+static void *io_copy_consumer_thread_main(void *arg)
 {
-    int res = 0;
-    struct io_copy_thread_arg thread_arg;
+    int ret = -1;
+    struct io_copy_thread_arg *thread_arg = (struct io_copy_thread_arg *)arg;
+
+    if (thread_arg->detach) {
+        ret = pthread_detach(pthread_self());
+        if (ret != 0) {
+            CRIT("Set thread detach fail");
+            goto err;
+        }
+    }
+
+    (void)prctl(PR_SET_NAME, "IoCopyWriter");
+
+    console_loop_io_copy_writer(thread_arg->sync_fd, thread_arg->srcfds, &thread_arg->iocopy_reader_finish,
+                                &thread_arg->buffers, thread_arg->writers, thread_arg->len);
+
+err:
+    DAEMON_CLEAR_ERRMSG();
+    sem_post(&thread_arg->iocopy_writer_finish_sem);
+    return NULL;
+}
+
+static int thread_arg_buffers_init(struct io_copy_thread_arg *thread_arg)
+{
+    int ret = 0;
+
+    thread_arg->buffers.io_sem = util_common_calloc_s(sizeof(sem_t));
+    if (thread_arg->buffers.io_sem == NULL) {
+        ERROR("Out of memory");
+        return -1;
+    }
+
+    if (sem_init(thread_arg->buffers.io_sem, 0, 0)) {
+        ERROR("Failed to init io copy semaphore");
+        ret = -1;
+        goto out;
+    }
+
+    thread_arg->buffers.stdout_queue_buffer = circular_queue_init();
+    if (thread_arg->buffers.stdout_queue_buffer == NULL) {
+        ERROR("Failed to init stdout circular queue buffer");
+        ret = -1;
+        goto out;
+    }
+
+    thread_arg->buffers.stderr_queue_buffer = circular_queue_init();
+    if (thread_arg->buffers.stderr_queue_buffer == NULL) {
+        ERROR("Failed to init stderr circular queue buffer");
+        ret = -1;
+        goto out;
+    }
+
+    return ret;
+
+out:
+    free_queue_buffers(&thread_arg->buffers);
+    return ret;
+}
+
+static int io_copy_thread_arg_init(struct io_copy_thread_arg *thread_arg, int sync_fd, bool detach,
+                                   struct io_copy_arg *copy_arg, size_t len)
+{
+    int ret = 0;
+
+    thread_arg->detach = detach;
+    thread_arg->copy_arg = copy_arg;
+    thread_arg->len = len;
+    thread_arg->sync_fd = sync_fd;
+    thread_arg->iocopy_reader_finish = false;
+
+    if (sem_init(&thread_arg->wait_sem, 0, 0)) {
+        ERROR("Failed to init start semaphore");
+        ret = -1;
+        goto out;
+    }
+
+    if (sem_init(&thread_arg->iocopy_writer_finish_sem, 0, 0)) {
+        ERROR("Failed to init writer finish semaphore");
+        ret = -1;
+        goto out;
+    }
+
+    if (io_copy_init_fds(len, thread_arg) != 0) {
+        ERROR("Failed to init fds");
+        ret = -1;
+        goto out;
+    }
+
+    if (io_copy_make_srcfds(len, copy_arg, thread_arg) != 0) {
+        ERROR("Failed to init source fds");
+        ret = -1;
+        goto out;
+    }
+
+    if (io_copy_make_dstfds(len, copy_arg, thread_arg) != 0) {
+        ERROR("Failed to init dst fds");
+        ret = -1;
+        goto out;
+    }
+
+    if (thread_arg_buffers_init(thread_arg) != 0) {
+        ERROR("Failed to init queue buffers");
+        ret = -1;
+        goto out;
+    }
+
+out:
+    return ret;
+}
+
+
+static int create_producer_consumer_thread(struct io_copy_thread_arg *thread_arg,
+                                           pthread_t *reader_tid, pthread_t *writer_tid)
+{
+    if (pthread_create(reader_tid, NULL, io_copy_producer_thread_main, (void *)thread_arg) != 0) {
+        CRIT("Thread creation failed");
+        return -1;
+    }
+
+    if (pthread_create(writer_tid, NULL, io_copy_consumer_thread_main, (void *)thread_arg) != 0) {
+        CRIT("Consumer thread creation failed");
+        return -1;
+    }
+
+    return 0;
+}
+
+static int start_io_copy_thread(int sync_fd, bool detach, struct io_copy_arg *copy_arg, size_t len,
+                                pthread_t *reader_tid, pthread_t *writer_tid)
+{
+    int ret = 0;
+    struct io_copy_thread_arg *thread_arg = NULL;
 
     if (copy_arg == NULL || len == 0) {
         return 0;
     }
 
-    thread_arg.detach = detach;
-    thread_arg.copy_arg = copy_arg;
-    thread_arg.len = len;
-    thread_arg.sync_fd = sync_fd;
-    if (sem_init(&thread_arg.wait_sem, 0, 0)) {
-        ERROR("Failed to init start semaphore");
+    thread_arg = (struct io_copy_thread_arg *)util_common_calloc_s(sizeof(struct io_copy_thread_arg));
+    if (thread_arg == NULL) {
+        ERROR("Out of memory");
         return -1;
     }
 
-    res = pthread_create(tid, NULL, io_copy_thread_main, (void *)(&thread_arg));
-    if (res != 0) {
-        CRIT("Thread creation failed");
-        return -1;
+    if (io_copy_thread_arg_init(thread_arg, sync_fd, detach, copy_arg, len) != 0) {
+        ERROR("Failed to init io copy thread arg");
+        ret = -1;
+        goto err_out;
     }
-    sem_wait(&thread_arg.wait_sem);
-    sem_destroy(&thread_arg.wait_sem);
+
+    if (create_producer_consumer_thread(thread_arg, reader_tid, writer_tid) != 0) {
+        ERROR("Failed to create producer & consumer thread for io copy");
+        ret = -1;
+        goto err_out;
+    }
+
+    sem_wait(&thread_arg->wait_sem);
+    sem_destroy(&thread_arg->wait_sem);
+
     return 0;
+
+err_out:
+    io_copy_thread_cleanup(thread_arg);
+    return ret;
 }
 
+static void add_io_copy_element(struct io_copy_arg *element,
+                                io_type srctype, void *src,
+                                io_type dsttype, void *dst,
+                                io_fifo_type dstfifotype)
+{
+    element->srctype = srctype;
+    element->src = src;
+    element->dsttype = dsttype;
+    element->dst = dst;
+    element->dstfifotype = dstfifotype;
+}
+
+/*
+    -----------------------------------------------------------------------------------
+    |  CHANNEL |      iSula                          iSulad                    lxc    |
+    -----------------------------------------------------------------------------------
+    |          |                    fifoin                         fifos[0]           |
+    |    IN    |       RDWR       -------->       RD      RDWR     -------->      RD  |
+    -----------------------------------------------------------------------------------
+    |          |                   fifoout                         fifos[1]           |
+    |    OUT   |       RD         <--------       WR       RD      <--------      WR  |
+    -----------------------------------------------------------------------------------
+    |          |                   fifoerr                         fifos[2]           |
+    |    ERR   |       RD         <--------       WR       RD      <--------     WR   |
+    -----------------------------------------------------------------------------------
+*/
 int ready_copy_io_data(int sync_fd, bool detach, const char *fifoin, const char *fifoout, const char *fifoerr,
                        int stdin_fd, struct io_write_wrapper *stdout_handler, struct io_write_wrapper *stderr_handler,
-                       const char *fifos[], pthread_t *tid)
+                       const char *fifos[], pthread_t *reader_tid, pthread_t *writer_tid)
 {
-    int ret = 0;
     size_t len = 0;
     struct io_copy_arg io_copy[6];
 
     if (fifoin != NULL) {
-        io_copy[len].srctype = IO_FIFO;
-        io_copy[len].src = (void *)fifoin;
-        io_copy[len].dsttype = IO_FIFO;
-        io_copy[len].dst = (void *)fifos[0];
-        len++;
+        add_io_copy_element(&io_copy[len++], IO_FIFO, (void *)fifoin, IO_FIFO, (void *)fifos[0], IO_WRITE_TO_LXC);
     }
+
     if (fifoout != NULL) {
-        io_copy[len].srctype = IO_FIFO;
-        io_copy[len].src = (void *)fifos[1];
-        io_copy[len].dsttype = IO_FIFO;
-        io_copy[len].dst = (void *)fifoout;
-        len++;
+        add_io_copy_element(&io_copy[len++], IO_FIFO, (void *)fifos[1], IO_FIFO, (void *)fifoout, IO_WRITE_TO_ISULA);
     }
+
     if (fifoerr != NULL) {
-        io_copy[len].srctype = IO_FIFO;
-        io_copy[len].src = (void *)fifos[2];
-        io_copy[len].dsttype = IO_FIFO;
-        io_copy[len].dst = (void *)fifoerr;
-        len++;
+        add_io_copy_element(&io_copy[len++], IO_FIFO, (void *)fifos[2], IO_FIFO, (void *)fifoerr, IO_WRITE_TO_ISULA);
     }
 
     if (stdin_fd > 0) {
-        io_copy[len].srctype = IO_FD;
-        io_copy[len].src = &stdin_fd;
-        io_copy[len].dsttype = IO_FIFO;
-        io_copy[len].dst = (void *)fifos[0];
-        len++;
+        add_io_copy_element(&io_copy[len++], IO_FD,  &stdin_fd, IO_FIFO, (void *)fifos[0], IO_RDWR_MAX);
     }
 
     if (stdout_handler != NULL) {
-        io_copy[len].srctype = IO_FIFO;
-        io_copy[len].src = (void *)fifos[1];
-        io_copy[len].dsttype = IO_FUNC;
-        io_copy[len].dst = stdout_handler;
-        len++;
+        add_io_copy_element(&io_copy[len++], IO_FIFO, (void *)fifos[1], IO_FUNC, stdout_handler, IO_RDWR_MAX);
     }
 
     if (stderr_handler != NULL) {
-        io_copy[len].srctype = IO_FIFO;
-        io_copy[len].src = (void *)fifos[2];
-        io_copy[len].dsttype = IO_FUNC;
-        io_copy[len].dst = stderr_handler;
-        len++;
+        add_io_copy_element(&io_copy[len++], IO_FIFO, (void *)fifos[2], IO_FUNC, stderr_handler, IO_RDWR_MAX);
     }
 
-    if (start_io_copy_thread(sync_fd, detach, io_copy, len, tid)) {
-        ret = -1;
-        goto out;
+    if (start_io_copy_thread(sync_fd, detach, io_copy, len, reader_tid, writer_tid) != 0) {
+        return -1;
     }
-out:
-    return ret;
+
+    return 0;
 }
