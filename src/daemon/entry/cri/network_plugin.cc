@@ -22,7 +22,7 @@
 
 #include "isula_libutils/log.h"
 
-#include "libcni_types.h"
+#include "utils_network.h"
 #include "utils.h"
 #include "sysctl_tools.h"
 #include "cri_runtime_service.h"
@@ -85,11 +85,11 @@ static std::string ParseIPFromLine(const char *line, const char *stdout_str)
         goto out;
     }
 
-    if (parse_cidr(fields[3], &ipnet_val) != 0) {
+    if (util_parse_cidr(fields[3], &ipnet_val) != 0) {
         ERROR("CNI failed to parse ip from output %s", stdout_str);
         goto out;
     }
-    cIP = ip_to_string(ipnet_val->ip, ipnet_val->ip_len);
+    cIP = util_ip_to_string(ipnet_val->ip, ipnet_val->ip_len);
     if (cIP == nullptr) {
         ERROR("Out of memory");
         goto out;
@@ -98,13 +98,13 @@ static std::string ParseIPFromLine(const char *line, const char *stdout_str)
     ret = cIP;
 out:
     free(cIP);
-    free_ipnet_type(ipnet_val);
+    util_free_ipnet(ipnet_val);
     util_free_array(fields);
     return ret;
 }
 
-static void GetOnePodIP(std::string nsenterPath, std::string netnsPath, std::string interfaceName,
-                        std::string addrType, std::vector<std::string> &ips, Errors &error)
+static void GetOnePodIP(std::string nsenterPath, std::string netnsPath, std::string interfaceName, std::string addrType,
+                        std::vector<std::string> &ips, Errors &error)
 {
     char *stderr_str { nullptr };
     char *stdout_str { nullptr };
