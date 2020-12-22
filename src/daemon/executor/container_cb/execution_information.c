@@ -1337,6 +1337,36 @@ out:
     return ret;
 }
 
+static int pack_inspect_network_settings(const container_t *cont, container_inspect *inspect)
+{
+    int ret = 0;
+
+    if (cont->common_config->network_settings == NULL) {
+        WARN("Container with id:%s no network settings to inspect", cont->common_config->id);
+        return 0;
+    }
+
+    inspect->network_settings = util_common_calloc_s(sizeof(container_network_settings));
+    if (inspect->network_settings == NULL) {
+        ERROR("Out of memory");
+        ret = -1;
+        goto out;
+    }
+
+    if (cont->common_config->network_settings->ip_address != NULL) {
+        inspect->network_settings->ip_address = util_strdup_s(cont->common_config->network_settings->ip_address);
+    }
+
+    if (cont->common_config->network_settings->gateway != NULL) {
+        inspect->network_settings->gateway = util_strdup_s(cont->common_config->network_settings->gateway);
+    }
+
+    // TODO: copy network settings fields according to requirement
+
+out:
+    return ret;
+}
+
 static int pack_inspect_data(const container_t *cont, container_inspect **out_inspect)
 {
     int ret = 0;
@@ -1371,6 +1401,12 @@ static int pack_inspect_data(const container_t *cont, container_inspect **out_in
     }
 
     if (pack_inspect_config(cont, inspect) != 0) {
+        ret = -1;
+        goto out;
+    }
+
+    if (pack_inspect_network_settings(cont, inspect) != 0) {
+        ERROR("Pack inspect network settings error");
         ret = -1;
         goto out;
     }
