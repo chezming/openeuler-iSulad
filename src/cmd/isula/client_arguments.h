@@ -211,17 +211,11 @@ struct custom_configs {
     /* device cgroup rules */
     char **device_cgroup_rules;
 
-    /* network driver */
-    char *driver;
+    /* container IP */
+    char *ip;
 
-    /* network gateway */
-    char *gateway;
-
-    /* network internal */
-    bool internal;
-
-    /* network subnet */
-    char *subnet;
+    /* container MAC */
+    char *mac_address;
 };
 
 struct args_cgroup_resources {
@@ -362,6 +356,12 @@ struct client_arguments {
 
     // network
     char *network_name;
+
+    // network create
+    char *driver;
+    char *gateway;
+    bool internal;
+    char *subnet;
 };
 
 #define LOG_OPTIONS(log) { CMD_OPT_TYPE_BOOL_FALSE, false, "debug", 'D', &(log).quiet, "Enable debug mode", NULL },
