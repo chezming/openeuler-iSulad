@@ -55,7 +55,9 @@ function test_container_with_networks()
 
     start_isulad_with_valgrind
     [[ $? -ne 0 ]] && msg_err "${FUNCNAME[0]}:${LINENO} - start isulad failed" && ((ret++))
-
+    
+    isula network ls
+    isula ps -a
     # run container but no available network
     isula run -tid --net ${network_name1} -n ${cont_name} busybox sh 2>&1 | grep "No available native network"
     [[ $? -ne 0 ]] && msg_err "${FUNCNAME[0]}:${LINENO} - run container and catch err msg failed" && ((ret++))
