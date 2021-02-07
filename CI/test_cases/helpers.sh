@@ -146,6 +146,9 @@ function check_valgrind_log() {
     cat $valgrind_log | grep "are definitely lost" | grep "==$pid=="
     if [ $? -eq 0 ];then
         echo "Memory leak may checked by valgrind, see valgrind log file: $valgrind_log"
+        echo "### valgrind log begin ###"
+        cat $valgrind_log
+        echo "### valgrind log end ###"
         sed -n '/definitely lost/,// p' $valgrind_log
         exit 1
     fi
