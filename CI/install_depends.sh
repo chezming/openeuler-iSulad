@@ -80,8 +80,9 @@ check_make_status make_cni_plugins ${build_log_cni_plugins} &
 
 # install lxc
 cd ~
-git clone https://gitee.com/src-openeuler/lxc.git
+git clone https://gitee.com/wangfengtu/lxc.git
 cd lxc
+git checkout -b cgroupv2 origin/cgroupv2
 tar xf lxc-4.0.3.tar.gz
 cd lxc-4.0.3
 mv ../*.patch .
@@ -98,8 +99,9 @@ ldconfig
 
 # install lcr
 cd ~
-git clone https://gitee.com/openeuler/lcr.git
+git clone https://gitee.com/wangfengtu/lcr.git
 cd lcr
+git checkout -b cgroupv2 origin/cgroupv2
 sed -i 's/fd == STDIN_FILENO || fd == STDOUT_FILENO || fd == STDERR_FILENO/fd == 0 || fd == 1 || fd == 2 || fd >= 1000/g' ./src/utils.c
 mkdir -p build
 cd build
