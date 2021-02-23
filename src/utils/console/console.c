@@ -116,6 +116,10 @@ static int console_cb_stdio_copy(int fd, uint32_t events, void *cbdata, struct e
 
     r_ret = util_read_nointr(fd, buf, sizeof(buf) - 1);
     if (r_ret <= 0) {
+        if (errno == EAGAIN) {
+            ret = EPOLL_LOOP_HANDLE_CONTINUE;
+            goto out;
+        }
         // if we close the sync fd, it means the IO COPY thread had beed made to detached, continue to watch other fds
         if (fd == ts->sync_fd) {
             epoll_loop_del_handler(descr, fd);
