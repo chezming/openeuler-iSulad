@@ -179,6 +179,8 @@ extern "C" {
       &(cmdargs).custom_conf.dns_search,                                                                                                                  \
       "Set custom DNS search domains",                                                                                                                    \
       command_append_array },                                                                                                                             \
+    { CMD_OPT_TYPE_STRING_DUP, false, "domainname", 0, &(cmdargs).custom_conf.domainname,                                                               \
+      "Container NIS domain name",   NULL },                                                                                                              \
     { CMD_OPT_TYPE_STRING,                                                                                                                                \
       false,                                                                                                                                              \
       "user-remap",                                                                                                                                       \

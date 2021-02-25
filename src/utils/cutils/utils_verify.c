@@ -759,21 +759,16 @@ out:
     return ret;
 }
 
-bool util_valid_sysctl(const char *sysctl_key)
+bool util_valid_sysctl_key(const char *sysctl_key, const char *sysctl_full_keys[], size_t full_keys_len)
 {
     size_t i = 0;
-    size_t full_keys_len = 0;
     size_t key_prefixes_len = 0;
-    const char *sysctl_full_keys[] = { "kernel.msgmax", "kernel.msgmnb", "kernel.msgmni", "kernel.sem",
-                                       "kernel.shmall", "kernel.shmmax", "kernel.shmmni", "kernel.shm_rmid_forced"
-                                     };
     const char *sysctl_key_prefixes[] = { "net.", "fs.mqueue." };
 
     if (sysctl_key == NULL) {
         return false;
     }
 
-    full_keys_len = sizeof(sysctl_full_keys) / sizeof(char *);
     key_prefixes_len = sizeof(sysctl_key_prefixes) / sizeof(char *);
 
     for (i = 0; i < full_keys_len; i++) {
@@ -787,6 +782,25 @@ bool util_valid_sysctl(const char *sysctl_key)
         }
     }
     return false;
+}
+
+bool util_valid_sysctl(const char *sysctl_key)
+{
+    const char *sysctl_full_keys[] = { "kernel.msgmax", "kernel.msgmnb", "kernel.msgmni", "kernel.sem",
+                                       "kernel.shmall", "kernel.shmmax", "kernel.shmmni", "kernel.shm_rmid_forced"
+                                     };
+
+    return util_valid_sysctl_key(sysctl_key, sysctl_full_keys, sizeof(sysctl_full_keys) / sizeof(sysctl_full_keys[0]));
+}
+
+bool util_valid_sysctl_with_domainname(const char *sysctl_key)
+{
+    const char *sysctl_full_keys[] = { "kernel.msgmax", "kernel.msgmnb", "kernel.msgmni", "kernel.sem",
+                                       "kernel.shmall", "kernel.shmmax", "kernel.shmmni", "kernel.shm_rmid_forced",
+                                       "kernel.domainname"
+                                     };
+
+    return util_valid_sysctl_key(sysctl_key, sysctl_full_keys, sizeof(sysctl_full_keys) / sizeof(sysctl_full_keys[0]));
 }
 
 bool util_valid_volume_name(const char *name)

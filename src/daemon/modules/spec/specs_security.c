@@ -785,7 +785,7 @@ out:
     return ret;
 }
 
-static int make_sure_oci_spec_linux_sysctl(oci_runtime_spec *oci_spec)
+int make_sure_oci_spec_linux_sysctl(oci_runtime_spec *oci_spec)
 {
     int ret = 0;
 
@@ -827,6 +827,7 @@ int merge_sysctls(oci_runtime_spec *oci_spec, const json_map_string_string *sysc
     for (i = 0; i < sysctls->len; i++) {
         if (append_json_map_string_string(oci_spec->linux->sysctl, sysctls->keys[i], sysctls->values[i]) != 0) {
             ERROR("Append string failed");
+            ret = -1;
             goto out;
         }
     }

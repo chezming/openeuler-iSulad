@@ -185,6 +185,9 @@ void client_arguments_free(struct client_arguments *args)
     free(custom_conf->hostname);
     custom_conf->hostname = NULL;
 
+    free(custom_conf->domainname);
+    custom_conf->domainname = NULL;
+
     util_free_array(custom_conf->cap_adds);
     custom_conf->cap_adds = NULL;
 

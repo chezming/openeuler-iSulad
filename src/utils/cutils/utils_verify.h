@@ -123,6 +123,8 @@ int util_valid_env(const char *env, char **dst);
 
 bool util_valid_sysctl(const char *sysctl_key);
 
+bool util_valid_sysctl_with_domainname(const char *sysctl_key);
+
 bool util_valid_volume_name(const char *name);
 
 #ifdef __cplusplus

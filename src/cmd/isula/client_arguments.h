@@ -90,6 +90,9 @@ struct custom_configs {
     /* hostname */
     char *hostname;
 
+    /* domainname */
+    char *domainname;
+
     /* privileged */
     bool privileged;
 

@@ -1151,7 +1151,7 @@ out:
     return ret;
 }
 
-static bool verify_oci_linux_sysctl(const oci_runtime_config_linux *l)
+static bool verify_oci_linux_sysctl(const oci_runtime_config_linux *l, host_config *host_spec)
 {
     size_t i = 0;
 
@@ -1168,7 +1168,12 @@ static bool verify_oci_linux_sysctl(const oci_runtime_config_linux *l)
                 return true;
             }
         }
-        if (!util_valid_sysctl(l->sysctl->keys[i])) {
+        if (host_spec->uts_mode != NULL && strcmp("kernel.domainname", l->sysctl->keys[i]) == 0) {
+            ERROR("Sysctl %s is not a separate kernel namespace", l->sysctl->keys[i]);
+            isulad_set_error_message("Sysctl %s is not a separate kernel namespace", l->sysctl->keys[i]);
+            return false;
+        }
+        if (!util_valid_sysctl_with_domainname(l->sysctl->keys[i])) {
             isulad_set_error_message("Sysctl %s=%s is not whitelist", l->sysctl->keys[i], l->sysctl->values[i]);
             return false;
         }
@@ -1177,7 +1182,7 @@ static bool verify_oci_linux_sysctl(const oci_runtime_config_linux *l)
 }
 
 /* verify oci linux */
-static int verify_oci_linux(const sysinfo_t *sysinfo, const oci_runtime_config_linux *l)
+static int verify_oci_linux(const sysinfo_t *sysinfo, const oci_runtime_config_linux *l, host_config *host_spec)
 {
     int ret = 0;
 
@@ -1188,7 +1193,7 @@ static int verify_oci_linux(const sysinfo_t *sysinfo, const oci_runtime_config_l
             goto out;
         }
     }
-    if (!verify_oci_linux_sysctl(l)) {
+    if (!verify_oci_linux_sysctl(l, host_spec)) {
         ret = -1;
         goto out;
     }
@@ -1512,13 +1517,13 @@ out:
     return ret;
 }
 
-static int verify_container_linux(const oci_runtime_spec *container, const sysinfo_t *sysinfo)
+static int verify_container_linux(const oci_runtime_spec *container, const sysinfo_t *sysinfo, host_config *host_spec)
 {
     int ret = 0;
 
     /* verify and adapt container settings */
     if (container->linux != NULL) {
-        ret = verify_oci_linux(sysinfo, container->linux);
+        ret = verify_oci_linux(sysinfo, container->linux, host_spec);
         if (ret != 0) {
             goto out;
         }
@@ -1561,7 +1566,7 @@ out:
 }
 
 /* verify container settings */
-int verify_container_settings(const oci_runtime_spec *container)
+int verify_container_settings(const oci_runtime_spec *container, host_config *host_spec)
 {
     int ret = 0;
     sysinfo_t *sysinfo = NULL;
@@ -1582,7 +1587,7 @@ int verify_container_settings(const oci_runtime_spec *container)
     }
 
     /* verify and adapt container settings */
-    ret = verify_container_linux(container, sysinfo);
+    ret = verify_container_linux(container, sysinfo, host_spec);
     if (ret != 0) {
         goto out;
     }

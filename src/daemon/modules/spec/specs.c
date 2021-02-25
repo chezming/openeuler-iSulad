@@ -904,6 +904,44 @@ static int merge_hostname(oci_runtime_spec *oci_spec, const host_config *host_sp
     return 0;
 }
 
+static int merge_domainname(oci_runtime_spec *oci_spec, container_config *container_spec)
+{
+    size_t i = 0;
+    json_map_string_string *sysctls = NULL;
+
+    if (container_spec->domainname == NULL) {
+        return 0;
+    }
+
+    if (make_sure_oci_spec_linux_sysctl(oci_spec) != 0) {
+        ERROR("out of memory");
+        return -1;
+    }
+
+    sysctls = oci_spec->linux->sysctl;
+
+    /* domainname in sysctl can override --domainname, so if domainname exists
+     * in sysctl, then drop domainname configed by --domainname */
+    for (i = 0; i < sysctls->len; i++) {
+        if (strcmp(sysctls->keys[i], "kernel.domainname") == 0) {
+            return 0;
+        }
+    }
+
+    if (sysctls->len >= LIST_SIZE_MAX) {
+        ERROR("Too many sysctls to add, the limit is %lld", LIST_SIZE_MAX);
+        isulad_set_error_message("Too many sysctls to add, the limit is %d", LIST_SIZE_MAX);
+        return -1;
+    }
+
+    if (append_json_map_string_string(sysctls, "kernel.domainname", container_spec->domainname) != 0) {
+        ERROR("Append domainname to sysctl failed");
+        return -1;
+    }
+
+    return 0;
+}
+
 static int merge_nanocpus(oci_runtime_spec *oci_spec, int64_t nanocpus)
 {
     int ret = 0;
@@ -2088,6 +2126,12 @@ int merge_all_specs(host_config *host_spec, const char *real_rootfs, container_c
     }
 
     ret = merge_hostname(oci_spec, host_spec, v2_spec->config);
+    if (ret != 0) {
+        ERROR("Failed to merge hostname");
+        goto out;
+    }
+
+    ret = merge_domainname(oci_spec, v2_spec->config);
     if (ret != 0) {
         ERROR("Failed to merge hostname");
         goto out;

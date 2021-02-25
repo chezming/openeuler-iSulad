@@ -32,6 +32,7 @@ int merge_sysctls(oci_runtime_spec *oci_spec, const json_map_string_string *sysc
 int merge_no_new_privileges(oci_runtime_spec *oci_spec, bool value);
 int adapt_settings_for_system_container(oci_runtime_spec *oci_spec, const host_config *host_spec);
 int merge_seccomp(oci_runtime_spec *oci_spec, const char *seccomp_profile);
+int make_sure_oci_spec_linux_sysctl(oci_runtime_spec *oci_spec);
 #ifdef ENABLE_SELINUX
 int merge_selinux(oci_runtime_spec *oci_spec, container_config_v2_common_config *v2_spec);
 #endif
