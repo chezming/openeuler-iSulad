@@ -20,7 +20,8 @@
 #include <memory>
 
 namespace CRISecurity {
-static void ModifyContainerConfig(const runtime::v1alpha2::LinuxContainerSecurityContext &sc, container_config *config)
+void ModifyContainerConfig(const runtime::v1alpha2::LinuxContainerSecurityContext &sc,
+                           container_config *config, Errors &error)
 {
     if (sc.has_run_as_user()) {
         free(config->user);
@@ -30,10 +31,25 @@ static void ModifyContainerConfig(const runtime::v1alpha2::LinuxContainerSecurit
         free(config->user);
         config->user = util_strdup_s(sc.run_as_username().c_str());
     }
+
+    std::string user = config->user != nullptr ? config->user : "";
+
+    if (sc.has_run_as_group()) {
+        if (user.empty()) {
+            error.SetError("runAsGroup is specified without a runAsUser");
+            return;
+        }
+        user += (":" + std::to_string(sc.run_as_group().value()));
+    }
+
+    if (!user.empty()) {
+        free(config->user);
+        config->user = util_strdup_s(user.c_str());
+    }
 }
 
-static void ModifyHostConfigCapabilities(const runtime::v1alpha2::LinuxContainerSecurityContext &sc,
-                                         host_config *hostConfig, Errors &error)
+void ModifyHostConfigCapabilities(const runtime::v1alpha2::LinuxContainerSecurityContext &sc,
+                                  host_config *hostConfig, Errors &error)
 {
     if (!sc.has_capabilities()) {
         return;
@@ -66,15 +82,64 @@ static void ModifyHostConfigCapabilities(const runtime::v1alpha2::LinuxContainer
             error.SetError("Out of memory");
             return;
         }
-        for (int i = 0; i < capDrop.size(); i++) {
+        for (int i {}; i < capDrop.size(); i++) {
             hostConfig->cap_drop[i] = util_strdup_s(capDrop[i].c_str());
             hostConfig->cap_drop_len++;
         }
     }
 }
 
-static void ModifyHostConfigNoNewPrivs(const runtime::v1alpha2::LinuxContainerSecurityContext &sc,
-                                       host_config *hostConfig, Errors &error)
+void AppendSecurityOption(std::vector<std::string> &securityOpts, std::string name, std::string value)
+{
+    if (value.empty()) {
+        return;
+    }
+
+    securityOpts.push_back(name + ":" + value);
+}
+
+
+void ModifyHostConfigSelinux(const runtime::v1alpha2::LinuxContainerSecurityContext &sc,
+                             host_config *hostConfig, Errors &error)
+{
+    // label<separator>type:<selinux_type>
+    if (!sc.has_selinux_options()) {
+        return;
+    }
+
+    auto selinuxOpt = sc.selinux_options();
+    std::vector<std::string> securityOpts;
+    AppendSecurityOption(securityOpts, "label=user", selinuxOpt.user());
+    AppendSecurityOption(securityOpts, "label=role", selinuxOpt.role());
+    AppendSecurityOption(securityOpts, "label=type", selinuxOpt.type());
+    AppendSecurityOption(securityOpts, "label=level", selinuxOpt.level());
+
+    auto optCount = securityOpts.size();
+    if (optCount == 0) {
+        return;
+    }
+
+    if (hostConfig->security_opt_len > (SIZE_MAX / sizeof(char *)) - optCount) {
+        error.Errorf("Too many security options");
+        return;
+    }
+
+    char **tmp_security_opt { nullptr };
+    size_t oldSize = hostConfig->security_opt_len * sizeof(char *);
+    size_t newSize = oldSize + optCount * sizeof(char *);
+    int ret = util_mem_realloc((void **)(&tmp_security_opt), newSize, (void *)hostConfig->security_opt, oldSize);
+    if (ret != 0) {
+        error.Errorf("Out of memory");
+        return;
+    }
+    hostConfig->security_opt = tmp_security_opt;
+    for (auto elem : securityOpts) {
+        hostConfig->security_opt[hostConfig->security_opt_len++] = util_strdup_s(elem.c_str());
+    }
+}
+
+void ModifyHostConfigNoNewPrivs(const runtime::v1alpha2::LinuxContainerSecurityContext &sc,
+                                host_config *hostConfig, Errors &error)
 {
     char **tmp_security_opt { nullptr };
 
@@ -98,8 +163,8 @@ static void ModifyHostConfigNoNewPrivs(const runtime::v1alpha2::LinuxContainerSe
     hostConfig->security_opt[hostConfig->security_opt_len++] = util_strdup_s("no-new-privileges");
 }
 
-static void ModifyHostConfigscSupplementalGroups(const runtime::v1alpha2::LinuxContainerSecurityContext &sc,
-                                                 host_config *hostConfig, Errors &error)
+void ModifyHostConfigscSupplementalGroups(const runtime::v1alpha2::LinuxContainerSecurityContext &sc,
+                                          host_config *hostConfig, Errors &error)
 {
     if (sc.supplemental_groups().empty()) {
         return;
@@ -123,18 +188,19 @@ static void ModifyHostConfigscSupplementalGroups(const runtime::v1alpha2::LinuxC
     }
 }
 
-static void ModifyHostConfig(const runtime::v1alpha2::LinuxContainerSecurityContext &sc, host_config *hostConfig,
-                             Errors &error)
+void ModifyHostConfig(const runtime::v1alpha2::LinuxContainerSecurityContext &sc, host_config *hostConfig,
+                      Errors &error)
 {
     hostConfig->privileged = sc.privileged();
     hostConfig->readonly_rootfs = sc.readonly_rootfs();
     // note: Apply apparmor options, selinux options, noNewPrivilege
     ModifyHostConfigCapabilities(sc, hostConfig, error);
+    ModifyHostConfigSelinux(sc, hostConfig, error);
     ModifyHostConfigNoNewPrivs(sc, hostConfig, error);
     ModifyHostConfigscSupplementalGroups(sc, hostConfig, error);
 }
 
-static void ModifyCommonNamespaceOptions(const runtime::v1alpha2::NamespaceOption &nsOpts, host_config *hostConfig)
+void ModifyCommonNamespaceOptions(const runtime::v1alpha2::NamespaceOption &nsOpts, host_config *hostConfig)
 {
     if (nsOpts.pid() == runtime::v1alpha2::NamespaceMode::NODE) {
         free(hostConfig->pid_mode);
@@ -142,8 +208,8 @@ static void ModifyCommonNamespaceOptions(const runtime::v1alpha2::NamespaceOptio
     }
 }
 
-static void ModifyHostNetworkOptionForContainer(const runtime::v1alpha2::NamespaceMode &hostNetwork,
-                                                const std::string &podSandboxID, host_config *hostConfig)
+void ModifyHostNetworkOptionForContainer(const runtime::v1alpha2::NamespaceMode &hostNetwork,
+                                         const std::string &podSandboxID, host_config *hostConfig)
 {
     std::string sandboxNSMode = "container:" + podSandboxID;
 
@@ -157,7 +223,7 @@ static void ModifyHostNetworkOptionForContainer(const runtime::v1alpha2::Namespa
     }
 }
 
-static void ModifyHostNetworkOptionForSandbox(const runtime::v1alpha2::NamespaceOption &nsOpts, host_config *hostConfig)
+void ModifyHostNetworkOptionForSandbox(const runtime::v1alpha2::NamespaceOption &nsOpts, host_config *hostConfig)
 {
     if (nsOpts.ipc() == runtime::v1alpha2::NamespaceMode::NODE) {
         free(hostConfig->ipc_mode);
@@ -171,8 +237,8 @@ static void ModifyHostNetworkOptionForSandbox(const runtime::v1alpha2::Namespace
     // Note: default networkMode is not supported
 }
 
-static void ModifyContainerNamespaceOptions(const runtime::v1alpha2::NamespaceOption &nsOpts,
-                                            const std::string &podSandboxID, host_config *hostConfig)
+void ModifyContainerNamespaceOptions(const runtime::v1alpha2::NamespaceOption &nsOpts,
+                                     const std::string &podSandboxID, host_config *hostConfig)
 {
     std::string sandboxNSMode = "container:" + podSandboxID;
     if (nsOpts.pid() == runtime::v1alpha2::NamespaceMode::POD) {
@@ -192,7 +258,7 @@ static void ModifyContainerNamespaceOptions(const runtime::v1alpha2::NamespaceOp
     ModifyHostNetworkOptionForContainer(nsOpts.network(), podSandboxID, hostConfig);
 }
 
-static void ModifySandboxNamespaceOptions(const runtime::v1alpha2::NamespaceOption &nsOpts, host_config *hostConfig)
+void ModifySandboxNamespaceOptions(const runtime::v1alpha2::NamespaceOption &nsOpts, host_config *hostConfig)
 {
     /* set common Namespace options */
     ModifyCommonNamespaceOptions(nsOpts, hostConfig);
@@ -214,6 +280,9 @@ void ApplySandboxSecurityContext(const runtime::v1alpha2::LinuxPodSandboxConfig 
         if (old.has_run_as_user()) {
             *sc->mutable_run_as_user() = old.run_as_user();
         }
+        if (old.has_run_as_group()) {
+            *sc->mutable_run_as_group() = old.run_as_group();
+        }
         if (old.has_namespace_options()) {
             *sc->mutable_namespace_options() = old.namespace_options();
         }
@@ -222,8 +291,9 @@ void ApplySandboxSecurityContext(const runtime::v1alpha2::LinuxPodSandboxConfig 
         }
         *sc->mutable_supplemental_groups() = old.supplemental_groups();
         sc->set_readonly_rootfs(old.readonly_rootfs());
+        sc->set_privileged(old.privileged());
     }
-    ModifyContainerConfig(*sc, config);
+    ModifyContainerConfig(*sc, config, error);
     ModifyHostConfig(*sc, hc, error);
     if (error.NotEmpty()) {
         return;
@@ -236,7 +306,7 @@ void ApplyContainerSecurityContext(const runtime::v1alpha2::LinuxContainerConfig
 {
     if (lc.has_security_context()) {
         const runtime::v1alpha2::LinuxContainerSecurityContext &sc = lc.security_context();
-        ModifyContainerConfig(sc, config);
+        ModifyContainerConfig(sc, config, error);
         ModifyHostConfig(sc, hc, error);
         if (error.NotEmpty()) {
             return;
