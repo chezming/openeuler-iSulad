@@ -201,139 +201,6 @@ static int request_pack_host_config_cgroup(const struct client_arguments *args, 
     return 0;
 }
 
-static int request_pack_custom_env(const struct client_arguments *args, isula_container_config_t *conf)
-{
-    int ret = 0;
-    char *pe = NULL;
-    char *new_env = NULL;
-
-    if (args->custom_conf.env != NULL) {
-        size_t i;
-        for (i = 0; i < util_array_len((const char **)(args->custom_conf.env)); i++) {
-            if (util_valid_env(args->custom_conf.env[i], &new_env) != 0) {
-                COMMAND_ERROR("Invalid environment %s", args->custom_conf.env[i]);
-                ret = -1;
-                goto out;
-            }
-            if (new_env == NULL) {
-                continue;
-            }
-            if (util_array_append(&conf->env, new_env) != 0) {
-                COMMAND_ERROR("Failed to append custom config env list %s", new_env);
-                ret = -1;
-                goto out;
-            }
-            free(new_env);
-            new_env = NULL;
-        }
-        conf->env_len = util_array_len((const char **)(conf->env));
-    }
-
-out:
-    free(pe);
-    free(new_env);
-    return ret;
-}
-
-static int read_env_from_file(const char *path, size_t file_size, isula_container_config_t *conf)
-{
-    int ret = 0;
-    FILE *fp = NULL;
-    char *buf = NULL;
-    char *new_env = NULL;
-
-    if (file_size == 0) {
-        return 0;
-    }
-    fp = util_fopen(path, "r");
-    if (fp == NULL) {
-        ERROR("Failed to open '%s'", path);
-        return -1;
-    }
-    buf = (char *)util_common_calloc_s(file_size + 1);
-    if (buf == NULL) {
-        ERROR("Out of memory");
-        ret = -1;
-        goto out;
-    }
-    while (fgets(buf, (int)file_size + 1, fp) != NULL) {
-        size_t len = strlen(buf);
-        if (len == 1) {
-            continue;
-        }
-        buf[len - 1] = '\0';
-        if (util_valid_env(buf, &new_env) != 0) {
-            ret = -1;
-            goto out;
-        }
-        if (new_env == NULL) {
-            continue;
-        }
-        if (util_array_append(&conf->env, new_env) != 0) {
-            ERROR("Failed to append environment variable");
-            ret = -1;
-            goto out;
-        }
-        free(new_env);
-        new_env = NULL;
-    }
-
-out:
-    fclose(fp);
-    free(buf);
-    free(new_env);
-    return ret;
-}
-
-static int append_env_variables_to_conf(const char *env_file, isula_container_config_t *conf)
-{
-    int ret = 0;
-    size_t file_size;
-
-    if (!util_file_exists(env_file)) {
-        COMMAND_ERROR("env file not exists: %s", env_file);
-        ret = -1;
-        goto out;
-    }
-    file_size = util_file_size(env_file);
-    if (file_size > REGULAR_FILE_SIZE) {
-        COMMAND_ERROR("env file '%s', size exceed limit: %lld", env_file, REGULAR_FILE_SIZE);
-        ret = -1;
-        goto out;
-    }
-
-    if (read_env_from_file(env_file, file_size, conf) != 0) {
-        COMMAND_ERROR("failed to read env from file: %s", env_file);
-        ret = -1;
-        goto out;
-    }
-
-out:
-    return ret;
-}
-
-static int request_pack_custom_env_file(const struct client_arguments *args, isula_container_config_t *conf)
-{
-    int ret = 0;
-    size_t i;
-    char **env_files = args->custom_conf.env_file;
-    size_t env_files_size = util_array_len((const char **)env_files);
-    if (env_files_size == 0) {
-        return 0;
-    }
-
-    for (i = 0; i < env_files_size; i++) {
-        if (append_env_variables_to_conf(env_files[i], conf) != 0) {
-            ret = -1;
-            goto out;
-        }
-    }
-    conf->env_len = util_array_len((const char **)(conf->env));
-
-out:
-    return ret;
-}
-
 static bool validate_label(const char *label)
 {
     bool ret = true;
@@ -609,6 +476,7 @@ static void request_pack_custom_stop_signal(const struct client_arguments *args,
 static isula_container_config_t *request_pack_custom_conf(const struct client_arguments *args)
 {
     isula_container_config_t *conf = NULL;
+    char *errmsg = NULL;
 
     if (args == NULL) {
         return NULL;
@@ -619,15 +487,12 @@ static isula_container_config_t *request_pack_custom_conf(const struct client_ar
         return NULL;
     }
 
-    /* append environment variables from env file */
-    if (request_pack_custom_env_file(args, conf) != 0) {
+    if (util_read_custom_envs((const char **)args->custom_conf.env_file, (const char **)args->custom_conf.env,
+			      &conf->env, &errmsg) != 0) {
+        COMMAND_ERROR("%s", errmsg);
         goto error_out;
     }
-
-    /* make sure --env has higher priority than --env-file */
-    if (request_pack_custom_env(args, conf) != 0) {
-        goto error_out;
-    }
+    conf->env_len = util_array_len((const char **)(conf->env));
 
     /* append labels from label file */
     if (request_pack_custom_label_file(args, conf) != 0) {
@@ -677,6 +542,7 @@ static isula_container_config_t *request_pack_custom_conf(const struct client_ar
     return conf;
 
 error_out:
+    free(errmsg);
     isula_container_config_free(conf);
     return NULL;
 }

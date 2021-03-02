@@ -207,6 +207,12 @@ extern "C" {
 #define SIGRTMAX 64
 #endif
 
+#define CACHE_ERRMSG_LEN 512
+#define CACHE_ERRMSG(errmsg, fmt, args...)              \
+    do {                                         \
+        (void)snprintf(errmsg, CACHE_ERRMSG_LEN, fmt, ##args); \
+    } while (0)
+
 #define SIGNAL_MAP_DEFAULT                                                                                             \
     {                                                                                                                  \
         { SIGHUP, "HUP" }, { SIGINT, "INT" }, { SIGQUIT, "QUIT" }, { SIGILL, "ILL" }, { SIGABRT, "ABRT" },             \
@@ -368,6 +374,8 @@ int util_read_pid_ppid_info(uint32_t pid, pid_ppid_info_t *pid_info);
 void util_parse_user_group(const char *username, char **user, char **group, char **tmp_dup);
 
 defs_map_string_object * dup_map_string_empty_object(defs_map_string_object *src);
+
+int util_read_custom_envs(const char **env_file, const char **env, char ***all_env, char **errmsg);
 
 #ifdef __cplusplus
 }

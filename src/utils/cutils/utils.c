@@ -1517,3 +1517,156 @@ out:
 
     return dst;
 }
+
+static int read_env_from_file(const char *path, size_t file_size, char ***envs)
+{
+    int ret = 0;
+    FILE *fp = NULL;
+    char *buf = NULL;
+    char *new_env = NULL;
+
+    if (file_size == 0) {
+        return 0;
+    }
+    fp = util_fopen(path, "r");
+    if (fp == NULL) {
+        ERROR("Failed to open '%s'", path);
+        return -1;
+    }
+    buf = (char *)util_common_calloc_s(file_size + 1);
+    if (buf == NULL) {
+        ERROR("Out of memory");
+        ret = -1;
+        goto out;
+    }
+    while (fgets(buf, (int)file_size + 1, fp) != NULL) {
+        size_t len = strlen(buf);
+        if (len == 1) {
+            continue;
+        }
+        buf[len - 1] = '\0';
+        if (util_valid_env(buf, &new_env) != 0) {
+            ret = -1;
+            goto out;
+        }
+        if (new_env == NULL) {
+            continue;
+        }
+        if (util_array_append(envs, new_env) != 0) {
+            ERROR("Failed to append environment variable");
+            ret = -1;
+            goto out;
+        }
+        free(new_env);
+        new_env = NULL;
+    }
+
+out:
+    fclose(fp);
+    free(buf);
+    free(new_env);
+    return ret;
+}
+
+static int append_env_variables(const char *env_file, char ***envs, char **errmsg_out)
+{
+    int ret = 0;
+    size_t file_size = 0;
+    char errmsg[CACHE_ERRMSG_LEN] = {0};
+
+    if (!util_file_exists(env_file)) {
+        CACHE_ERRMSG(errmsg, "env file not exists: %s", env_file);
+        ret = -1;
+        goto out;
+    }
+    file_size = util_file_size(env_file);
+    if (file_size > REGULAR_FILE_SIZE) {
+        CACHE_ERRMSG(errmsg, "env file '%s', size exceed limit: %lld", env_file, REGULAR_FILE_SIZE);
+        ret = -1;
+        goto out;
+    }
+
+    if (read_env_from_file(env_file, file_size, envs) != 0) {
+        CACHE_ERRMSG(errmsg, "failed to read env from file: %s", env_file);
+        ret = -1;
+        goto out;
+    }
+
+out:
+    if (ret != 0 && strlen(errmsg) != 0 && errmsg_out != NULL) {
+        *errmsg_out = util_strdup_s(errmsg);
+    }
+
+    return ret;
+}
+
+static int read_custom_env_files(const char **env_files, char ***envs, char **errmsg)
+{
+    int ret = 0;
+    size_t i;
+    size_t env_files_size = util_array_len(env_files);
+    if (env_files_size == 0) {
+        return 0;
+    }
+
+    for (i = 0; i < env_files_size; i++) {
+        if (append_env_variables(env_files[i], envs, errmsg) != 0) {
+            ret = -1;
+            goto out;
+        }
+    }
+
+out:
+    return ret;
+}
+
+static int read_custom_envs(const char **envs, char ***all_envs, char **errmsg_out)
+{
+    int ret = 0;
+    char *pe = NULL;
+    char *new_env = NULL;
+    char errmsg[CACHE_ERRMSG_LEN] = {0};
+
+    if (envs != NULL) {
+        size_t i;
+        for (i = 0; i < util_array_len(envs); i++) {
+            if (util_valid_env(envs[i], &new_env) != 0) {
+                CACHE_ERRMSG(errmsg, "Invalid environment %s", envs[i]);
+                ret = -1;
+                goto out;
+            }
+            if (new_env == NULL) {
+                continue;
+            }
+            if (util_array_append(all_envs, new_env) != 0) {
+                CACHE_ERRMSG(errmsg, "Failed to append custom config env list %s", new_env);
+                ret = -1;
+                goto out;
+            }
+            free(new_env);
+            new_env = NULL;
+        }
+    }
+
+out:
+    if (ret != 0 && strlen(errmsg) != 0 && errmsg_out != NULL) {
+        *errmsg_out = util_strdup_s(errmsg);
+    }
+
+    free(pe);
+    free(new_env);
+    return ret;
+}
+
+int util_read_custom_envs(const char **env_files, const char **envs, char ***all_envs, char **errmsg)
+{
+    if (read_custom_env_files(env_files, all_envs, errmsg) != 0) {
+        return -1;
+    }
+
+    if (read_custom_envs(envs, all_envs, errmsg) != 0) {
+        return -1;
+    }
+
+    return 0;
+}

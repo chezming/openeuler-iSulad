@@ -48,8 +48,7 @@ static int fill_exec_request(const struct client_arguments *args, const struct c
                              struct isula_exec_request *request)
 {
     int ret = 0;
-    size_t i = 0;
-    char *new_env = NULL;
+    char *errmsg = NULL;
 
     request->name = util_strdup_s(args->name);
     request->suffix = util_strdup_s(args->exec_suffix);
@@ -73,28 +72,17 @@ static int fill_exec_request(const struct client_arguments *args, const struct c
         goto out;
     }
 
-    /* environment variables */
-    for (i = 0; i < util_array_len((const char **)(args->extra_env)); i++) {
-        if (util_valid_env(args->extra_env[i], &new_env) != 0) {
-            ERROR("Invalid environment %s", args->extra_env[i]);
-            ret = -1;
-            goto out;
-        }
-        if (new_env == NULL) {
-            continue;
-        }
-        if (util_array_append(&request->env, new_env) != 0) {
-            ERROR("Failed to append custom config env list %s", new_env);
-            ret = -1;
-            goto out;
-        }
-        request->env_len++;
-        free(new_env);
-        new_env = NULL;
+    if (util_read_custom_envs((const char **)args->extra_env_file, (const char **)args->extra_env,
+			      &request->env, &errmsg) != 0) {
+        ERROR("%s", errmsg);
+        ret = -1;
+        goto out;
     }
+    request->env_len = util_array_len((const char **)(request->env));
 
 out:
-    free(new_env);
+    free(errmsg);
+
     return ret;
 }
 
@@ -307,6 +295,7 @@ static int remote_cmd_exec(const struct client_arguments *args, uint32_t *exit_c
     client_connect_config_t config = { 0 };
     struct termios oldtios;
     bool reset_tty = false;
+    char *errmsg = NULL;
 
     ops = get_connect_client_ops();
     if (ops == NULL || !ops->container.remote_exec) {
@@ -331,9 +320,13 @@ static int remote_cmd_exec(const struct client_arguments *args, uint32_t *exit_c
     request.argc = args->argc;
     request.argv = (char **)args->argv;
 
-    /* environment variables */
-    request.env_len = util_array_len((const char **)(args->extra_env));
-    request.env = args->extra_env;
+    if (util_read_custom_envs((const char **)args->extra_env_file, (const char **)args->extra_env,
+			      &request.env, &errmsg) != 0) {
+        ERROR("%s", errmsg);
+        ret = ECOMMON;
+        goto out;
+    }
+    request.env_len = util_array_len((const char **)(request.env));
 
     if (remote_cmd_exec_setup_tty(args, &reset_tty, &oldtios) < 0) {
         ret = ECOMMON;
@@ -349,6 +342,7 @@ static int remote_cmd_exec(const struct client_arguments *args, uint32_t *exit_c
     }
 
 out:
+    free(errmsg);
     if (reset_tty && tcsetattr(0, TCSAFLUSH, &oldtios) < 0) {
         WARN("Failed to reset terminal properties: %s.", strerror(errno));
     }

@@ -27,6 +27,10 @@
         CMD_OPT_TYPE_CALLBACK, false, "env", 'e', &(cmdargs).extra_env, "Set environment variables",             \
         command_append_array                                                                                     \
     },                                                                                                           \
+    {                                                                                                            \
+        CMD_OPT_TYPE_CALLBACK, false, "env-file", 0, &(cmdargs).extra_env_file,                                  \
+        "Read in a file of environment variables", command_append_array                                          \
+    },                                                                                                           \
     { CMD_OPT_TYPE_BOOL, false, "detach", 'd', &(cmdargs).detach, "Run container in background", NULL }, \
     { CMD_OPT_TYPE_BOOL, false, "tty", 't', &(cmdargs).custom_conf.tty, "Allocate a pseudo-TTY", NULL }, \
     { CMD_OPT_TYPE_BOOL,                                                                                 \

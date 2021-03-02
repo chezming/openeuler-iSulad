@@ -337,6 +337,7 @@ struct client_arguments {
 
     /* extra environment variables used in exec */
     char **extra_env;
+    char **extra_env_file;
 
     // remaining arguments
     char * const *argv;
