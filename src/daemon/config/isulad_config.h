@@ -99,6 +99,8 @@ int parse_log_opts(struct service_arguments *args, const char *key, const char *
 
 char *conf_get_isulad_monitor_fifo_path();
 
+int conf_get_isulad_runtimes(char ***runtimes, int *runtimes_size);
+
 #ifdef __cplusplus
 }
 #endif

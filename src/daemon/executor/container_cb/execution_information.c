@@ -204,6 +204,7 @@ out:
 
 static int isulad_info_cb(const host_info_request *request, host_info_response **response)
 {
+    int i = 0;
     int ret = 0;
     int cRunning = 0;
     int cPaused = 0;
@@ -219,6 +220,9 @@ static int isulad_info_cb(const host_info_request *request, host_info_response *
     char *huge_page_size = NULL;
     struct utsname u;
     char *rootpath = NULL;
+    char *default_runtime = NULL;
+    char **runtimes = NULL;
+    int runtimes_size = 0;
 #ifdef ENABLE_OCI_IMAGE
     im_image_count_request *im_request = NULL;
     struct graphdriver_status *driver_status = NULL;
@@ -318,6 +322,18 @@ static int isulad_info_cb(const host_info_request *request, host_info_response *
         goto pack_response;
     }
 
+    default_runtime = conf_get_default_runtime();
+    if (default_runtime == NULL) {
+        ERROR("Get isulad default runtime failed");
+        cc = ISULAD_ERR_EXEC;
+        goto pack_response;
+    }
+
+    if (conf_get_isulad_runtimes(&runtimes, &runtimes_size) != 0) {
+        cc = ISULAD_ERR_EXEC;
+        goto pack_response;
+    }
+
     (*response)->containers_num = (cRunning + cPaused + cStopped);
     (*response)->c_running = cRunning;
     (*response)->c_paused = cPaused;
@@ -335,6 +351,8 @@ static int isulad_info_cb(const host_info_request *request, host_info_response *
     (*response)->huge_page_size = util_strdup_s(huge_page_size);
     (*response)->isulad_root_dir = rootpath;
     rootpath = NULL;
+    (*response)->default_runtime = default_runtime;
+    default_runtime = NULL;
     (*response)->total_mem = (uint32_t)total_mem;
     (*response)->http_proxy = util_strdup_s(http_proxy);
     (*response)->https_proxy = util_strdup_s(https_proxy);
@@ -343,18 +361,30 @@ static int isulad_info_cb(const host_info_request *request, host_info_response *
     (*response)->driver_name = util_strdup_s(driver_status->driver_name);
     (*response)->driver_status = util_strdup_s(driver_status->status);
 #endif
+    (*response)->runtimes_len = runtimes_size;
+    (*response)->runtimes = (char **)util_common_calloc_s(runtimes_size * sizeof(char *));
+    if (runtimes_size != 0 && (*response)->runtimes == NULL) {
+        ERROR("Out of memory");
+        cc = ISULAD_ERR_EXEC;
+        goto pack_response;
+    }
+    for (i = 0; i < runtimes_size; i++) {
+        (*response)->runtimes[i] = util_strdup_s(runtimes[i]);
+    }
 
 pack_response:
     if (*response != NULL) {
         (*response)->cc = cc;
     }
     free(rootpath);
+    free(default_runtime);
 #ifdef ENABLE_OCI_IMAGE
     im_free_graphdriver_status(driver_status);
     free_im_image_count_request(im_request);
 #endif
     free(huge_page_size);
     free(operating_system);
+    util_free_array_by_len(runtimes, runtimes_size);
     isula_libutils_free_log_prefix();
     DAEMON_CLEAR_ERRMSG();
     return (cc == ISULAD_SUCCESS) ? 0 : -1;

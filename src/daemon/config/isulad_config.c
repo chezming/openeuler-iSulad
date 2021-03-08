@@ -1576,3 +1576,36 @@ out:
     free_isulad_daemon_configs(tmp_json_confs);
     return ret;
 }
+
+int conf_get_isulad_runtimes(char ***runtimes, int *runtimes_size)
+{
+    struct service_arguments *conf = NULL;
+    int ret = 0;
+
+    if (isulad_server_conf_rdlock()) {
+        ERROR("BUG conf_rdlock failed");
+        return -1;
+    }
+
+    conf = conf_get_server_conf();
+    if (conf == NULL || conf->json_confs == NULL) {
+        ret = -1;
+        goto out;
+    }
+
+    if (conf->json_confs->runtimes == NULL || conf->json_confs->runtimes->len == 0) {
+        *runtimes_size = 0;
+        goto out;
+    }
+
+    *runtimes_size = conf->json_confs->runtimes->len;
+    *runtimes = util_str_array_dup((const char **)conf->json_confs->runtimes->keys, *runtimes_size);
+    if (*runtimes == NULL) {
+        ret = -1;
+        goto out;
+    }
+
+out:
+    (void)isulad_server_conf_unlock();
+    return ret;
+}

@@ -101,9 +101,13 @@ public:
         if (!gresponse->isulad_root_dir().empty()) {
             response->isulad_root_dir = util_strdup_s(gresponse->isulad_root_dir().c_str());
         }
+        if (!gresponse->default_runtime().empty()) {
+            response->default_runtime = util_strdup_s(gresponse->default_runtime().c_str());
+        }
         response->total_mem = gresponse->total_mem();
         get_proxy_info_from_grpc(response, gresponse);
         get_driver_info_from_grpc(response, gresponse);
+        get_runtimes_info_from_grpc(response, gresponse);
 
         return 0;
     }
@@ -157,6 +161,25 @@ private:
         }
         if (!gresponse->driver_status().empty()) {
             response->driver_status = util_strdup_s(gresponse->driver_status().c_str());
+        }
+    }
+
+    static void get_runtimes_info_from_grpc(isula_info_response *response, InfoResponse *gresponse)
+    {
+        int size = gresponse->runtimes_size();
+        if (size > 0) {
+            response->runtimes = static_cast<char **>(util_common_calloc_s(size * sizeof(char *)));
+            if (response->runtimes == nullptr) {
+                ERROR("Out of memory");
+                response->cc = ISULAD_ERR_MEMOUT;
+                return;
+            }
+            response->runtimes_size = size;
+            for (int i = 0;i < size; i++) {
+                response->runtimes[i] = util_strdup_s(gresponse->runtimes(i).c_str());
+            }
+        } else {
+            response->runtimes_size = 0;
         }
     }
 };

@@ -384,6 +384,8 @@ message InfoResponse {
     string no_proxy = 22;
     string driver_name = 23;
     string driver_status = 24;
+    string default_runtime = 25;
+    repeated bytes runtimes = 26;
 }
 
 message UpdateRequest {
