@@ -802,6 +802,7 @@ public:
         if (request->suffix != nullptr) {
             grequest->set_suffix(request->suffix);
         }
+        grequest->set_privileged(request->privileged);
         grequest->set_tty(request->tty);
         grequest->set_open_stdin(request->open_stdin);
         grequest->set_attach_stdin(request->attach_stdin);

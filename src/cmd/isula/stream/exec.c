@@ -54,6 +54,7 @@ static int fill_exec_request(const struct client_arguments *args, const struct c
     request->name = util_strdup_s(args->name);
     request->suffix = util_strdup_s(args->exec_suffix);
     request->tty = args->custom_conf.tty;
+    request->privileged = args->custom_conf.privileged;
     request->open_stdin = args->custom_conf.open_stdin;
     request->attach_stdin = args->custom_conf.attach_stdin;
     request->attach_stdout = args->custom_conf.attach_stdout;

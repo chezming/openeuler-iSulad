@@ -355,6 +355,7 @@ int ContainerServiceImpl::exec_request_from_grpc(const ExecRequest *grequest, co
     }
 
     tmpreq->tty = grequest->tty();
+    tmpreq->privileged = grequest->privileged();
     tmpreq->attach_stdin = grequest->attach_stdin();
     tmpreq->attach_stdout = grequest->attach_stdout();
     tmpreq->attach_stderr = grequest->attach_stderr();

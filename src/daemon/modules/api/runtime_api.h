@@ -131,6 +131,7 @@ typedef struct _rt_exec_params_t {
     const char *suffix;
     defs_process *spec;
     bool attach_stdin;
+    bool privileged;
 } rt_exec_params_t;
 
 typedef struct _rt_pause_params_t {
