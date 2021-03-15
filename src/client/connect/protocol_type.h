@@ -428,6 +428,7 @@ struct isula_image_info {
     char *imageref;
     char *type;
     char *digest;
+    char *imageid;
     int64_t created; /* seconds */
     int32_t created_nanos;
     int64_t size; /* Bytes */

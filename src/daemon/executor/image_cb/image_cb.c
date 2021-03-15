@@ -553,6 +553,46 @@ static bool valid_repo_tags(char * const * const repo_tags, size_t repo_index)
     return false;
 }
 
+static bool valid_repo_digest(char * const * const repo_digests, size_t digest_index)
+{
+    if (repo_digests != NULL && repo_digests[digest_index] != NULL) {
+        return true;
+    }
+
+    return false;
+}
+
+static char *get_digest_from_repo_digest(const char *repo_digest)
+{
+    char **parts = NULL;
+    char *digest = NULL;
+    int ret = 0;
+
+    // repo digest format:
+    // test@sha256:2bf1de4c5264b8ada56ef85e9554acdf8f7141b76720a31d95887bd9ee7220d8
+    parts = util_string_split(repo_digest, '@');
+    if (parts == NULL || util_array_len((const char **) parts) != 2) {
+        ret = -1;
+        goto out;
+    }
+
+    if (!util_valid_digest(parts[1])) {
+        ret = -1;
+        goto out;
+    }
+
+    digest = util_strdup_s(parts[1]);
+
+out:
+    util_free_array(parts);
+    if (ret != 0) {
+        free(digest);
+        digest = NULL;
+    }
+
+    return digest;
+}
+
 static int trans_one_image(image_list_images_response *response, size_t image_index,
                            const imagetool_image_summary *im_image, size_t repo_index)
 {
@@ -571,6 +611,11 @@ static int trans_one_image(image_list_images_response *response, size_t image_in
 
     if (valid_repo_tags(im_image->repo_tags, repo_index)) {
         out_image->name = util_strdup_s(im_image->repo_tags[repo_index]);
+    }
+
+    // any one of repo_digests contain digest, so we use index 0
+    if (valid_repo_digest(im_image->repo_digests, 0)) {
+        out_image->digest = get_digest_from_repo_digest(im_image->repo_digests[0]);
     }
 
     out_image->target = util_common_calloc_s(sizeof(image_descriptor));

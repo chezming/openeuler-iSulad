@@ -953,6 +953,7 @@ void isula_images_list_free(size_t images_num, struct isula_image_info *images_l
         free(in->imageref);
         free(in->type);
         free(in->digest);
+        free(in->imageid);
     }
 
     free(images_list);

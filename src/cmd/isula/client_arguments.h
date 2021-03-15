@@ -292,6 +292,7 @@ struct client_arguments {
     bool list_all;
     char **filters;
     bool no_trunc;
+    bool digests;
 
     // inspect
     char *format;
