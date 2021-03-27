@@ -174,8 +174,12 @@ void WebsocketServer::CloseWsSession(int socketID)
     auto it = m_wsis.find(socketID);
     if (it != m_wsis.end()) {
         free(it->second.buf);
-        close(it->second.pipes.at(0));
-        close(it->second.pipes.at(1));
+        // cannot close the pipe read endpoint, otherwise epoll will trigger EOF
+        // should close the read endpoint when epoll exits
+        if (it->second.pipes.at(1) >= 0) {
+            close(it->second.pipes.at(1));
+            it->second.pipes.at(1) = -1;
+        }
         it->second.sended = true;
         delete it->second.buf_mutex;
         delete it->second.sended_mutex;
