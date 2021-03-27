@@ -415,8 +415,7 @@ int oci_rmi(const im_rmi_request *request)
     real_image_name = oci_resolve_image_name(request->image.image);
     if (real_image_name == NULL) {
         ERROR("Failed to resolve image name");
-        ret = -1;
-        goto out;
+        return -1;
     }
 
     if (storage_img_get_names(real_image_name, &image_names, &image_names_len) != 0) {
