@@ -58,6 +58,12 @@ static void print_with_space(const char *info)
 
 static void client_info_server(const struct isula_info_response *response)
 {
+    char *runtimes_array = NULL;
+
+    if (response->runtimes_size > 0) {
+        runtimes_array = util_string_join(", ", (const char **)response->runtimes, response->runtimes_size);
+    }
+
     printf("Containers: %u\n", (unsigned int)(response->containers_num));
     printf(" Running: %u\n", (unsigned int)(response->c_running));
     printf(" Paused: %u\n", (unsigned int)(response->c_paused));
@@ -77,6 +83,14 @@ static void client_info_server(const struct isula_info_response *response)
     }
     if (response->cgroup_driver != NULL) {
         printf("Cgroup Driver: %s\n", response->cgroup_driver);
+    }
+    if (runtimes_array != NULL) {
+        printf("Runtimes: %s\n", runtimes_array);
+    } else {
+        printf("Runtimes: %s\n", response->default_runtime);
+    }
+    if (response->default_runtime != NULL) {
+        printf("Default Runtime: %s\n", response->default_runtime);
     }
     if (response->huge_page_size != NULL) {
         printf("Hugetlb Pagesize: %s\n", response->huge_page_size);
@@ -111,6 +125,8 @@ static void client_info_server(const struct isula_info_response *response)
     if (response->no_proxy != NULL) {
         printf("No Proxy: %s\n", response->no_proxy);
     }
+
+    free(runtimes_array);
 }
 
 static int client_info(const struct client_arguments *args)

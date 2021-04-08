@@ -102,6 +102,14 @@ void ContainerServiceImpl::info_response_to_grpc(const host_info_response *respo
         gresponse->set_isulad_root_dir(response->isulad_root_dir);
     }
 
+    if (response->default_runtime != nullptr) {
+        gresponse->set_default_runtime(response->default_runtime);
+    }
+
+    for (size_t i = 0; i < response->runtimes_len; i++) {
+        gresponse->add_runtimes(response->runtimes[i]);
+    }
+
     gresponse->set_total_mem(response->total_mem);
 
     pack_proxy_info_to_grpc(response, gresponse);

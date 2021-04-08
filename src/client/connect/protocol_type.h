@@ -399,11 +399,14 @@ struct isula_info_response {
     char *logging_driver;
     char *huge_page_size;
     char *isulad_root_dir;
+    char *default_runtime;
     char *http_proxy;
     char *https_proxy;
     char *no_proxy;
     char *driver_name;
     char *driver_status;
+    char **runtimes;
+    uint32_t runtimes_size;
     uint32_t total_mem;
     uint32_t containers_num;
     uint32_t c_running;

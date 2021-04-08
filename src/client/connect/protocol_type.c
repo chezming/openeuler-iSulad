@@ -208,6 +208,12 @@ void isula_info_response_free(struct isula_info_response *response)
     free(response->isulad_root_dir);
     response->isulad_root_dir = NULL;
 
+    free(response->default_runtime);
+    response->default_runtime = NULL;
+
+    util_free_array_by_len(response->runtimes, response->runtimes_size);
+    response->runtimes = NULL;
+
     free(response->http_proxy);
     response->http_proxy = NULL;
 
