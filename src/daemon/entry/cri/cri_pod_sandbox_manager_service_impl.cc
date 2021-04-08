@@ -25,6 +25,7 @@
 #include "service_container_api.h"
 #include "cxxutils.h"
 #include "cri_image_manager_service_impl.h"
+#include "namespace.h"
 
 namespace CRI {
 auto PodSandboxManagerServiceImpl::EnsureSandboxImageExists(const std::string &image, Errors &error) -> bool
@@ -99,9 +100,17 @@ void PodSandboxManagerServiceImpl::MakeSandboxIsuladConfig(const runtime::v1alph
     if (error.NotEmpty()) {
         return;
     }
+    // Apply a label to distinguish sandboxes from regular containers.
     if (append_json_map_string_string(custom_config->labels, CRIHelpers::Constants::CONTAINER_TYPE_LABEL_KEY.c_str(),
                                       CRIHelpers::Constants::CONTAINER_TYPE_LABEL_SANDBOX.c_str()) != 0) {
         error.SetError("Append container type into labels failed");
+        return;
+    }
+    // Apply a container name label for infra container. This is used in summary v1.
+    if (append_json_map_string_string(custom_config->labels,
+                                      CRIHelpers::Constants::KUBERNETES_CONTAINER_NAME_LABEL.c_str(),
+                                      CRIHelpers::Constants::POD_INFRA_CONTAINER_NAME.c_str()) != 0) {
+        error.SetError("Append kubernetes container name into labels failed");
         return;
     }
 
@@ -136,6 +145,8 @@ void PodSandboxManagerServiceImpl::MakeSandboxIsuladConfig(const runtime::v1alph
 
     const char securityOptSep = '=';
 
+    // Note: In new k8s version, run sandbox with no-new-privileges and
+    // using runtime/default sending no "seccomp=" means iSulad will use default profile
     // Security Opts
     if (c.linux().has_security_context()) {
         std::vector<std::string> securityOpts =
@@ -255,6 +266,7 @@ container_create_request *PodSandboxManagerServiceImpl::GenerateSandboxCreateCon
         error.SetError("Out of memory");
         goto error_out;
     }
+    hostconfig->ipc_mode = util_strdup_s(SHARE_NAMESPACE_SHAREABLE);
 
     custom_config = (container_config *)util_common_calloc_s(sizeof(container_config));
     if (custom_config == nullptr) {
@@ -320,6 +332,7 @@ auto PodSandboxManagerServiceImpl::CreateSandboxContainer(const runtime::v1alpha
         goto cleanup;
     }
     response_id = create_response->id;
+
 cleanup:
     free_container_create_request(create_request);
     free_container_create_response(create_response);
