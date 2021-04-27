@@ -25,8 +25,12 @@
 #include "utils_array.h"
 #include "utils_convert.h"
 #include "utils_string.h"
+#include "utils_regex.h"
 
 #define DRIVER_MAX 2
+#define MATCH_NUM 1
+#define ADDRESS_REGEX \
+        "^[a-zA-Z]{3}(\\+)?[a-zA-Z]{0,3}:\\/\\/[0-9a-zA-Z.-]+:([1-9][0-9]{0,3}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]{1}|6553[0-5]|syslog)$"
 
 typedef int (*log_opt_callback_t)(const char *key, const char *value, char **parsed_val);
 
@@ -38,6 +42,17 @@ typedef struct log_opt_parse {
 
 static int log_opt_common_cb(const char *key, const char *value, char **parsed_val)
 {
+    *parsed_val = util_strdup_s(value);
+    return 0;
+}
+
+static int log_opt_address_cb(const char *key, const char *value, char **parsed_val)
+{
+    if (util_reg_match(ADDRESS_REGEX, value) != 0) {
+        ERROR("invalid syslog address");
+        return -1;
+    }
+
     *parsed_val = util_strdup_s(value);
     return 0;
 }
@@ -104,9 +119,14 @@ static int log_opt_disable_log_cb(const char *key, const char *value, char **par
 
 bool parse_container_log_opt(const char *key, const char *val, json_map_string_string *opts)
 {
-#define LOG_PARSER_MAX 5
+#define LOG_PARSER_MAX 6
     size_t i, j;
     log_opt_parse_t support_parsers[LOG_PARSER_MAX] = {
+        {
+            .key = "syslog-address",
+            .real_key = CONTAINER_LOG_CONFIG_KEY_SYSLOG_ADDRESS,
+            .cb = &log_opt_address_cb,
+        },
         {
             .key = "max-size",
             .real_key = CONTAINER_LOG_CONFIG_KEY_SIZE,
@@ -202,10 +222,10 @@ bool parse_container_log_opts(json_map_string_string **opts)
 bool check_opt_container_log_opt(const char *driver, const char *opt_key)
 {
 #define DRIVER_MAX 2
-#define MAX_SUPPORT_KEY_LEN 3
+#define MAX_SUPPORT_KEY_LEN 4
     const char *support_keys[][MAX_SUPPORT_KEY_LEN] = {
         { CONTAINER_LOG_CONFIG_KEY_FILE, CONTAINER_LOG_CONFIG_KEY_ROTATE, CONTAINER_LOG_CONFIG_KEY_SIZE },
-        { CONTAINER_LOG_CONFIG_KEY_SYSLOG_TAG, CONTAINER_LOG_CONFIG_KEY_SYSLOG_FACILITY, NULL}
+        { CONTAINER_LOG_CONFIG_KEY_SYSLOG_TAG, CONTAINER_LOG_CONFIG_KEY_SYSLOG_FACILITY, CONTAINER_LOG_CONFIG_KEY_SYSLOG_ADDRESS, NULL}
     };
     const char *driver_idx[] = { CONTAINER_LOG_CONFIG_JSON_FILE_DRIVER, CONTAINER_LOG_CONFIG_SYSLOG_DRIVER };
     size_t i, idx;
@@ -240,7 +260,7 @@ bool check_raw_log_opt(const char *key)
 {
     size_t i;
     const char *support_keys[] = {
-        "max-size", "max-file", "disable-log", "syslog-tag", "syslog-facility"
+        "max-size", "max-file", "disable-log", "syslog-address", "syslog-tag", "syslog-facility"
     };
 
     if (key == NULL) {

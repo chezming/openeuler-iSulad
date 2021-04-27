@@ -90,6 +90,7 @@ extern "C" {
 #define CONTAINER_LOG_CONFIG_KEY_SIZE "log.console.filesize"
 #define CONTAINER_LOG_CONFIG_KEY_SYSLOG_TAG "log.console.tag"
 #define CONTAINER_LOG_CONFIG_KEY_SYSLOG_FACILITY "log.console.facility"
+#define CONTAINER_LOG_CONFIG_KEY_SYSLOG_ADDRESS "log.console.address"
 
 #ifndef DEFAULT_UNIX_SOCKET
 #define DEFAULT_UNIX_SOCKET "unix:///var/run/isulad.sock"
