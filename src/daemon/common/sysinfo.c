@@ -1597,3 +1597,36 @@ free_out:
     }
     return minfos;
 }
+
+// running_in_userns detects whether we are currently running in a user namespace.
+// -1 will be returned if error happens.
+int running_in_userns()
+{
+    int ret = 1;
+    int64_t a = 0, b = 0, c = 0;
+    FILE *fp = NULL;
+
+    fp = util_fopen("/proc/self/uid_map", "r");
+    if (fp == NULL) {
+        ERROR("Failed to open \"/proc/self/uid_map\"\n");
+        return -1;
+    }
+
+    ret = fscanf(fp, "%ld %ld %ld", &a, &b, &c);
+    if (ret == EOF) {
+        ret = -1;
+        goto out;
+    }
+
+    /*
+     * We assume we are in the initial user namespace if we have a full
+     * range - 4294967295 uids starting at uid 0.
+     */
+    if (a == 0 && b == 0 && c == 4294967295) {
+        ret = 0;
+    }
+
+out:
+    fclose(fp);
+    return ret;
+}

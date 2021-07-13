@@ -47,7 +47,7 @@ int delete_container(container_t *cont, bool force);
 int exec_container(const container_t *cont, const container_exec_request *request, container_exec_response *response,
                    int stdinfd, struct io_write_wrapper *stdout_handler, struct io_write_wrapper *stderr_handler);
 
-container_inspect *inspect_container(const char *id, int timeout, bool with_host_config);
+container_inspect *inspect_container(const char *id, int timeout, bool with_host_config, bool with_size_info);
 container_inspect_state *inspect_container_state(const char *id, int timeout);
 
 #ifdef __cplusplus

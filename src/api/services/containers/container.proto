@@ -254,6 +254,7 @@ message InspectContainerRequest {
 	string id = 1;
 	bool bformat = 2;
 	int32 timeout = 3;
+	bool bsize = 4;
 }
 
 message InspectContainerResponse {

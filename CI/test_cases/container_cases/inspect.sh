@@ -142,6 +142,24 @@ function test_inspect_spec()
     isula inspect -f "{{json .State.Status}} {{.Name}}" $containername 2>&1 | sed -n '2p' | grep ${containername}
     [[ $? -ne 0 ]] && msg_err "${FUNCNAME[0]}:${LINENO} - failed to check container with image: ${image}" && ((ret++))
 
+    isula inspect --type=container $containername 2>&1 | grep ${containername}
+    [[ $? -ne 0 ]] && msg_err "${FUNCNAME[0]}:${LINENO} - failed to check container with image: ${image}" && ((ret++))
+
+    isula inspect --type=image $image 2>&1 | grep ${image}
+    [[ $? -ne 0 ]] && msg_err "${FUNCNAME[0]}:${LINENO} - failed to check container with image: ${image}" && ((ret++))
+
+    isula inspect --type=non-existent-type $containername 2>&1 | grep ${containername}
+    [[ $? -ne 1 ]] && msg_err "${FUNCNAME[0]}:${LINENO} - failed to check container with image: ${image}" && ((ret++))
+
+    isula inspect -s $containername 2>&1 | grep 'SizeRw'
+    [[ $? -ne 0 ]] && msg_err "${FUNCNAME[0]}:${LINENO} - failed to check container with image: ${image}" && ((ret++))
+
+    isula inspect --size $containername 2>&1 | grep 'SizeRootFs'
+    [[ $? -ne 0 ]] && msg_err "${FUNCNAME[0]}:${LINENO} - failed to check container with image: ${image}" && ((ret++))
+
+    isula inspect -s $containername 2>&1 | grep 'SizeRw'
+    [[ $? -ne 0 ]] && msg_err "${FUNCNAME[0]}:${LINENO} - failed to check container with image: ${image}" && ((ret++))
+
     isula rm -f $containername
 
     msg_info "${test} finished with return ${ret}..."

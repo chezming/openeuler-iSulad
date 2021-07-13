@@ -1057,6 +1057,22 @@ char *container_get_image(const container_t *cont)
     return tmp;
 }
 
+/* container get id */
+char *container_get_id(const container_t *cont)
+{
+    char *tmp = NULL;
+
+    if (cont == NULL) {
+        return NULL;
+    }
+
+    if (cont->common_config != NULL && cont->common_config->id != NULL) {
+        tmp = util_strdup_s(cont->common_config->id);
+    }
+
+    return tmp;
+}
+
 /* reset restart manager */
 bool container_reset_restart_manager(container_t *cont, bool reset_count)
 {

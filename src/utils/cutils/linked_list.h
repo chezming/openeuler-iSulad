@@ -122,5 +122,58 @@ static inline size_t linked_list_len(struct linked_list *list)
     return i;
 }
 
+/* Swap the element of the lists. */
+static inline void linked_list_swap(struct linked_list *left, struct linked_list *right)
+{
+    void *tmp = NULL;
+    if (left == NULL || right == NULL || left == right) {
+        return;
+    }
+    tmp = left->elem;
+    left->elem = right->elem;
+    right->elem = tmp;
+}
+
+/* Sort the list. */
+static inline void linked_list_qsort(struct linked_list *left, struct linked_list *right,
+                                     int (*compar)(const void *, const void *))
+{
+    void *basic = NULL;
+    struct linked_list *i = NULL, *j = NULL;
+
+    if (left == NULL || right == NULL || left == right) {
+        return;
+    }
+    /* Note: left must come before right in the list. */
+    i = left, j = right;
+    basic = left->elem;
+    while (i != j) {
+        for (; compar(basic, j->elem) <= 0 && i != j; j = j->prev);
+        for (; compar(basic, i->elem) >= 0 && i != j; i = i->next);
+        linked_list_swap(i, j);
+    }
+    linked_list_swap(left, i);
+
+    if (i != left) {
+        linked_list_qsort(left, i->prev, compar);
+    }
+    if (i != right) {
+        linked_list_qsort(i->next, right, compar);
+    }
+}
+
+/* Retrieve the NTH element of list. */
+static inline void *linked_list_at(struct linked_list *list, int n)
+{
+    /* Note: the index starts at 0. */
+    while (n-- >= 0) {
+        if (list == NULL) {
+            return NULL;
+        }
+        list = list->next;
+    }
+    return list ? list->elem : NULL;
+}
+
 #endif
 

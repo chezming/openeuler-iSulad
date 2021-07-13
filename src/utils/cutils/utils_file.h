@@ -48,6 +48,8 @@ int util_recursive_rmdir(const char *dirpath, int recursive_depth);
 
 char *util_path_join(const char *dir, const char *file);
 
+char *util_path_join_two(const char *dir, const char *file1, const char *file2);
+
 int util_ensure_path(char **confpath, const char *path);
 
 int util_build_dir(const char *name);
@@ -112,6 +114,10 @@ int util_list_all_entries(const char *directory, char ***out);
 //          and will NOT error out.
 //       2. If fifo or socket exist in source, this function will return failure.
 int util_copy_dir_recursive(char *copy_dst, char *copy_src);
+
+char *util_get_default_tmp_dir();
+
+char *util_get_tmp_file(const char *dir, const char *pattern);
 
 #ifdef __cplusplus
 }

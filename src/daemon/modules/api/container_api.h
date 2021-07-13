@@ -164,6 +164,8 @@ char *container_get_command(const container_t *cont);
 
 char *container_get_image(const container_t *cont);
 
+char *container_get_id(const container_t *cont);
+
 int container_exit_on_next(container_t *cont);
 
 bool container_reset_restart_manager(container_t *cont, bool reset_count);

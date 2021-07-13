@@ -24,6 +24,11 @@ static void map_free_key_value(void *key, void *val)
     free(val);
 }
 
+/* funtion to take use of some objects, but not free them */
+void map_free_nothing(void *key, void *val)
+{
+}
+
 /* function to remove element by key */
 bool map_remove(map_t *map, void *key)
 {

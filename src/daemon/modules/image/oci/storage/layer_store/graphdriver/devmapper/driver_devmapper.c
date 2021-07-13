@@ -618,3 +618,9 @@ int devmapper_get_layer_fs_info(const char *id, const struct graphdriver *driver
 {
     return 0;
 }
+
+int devmapper_get_layer_diff_size(const char *id, const char *parent, const struct graphdriver *driver,
+                                  int64_t *diff_size)
+{
+    return naive_get_layer_diff_size(id, parent, driver, diff_size);
+}

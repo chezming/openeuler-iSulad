@@ -268,13 +268,13 @@ out:
     return ret;
 }
 
-int overlay2_init(struct graphdriver *driver, const char *drvier_home, const char **options, size_t len)
+int overlay2_init(struct graphdriver *driver, const char *driver_home, const char **options, size_t len)
 {
     int ret = 0;
     char *link_dir = NULL;
     char *root_dir = NULL;
 
-    if (driver == NULL || drvier_home == NULL) {
+    if (driver == NULL || driver_home == NULL) {
         ERROR("Invalid input arguments");
         return -1;
     }
@@ -291,9 +291,16 @@ int overlay2_init(struct graphdriver *driver, const char *drvier_home, const cha
         goto out;
     }
 
-    link_dir = util_path_join(drvier_home, OVERLAY_LINK_DIR);
+    driver->overlay_opts->support_native = overlay2_support_native(driver_home);
+    if (driver->overlay_opts->support_native) {
+        WARN("Not using native diff for overlay2, this may cause degraded performance for calculate SizeRw and SizeRootFs");
+    }
+
+    driver->support_dtype = util_support_d_type(driver_home);
+
+    link_dir = util_path_join(driver_home, OVERLAY_LINK_DIR);
     if (link_dir == NULL) {
-        ERROR("Unable to create driver link directory %s.", drvier_home);
+        ERROR("Unable to create driver link directory %s.", driver_home);
         ret = -1;
         goto out;
     }
@@ -306,11 +313,11 @@ int overlay2_init(struct graphdriver *driver, const char *drvier_home, const cha
 
     rm_invalid_symlink(link_dir);
 
-    driver->home = util_strdup_s(drvier_home);
+    driver->home = util_strdup_s(driver_home);
 
-    root_dir = util_path_dir(drvier_home);
+    root_dir = util_path_dir(driver_home);
     if (root_dir == NULL) {
-        ERROR("Unable to get driver root home directory %s.", drvier_home);
+        ERROR("Unable to get driver root home directory %s.", driver_home);
         ret = -1;
         goto out;
     }
@@ -328,7 +335,7 @@ int overlay2_init(struct graphdriver *driver, const char *drvier_home, const cha
         goto out;
     }
 
-    if (!util_support_d_type(drvier_home)) {
+    if (!util_support_d_type(driver_home)) {
         ERROR("The backing %s filesystem is formatted without d_type support, which leads to incorrect behavior.",
               driver->backing_fs);
         ret = -1;
@@ -337,7 +344,7 @@ int overlay2_init(struct graphdriver *driver, const char *drvier_home, const cha
     driver->support_dtype = true;
 
     if (!driver->overlay_opts->skip_mount_home) {
-        if (util_ensure_mounted_as(drvier_home, "private") != 0) {
+        if (util_ensure_mounted_as(driver_home, "private") != 0) {
             ret = -1;
             goto out;
         }
@@ -1654,7 +1661,6 @@ out:
 int overlay2_apply_diff(const char *id, const struct graphdriver *driver, const struct io_read_wrapper *content)
 {
     int ret = 0;
-    char *layer_dir = NULL;
     char *layer_diff = NULL;
     struct archive_options options = { 0 };
     char *err = NULL;
@@ -1665,14 +1671,7 @@ int overlay2_apply_diff(const char *id, const struct graphdriver *driver, const 
         goto out;
     }
 
-    layer_dir = util_path_join(driver->home, id);
-    if (layer_dir == NULL) {
-        ERROR("Failed to join layer dir:%s", id);
-        ret = -1;
-        goto out;
-    }
-
-    layer_diff = util_path_join(layer_dir, OVERLAY_LAYER_DIFF);
+    layer_diff = util_path_join_two(driver->home, id, OVERLAY_LAYER_DIFF);
     if (layer_diff == NULL) {
         ERROR("Failed to join layer diff dir:%s", id);
         ret = -1;
@@ -1690,7 +1689,6 @@ int overlay2_apply_diff(const char *id, const struct graphdriver *driver, const 
 
 out:
     free(err);
-    free(layer_dir);
     free(layer_diff);
     return ret;
 }
@@ -1815,9 +1813,10 @@ int overlay2_get_driver_status(const struct graphdriver *driver, struct graphdri
 {
 #define MAX_INFO_LENGTH 100
 #define BACK_FS "Backing Filesystem"
-#define SUPPORT_DTYPE "Supports d_type: true\n"
+#define SUPPORT_DTYPE "Supports d_type"
+#define NATIVE_OVERLAY_DIFF "Native Overlay Diff"
     int ret = 0;
-    int nret = 0;
+    int tmp_len = 0;
     char tmp[MAX_INFO_LENGTH] = { 0 };
 
     if (driver == NULL || status == NULL) {
@@ -1829,19 +1828,40 @@ int overlay2_get_driver_status(const struct graphdriver *driver, struct graphdri
 
     status->backing_fs = util_strdup_s(driver->backing_fs);
 
-    nret = snprintf(tmp, MAX_INFO_LENGTH, "%s: %s\n", BACK_FS, driver->backing_fs);
-    if (nret < 0 || nret >= MAX_INFO_LENGTH) {
-        ERROR("Failed to get backing fs");
+    tmp_len = snprintf(tmp, MAX_INFO_LENGTH, "%s: %s\n", BACK_FS, driver->backing_fs);
+    if (tmp_len < 0 || tmp_len >= MAX_INFO_LENGTH) {
+        ERROR("Too long driver status");
         ret = -1;
         goto out;
     }
 
-    status->status = util_string_append(SUPPORT_DTYPE, tmp);
-    if (status->status == NULL) {
-        ERROR("Failed to append SUPPORT_DTYPE");
+    if (driver->support_dtype) {
+        strncat(tmp, SUPPORT_DTYPE ": true\n", MAX_INFO_LENGTH - tmp_len);
+        tmp_len += strlen(SUPPORT_DTYPE);
+    } else {
+        strncat(tmp, SUPPORT_DTYPE ": false\n", MAX_INFO_LENGTH - tmp_len);
+        tmp_len += strlen(SUPPORT_DTYPE);
+    }
+    if (tmp_len >= MAX_INFO_LENGTH) {
+        ERROR("Too long driver status");
         ret = -1;
         goto out;
     }
+
+    if (driver->overlay_opts->support_native) {
+        strncat(tmp, NATIVE_OVERLAY_DIFF ": true\n", MAX_INFO_LENGTH - tmp_len);
+        tmp_len += strlen(NATIVE_OVERLAY_DIFF);
+    } else {
+        strncat(tmp, NATIVE_OVERLAY_DIFF ": false\n", MAX_INFO_LENGTH - tmp_len);
+        tmp_len += strlen(NATIVE_OVERLAY_DIFF);
+    }
+    if (tmp_len >= MAX_INFO_LENGTH) {
+        ERROR("Too long driver status");
+        ret = -1;
+        goto out;
+    }
+
+    status->status = util_strdup_s(tmp);
 
 out:
     return ret;
@@ -2057,4 +2077,294 @@ out:
     free(layer_dir);
     free(layer_diff);
     return ret;
+}
+
+bool overlay2_is_parent(const char *id, const char *parent)
+{
+    bool ret = false;
+    struct layer *rw_layer = NULL;
+
+    if (id == NULL || parent == NULL) {
+        return false;
+    }
+
+    rw_layer = storage_layer_get(id);
+    if (rw_layer == NULL || rw_layer->parent == NULL) {
+        ERROR("Failed to compute size of container rootfs %s", id);
+        goto out;
+    }
+
+    ret = (strcmp(parent, rw_layer->parent) == 0);
+
+out:
+    free_layer(rw_layer);
+    return ret;
+}
+
+// overlay2_get_layer_diff_size calculates the changes between the specified id
+// and its parent and returns the size in bytes of the changes
+// relative to its base filesystem directory.
+int overlay2_get_layer_diff_size(const char *id, const char *parent, const struct graphdriver *driver,
+                                 int64_t *diff_size)
+{
+    int ret = 0;
+    int64_t total_size = 0, total_inode = 0;
+    char *diff_dir = NULL;
+
+    if (driver == NULL) {
+        ERROR("Driver not inited yet");
+        ret = -1;
+        goto out;
+    }
+
+    if (id == NULL) {
+        ERROR("Invalid input arguments for driver mount layer");
+        ret = -1;
+        goto out;
+    }
+
+    if (driver->overlay_opts->support_native == false || !overlay2_is_parent(id, parent)) {
+        return naive_get_layer_diff_size(id, parent, driver, diff_size);
+    }
+
+    diff_dir = util_path_join_two(driver->home, id, OVERLAY_LAYER_DIFF);
+    if (diff_dir == NULL) {
+        ERROR("Failed to join layer dir:%s", id);
+        ret = -1;
+        goto out;
+    }
+    utils_calculate_dir_size_without_hardlink(diff_dir, &total_size, &total_inode);
+
+out:
+    free(diff_dir);
+    *diff_size = total_size;
+    return ret;
+}
+
+// support_native checks whether the filesystem has a bug
+// which copies up the opaque flag when copying up an opaque
+// directory or the kernel enable CONFIG_OVERLAY_FS_REDIRECT_DIR.
+// When these exist naive diff should be used.
+//
+// When running in a user namespace, returns false immediately.
+bool overlay2_support_native(const char *root_path)
+{
+    int ret = 0;
+    int fd = 0;
+    bool is_support = false;
+    char *tmp_root_path = NULL;
+    char *merged_dir = NULL;
+    char *new_name = NULL;
+    char xattr_redirect[XATTR_SIZE_MAX] = { 0 };
+    char xattr_opaque[XATTR_SIZE_MAX] = { 0 };
+    char tmp_path[PATH_MAX] = { 0 };
+
+    if (running_in_userns()) {
+        ERROR("running in a user namespace");
+        goto out;
+    }
+    tmp_root_path = util_get_tmp_file(root_path, "opaque-bug-check");
+    if (tmp_root_path == NULL) {
+        ERROR("get temp directory failed");
+        goto out;
+    }
+
+    ret = util_mkdir_p(tmp_root_path, TEMP_DIRECTORY_MODE);
+    if (ret != 0) {
+        ERROR("mkdir failed");
+        goto out;
+    }
+
+    // Make directories l1/d, l1/d1, l2/d, l3, work, merged
+    ret = snprintf(tmp_path, PATH_MAX, "%s/%s/%s", tmp_root_path, "l1", "d");
+    if (ret >= PATH_MAX) {
+        ERROR("too long file path");
+        goto rmdir_out;
+    }
+    ret = util_mkdir_p(tmp_path, DEFAULT_HIGHEST_DIRECTORY_MODE);
+    if (ret != 0) {
+        ERROR("mkdir failed");
+        goto rmdir_out;
+    }
+
+    ret = snprintf(tmp_path, PATH_MAX, "%s/%s/%s", tmp_root_path, "l1", "d1");
+    if (ret >= PATH_MAX) {
+        ERROR("too long file path");
+        goto rmdir_out;
+    }
+    ret = util_mkdir_p(tmp_path, DEFAULT_HIGHEST_DIRECTORY_MODE);
+    if (ret != 0) {
+        ERROR("mkdir failed");
+        goto rmdir_out;
+    }
+
+    ret = snprintf(tmp_path, PATH_MAX, "%s/%s/%s", tmp_root_path, "l2", "d");
+    if (ret >= PATH_MAX) {
+        ERROR("too long file path");
+        goto rmdir_out;
+    }
+    ret = util_mkdir_p(tmp_path, DEFAULT_HIGHEST_DIRECTORY_MODE);
+    if (ret != 0) {
+        ERROR("mkdir failed");
+        goto rmdir_out;
+    }
+
+    ret = snprintf(tmp_path, PATH_MAX, "%s/%s", tmp_root_path, "l3");
+    if (ret >= PATH_MAX) {
+        ERROR("too long file path");
+        goto rmdir_out;
+    }
+    ret = util_mkdir_p(tmp_path, DEFAULT_HIGHEST_DIRECTORY_MODE);
+    if (ret != 0) {
+        ERROR("mkdir failed");
+        goto rmdir_out;
+    }
+
+    ret = snprintf(tmp_path, PATH_MAX, "%s/%s", tmp_root_path, OVERLAY_LAYER_WORK);
+    if (ret >= PATH_MAX) {
+        ERROR("too long file path");
+        goto rmdir_out;
+    }
+    ret = util_mkdir_p(tmp_path, DEFAULT_HIGHEST_DIRECTORY_MODE);
+    if (ret != 0) {
+        ERROR("mkdir failed");
+        goto rmdir_out;
+    }
+
+    ret = snprintf(tmp_path, PATH_MAX, "%s/%s", tmp_root_path, OVERLAY_LAYER_MERGED);
+    if (ret >= PATH_MAX) {
+        ERROR("too long file path");
+        goto rmdir_out;
+    }
+    ret = util_mkdir_p(tmp_path, DEFAULT_HIGHEST_DIRECTORY_MODE);
+    if (ret != 0) {
+        ERROR("mkdir failed");
+        goto rmdir_out;
+    }
+
+    // Mark l2/d as opaque
+    ret = snprintf(tmp_path, PATH_MAX, "%s/%s/%s", tmp_root_path, "l2", "d");
+    if (ret >= PATH_MAX) {
+        ERROR("too long file path");
+        goto rmdir_out;
+    }
+    ret = lsetxattr(tmp_path, "trusted.overlay.opaque", "y", strlen("y"), 0);
+    if (ret != 0) {
+        ERROR("Failed to set opaque flag on middle layer");
+        goto rmdir_out;
+    }
+
+    ret = snprintf(tmp_path, PATH_MAX, "lowerdir=%s/%s:%s/%s,upperdir=%s/%s,workdir=%s/%s", tmp_root_path, "l2",
+                   tmp_root_path, "l1", tmp_root_path, "l3", tmp_root_path, OVERLAY_LAYER_WORK);
+    if (ret >= PATH_MAX) {
+        ERROR("too long file path");
+        goto rmdir_out;
+    }
+    merged_dir = util_path_join(tmp_root_path, OVERLAY_LAYER_MERGED);
+    if (merged_dir == NULL) {
+        ERROR("Failed to join path");
+        goto rmdir_out;
+    }
+    ret = mount("overlay", merged_dir, "overlay", 0, tmp_path);
+    if (ret != 0) {
+        ERROR("Failed to mount overlay");
+        goto rmdir_out;
+    }
+
+    // Touch file in d to force copy up of opaque directory "d" from "l2" to "l3"
+    ret = snprintf(tmp_path, PATH_MAX, "%s/%s/%s", merged_dir, "d", "f");
+    if (ret >= PATH_MAX) {
+        ERROR("too long file path");
+        goto umount_out;
+    }
+    fd = util_open(tmp_path, O_CREAT, 0644);
+    if (fd == -1) {
+        ERROR("failed to write to merged directory");
+        goto umount_out;
+    }
+
+    // Check l3/d does not have opaque flag
+    ret = snprintf(tmp_path, PATH_MAX, "%s/%s/%s", tmp_root_path, "l3", "d");
+    if (ret >= PATH_MAX) {
+        ERROR("too long file path");
+        goto close_out;
+    }
+    ret = lgetxattr(tmp_path, "trusted.overlay.opaque", xattr_opaque, XATTR_SIZE_MAX);
+    if (ret == -1 && errno != ENODATA) {
+        ERROR("failed to read opaque flag on upper layer");
+        goto close_out;
+    }
+    if (errno != ENODATA && strncmp(xattr_redirect, "y", strlen("y")) == 0) {
+        ERROR("opaque flag erroneously copied up, consider update to kernel 4.8 or later to fix");
+        goto close_out;
+    }
+
+    // rename "d1" to "d2"
+    ret = snprintf(tmp_path, PATH_MAX, "%s/%s", merged_dir, "d1");
+    if (ret >= PATH_MAX) {
+        ERROR("too long file path");
+        goto close_out;
+    }
+    new_name = util_path_join(merged_dir, "d2");
+    if (new_name == NULL) {
+        ERROR("Failed to join path");
+        goto close_out;
+    }
+    ret = rename(tmp_path, new_name);
+    if (ret != 0) {
+        // if rename failed with EXDEV, the kernel doesn't have CONFIG_OVERLAY_FS_REDIRECT_DIR enabled
+        if (errno == EXDEV) {
+            is_support = true;
+            goto close_out;
+        }
+        ERROR("failed to rename dir in merged directory");
+        goto close_out;
+    }
+
+    // get the xattr of "d2"
+    ret = snprintf(tmp_path, PATH_MAX, "%s/%s/%s", tmp_root_path, "l3", "d2");
+    if (ret >= PATH_MAX) {
+        ERROR("too long file path");
+        goto close_out;
+    }
+    ret = lgetxattr(tmp_path, "trusted.overlay.redirect", xattr_redirect, XATTR_SIZE_MAX);
+    if (ret == -1 && errno != ENODATA) {
+        ERROR("failed to read redirect flag on upper layer");
+        goto close_out;
+    }
+
+    if (errno != ENODATA && strncmp(xattr_redirect, "d1", strlen("d1")) == 0) {
+        ERROR("kernel has CONFIG_OVERLAY_FS_REDIRECT_DIR enabled");
+        goto close_out;
+    }
+
+    is_support = true;
+
+    // fd must be closed before merged_dir is closed
+    // to avoid Device or resource busy.
+close_out:
+    if (close(fd) != 0) {
+        ERROR("Failed to close file");
+    }
+
+umount_out:
+    ret = umount(merged_dir);
+    if (ret != 0) {
+        perror("nigo");
+        ERROR("Failed to unmount check directory %s", merged_dir);
+        goto rmdir_out;
+    }
+
+rmdir_out:
+    ret = util_recursive_remove_path(tmp_root_path);
+    if (ret != 0) {
+        ERROR("Failed to remove check directory %s", tmp_root_path);
+        goto out;
+    }
+
+out:
+    free(tmp_root_path);
+    free(merged_dir);
+    free(new_name);
+    return is_support;
 }
