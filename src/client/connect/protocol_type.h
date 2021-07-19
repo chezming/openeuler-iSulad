@@ -446,6 +446,8 @@ struct isula_create_image_response {
 };
 
 struct isula_list_images_request {
+    char *name;
+    char *tag;
     struct isula_filters *filters;
     // unuseful definition to avoid generate empty struct which will get 0 if we call sizeof
     char unuseful;

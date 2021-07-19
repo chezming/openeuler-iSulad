@@ -82,6 +82,7 @@ static char *trans_time(int64_t created)
 /* list print table */
 static void list_print_table(struct isula_image_info *images_list, const size_t size, const struct lengths *length)
 {
+    static bool print_table_header = true;
     const struct isula_image_info *in = NULL;
     size_t i = 0;
     char *created = NULL;
@@ -90,13 +91,16 @@ static void list_print_table(struct isula_image_info *images_list, const size_t 
     if (length == NULL) {
         return;
     }
-    /* print header */
-    printf("%-*s ", (int)length->registry_length, "REPOSITORY");
-    printf("%-*s ", (int)length->tag_length, "TAG");
-    printf("%-*s ", (int)length->digest_length, "IMAGE ID");
-    printf("%-*s ", (int)length->created_length, "CREATED");
-    printf("%-*s ", (int)length->size_length, "SIZE");
-    printf("\n");
+    /* print header once*/
+    if (print_table_header) {
+        print_table_header = false;
+        printf("%-*s ", (int)length->registry_length, "REPOSITORY");
+        printf("%-*s ", (int)length->tag_length, "TAG");
+        printf("%-*s ", (int)length->digest_length, "IMAGE ID");
+        printf("%-*s ", (int)length->created_length, "CREATED");
+        printf("%-*s ", (int)length->size_length, "SIZE");
+        printf("\n");
+    }
 
     for (i = 0, in = images_list; i < size && in != NULL; i++, in++) {
         if (in->imageref == NULL || strcmp(in->imageref, "-") == 0) {
@@ -257,11 +261,14 @@ static inline int isula_image_cmp(struct isula_image_info *first, struct isula_i
  */
 static int list_images(const struct client_arguments *args)
 {
+    int i = 0;
     isula_connect_ops *ops = NULL;
     struct isula_list_images_request request = { 0 };
     struct isula_list_images_response *response = NULL;
     client_connect_config_t config = { 0 };
-    int ret = 0;
+    char *colon_pos = NULL;
+    char **split_res = NULL;
+    int ret = 0, split_res_len = 0;
 
     response = util_common_calloc_s(sizeof(struct isula_list_images_response));
     if (response == NULL) {
@@ -285,25 +292,67 @@ static int list_images(const struct client_arguments *args)
         }
     }
     config = get_connect_config(args);
-    ret = ops->image.list(&request, response, &config);
-    if (ret != 0) {
-        client_print_error(response->cc, response->server_errono, response->errmsg);
+    
+    if (args->argc == 0) {
+        ret = ops->image.list(&request, response, &config);
+        if (ret != 0) {
+            client_print_error(response->cc, response->server_errono, response->errmsg);
+            goto out;
+        }
+
+        if (response->images_list != NULL && response->images_num > 0) {
+            qsort(response->images_list, (size_t)(response->images_num), sizeof(struct isula_image_info),
+                  (int (*)(const void *, const void *))isula_image_cmp);
+        }
+
+        if (args->dispname) {
+            images_info_print_quiet(response);
+        } else {
+            images_info_print(response);
+        }
         goto out;
     }
+    
+    for (i = 0; i < args->argc; i++) {
+        if ((colon_pos = strchr(args->argv[i], ':')) != NULL) {
+            split_res = util_string_split(args->argv[i], ':');
+            if (split_res == NULL) {
+                ERROR("Out of memory");
+                ret = -1;
+                goto out;
+            }
+            split_res_len = util_array_len((const char **)split_res);
+            request.name = split_res[0];
+            request.tag = split_res_len == 1 ? "*" : split_res[1];
+        } else {
+            request.name = args->argv[i];
+            request.tag = "*";
+        }
 
-    if (response->images_list != NULL && response->images_num > 0) {
-        qsort(response->images_list, (size_t)(response->images_num), sizeof(struct isula_image_info),
-              (int (*)(const void *, const void *))isula_image_cmp);
+        ret = ops->image.list(&request, response, &config);
+        if (ret != 0) {
+            client_print_error(response->cc, response->server_errono, response->errmsg);
+            goto out;
+        }
+
+        if (response->images_list != NULL && response->images_num > 0) {
+            qsort(response->images_list, (size_t)(response->images_num), sizeof(struct isula_image_info),
+                  (int (*)(const void *, const void *))isula_image_cmp);
+        }
+
+        if (args->dispname) {
+            images_info_print_quiet(response);
+        } else {
+            images_info_print(response);
+        }
     }
-
-    if (args->dispname) {
-        images_info_print_quiet(response);
-    } else {
-        images_info_print(response);
-    }
-
+    
 out:
     isula_filters_free(request.filters);
+    if (colon_pos) {
+        free(request.name);
+        free(request.tag);
+    }
     isula_list_images_response_free(response);
     return ret;
 }

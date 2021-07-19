@@ -38,11 +38,16 @@ public:
         if (request == nullptr) {
             return -1;
         }
-        if (request->filters != nullptr) {
+        if (request->filters != nullptr || request->name != nullptr) {
             google::protobuf::Map<std::string, std::string> *map = nullptr;
             map = grequest->mutable_filters();
-            for (size_t i = 0; i < request->filters->len; i++) {
-                (*map)[request->filters->keys[i]] = request->filters->values[i];
+            if (request->filters != nullptr) {
+                for (size_t i = 0; i < request->filters->len; i++) {
+                    (*map)[request->filters->keys[i]] = request->filters->values[i];
+                }
+            }
+            if (request->name != nullptr) {
+                (*map)["reference"] = std::string(request->name).append(":").append(request->tag);
             }
         }
         return 0;
