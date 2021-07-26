@@ -21,7 +21,7 @@
 
 class MockSysinfo {
 public:
-    MOCK_METHOD0(GetDefaultTotalMemSize, uint64_t(void));
+    MOCK_METHOD0(GetDefaultTotalMemSize, double(void));
     MOCK_METHOD2(FindMountInfo, mountinfo_t*(mountinfo_t **minfos, const char *dir));
     MOCK_METHOD1(FreeMountsInfo, void(mountinfo_t **minfos));
     MOCK_METHOD2(ValidateHugetlb, char*(const char *pagesize, uint64_t limit));

@@ -95,7 +95,7 @@ static void client_info_server(const struct isula_info_response *response)
     }
 
     printf("CPUs: %u\n", (unsigned int)(response->cpus));
-    printf("Total Memory: %u GB\n", (unsigned int)(response->total_mem));
+    printf("Total Memory: %.2lf GiB\n", response->total_mem);
     if (response->nodename != NULL) {
         printf("Name: %s\n", response->nodename);
     }

@@ -225,7 +225,7 @@ static container_info *get_container_stats(const container_t *cont,
                                            const struct stats_context *ctx)
 {
     int ret = 0;
-    uint64_t sysmem_limit;
+    double sysmem_limit;
     uint64_t sys_cpu_usage = 0;
     container_info *info = NULL;
     map_t *map_labels = NULL;

@@ -537,7 +537,7 @@ char *util_human_size(uint64_t val)
     size_t len = 0;
     uint64_t ui = 0;
     char *out = NULL;
-    char *uf[] = { "B", "KB", "MB", "GB" };
+    char *uf[] = { "B", "KiB", "MiB", "GiB" };
 
     ui = val;
 

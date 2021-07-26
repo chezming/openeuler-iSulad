@@ -404,7 +404,7 @@ struct isula_info_response {
     char *no_proxy;
     char *driver_name;
     char *driver_status;
-    uint32_t total_mem;
+    double total_mem;
     uint32_t containers_num;
     uint32_t c_running;
     uint32_t c_paused;

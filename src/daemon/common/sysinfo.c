@@ -631,7 +631,7 @@ out:
 }
 
 /* get default total mem size */
-uint64_t get_default_total_mem_size(void)
+double get_default_total_mem_size(void)
 {
     FILE *fp = NULL;
     size_t len = 0;
@@ -659,7 +659,7 @@ uint64_t get_default_total_mem_size(void)
             if (*p == '\0') {
                 goto out;
             }
-            sysmem_limit = strtoull(p, NULL, 0);
+            sysmem_limit = atof(p);
             break;
         }
     }

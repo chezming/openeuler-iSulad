@@ -210,8 +210,8 @@ static int isulad_info_cb(const host_info_request *request, host_info_response *
     int cStopped = 0;
     size_t images_num = 0;
     uint32_t cc = ISULAD_SUCCESS;
-    uint64_t total_mem = 0;
-    uint64_t sysmem_limit = 0;
+    double total_mem = 0.0;
+    double sysmem_limit = 0.0;
     char *http_proxy = NULL;
     char *https_proxy = NULL;
     char *no_proxy = NULL;
@@ -277,7 +277,7 @@ static int isulad_info_cb(const host_info_request *request, host_info_response *
     }
 
     sysmem_limit = get_default_total_mem_size();
-    if (sysmem_limit == 0) {
+    if (sysmem_limit == 0.0) {
         ERROR("Failed to get total mem!");
         cc = ISULAD_ERR_EXEC;
         goto pack_response;
@@ -335,7 +335,7 @@ static int isulad_info_cb(const host_info_request *request, host_info_response *
     (*response)->huge_page_size = util_strdup_s(huge_page_size);
     (*response)->isulad_root_dir = rootpath;
     rootpath = NULL;
-    (*response)->total_mem = (uint32_t)total_mem;
+    (*response)->total_mem = total_mem;
     (*response)->http_proxy = util_strdup_s(http_proxy);
     (*response)->https_proxy = util_strdup_s(https_proxy);
     (*response)->no_proxy = util_strdup_s(no_proxy);
