@@ -58,6 +58,8 @@ static void print_with_space(const char *info)
 
 static void client_info_server(const struct isula_info_response *response)
 {
+    size_t i = 0;
+
     printf("Containers: %u\n", (unsigned int)(response->containers_num));
     printf(" Running: %u\n", (unsigned int)(response->c_running));
     printf(" Paused: %u\n", (unsigned int)(response->c_paused));
@@ -77,6 +79,16 @@ static void client_info_server(const struct isula_info_response *response)
     }
     if (response->cgroup_driver != NULL) {
         printf("Cgroup Driver: %s\n", response->cgroup_driver);
+    }
+    if (response->runtimes_len > 0 && response->runtimes != NULL) {
+        printf("Runtimes:");
+        for (i = 0; i < response->runtimes_len; i++) {
+            printf(" %s", response->runtimes[i]);
+        }
+        putchar('\n');
+    }
+    if (response->default_runtime != NULL) {
+        printf("Default Runtime: %s\n", response->default_runtime);
     }
     if (response->huge_page_size != NULL) {
         printf("Hugetlb Pagesize: %s\n", response->huge_page_size);
@@ -110,6 +122,18 @@ static void client_info_server(const struct isula_info_response *response)
     }
     if (response->no_proxy != NULL) {
         printf("No Proxy: %s\n", response->no_proxy);
+    }
+    if (response->insecure_registries_len > 0 && response->insecure_registries != NULL) {
+        printf("Insecure Registries:\n");
+        for (i = 0; i < response->insecure_registries_len; i++) {
+            printf(" %s\n", response->insecure_registries[i]);
+        }
+    }
+    if (response->registry_mirrors_len > 0 && response->registry_mirrors != NULL) {
+        printf("Registry Mirrors:\n");
+        for (i = 0; i < response->registry_mirrors_len; i++) {
+            printf(" %s\n", response->registry_mirrors[i]);
+        }
     }
 }
 

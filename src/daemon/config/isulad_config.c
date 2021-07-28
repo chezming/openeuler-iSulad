@@ -406,9 +406,10 @@ out:
 }
 
 /* conf get registry */
-char **conf_get_registry_list()
+char **conf_get_registry_list(size_t *len)
 {
     int nret = 0;
+    int tmp_len = 0;
     size_t i;
     char **opts = NULL;
     char *p = NULL;
@@ -422,6 +423,8 @@ char **conf_get_registry_list()
     if (conf == NULL || conf->json_confs->registry_mirrors_len == 0) {
         goto out;
     }
+
+    tmp_len = conf->json_confs->registry_mirrors_len;
 
     for (i = 0; i < conf->json_confs->registry_mirrors_len; i++) {
         p = conf->json_confs->registry_mirrors[i];
@@ -438,13 +441,15 @@ char **conf_get_registry_list()
     }
 out:
     (void)isulad_server_conf_unlock();
+    *len = tmp_len;
     return opts;
 }
 
 /* conf get insecure registry */
-char **conf_get_insecure_registry_list()
+char **conf_get_insecure_registry_list(size_t *len)
 {
     int nret = 0;
+    int tmp_len = 0;
     size_t i;
     char **opts = NULL;
     char *p = NULL;
@@ -458,6 +463,8 @@ char **conf_get_insecure_registry_list()
     if (conf == NULL || conf->json_confs->insecure_registries_len == 0) {
         goto out;
     }
+
+    tmp_len = conf->json_confs->insecure_registries_len;
 
     for (i = 0; i < conf->json_confs->insecure_registries_len; i++) {
         p = conf->json_confs->insecure_registries[i];
@@ -474,6 +481,7 @@ char **conf_get_insecure_registry_list()
     }
 out:
     (void)isulad_server_conf_unlock();
+    *len = tmp_len;
     return opts;
 }
 

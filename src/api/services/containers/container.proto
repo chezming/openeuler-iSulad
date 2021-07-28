@@ -385,6 +385,10 @@ message InfoResponse {
     string no_proxy = 22;
     string driver_name = 23;
     string driver_status = 24;
+    repeated string registry_mirrors = 25;
+    repeated string insecure_registries = 26;
+    repeated string runtimes = 27;
+    string default_runtime = 28;
 }
 
 message UpdateRequest {

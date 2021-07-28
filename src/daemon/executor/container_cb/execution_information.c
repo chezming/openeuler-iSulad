@@ -219,6 +219,10 @@ static int isulad_info_cb(const host_info_request *request, host_info_response *
     char *huge_page_size = NULL;
     struct utsname u;
     char *rootpath = NULL;
+    char *isulad_engine = NULL;
+    size_t registry_mirrors_len = 0;
+    size_t insecure_registries_len = 0;
+
 #ifdef ENABLE_OCI_IMAGE
     im_image_count_request *im_request = NULL;
     struct graphdriver_status *driver_status = NULL;
@@ -343,6 +347,22 @@ static int isulad_info_cb(const host_info_request *request, host_info_response *
     (*response)->driver_name = util_strdup_s(driver_status->driver_name);
     (*response)->driver_status = util_strdup_s(driver_status->status);
 #endif
+
+    (*response)->registry_mirrors = conf_get_registry_list(&registry_mirrors_len);
+    (*response)->registry_mirrors_len = registry_mirrors_len;
+    (*response)->insecure_registries = conf_get_insecure_registry_list(&insecure_registries_len);
+    (*response)->insecure_registries_len = insecure_registries_len;
+    (*response)->default_runtime = conf_get_default_runtime();
+    isulad_engine = conf_get_isulad_engine();
+    if (isulad_engine != NULL) {
+        (*response)->runtimes = (char **)util_common_calloc_s(1 * sizeof(char *));
+        if ((*response)->runtimes == NULL) {
+            ERROR("out of memory");
+            cc = ISULAD_ERR_MEMOUT;
+        }
+        (*response)->runtimes[0] = isulad_engine;
+        (*response)->runtimes_len = 1;
+    }
 
 pack_response:
     if (*response != NULL) {

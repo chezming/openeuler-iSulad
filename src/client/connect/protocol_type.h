@@ -412,6 +412,13 @@ struct isula_info_response {
     uint32_t images_num;
     uint32_t cpus;
     char *errmsg;
+    char **registry_mirrors;
+    size_t registry_mirrors_len;
+    char **insecure_registries;
+    size_t insecure_registries_len;
+    char **runtimes;
+    size_t runtimes_len;
+    char *default_runtime;
 };
 
 struct isula_update_request {

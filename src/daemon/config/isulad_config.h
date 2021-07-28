@@ -79,9 +79,9 @@ int conf_get_isulad_default_ulimit(host_config_ulimits_element ***ulimit);
 
 unsigned int conf_get_start_timeout();
 
-char **conf_get_insecure_registry_list();
+char **conf_get_insecure_registry_list(size_t *len);
 
-char **conf_get_registry_list();
+char **conf_get_registry_list(size_t *len);
 char *conf_get_isulad_native_umask();
 
 char *conf_get_isulad_cgroup_parent();
