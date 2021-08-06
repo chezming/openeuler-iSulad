@@ -383,3 +383,53 @@ void map_free(map_t *map)
     free(map);
 }
 
+/* function to return its argument unchanged. */
+static void *identity(void *shallow)
+{
+    return shallow;
+}
+
+/* function to copy map, copy points to a custom deep-copy function */
+map_t *map_copy(map_t *map, void *(*copy)(void *))
+{
+    map_t *new_map = NULL;
+    map_itor *itor = NULL;
+
+    if (map == NULL) {
+        return NULL;
+    }
+
+    new_map = util_common_calloc_s(sizeof(map_t));
+    if (new_map == NULL) {
+        ERROR("Out of memory");
+        return NULL;
+    }
+
+    new_map->type = map->type;
+    new_map->store = rbtree_new(map->store->comparator, map->store->kvfreer);
+    if (new_map->store == NULL) {
+        map_free(new_map);
+        return NULL;
+    }
+
+    itor = rbtree_iterator_new(map->store);
+    if (itor == NULL) {
+        map_free(new_map);
+        return NULL;
+    }
+
+    if (copy == NULL) {
+        /* Use default shallow-copy function */
+        copy = &identity;
+    }
+
+    for (; rbtree_iterator_valid(itor); rbtree_iterator_next(itor)) {
+        if (!rbtree_insert(new_map->store, rbtree_iterator_key(itor), (*copy)(rbtree_iterator_value(itor)))) {
+            map_free(new_map);
+            return NULL;
+        };
+    }
+
+    map_itor_free(itor);
+    return new_map;
+}
