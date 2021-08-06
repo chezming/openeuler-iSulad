@@ -2069,3 +2069,24 @@ out:
 
     return ret;
 }
+
+char *util_get_file_path_fd(const int fd)
+{
+    int nret = 0;
+    char file_path[PATH_MAX] = { 0 };
+    char tmp_path[PATH_MAX] = { 0 };
+
+    nret = snprintf(tmp_path, PATH_MAX, "/proc/self/fd/%d", fd);
+    if (nret < 0 || nret >= PATH_MAX) {
+        ERROR("Too long directory path %s", tmp_path);
+        return NULL;
+    }
+
+    nret = readlink(tmp_path, file_path, PATH_MAX - 1);
+    if (nret == -1) {
+        ERROR("Failed to readlink %s", tmp_path);
+        return NULL;
+    }
+
+    return util_strdup_s(file_path);
+}
