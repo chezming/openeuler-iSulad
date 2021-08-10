@@ -1260,7 +1260,13 @@ static int kill_with_signal(container_t *cont, uint32_t signal)
         goto out;
     }
 
-    ret = send_signal_to_process(cont->state->state->pid, cont->state->state->start_time, stop_signal, signal);
+    rt_kill_params_t kill_params = {
+        .pid = cont->state->state->pid,
+        .start_time = cont->state->state->start_time,
+        .signal = signal,
+        .stop_signal = stop_signal,
+    };
+    ret = runtime_kill(id, cont->runtime, &kill_params);
     if (ret != 0) {
         ERROR("Failed to send signal to container %s with signal %u", id, signal);
     }
@@ -1926,7 +1932,7 @@ int exec_container(const container_t *cont, const container_exec_request *reques
     }
 
     id = cont->common_config->id;
-    EVENT("Event: {Object: %s, Type: execing}", id);
+    WARN("Event: {Object: %s, Type: execing}", id);
 
     get_exec_command(request, exec_command, sizeof(exec_command));
     (void)isulad_monitor_send_container_event(id, EXEC_CREATE, -1, 0, exec_command, NULL);
@@ -1984,7 +1990,7 @@ int exec_container(const container_t *cont, const container_exec_request *reques
         goto pack_response;
     }
 
-    EVENT("Event: {Object: %s, Type: execed}", id);
+    WARN("Event: {Object: %s, Type: execed with exit code %d}", id, exit_code);
     (void)isulad_monitor_send_container_event(id, EXEC_DIE, -1, 0, NULL, NULL);
 
 pack_response:

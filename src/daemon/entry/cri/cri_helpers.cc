@@ -14,6 +14,7 @@
  *********************************************************************************/
 
 #include "cri_helpers.h"
+#include "constants.h"
 #include <algorithm>
 #include <functional>
 #include <iostream>
@@ -42,6 +43,7 @@ const std::string Constants::CONTAINER_LOGPATH_LABEL_KEY { "cri.container.logpat
 const std::string Constants::CONTAINER_HUGETLB_ANNOTATION_KEY { "cri.container.hugetlblimit" };
 const std::string Constants::SANDBOX_ID_LABEL_KEY { "cri.sandbox.id" };
 const std::string Constants::KUBERNETES_CONTAINER_NAME_LABEL { "io.kubernetes.container.name" };
+const std::string Constants::POD_INFRA_CONTAINER_NAME { "POD" };
 const std::string Constants::DOCKER_IMAGEID_PREFIX { "docker://" };
 const std::string Constants::DOCKER_PULLABLE_IMAGEID_PREFIX { "docker-pullable://" };
 const std::string Constants::RUNTIME_READY { "RuntimeReady" };
@@ -966,4 +968,22 @@ cleanup:
     free_container_stop_request(request);
     free_container_stop_response(response);
 }
+
+char *GenerateExecSuffix()
+{
+    char *exec_suffix = (char *)util_common_calloc_s(sizeof(char) * (CONTAINER_ID_MAX_LEN + 1));
+    if (exec_suffix == nullptr) {
+        ERROR("Out of memory");
+        return nullptr;
+    }
+
+    if (util_generate_random_str(exec_suffix, (size_t)CONTAINER_ID_MAX_LEN)) {
+        ERROR("Failed to generate exec suffix(id)");
+        free(exec_suffix);
+        return nullptr;
+    }
+
+    return exec_suffix;
+}
+
 } // namespace CRIHelpers

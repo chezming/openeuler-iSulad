@@ -46,9 +46,12 @@
 #include "daemon_arguments.h"
 #include "utils_convert.h"
 #include "utils_file.h"
+#include "console.h"
 
 #define SHIM_BINARY "isulad-shim"
+#define RESIZE_FIFO_NAME "resize_fifo"
 #define SHIM_LOG_SIZE ((BUFSIZ - 100) / 2)
+#define RESIZE_DATA_SIZE 100
 #define PID_WAIT_TIME 120
 
 static void copy_process(shim_client_process_state *p, defs_process *dp)
@@ -562,6 +565,9 @@ static int runtime_call_stats(const char *workdir, const char *runtime, const ch
         info->mem_used = stats->data->memory->usage->usage;
         info->mem_limit = stats->data->memory->usage->limit;
     }
+    if (stats != NULL && stats->data != NULL && stats->data->memory != NULL && stats->data->memory->raw) {
+        info->inactive_file_total = stats->data->memory->raw->total_inactive_file;
+    }
 
 out:
     free_shim_client_runtime_stats(stats);
@@ -1002,7 +1008,7 @@ static char *try_generate_exec_id()
         return NULL;
     }
 
-    if (util_generate_random_str(id, (size_t)CONTAINER_EXEC_ID_MAX_LEN)) {
+    if (util_generate_random_str(id, (size_t)CONTAINER_EXEC_ID_MAX_LEN) != 0) {
         ERROR("Generate id failed");
         goto err_out;
     }
@@ -1029,6 +1035,7 @@ int rt_isula_exec(const char *id, const char *runtime, const rt_exec_params_t *p
     const char **runtime_args = NULL;
     size_t runtime_args_len = 0;
     char workdir[PATH_MAX] = { 0 };
+    char resize_fifo_dir[PATH_MAX] = { 0 };
     const char *cmd = NULL;
     int ret = 0;
     char bundle[PATH_MAX] = { 0 };
@@ -1048,9 +1055,14 @@ int rt_isula_exec(const char *id, const char *runtime, const rt_exec_params_t *p
         goto out;
     }
 
-    exec_id = try_generate_exec_id();
+    if (params->suffix != NULL) {
+        exec_id = util_strdup_s(params->suffix);
+    } else {
+        exec_id = try_generate_exec_id();
+    }
+
     if (exec_id == NULL) {
-        ERROR("Failed to generate exec id");
+        ERROR("Out of memory or generate exec id failed");
         ret = -1;
         goto out;
     }
@@ -1066,10 +1078,23 @@ int rt_isula_exec(const char *id, const char *runtime, const rt_exec_params_t *p
         goto out;
     }
 
+    ret = snprintf(resize_fifo_dir, sizeof(resize_fifo_dir), "%s/%s", workdir, RESIZE_FIFO_NAME);
+    if (ret < 0) {
+        ERROR("failed join resize fifo full path");
+        goto out;
+    }
+
+    ret = console_fifo_create(resize_fifo_dir);
+    if (ret < 0) {
+        ERROR("failed create resize fifo file");
+        goto out;
+    }
+
     p.exec = true;
     p.isulad_stdin = (char *)params->console_fifos[0];
     p.isulad_stdout = (char *)params->console_fifos[1];
     p.isulad_stderr = (char *)params->console_fifos[2];
+    p.resize_fifo = resize_fifo_dir;
     p.runtime_args = (char **)runtime_args;
     p.runtime_args_len = runtime_args_len;
     copy_process(&p, process);
@@ -1227,6 +1252,89 @@ int rt_isula_resize(const char *id, const char *runtime, const rt_resize_params_
 
 int rt_isula_exec_resize(const char *id, const char *runtime, const rt_exec_resize_params_t *params)
 {
-    ERROR("rt_isula_exec_resize not impl");
+    char workdir[PATH_MAX] = { 0 };
+    char resize_fifo_path[PATH_MAX] = { 0 };
+    char data[RESIZE_DATA_SIZE] = { 0 };
+    ssize_t count;
+    int fd = -1;
+    pid_t pid = -1;
+    int ret = 0;
+
+    if (id == NULL || runtime == NULL || params == NULL) {
+        ERROR("nullptr arguments not allowed");
+        return -1;
+    }
+
+    /* crictl not suport exec auto resize */
+    if (params->suffix == NULL) {
+        WARN("exec resize not support when isula not being used");
+        return 0;
+    }
+
+    if (snprintf(workdir, sizeof(workdir), "%s/%s/exec/%s", params->state, id, params->suffix) < 0) {
+        ERROR("failed to join exec workdir path");
+        return -1;
+    }
+
+    if (snprintf(resize_fifo_path, sizeof(resize_fifo_path), "%s/%s", workdir, RESIZE_FIFO_NAME) < 0) {
+        ERROR("failed to join exec fifo path");
+        return -1;
+    }
+
+    if (snprintf(data, sizeof(data), "%d %d", params->width, params->height) < 0) {
+        ERROR("failed to write resize data");
+        return -1;
+    }
+
+    fd = util_open(resize_fifo_path, O_WRONLY | O_NONBLOCK, 0);
+    if (fd == -1) {
+        ERROR("open exec resize fifo error");
+        ret = -1;
+        goto out;
+    }
+
+    count = write(fd, data, RESIZE_DATA_SIZE);
+    if (count <= 0) {
+        ERROR("write exec resize data error");
+        ret = -1;
+        goto out;
+    }
+
+    pid = get_container_process_pid(workdir);
+    if (pid < 0) {
+        ERROR("%s: failed wait init pid", id);
+        ret = -1;
+        goto out;
+    }
+
+    if (kill(pid, SIGWINCH) < 0) {
+        ERROR("can't kill process (pid=%d) with signal %u: %s", pid, SIGWINCH, strerror(errno));
+        ret = -1;
+        goto out;
+    }
+
+out:
+    close(fd);
+    return ret;
+}
+
+int rt_isula_kill(const char *id, const char *runtime, const rt_kill_params_t *params)
+{
+    if (util_process_alive(params->pid, params->start_time) == false) {
+        if (params->signal == params->stop_signal || params->signal == SIGKILL) {
+            WARN("Process %d is not alive", params->pid);
+            return 0;
+        } else {
+            ERROR("Process (pid=%d) is not alive, can not kill with signal %u", params->pid, params->signal);
+            return -1;
+        }
+    } else {
+        int ret = kill(params->pid, (int)params->signal);
+        if (ret < 0) {
+            ERROR("Can not kill process (pid=%d) with signal %u: %s", params->pid, params->signal, strerror(errno));
+            return -1;
+        }
+    }
+
     return 0;
 }
