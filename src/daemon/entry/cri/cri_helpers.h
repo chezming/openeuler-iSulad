@@ -41,6 +41,7 @@ public:
     static const std::string CONTAINER_HUGETLB_ANNOTATION_KEY;
     static const std::string SANDBOX_ID_LABEL_KEY;
     static const std::string KUBERNETES_CONTAINER_NAME_LABEL;
+    static const std::string POD_INFRA_CONTAINER_NAME;
     // DOCKER_IMAGEID_PREFIX is the prefix of image id in container status.
     static const std::string DOCKER_IMAGEID_PREFIX;
     // DOCKER_PULLABLE_IMAGEID_PREFIX is the prefix of pullable image id in container status.
@@ -140,6 +141,8 @@ auto GetRealContainerOrSandboxID(service_executor_t *cb, const std::string &id,
 void RemoveContainer(service_executor_t *cb, const std::string &containerID, Errors &error);
 
 void StopContainer(service_executor_t *cb, const std::string &containerID, int64_t timeout, Errors &error);
+
+char *GenerateExecSuffix();
 }; // namespace CRIHelpers
 
 #endif // DAEMON_ENTRY_CRI_CRI_HELPERS_H

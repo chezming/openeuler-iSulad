@@ -1223,15 +1223,15 @@ static int container_update_cb(const container_update_request *request, containe
 
     id = cont->common_config->id;
     isula_libutils_set_log_prefix(id);
-    EVENT("Event: {Object: %s, Type: updating}", id);
+    WARN("Event: {Object: %s, Type: updating}", id);
 
     if (do_update_resources(request, cont) != 0) {
         cc = ISULAD_ERR_EXEC;
         goto pack_response;
     }
 
-    EVENT("Event: {Object: %s, Type: updated}", id);
-    (void)isulad_monitor_send_container_event(id, CREATE, -1, 0, NULL, NULL);
+    WARN("Event: {Object: %s, Type: updated}", id);
+    (void)isulad_monitor_send_container_event(id, UPDATE, -1, 0, NULL, NULL);
 
 pack_response:
     pack_update_response(*response, cc, id);
@@ -1345,13 +1345,14 @@ static int runtime_resize_helper(const char *id, const char *runtime, const char
     return ret;
 }
 
-static int runtime_exec_resize_helper(const char *id, const char *runtime, const char *rootpath, const char *suffix,
-                                      unsigned int height, unsigned int width)
+static int runtime_exec_resize_helper(const char *id, const char *state, const char *runtime, const char *rootpath,
+                                      const char *suffix, unsigned int height, unsigned int width)
 {
     int ret = 0;
     rt_exec_resize_params_t params = { 0 };
 
     params.rootpath = rootpath;
+    params.state = state;
     params.suffix = suffix;
     params.height = height;
     params.width = width;
@@ -1380,7 +1381,7 @@ static int resize_container(container_t *cont, const char *suffix, unsigned int 
 
     if (suffix != NULL) {
         DEBUG("Failed to resize container:%s suffix:%s", id, suffix);
-        if (runtime_exec_resize_helper(id, cont->runtime, cont->root_path, suffix, height, width)) {
+        if (runtime_exec_resize_helper(id, cont->state_path, cont->runtime, cont->root_path, suffix, height, width)) {
             ERROR("Failed to resize container:%s", id);
             ret = -1;
             goto out;
