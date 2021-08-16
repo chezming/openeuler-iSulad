@@ -516,13 +516,6 @@ out:
 int runtime_init()
 {
     int ret = 0;
-    char *engine = NULL;
-
-    engine = conf_get_isulad_engine();
-    if (engine == NULL) {
-        ret = -1;
-        goto out;
-    }
 
     if (engines_global_init()) {
         ERROR("Init engines global failed");
@@ -531,12 +524,11 @@ int runtime_init()
     }
 
     /* Init default engine, now is lcr */
-    if (engines_discovery(engine)) {
-        ERROR("Failed to discovery default engine:%s", engine);
+    if (engines_discovery("lcr")) {
+        ERROR("Failed to discovery engine lcr");
         ret = -1;
     }
 
 out:
-    free(engine);
     return ret;
 }
