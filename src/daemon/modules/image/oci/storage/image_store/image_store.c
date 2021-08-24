@@ -3429,6 +3429,7 @@ static int get_images_from_json()
 
     for (i = 0; i < image_dirs_num; i++) {
         bool valid_v1_image = false;
+        int parse_res = 0;
 
         if (util_reg_match(id_patten, image_dirs[i]) != 0) {
             DEBUG("Image's json is placed inside image's data directory, so skip any other file or directory: %s",
@@ -3444,20 +3445,25 @@ static int get_images_from_json()
         }
 
         if (validate_manifest_schema_version_1(image_path, &valid_v1_image) != 0) {
+            (void)util_recursive_rmdir(image_path, 0);
             ERROR("Failed to validate manifest schema version 1 format");
             continue;
         }
 
         if (!valid_v1_image) {
             if (append_image_by_directory(image_path) != 0) {
+                parse_res = -1;
                 ERROR("Found image path but load json failed: %s", image_dirs[i]);
-                continue;
             }
         } else {
             if (convert_to_v2_image_and_load(image_path) != 0) {
+                parse_res = -1;
                 ERROR("Failed to convert image to v2 format image and load to store");
-                continue;
             }
+        }
+
+        if (parse_res != 0 && util_recursive_rmdir(image_path, 0)) {
+            ERROR("failed to remove directory %s", image_path);
         }
     }
 
