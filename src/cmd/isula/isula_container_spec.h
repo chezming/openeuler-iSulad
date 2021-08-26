@@ -33,6 +33,8 @@ typedef struct isula_container_config {
 
     char *hostname;
 
+    char *domainname;
+
     char *user;
 
     bool attach_stdin;

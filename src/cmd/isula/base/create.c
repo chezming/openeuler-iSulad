@@ -488,6 +488,15 @@ static void request_pack_custom_hostname(const struct client_arguments *args, is
     return;
 }
 
+static void request_pack_custom_domainname(const struct client_arguments *args, isula_container_config_t *conf)
+{
+    if (args->custom_conf.domainname != NULL) {
+        conf->domainname = util_strdup_s(args->custom_conf.domainname);
+    }
+
+    return;
+}
+
 static void request_pack_custom_all_devices(const struct client_arguments *args, isula_container_config_t *conf)
 {
     /* alldevices */
@@ -644,6 +653,8 @@ static isula_container_config_t *request_pack_custom_conf(const struct client_ar
     request_pack_custom_user(args, conf);
 
     request_pack_custom_hostname(args, conf);
+
+    request_pack_custom_domainname(args, conf);
 
     /* all devices */
     request_pack_custom_all_devices(args, conf);

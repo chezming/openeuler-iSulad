@@ -339,6 +339,9 @@ static int pack_container_custom_config(container_config *container_spec, const 
     if (custom_conf->hostname != NULL) {
         container_spec->hostname = util_strdup_s(custom_conf->hostname);
     }
+    if (custom_conf->domainname != NULL) {
+        container_spec->domainname = util_strdup_s(custom_conf->domainname);
+    }
     container_spec->log_driver = util_strdup_s(custom_conf->log_driver);
 
     /* console config */
@@ -430,6 +433,9 @@ void isula_container_config_free(isula_container_config_t *config)
 
     free(config->hostname);
     config->hostname = NULL;
+
+    free(config->domainname);
+    config->domainname = NULL;
 
     free(config->user);
     config->user = NULL;

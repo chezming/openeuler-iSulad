@@ -1598,7 +1598,7 @@ int container_create_cb(const container_create_request *request, container_creat
         goto umount_shm;
     }
 
-    if (verify_container_settings(oci_spec) != 0) {
+    if (verify_container_settings(oci_spec, host_spec) != 0) {
         ERROR("Failed to verify container settings");
         cc = ISULAD_ERR_EXEC;
         goto umount_channel;

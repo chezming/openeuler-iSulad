@@ -25,7 +25,7 @@
 extern "C" {
 #endif
 
-int verify_container_settings(const oci_runtime_spec *container);
+int verify_container_settings(const oci_runtime_spec *container, host_config *host_spec);
 
 int verify_oci_hook(const oci_runtime_spec_hooks *h);
 
