@@ -34,6 +34,7 @@
 #include "utils_verify.h"
 
 #define IMAGES_OPTIONS(cmdargs)                                                                                        \
+    { CMD_OPT_TYPE_BOOL, false, "no-trunc", 0, &((cmdargs).no_trunc), "Don't truncate output", NULL },                  \
     { CMD_OPT_TYPE_BOOL, false, "quiet", 'q', &((cmdargs).dispname), "Only display image names", NULL },               \
     {                                                                                                                  \
         CMD_OPT_TYPE_CALLBACK, false, "filter", 'f', &(cmdargs).filters, "Filter output based on conditions provided", \
@@ -42,6 +43,7 @@
 
 #define CREATED_DISPLAY_FORMAT "YYYY-MM-DD HH:MM:SS"
 #define SHORT_DIGEST_LEN 12
+#define NO_TRUNC_DIGEST_LEN 71
 
 const char g_cmd_images_desc[] = "List images";
 const char g_cmd_images_usage[] = "images";
@@ -119,7 +121,7 @@ static void list_print_table(struct isula_image_info *images_list, const size_t 
             free(copy_name);
         }
 
-        digest = util_short_digest(in->digest);
+        digest = g_cmd_images_args.no_trunc ? util_strdup_s(in->digest) : util_short_digest(in->digest);
         printf("%-*s ", (int)length->digest_length, digest ? digest : "-");
         free(digest);
 
@@ -184,7 +186,7 @@ static void list_field_width(const struct isula_image_info *images_list, const s
             }
         }
         if (in->digest) {
-            len = SHORT_DIGEST_LEN;
+            len = g_cmd_images_args.no_trunc ? NO_TRUNC_DIGEST_LEN : SHORT_DIGEST_LEN;
             if (len > l->digest_length) {
                 l->digest_length = (unsigned int)len;
             }
@@ -231,8 +233,9 @@ static void images_info_print_quiet(const struct isula_list_images_response *res
     size_t i = 0;
 
     for (i = 0, in = response->images_list; in != NULL && i < response->images_num; i++, in++) {
-        char *digest = util_short_digest(in->digest);
-        printf("%-*s", SHORT_DIGEST_LEN, digest ? digest : "<none>");
+        char *digest = g_cmd_images_args.no_trunc ? util_strdup_s(in->digest) : util_short_digest(in->digest);
+        int len = g_cmd_images_args.no_trunc ? NO_TRUNC_DIGEST_LEN : SHORT_DIGEST_LEN;
+        printf("%-*s", len, digest ? digest : "<none>");
         printf("\n");
         free(digest);
     }
