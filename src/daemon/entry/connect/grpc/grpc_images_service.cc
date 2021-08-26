@@ -106,6 +106,9 @@ void ImagesServiceImpl::image_list_response_to_grpc(image_list_images_response *
         if (response->images[i]->name != nullptr) {
             image->set_name(response->images[i]->name);
         }
+        if (response->images[i]->digest != nullptr) {
+            image->set_digest(response->images[i]->digest);
+        }
         target = new (std::nothrow) Descriptor;
         if (target == nullptr) {
             ERROR("Out of memory");

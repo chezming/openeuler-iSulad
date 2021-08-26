@@ -84,8 +84,8 @@ public:
                 const char *media_type =
                     !image.target().media_type().empty() ? image.target().media_type().c_str() : "-";
                 images_list[i].type = util_strdup_s(media_type);
-                const char *digest = !image.target().digest().empty() ? image.target().digest().c_str() : "-";
-                images_list[i].digest = util_strdup_s(digest);
+                const char *imageid = !image.target().digest().empty() ? image.target().digest().c_str() : "-";
+                images_list[i].imageid = util_strdup_s(imageid);
                 images_list[i].size = image.target().size();
             }
             if (image.has_created_at()) {
@@ -94,6 +94,8 @@ public:
             }
             const char *name = !image.name().empty() ? image.name().c_str() : "-";
             images_list[i].imageref = util_strdup_s(name);
+            const char *digest = !image.digest().empty() ? image.digest().c_str() : "-";
+            images_list[i].digest = util_strdup_s(digest);
         }
 
         response->images_list = images_list;

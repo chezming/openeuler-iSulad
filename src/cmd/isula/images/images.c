@@ -34,6 +34,7 @@
 #include "utils_verify.h"
 
 #define IMAGES_OPTIONS(cmdargs)                                                                                        \
+    { CMD_OPT_TYPE_BOOL, false, "digests", 0, &((cmdargs).digests), "Show digests", NULL },                           \
     { CMD_OPT_TYPE_BOOL, false, "quiet", 'q', &((cmdargs).dispname), "Only display image names", NULL },               \
     {                                                                                                                  \
         CMD_OPT_TYPE_CALLBACK, false, "filter", 'f', &(cmdargs).filters, "Filter output based on conditions provided", \
@@ -52,6 +53,7 @@ struct lengths {
     unsigned int registry_length;
     unsigned int tag_length;
     unsigned int digest_length;
+    unsigned int imageid_length;
     unsigned int created_length;
     unsigned int size_length;
 };
@@ -85,7 +87,7 @@ static void list_print_table(struct isula_image_info *images_list, const size_t 
     const struct isula_image_info *in = NULL;
     size_t i = 0;
     char *created = NULL;
-    char *digest = NULL;
+    char *imageid = NULL;
     char *image_size = NULL;
     if (length == NULL) {
         return;
@@ -93,7 +95,10 @@ static void list_print_table(struct isula_image_info *images_list, const size_t 
     /* print header */
     printf("%-*s ", (int)length->registry_length, "REPOSITORY");
     printf("%-*s ", (int)length->tag_length, "TAG");
-    printf("%-*s ", (int)length->digest_length, "IMAGE ID");
+    if (g_cmd_images_args.digests) {
+        printf("%-*s ", (int)length->digest_length, "DIGEST");
+    }
+    printf("%-*s ", (int)length->imageid_length, "IMAGE ID");
     printf("%-*s ", (int)length->created_length, "CREATED");
     printf("%-*s ", (int)length->size_length, "SIZE");
     printf("\n");
@@ -119,9 +124,13 @@ static void list_print_table(struct isula_image_info *images_list, const size_t 
             free(copy_name);
         }
 
-        digest = util_short_digest(in->digest);
-        printf("%-*s ", (int)length->digest_length, digest ? digest : "-");
-        free(digest);
+        if (g_cmd_images_args.digests) {
+            printf("%-*s ", (int)length->digest_length, in->digest ? in->digest : "-");
+        }
+
+        imageid = util_short_digest(in->imageid);
+        printf("%-*s ", (int)length->imageid_length, imageid ? imageid : "-");
+        free(imageid);
 
         created = trans_time(in->created);
         printf("%-*s ", (int)length->created_length, created ? created : "-");
@@ -183,10 +192,10 @@ static void list_field_width(const struct isula_image_info *images_list, const s
                 return;
             }
         }
-        if (in->digest) {
+        if (in->imageid) {
             len = SHORT_DIGEST_LEN;
-            if (len > l->digest_length) {
-                l->digest_length = (unsigned int)len;
+            if (len > l->imageid_length) {
+                l->imageid_length = (unsigned int)len;
             }
         }
         if (in->created) {
@@ -215,7 +224,8 @@ static void images_info_print(const struct isula_list_images_response *response)
     struct lengths max_len = {
         .registry_length = 30, /* registry */
         .tag_length = 10, /* tag */
-        .digest_length = 20, /* digest */
+        .digest_length = 71, /* digest */
+        .imageid_length = 20, /* digest */
         .created_length = 20, /* created */
         .size_length = 10, /* size */
     };
