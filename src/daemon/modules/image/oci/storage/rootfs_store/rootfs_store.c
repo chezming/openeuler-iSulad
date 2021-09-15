@@ -387,7 +387,6 @@ out:
 static int rootfs_store_load()
 {
     struct linked_list *item = NULL;
-    struct linked_list *next = NULL;
 
     if (g_rootfs_store->loaded) {
         DEBUG("Do not need reload if daemon");
@@ -399,7 +398,7 @@ static int rootfs_store_load()
         return -1;
     }
 
-    linked_list_for_each_safe(item, &(g_rootfs_store->rootfs_list), next) {
+    linked_list_for_each(item, &(g_rootfs_store->rootfs_list)) {
         if (load_container_to_store_field((cntrootfs_t *)item->elem) != 0) {
             ERROR("Failed to load container to container store");
             return -1;
@@ -1078,7 +1077,6 @@ int rootfs_store_wipe()
     int ret = 0;
     char *id = NULL;
     struct linked_list *item = NULL;
-    struct linked_list *next = NULL;
 
     if (g_rootfs_store == NULL) {
         ERROR("Rootfs store is not ready");
@@ -1090,7 +1088,7 @@ int rootfs_store_wipe()
         return -1;
     }
 
-    linked_list_for_each_safe(item, &(g_rootfs_store->rootfs_list), next) {
+    linked_list_for_each(item, &(g_rootfs_store->rootfs_list)) {
         id = util_strdup_s(((cntrootfs_t *)item->elem)->srootfs->id);
         if (delete_rootfs_from_store_without_lock(id) != 0) {
             ERROR("Failed to delete rootfs: %s", id);
@@ -1272,7 +1270,6 @@ int rootfs_store_get_all_rootfs(struct rootfs_list *all_rootfs)
 {
     int ret = 0;
     struct linked_list *item = NULL;
-    struct linked_list *next = NULL;
 
     if (all_rootfs == NULL) {
         ERROR("Invalid input paratemer, memory should be allocated first");
@@ -1300,7 +1297,7 @@ int rootfs_store_get_all_rootfs(struct rootfs_list *all_rootfs)
         goto out;
     }
 
-    linked_list_for_each_safe(item, &(g_rootfs_store->rootfs_list), next) {
+    linked_list_for_each(item, &(g_rootfs_store->rootfs_list)) {
         storage_rootfs *tmp_rootfs = NULL;
         cntrootfs_t *img = (cntrootfs_t *)item->elem;
         tmp_rootfs = copy_rootfs(img->srootfs);

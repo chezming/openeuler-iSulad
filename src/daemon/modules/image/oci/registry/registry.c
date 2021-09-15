@@ -1115,7 +1115,6 @@ static void set_cached_layers_info(char *blob_digest, char *diffid, int result, 
 {
     cached_layer *cache = NULL;
     struct linked_list *item = NULL;
-    struct linked_list *next = NULL;
     file_elem *elem = NULL;
     thread_fetch_info *info = NULL;
 
@@ -1133,7 +1132,7 @@ static void set_cached_layers_info(char *blob_digest, char *diffid, int result, 
 
     // Do hard links to let the layer exist in every downloader's directory, and
     // fill necessary item fields to do layer register.
-    linked_list_for_each_safe(item, &cache->file_list, next) {
+    linked_list_for_each(item, &cache->file_list) {
         elem = (file_elem *)item->elem;
         info = elem->info;
         if (info->diffid == NULL) {
@@ -1166,7 +1165,6 @@ static void notify_cached_descs(char *blob_digest)
 {
     cached_layer *cache = NULL;
     struct linked_list *item = NULL;
-    struct linked_list *next = NULL;
     thread_fetch_info *info = NULL;
 
     cache = (cached_layer *)map_search(g_shared->cached_layers, blob_digest);
@@ -1176,7 +1174,7 @@ static void notify_cached_descs(char *blob_digest)
     }
 
     // notify all related register threads to do register
-    linked_list_for_each_safe(item, &cache->file_list, next) {
+    linked_list_for_each(item, &cache->file_list) {
         info = ((file_elem*)item->elem)->info;
         info->notified = true;
         register_layer_notify(info->desc);
