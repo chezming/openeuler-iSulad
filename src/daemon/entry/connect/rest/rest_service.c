@@ -22,17 +22,12 @@
 #include "utils.h"
 #include "rest_containers_service.h"
 #include "rest_images_service.h"
-#ifdef ENABLE_METRICS
-#include "rest_metrics_service.h"
-#endif
 
 #define REST_PTHREAD_NUM 100
 #define BACKLOG 2048
 static char *g_socketpath = NULL;
 static evbase_t *g_evbase = NULL;
 static evhtp_t *g_htp = NULL;
-static struct event *g_signal_event = NULL;
-daemon_shutdown_cb_t g_shutdown_cb;
 
 /* rest server free */
 static void rest_server_free()
@@ -41,11 +36,6 @@ static void rest_server_free()
         free(g_socketpath);
         g_socketpath = NULL;
     }
-
-    if (g_signal_event != NULL) {
-        evsignal_del(g_signal_event);
-    }
-
     if (g_evbase != NULL) {
         event_base_free(g_evbase);
         g_evbase = NULL;
@@ -67,11 +57,6 @@ static int rest_register_handler(evhtp_t *g_htp)
         return -1;
     }
 
-#ifdef ENABLE_METRICS
-    if (rest_register_metrics_handler(g_htp) != 0) {
-        return -1;
-    }
-#endif
     return 0;
 }
 
@@ -94,24 +79,10 @@ static void libevent_log_cb(int severity, const char *msg)
     }
 }
 
-static void signal_cb(evutil_socket_t sig, short events, void *user_data)
-{
-    struct event_base *base = (struct event_base *)user_data;
-
-    if (base != NULL) {
-        event_base_loopbreak(base);
-    }
-
-    if (g_shutdown_cb != NULL) {
-        g_shutdown_cb();
-    }
-}
-
 /* rest server init */
-int rest_server_init(const char *socket, daemon_shutdown_cb_t shutdown_cb)
+int rest_server_init(const char *socket)
 {
     g_socketpath = util_strdup_s(socket);
-    g_shutdown_cb = shutdown_cb;
 
     event_set_log_callback(libevent_log_cb);
 
@@ -120,13 +91,6 @@ int rest_server_init(const char *socket, daemon_shutdown_cb_t shutdown_cb)
         ERROR("Failed to init rest server");
         goto error_out;
     }
-
-    g_signal_event = evsignal_new(g_evbase, SIGTERM, signal_cb, (void *)g_evbase);
-    if (g_signal_event == NULL || event_add(g_signal_event, NULL) < 0) {
-        ERROR("rest add signal event failed");
-        goto error_out;
-    }
-
     g_htp = evhtp_new(g_evbase, NULL);
     if (g_htp == NULL) {
         ERROR("Failed to init rest server");
@@ -171,3 +135,4 @@ void rest_server_shutdown(void)
         }
     }
 }
+

@@ -500,8 +500,7 @@
 		},
 		{
 			"names": [
-				"modify_ldt",
-				"clone3"
+				"modify_ldt"
 			],
 			"action": "SCMP_ACT_ALLOW",
 			"args": [

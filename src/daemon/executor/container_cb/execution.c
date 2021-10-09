@@ -18,6 +18,7 @@
 #include <pthread.h>
 #include <malloc.h>
 #include <sys/eventfd.h>
+#include <lxc/lxccontainer.h>
 #include <isula_libutils/container_config.h>
 #include <isula_libutils/container_config_v2.h>
 #include <isula_libutils/container_delete_request.h>
@@ -395,12 +396,13 @@ static int container_start_cb(const container_start_request *request, container_
         goto pack_response;
     }
 
+    //容器启动准备
     if (container_start_prepare(cont, request, stdinfd, stdout_handler, stderr_handler, &fifopath, fifos, &sync_fd,
                                 &thread_id) != 0) {
         cc = ISULAD_ERR_EXEC;
         goto pack_response;
     }
-
+    //容器启动
     if (start_container(cont, (const char **)fifos, true) != 0) {
         cc = ISULAD_ERR_EXEC;
         goto pack_response;

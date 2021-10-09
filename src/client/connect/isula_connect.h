@@ -105,6 +105,23 @@ typedef struct {
 } volume_ops;
 
 typedef struct {
+    int (*list)(const struct isula_list_checkpoint_request *request, struct isula_list_checkpoint_response *response,
+                void *arg);
+
+    int (*remove)(const struct isula_remove_checkpoint_request *request, struct isula_remove_checkpoint_response *response,
+                  void *arg);
+
+    int (*create)(const struct isula_create_checkpoint_request *request, struct isula_create_checkpoint_response *response,
+                 void *arg);
+
+    int (*restore)(const struct isula_restore_checkpoint_request *request, struct isula_restore_checkpoint_response *response,
+                 void *arg);
+
+
+
+} checkpoint_ops;
+
+typedef struct {
     int (*check)(const struct isula_health_check_request *request, struct isula_health_check_response *response,
                  void *arg);
 } health_ops;
@@ -113,6 +130,7 @@ typedef struct {
     container_ops container;
     image_ops image;
     volume_ops volume;
+    checkpoint_ops checkpoint;
     health_ops health;
 } isula_connect_ops;
 

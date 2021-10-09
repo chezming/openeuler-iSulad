@@ -589,6 +589,8 @@ struct isula_volume_info {
     char *name;
 };
 
+
+
 struct isula_list_volume_response {
     size_t volumes_len;
     struct isula_volume_info *volumes;
@@ -614,6 +616,62 @@ struct isula_prune_volume_request {
 struct isula_prune_volume_response {
     size_t volumes_len;
     char **volumes;
+    uint32_t cc;
+    uint32_t server_errono;
+    char *errmsg;
+};
+
+
+
+
+struct isula_create_checkpoint_request {
+    char* container;
+    char* dir;
+};
+
+struct isula_create_checkpoint_response {
+    char* container;
+    uint32_t cc;
+    uint32_t server_errono;
+    char *errmsg;
+};
+
+struct isula_restore_checkpoint_request {
+    char* container;
+    char* dir;
+};
+
+struct isula_restore_checkpoint_response {
+    char* container;
+    uint32_t cc;
+    uint32_t server_errono;
+    char *errmsg;
+};
+
+struct isula_list_checkpoint_request {
+    char* dir;
+};
+
+struct isula_checkpoint_info{
+    char *name;
+    char *dir;
+};
+
+struct isula_list_checkpoint_response {
+    size_t checkpoints_len;
+    struct isula_checkpoint_info *checkpoints;
+    uint32_t cc;
+    uint32_t server_errono;
+    char *errmsg;
+};
+
+struct isula_remove_checkpoint_request {
+    char* container;
+    char* dir;
+};
+
+struct isula_remove_checkpoint_response {
+    char* container;
     uint32_t cc;
     uint32_t server_errono;
     char *errmsg;

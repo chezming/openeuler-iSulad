@@ -1,31 +1,33 @@
 /******************************************************************************
- * Copyright (c) KylinSoft  Co., Ltd. 2021. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2020. All rights reserved.
  * iSulad licensed under the Mulan PSL v2.
-
  * You can use this software according to the terms and conditions of the Mulan PSL v2.
  * You may obtain a copy of Mulan PSL v2 at:
  *     http://license.coscl.org.cn/MulanPSL2
  * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY OR FIT FOR A PARTICULAR
  * PURPOSE.
- * See the Mulan PSL v2 for more details.
- * Author: xiapin
- * Create: 2021-08-17
- * Description: provide metric restful service definition
+ * See the Mulan PSL v2 for more detairm.
+ * Author: wangfengtu
+ * Create: 2020-09-05
+ * Description: provide list CHECKPOINT definition
  ******************************************************************************/
-#ifndef DAEMON_ENTRY_CONNECT_REST_REST_METRICS_SERVICE_H
-#define DAEMON_ENTRY_CONNECT_REST_REST_METRICS_SERVICE_H
+#ifndef CMD_ISULA_CHECKPOINT_REMOVE_H
+#define CMD_ISULA_CHECKPOINT_REMOVE_H
 
-#include <evhtp.h>
+#include "client_arguments.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int rest_register_metrics_handler(evhtp_t *htp);
+extern const char g_cmd_checkpoint_rm_desc[];
+extern const char g_cmd_checkpoint_rm_usage[];
+extern struct client_arguments g_cmd_checkpoint_rm_args;
+int cmd_checkpoint_rm_main(int argc, const char **argv);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif
+#endif // CMD_ISULA_CHECKPOINT_REMOVE_H

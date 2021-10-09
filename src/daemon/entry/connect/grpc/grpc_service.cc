@@ -20,9 +20,11 @@
 #include <grpc++/grpc++.h>
 #include <sstream>
 #include <fstream>
+#include <syslog.h>
 #include "grpc_containers_service.h"
 #include "grpc_images_service.h"
 #include "grpc_volumes_service.h"
+#include "grpc_checkpoints_service.h"
 #include "runtime_runtime_service.h"
 #include "runtime_image_service.h"
 #include "isula_libutils/log.h"
@@ -72,6 +74,7 @@ public:
         m_builder.RegisterService(&m_containerService);
         m_builder.RegisterService(&m_imagesService);
         m_builder.RegisterService(&m_volumeService);
+        m_builder.RegisterService(&m_checkpointService);
         m_builder.RegisterService(&m_runtimeRuntimeService);
         m_builder.RegisterService(&m_runtimeImageService);
 
@@ -184,6 +187,7 @@ private:
     ContainerServiceImpl m_containerService;
     ImagesServiceImpl m_imagesService;
     VolumeServiceImpl m_volumeService;
+    CheckpointServiceImpl m_checkpointService;
     RuntimeRuntimeServiceImpl m_runtimeRuntimeService;
     RuntimeImageServiceImpl m_runtimeImageService;
     ServerBuilder m_builder;
@@ -196,6 +200,10 @@ GRPCServerImpl *g_grpcserver { nullptr };
 
 int grpc_server_init(const struct service_arguments *args)
 {
+    openlog("isula",LOG_CONS | LOG_PID,LOG_LOCAL2);
+	    syslog(LOG_DEBUG,"grpc_server_init\n");
+	    closelog();
+   
     if (args == nullptr) {
         return -1;
     }

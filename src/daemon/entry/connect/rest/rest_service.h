@@ -19,9 +19,7 @@
 extern "C" {
 #endif
 
-typedef void (*daemon_shutdown_cb_t)(void);
-
-int rest_server_init(const char *socket, daemon_shutdown_cb_t shutdown_cb);
+int rest_server_init(const char *socket);
 
 void rest_server_wait(void);
 

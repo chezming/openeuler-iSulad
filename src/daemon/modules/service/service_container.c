@@ -60,6 +60,8 @@
 #include "utils_verify.h"
 #include "volume_api.h"
 
+#include <lxc/lxccontainer.h>
+
 #define KATA_RUNTIME "kata-runtime"
 
 int set_container_to_removal(const container_t *cont)
@@ -658,9 +660,39 @@ static int verify_mounts(const container_t *cont)
 
     return 0;
 }
-
+/*
+static int checkpoint_restore_container(char* container){
+    struct lxc_container *c;
+    c=lxc_container_new(container,"/var/lib/isulad/engines/lcr/");
+    if (!c) {
+		printf("System error loading %s\n", container);
+		return 0;
+	}
+    if (!c->is_defined(c)) {
+		printf("Error response from daemon: No such container:%s\n", container);
+		return 0;
+	}
+    if (c->is_running(c)) {
+		printf("%s is running, not restoring\n", container);
+		return 0;
+	}
+    char checkpoint_dir[1000]="/tmp/isula-criu/";
+    strcat(checkpoint_dir,container);
+    bool res;
+    
+    res =  c->restore(c,checkpoint_dir,false);
+    if (!res){
+        printf("Restoring %s failed\n",args->name);
+    }else{
+        printf("%s\n",args->name);
+    }
+    
+    return res;
+}
+*/
 static int do_start_container(container_t *cont, const char *console_fifos[], bool reset_rm, pid_ppid_info_t *pid_info)
 {
+    printf("do_start_container\n");
     int ret = 0;
     int nret = 0;
     int exit_fifo_fd = -1;
@@ -726,12 +758,48 @@ static int do_start_container(container_t *cont, const char *console_fifos[], bo
         goto close_exit_fd;
     }
 
+    //挂载文件系统
     nret = im_mount_container_rootfs(cont->common_config->image_type, cont->common_config->image, id);
+    printf("容器挂在文件系统：%d\n",nret);
+    //return ret;
     if (nret != 0) {
         ERROR("Failed to mount rootfs for container %s", id);
         ret = -1;
         goto close_exit_fd;
     }
+/*
+    //restore流程
+    struct lxc_container *c;
+    //char *container = id;
+    c=lxc_container_new(id,"/var/lib/isulad/engines/lcr/");
+    if (!c) {
+
+		printf("System error loading %s\n", id);
+		
+	}
+    if (!c->is_defined(c)) {
+		printf("Error response from daemon: No such container:%s\n", id);
+		
+	}
+    if (c->is_running(c)) {
+		printf("%s is running, not restoring\n", id);
+	
+	}
+    char checkpoint_dir[1000]="/tmp/isula-criu/";
+    strcat(checkpoint_dir,c->name);
+    bool res;
+    res =  c->restore(c,checkpoint_dir,false);
+    
+    if(!res){
+        printf("restore fail\n");
+    }
+    if(res){
+        printf("restore success\n");
+    }*/
+    //goto close_exit_fd;
+
+    //restore
+    //checkpoint_restore_container(cont)
 
     // embedded conainter is readonly, create mtab link will fail
     // kata-runtime container's qemu donot support to create mtab in host
@@ -879,12 +947,14 @@ int start_container(container_t *cont, const char *console_fifos[], bool reset_r
     }
 
     ret = do_start_container(cont, console_fifos, reset_rm, &pid_info);
+    
     if (ret != 0) {
         ERROR("Runtime start container failed");
         ret = -1;
         goto set_stopped;
     } else {
         container_state_set_running(cont->state, &pid_info, true);
+        //return ret;
         container_state_reset_has_been_manual_stopped(cont->state);
         container_init_health_monitor(cont->common_config->id);
         goto save_container;

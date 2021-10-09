@@ -784,7 +784,7 @@ static int overlay_supports_selinux(bool *supported)
         char sym_type[KALLSYMS_ITEM_MAX_LEN] = { 0 };
         char sym_name[KALLSYMS_ITEM_MAX_LEN] = { 0 };
 
-        if (sscanf(buf, "%99s %99s %99s", sym_addr, sym_type, sym_name) != 3) {
+        if (sscanf(buf, "%s %s %s", sym_addr, sym_type, sym_name) != 3) {
             ERROR("sscanf buffer failed");
             ret = -1;
             goto out;
@@ -1292,7 +1292,7 @@ static int isulad_server_init_service()
 #else
     INFO("Creating rest server...");
 #endif
-    if (server_common_init(args, daemon_shutdown)) {
+    if (server_common_init(args)) {
         ERROR("Failed to init service");
         goto unlock_out;
     }
@@ -1416,11 +1416,6 @@ static int pre_init_daemon(int argc, char **argv, char **msg)
 
     if (server_conf_parse_save(argc, (const char **)argv)) {
         *msg = g_isulad_errmsg ? g_isulad_errmsg : "Failed to parse and save server conf";
-        goto out;
-    }
-
-    if (init_isulad_daemon_constants() != 0) {
-        *msg = "Failed to parse isulad daemon constants";
         goto out;
     }
 

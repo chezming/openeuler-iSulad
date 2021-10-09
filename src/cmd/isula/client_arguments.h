@@ -337,6 +337,8 @@ struct client_arguments {
     char *password;
     char *server;
     bool password_stdin;
+    //checkpoint
+    char *checkpoint_dir;
 
     /* extra environment variables used in exec */
     char **extra_env;

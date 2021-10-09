@@ -55,6 +55,10 @@
 #include "remove.h"
 #include "prune.h"
 #include "list.h"
+#include "checkpoint.h"
+#include "cplist.h"
+#include "cpcreate.h"
+#include "cpremove.h"
 
 // The list of our supported commands
 struct command g_commands[] = {
@@ -93,6 +97,10 @@ struct command g_commands[] = {
     {
         // `unpause` sub-command
         "unpause", false, cmd_resume_main, g_cmd_resume_desc, NULL, &g_cmd_resume_args
+    },
+        {
+        // `volume` sub-command
+        "checkpoint", true, cmd_checkpoint_main, g_cmd_checkpoint_desc, NULL, NULL
     },
 #ifdef ENABLE_OCI_IMAGE
     {

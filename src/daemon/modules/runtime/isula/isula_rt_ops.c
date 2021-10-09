@@ -1094,7 +1094,7 @@ int rt_isula_exec(const char *id, const char *runtime, const rt_exec_params_t *p
     p.isulad_stdin = (char *)params->console_fifos[0];
     p.isulad_stdout = (char *)params->console_fifos[1];
     p.isulad_stderr = (char *)params->console_fifos[2];
-    p.resize_fifo = resize_fifo_dir;
+    p.exit_fifo = resize_fifo_dir;
     p.runtime_args = (char **)runtime_args;
     p.runtime_args_len = runtime_args_len;
     copy_process(&p, process);
@@ -1281,7 +1281,7 @@ int rt_isula_exec_resize(const char *id, const char *runtime, const rt_exec_resi
         return -1;
     }
 
-    if (snprintf(data, sizeof(data), "%u %u", params->width, params->height) < 0) {
+    if (snprintf(data, sizeof(data), "%d %d", params->width, params->height) < 0) {
         ERROR("failed to write resize data");
         return -1;
     }

@@ -1388,3 +1388,16 @@ void isula_prune_volume_response_free(struct isula_prune_volume_response *respon
     free(response);
     return;
 }
+
+void isula_remove_checkpoint_response_free(struct isula_remove_checkpoint_response *response)
+{
+    if (response == NULL) {
+        return;
+    }
+
+    free(response->errmsg);
+    response->errmsg = NULL;
+
+    free(response);
+    return;
+}

@@ -533,7 +533,7 @@ static void *task_console_accept(void *data)
     }
 
     /* p.state.resize_fifo------>runtime.console */
-    ret = connect_to_isulad(ac->p, EXEC_RESIZE, ac->p->state->resize_fifo, recv_fd);
+    ret = connect_to_isulad(ac->p, EXEC_RESIZE, ac->p->state->exit_fifo, recv_fd);
     if (ret != SHIM_OK) {
         goto out;
     }
