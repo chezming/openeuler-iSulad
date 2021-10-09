@@ -29,7 +29,6 @@
 #include "url.h"
 #include "errors.h"
 #include "read_write_lock.h"
-#include "isula_libutils/cri_terminal_size.h"
 
 #define MAX_ECHO_PAYLOAD 4096
 #define MAX_ARRAY_LEN 2
@@ -42,112 +41,62 @@
 #define LWS_TIMEOUT 50
 // io copy maximum single transfer 4K, let max total buffer size: 1GB
 #define FIFO_LIST_BUFFER_MAX_LEN 262144
-#define SESSION_CAPABILITY 300
-#define MAX_SESSION_NUM 120
 
 enum WebsocketChannel {
     STDINCHANNEL = 0,
     STDOUTCHANNEL,
-    STDERRCHANNEL,
-    ERRORCHANNEL,
-    RESIZECHANNEL
+    STDERRCHANNEL
 };
 
 struct session_data {
     std::array<int, MAX_ARRAY_LEN> pipes;
-    volatile bool close;
-    std::mutex *session_mutex;
+    bool *close;
+    std::mutex *buf_mutex;
     sem_t *sync_close_sem;
     std::list<unsigned char *> buffer;
-    std::string container_id;
-    std::string suffix;
 
     unsigned char *FrontMessage()
     {
         unsigned char *message = nullptr;
 
-        if (session_mutex == nullptr) {
-            return nullptr;
-        }
-
-        session_mutex->lock();
+        buf_mutex->lock();
         message = buffer.front();
-        session_mutex->unlock();
+        buf_mutex->unlock();
 
         return message;
     }
 
     void PopMessage()
     {
-        if (session_mutex == nullptr) {
-            return;
-        }
-
-        session_mutex->lock();
+        buf_mutex->lock();
         buffer.pop_front();
-        session_mutex->unlock();
+        buf_mutex->unlock();
     }
 
     int PushMessage(unsigned char *message)
     {
-        if (session_mutex == nullptr) {
-            return -1;
-        }
-
-        session_mutex->lock();
-
         // In extreme scenarios, websocket data cannot be processed,
         // ignore the data coming in later to prevent iSulad from getting stuck
-        if (close || buffer.size() >= FIFO_LIST_BUFFER_MAX_LEN) {
+        if (*close || buffer.size() >= FIFO_LIST_BUFFER_MAX_LEN) {
             free(message);
-            session_mutex->unlock();
             return -1;
         }
-
+        buf_mutex->lock();
         buffer.push_back(message);
-        session_mutex->unlock();
+        buf_mutex->unlock();
+
         return 0;
-    }
-
-    bool IsClosed()
-    {
-        bool c = false;
-
-        if (session_mutex == nullptr) {
-            return true;
-        }
-
-        session_mutex->lock();
-        c = close;
-        session_mutex->unlock();
-
-        return c;
-    }
-
-    void CloseSession()
-    {
-        if (session_mutex == nullptr) {
-            return;
-        }
-
-        session_mutex->lock();
-        close = true;
-        session_mutex->unlock();
     }
 
     void EraseAllMessage()
     {
-        if (session_mutex == nullptr) {
-            return;
-        }
-
-        session_mutex->lock();
+        buf_mutex->lock();
         for (auto iter = buffer.begin(); iter != buffer.end();) {
             free(*iter);
             *iter = NULL;
             iter = buffer.erase(iter);
         }
-        session_mutex->unlock();
+        buf_mutex->unlock();
     }
 };
 
@@ -160,6 +109,7 @@ public:
     void Shutdown();
     void RegisterCallback(const std::string &path, std::shared_ptr<StreamingServeInterface> callback);
     url::URLDatum GetWebsocketUrl();
+    std::unordered_map<int, session_data> &GetWsisData();
     void SetLwsSendedFlag(int socketID, bool sended);
     void ReadLockAllWsSession();
     void UnlockAllWsSession();
@@ -177,15 +127,12 @@ private:
     int  Wswrite(struct lws *wsi, const unsigned char *message);
     inline void DumpHandshakeInfo(struct lws *wsi) noexcept;
     int RegisterStreamTask(struct lws *wsi) noexcept;
-    int GenerateSessionData(session_data *session, const std::string containerID) noexcept;
+    int GenerateSessionData(session_data &session) noexcept;
     static int Callback(struct lws *wsi, enum lws_callback_reasons reason,
                         void *user, void *in, size_t len);
     void ServiceWorkThread(int threadid);
     void CloseWsSession(int socketID);
     void CloseAllWsSession();
-    int ResizeTerminal(int socketID, const char *jsonData, size_t len,
-                       const std::string &containerID, const std::string &suffix);
-    int parseTerminalSize(const char *jsonData, size_t len, uint16_t &width, uint16_t &height);
 
 private:
     static RWMutex m_mutex;
@@ -193,11 +140,11 @@ private:
     volatile int m_force_exit = 0;
     std::thread m_pthread_service;
     const struct lws_protocols m_protocols[MAX_PROTOCOL_NUM] = {
-        { "channel.k8s.io", Callback, 0, MAX_ECHO_PAYLOAD, },
-        { nullptr, nullptr, 0, 0 }
+        {  "channel.k8s.io", Callback, 0, MAX_ECHO_PAYLOAD, },
+        { NULL, NULL, 0, 0 }
     };
     RouteCallbackRegister m_handler;
-    static std::unordered_map<int, session_data *> m_wsis;
+    static std::unordered_map<int, session_data> m_wsis;
     url::URLDatum m_url;
     int m_listenPort;
 };
@@ -205,6 +152,7 @@ private:
 ssize_t WsWriteStdoutToClient(void *context, const void *data, size_t len);
 ssize_t WsWriteStderrToClient(void *context, const void *data, size_t len);
 int closeWsConnect(void *context, char **err);
+int closeWsStream(void *context, char **err);
 
 #endif // DAEMON_ENTRY_CRI_WEBSOCKET_SERVICE_WS_SERVER_H
 

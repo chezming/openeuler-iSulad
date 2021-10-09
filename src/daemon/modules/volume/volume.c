@@ -17,6 +17,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <pthread.h>
+#include <syslog.h>
 
 #include "isula_libutils/log.h"
 #include "volume_api.h"
@@ -472,11 +473,13 @@ out:
 
 struct volumes * volume_list(void)
 {
+    
     struct volumes *vols = NULL;
 
     mutex_lock(&g_vs.mutex);
     vols = list_all_driver_volumes();
     mutex_unlock(&g_vs.mutex);
+    ERROR("struct volumes * volume_list(void)\n");
 
     return vols;
 }
@@ -639,6 +642,7 @@ void free_volume(struct volume *vol)
 
 void free_volumes(struct volumes *vols)
 {
+    
     size_t i = 0;
     if (vols == NULL) {
         return;

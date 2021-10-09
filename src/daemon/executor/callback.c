@@ -19,9 +19,8 @@
 #include "image_cb.h"
 #include "execution.h"
 #include "volume_cb.h"
-#ifdef ENABLE_METRICS
-#include "metrics_cb.h"
-#endif
+#include "checkpoint_cb.h"
+#include <syslog.h>
 
 service_executor_t g_isulad_service_executor;
 
@@ -160,9 +159,7 @@ int service_callback_init(void)
     container_callback_init(&g_isulad_service_executor.container);
     image_callback_init(&g_isulad_service_executor.image);
     volume_callback_init(&g_isulad_service_executor.volume);
-#ifdef ENABLE_METRICS
-    metrics_callback_init(&g_isulad_service_executor.metrics);
-#endif
+    checkpoint_callback_init(&g_isulad_service_executor.checkpoint);
     return 0;
 }
 

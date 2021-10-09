@@ -20,6 +20,7 @@
 #include <memory>
 #include <sstream>
 #include <string>
+#include <syslog.h>
 
 #include "certificate.h"
 #include "connect.h"
@@ -84,11 +85,15 @@ public:
 
     virtual void unpackStatus(Status &status, RP *response)
     {
+        openlog("isula",LOG_CONS | LOG_PID,LOG_LOCAL2);
+        syslog(LOG_DEBUG,"unpackStatus\n");
+        closelog();
         if (!status.error_message().empty() && (status.error_code() == grpc::StatusCode::UNKNOWN ||
                                                 status.error_code() == grpc::StatusCode::PERMISSION_DENIED ||
                                                 status.error_code() == grpc::StatusCode::INTERNAL)) {
             response->errmsg = util_strdup_s(status.error_message().c_str());
         } else {
+            
             response->errmsg = util_strdup_s(errno_to_error_message(ISULAD_ERR_CONNECT));
         }
 
@@ -102,6 +107,9 @@ public:
         gRP reply;
         ClientContext context;
         Status status;
+        openlog("isula",LOG_CONS | LOG_PID,LOG_LOCAL2);
+        syslog(LOG_DEBUG,"client run\n");
+        closelog();
 
         // Set deadline for GRPC client
         if (deadline > 0) {

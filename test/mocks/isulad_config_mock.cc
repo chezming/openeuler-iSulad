@@ -15,8 +15,6 @@
 
 #include "isulad_config_mock.h"
 
-static isulad_daemon_constants g_isulad_daemon_constants = {0};
-
 namespace {
 MockIsuladConf *g_isulad_conf_mock = nullptr;
 }
@@ -153,20 +151,4 @@ bool conf_get_use_decrypted_key_flag()
         return g_isulad_conf_mock->ConfGetUseDecryptedKeyFlag();
     }
     return true;
-}
-
-int init_isulad_daemon_constants()
-{
-    if (g_isulad_conf_mock != nullptr) {
-        return g_isulad_conf_mock->InitIsuladDaemonConstants();
-    }
-    return 0;
-}
-
-isulad_daemon_constants *get_isulad_daemon_constants()
-{
-    if (g_isulad_conf_mock != nullptr) {
-        return g_isulad_conf_mock->GetIsuladDaemonConstants();
-    }
-    return &g_isulad_daemon_constants;
 }

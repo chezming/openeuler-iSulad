@@ -17,17 +17,11 @@
 
 #include "daemon_arguments.h"
 
-#ifndef GRPC_CONNECTOR
-#include "rest_service.h"
-#else
-typedef void (*daemon_shutdown_cb_t)(void);
-#endif
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int server_common_init(const struct service_arguments *args, daemon_shutdown_cb_t shutdown_cb);
+int server_common_init(const struct service_arguments *args);
 
 void server_common_start(void);
 

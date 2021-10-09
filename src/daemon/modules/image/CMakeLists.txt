@@ -96,8 +96,7 @@ target_link_libraries(${LIB_ISULAD_IMG}
     ${DEVMAPPER_LIBRARY}
     ${LIBTAR_LIBRARY}
     ${SELINUX_LIBRARY}
-    ${LIBARCHIVE_LIBRARY}
-    -lpthread -lcrypto -lz libhttpclient)
+    -lpthread -lcrypto -larchive -lz libhttpclient)
 
 target_compile_definitions(${LIB_ISULAD_IMG} PRIVATE LIB_ISULAD_IMG_SO)
 

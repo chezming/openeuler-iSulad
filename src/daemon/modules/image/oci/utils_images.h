@@ -35,6 +35,7 @@ extern "C" {
 #define HTTP_PREFIX "http://"
 
 #define DEFAULT_TAG ":latest"
+#define HOSTNAME_TO_STRIP "docker.io/"
 #define REPO_PREFIX_TO_STRIP "library/"
 #define MAX_ID_BUF_LEN 256
 
@@ -44,7 +45,7 @@ char *oci_default_tag(const char *name);
 char *oci_add_host(const char *domain, const char *name);
 char *oci_normalize_image_name(const char *name);
 int oci_split_image_name(const char *image_name, char **host, char **name, char **tag);
-char *oci_strip_host_prefix(const char *name);
+char *oci_strip_dockerio_prefix(const char *name);
 char *make_big_data_base_name(const char *key);
 char *oci_calc_diffid(const char *file);
 void free_items_not_inherit(docker_image_config_v2 *config);
@@ -54,7 +55,6 @@ bool oci_valid_time(char *time);
 
 char *oci_get_isulad_tmpdir(const char *root_dir);
 int makesure_isulad_tmpdir_perm_right(const char *root_dir);
-char *get_hostname_to_strip();
 
 #ifdef __cplusplus
 }

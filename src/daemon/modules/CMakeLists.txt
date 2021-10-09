@@ -12,6 +12,7 @@ add_subdirectory(events_sender)
 add_subdirectory(service)
 add_subdirectory(api)
 add_subdirectory(volume)
+add_subdirectory(checkpoint)
 
 set(local_modules_srcs
     ${modules_top_srcs}
@@ -25,6 +26,7 @@ set(local_modules_srcs
     ${EVENTS_SENDER_SRCS}
     ${SERVICE_SRCS}
     ${VOLUME_SRCS}
+    ${CHECKPOINT_SRCS}
     )
 
 set(local_modules_incs
@@ -40,6 +42,7 @@ set(local_modules_incs
     ${SERVICE_INCS}
     ${MODULES_API_INCS}
     ${VOLUME_INCS}
+    ${CHECKPOINT_INCS}
     )
 
 set(MODULES_SRCS

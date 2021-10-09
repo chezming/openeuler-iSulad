@@ -1,0 +1,63 @@
+syntax = "proto3";
+option optimize_for = CODE_SIZE;
+
+package checkpoint;
+
+service CheckpointService {
+    //list
+	rpc List(ListCheckpointRequest) returns (ListCheckpointResponse);
+    //remove
+	rpc Remove(RemoveCheckpointRequest) returns (RemoveCheckpointResponse);
+    //create
+	rpc Create(CreateCheckpointRequest) returns (CreateCheckpointResponse);
+	//create
+	rpc Restore(RestoreCheckpointRequest) returns (RestoreCheckpointResponse);
+}
+
+message Checkpoint{
+	string name =1;
+	string dir = 2;
+}
+
+message ListCheckpointRequest {
+    string dir=1;
+}
+
+message ListCheckpointResponse {
+	repeated Checkpoint checkpoints = 1;
+	uint32 cc = 2;
+	string errmsg = 3;
+}
+
+message RemoveCheckpointRequest {
+	string container = 1;
+	string dir = 2;
+}
+
+message RemoveCheckpointResponse {
+	uint32 cc = 1;
+	string errmsg = 2;
+}
+
+message CreateCheckpointRequest {
+    string container =1;
+    string dir =2;
+}
+
+message CreateCheckpointResponse {
+	string container =1;
+	uint32 cc = 2;
+	string errmsg = 3;
+}
+
+message RestoreCheckpointRequest {
+    string container =1;
+    string dir =2;
+}
+
+message RestoreCheckpointResponse {
+	string container =1;
+	uint32 cc = 2;
+	string errmsg = 3;
+}
+

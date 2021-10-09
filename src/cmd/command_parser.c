@@ -135,12 +135,20 @@ void subcommand_init(command_t *self, command_option_t *opts, int opts_len, int 
 {
     (void)memset(self, 0, sizeof(command_t));
     self->name = util_string_join(" ", argv, 2);
+    //printf("name:%s\n",self->name);
     self->argc = argc - 3;
+    //printf("argc:%d\n",self->argc);
     self->argv = argv + 3;
+    //printf("argv[0]:%s\n",self->argv[0]);
+    //printf("argv[1]:%s\n",self->argv[1]);
     self->usage = usage;
+    //printf("usage:%s\n",self->usage);
     self->description = description;
+    //printf("description:%s\n",self->description);
     self->options = opts;
+    //printf("options:%s\n",opts->description);
     self->option_count = opts_len;
+    //printf(":%s\n",self->name);
 }
 
 void command_option(command_t *self, command_option_type_t type, void *data, int small, const char *large,
@@ -328,23 +336,33 @@ static int command_parse_short_arg(command_t *self, const char *arg)
 static int command_parse_long_arg(command_t *self, const char *arg)
 {
     int j = 0;
+    //printf("type:%s\n",(char *)self->options->large);
+    //printf("usage:%s\n",(char *)self->usage);
 
     if (strcmp(arg, "help") == 0) {
         command_help(self);
         exit(0);
     }
+    //printf("option_count=%d\n",self->option_count);
 
     for (j = 0; j < self->option_count; ++j) {
+        
+        //printf("j=%d\n",j);
         command_option_t *opt = &self->options[j];
+        //printf("%s\n",opt->name);
         const char *opt_arg = NULL;
         opt->hasdata = false;
 
         if (opt->large == NULL) {
             continue;
         }
-
+        //printf("arg:%s\n",arg);
+        //printf("opt->large:%s\n",opt->large);
         opt_arg = util_str_skip_str(arg, opt->large);
+        
+        
         if (opt_arg == NULL) {
+            
             continue;
         }
 
@@ -372,16 +390,19 @@ static int command_parse_long_arg(command_t *self, const char *arg)
 
 int command_parse_args(command_t *self, int *argc, char * const **argv)
 {
+    //printf("command_parse_args\n");
     int ret = 0;
 
     for (; self->argc; self->argc--, self->argv++) {
         const char *arg_opt = self->argv[0];
+        //printf("%c\n",arg_opt[1]);
         if (arg_opt[0] != '-' || !arg_opt[1]) {
             break;
         }
 
         // short option
         if (arg_opt[1] != '-') {
+            //printf("short\n");
             arg_opt = arg_opt + 1;
             ret = command_parse_short_arg(self, arg_opt);
             if (!ret) {
@@ -399,6 +420,7 @@ int command_parse_args(command_t *self, int *argc, char * const **argv)
 
         // long option
         arg_opt = arg_opt + 2;
+        //printf("long\n");
         ret = command_parse_long_arg(self, arg_opt);
         if (ret == 0) {
             continue;

@@ -101,9 +101,12 @@ unlock_out:
         ret = -1;
     }
 out:
-    if (strcmp(name, "runc") == 0 || strcmp(name, "lcr") == 0 || strcmp(name, "kata-runtime") == 0) {
+    if (strcmp(name, "runc") == 0 || strcmp(name, "lcr") == 0) {
         *runtime_res = true;
-        return ret;
+    }
+
+    if (strcmp(name, "kata-runtime") == 0) {
+        *runtime_res = true;
     }
 
     if (convert_v2_runtime(name, NULL) == 0) {

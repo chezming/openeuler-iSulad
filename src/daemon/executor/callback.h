@@ -88,7 +88,6 @@
 #include "events_format.h"
 #include "stream_wrapper.h"
 #include "utils_timestamp.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -272,19 +271,78 @@ typedef struct {
     int (*prune)(const volume_prune_volume_request *request, volume_prune_volume_response **response);
 } service_volume_callback_t;
 
-#ifdef ENABLE_METRICS
+
 typedef struct {
-    int (*export_metrics_by_type)(const char *metric_type, char **data, int *len);
-} service_metrics_callback_t;
-#endif
+    char* container;
+    char* dir;
+}checkpoint_create_checkpoint_request;
+
+typedef struct{
+    char* container;
+    uint32_t cc;
+    uint32_t server_errono;
+    char *errmsg;
+}checkpoint_create_checkpoint_response;
+
+typedef struct {
+    char* container;
+    char* dir;
+}checkpoint_restore_checkpoint_request;
+
+typedef struct{
+    char* container;
+    uint32_t cc;
+    uint32_t server_errono;
+    char *errmsg;
+}checkpoint_restore_checkpoint_response;
+
+typedef struct {
+    char* container;
+    char* dir;
+}checkpoint_remove_checkpoint_request;
+
+typedef struct{
+    char* container;
+    uint32_t cc;
+    uint32_t server_errono;
+    char *errmsg;
+}checkpoint_remove_checkpoint_response;
+
+typedef struct {
+    char* dir;
+}checkpoint_list_checkpoint_request;
+
+struct isula_checkpoint_info{
+    char *name;
+    char *dir;
+};
+typedef struct {
+    char *dir;
+
+    char *name;
+}checkpoint_checkpoint;
+
+typedef struct{
+    size_t checkpoints_len;
+    checkpoint_checkpoint  **checkpoints;
+    uint32_t cc;
+    uint32_t server_errono;
+    char *errmsg;
+}checkpoint_list_checkpoint_response;
+
+typedef struct{
+    int (*create)(const checkpoint_create_checkpoint_request *request,checkpoint_create_checkpoint_response **response);
+    int (*remove)(const checkpoint_remove_checkpoint_request *request,checkpoint_remove_checkpoint_response **response);
+    int (*list)(const checkpoint_list_checkpoint_request *request,checkpoint_list_checkpoint_response **response);
+    int (*restore)(const checkpoint_restore_checkpoint_request *request,checkpoint_restore_checkpoint_response **response);
+
+}service_checkpoint_callback_t;
 
 typedef struct {
     service_container_callback_t container;
     service_image_callback_t image;
     service_volume_callback_t volume;
-#ifdef ENABLE_METRICS
-    service_metrics_callback_t metrics;
-#endif
+    service_checkpoint_callback_t checkpoint;
 } service_executor_t;
 
 int service_callback_init(void);

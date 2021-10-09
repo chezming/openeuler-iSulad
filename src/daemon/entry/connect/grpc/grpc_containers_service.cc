@@ -768,6 +768,7 @@ Status ContainerServiceImpl::Inspect(ServerContext *context, const InspectContai
 
 Status ContainerServiceImpl::List(ServerContext *context, const ListRequest *request, ListResponse *reply)
 {
+    
     int tret;
     service_executor_t *cb = nullptr;
     container_list_request *container_req = nullptr;
@@ -783,6 +784,7 @@ Status ContainerServiceImpl::List(ServerContext *context, const ListRequest *req
     }
 
     tret = list_request_from_grpc(request, &container_req);
+    printf("tret = list_request_from_grpc(request, &container_req);\n");
     if (tret != 0) {
         ERROR("Failed to transform grpc request");
         reply->set_cc(ISULAD_ERR_INPUT);
