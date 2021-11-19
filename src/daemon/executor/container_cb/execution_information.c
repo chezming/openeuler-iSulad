@@ -853,14 +853,14 @@ pack_response:
     return (cc == ISULAD_SUCCESS) ? 0 : -1;
 }
 
-static int inspect_container_helper(const char *id, int timeout, char **container_json)
+static int inspect_container_helper(const char *id, int timeout, bool with_size_info, char **container_json)
 {
     int ret = 0;
     container_inspect *inspect = NULL;
     parser_error err = NULL;
     struct parser_context ctx = { OPT_GEN_KAY_VALUE | OPT_GEN_SIMPLIFY, 0 };
 
-    inspect = inspect_container(id, timeout, true);
+    inspect = inspect_container(id, timeout, true, with_size_info);
     if (inspect == NULL) {
         ERROR("Failed to inspect container:%s", id);
         ret = -1;
@@ -915,7 +915,7 @@ static int container_inspect_cb(const container_inspect_request *request, contai
 
     INFO("Inspect :%s", name);
 
-    if (inspect_container_helper(name, timeout, &container_json) != 0) {
+    if (inspect_container_helper(name, timeout, request->bsize, &container_json) != 0) {
         cc = ISULAD_ERR_EXEC;
     }
 

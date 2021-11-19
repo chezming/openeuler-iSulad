@@ -297,6 +297,8 @@ struct client_arguments {
 
     // inspect
     char *format;
+    bool size;
+    char *inspect_type;
 
     // stats
     bool nostream;

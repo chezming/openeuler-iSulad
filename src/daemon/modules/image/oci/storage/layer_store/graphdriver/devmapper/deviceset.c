@@ -163,6 +163,21 @@ static int devmapper_parse_options(struct device_set *devset, const char **optio
                 goto out;
             }
             devset->mount_options = util_strdup_s(val);
+        } else if (strcasecmp(dup, "dm.override_udev_sync_check") == 0 ||
+                   strcasecmp(dup, "devicemapper.override_udev_sync_check") == 0) {
+            if (!util_valid_str(val)) {
+                ERROR("Invalid dm.override_udev_sync_check or devicemapper.override_udev_sync_check value");
+                isulad_set_error_message(
+                    "Invalid dm.override_udev_sync_check or devicemapper.override_udev_sync_check value");
+                ret = -1;
+                goto out;
+            }
+            nret = util_str_to_bool(val, &devset->override_udev_sync_check);
+            if (nret != 0) {
+                ERROR("Invalid bool: '%s': %s", val, strerror(-nret));
+                ret = -1;
+                goto out;
+            }
         } else {
             ERROR("devicemapper: unknown option: '%s'", dup);
             isulad_set_error_message("devicemapper: unknown option: '%s'", dup);

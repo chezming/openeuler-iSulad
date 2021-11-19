@@ -139,6 +139,8 @@ mountinfo_t *find_mount_info(mountinfo_t **minfos, const char *dir);
 
 void free_mounts_info(mountinfo_t **minfos);
 
+int running_in_userns();
+
 #ifdef __cplusplus
 }
 #endif

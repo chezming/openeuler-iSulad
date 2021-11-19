@@ -20,8 +20,11 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <sys/types.h>
+#include <sys/xattr.h>
 
 #include "driver.h"
+#include "sysinfo.h"
 
 struct driver_create_opts;
 struct driver_mount_opts;
@@ -67,6 +70,13 @@ void free_driver_mount_opts(struct driver_mount_opts *opts);
 int overlay2_repair_lowers(const char *id, const char *parent, const struct graphdriver *driver);
 
 int overlay2_get_layer_fs_info(const char *id, const struct graphdriver *driver, imagetool_fs_info *fs_info);
+
+bool overlay2_is_parent(const char *id, const char *parent);
+
+int overlay2_get_layer_diff_size(const char *id, const char *parent, const struct graphdriver *driver,
+                                 int64_t *diff_size);
+
+bool overlay2_support_native(const char *root_path);
 
 #ifdef __cplusplus
 }

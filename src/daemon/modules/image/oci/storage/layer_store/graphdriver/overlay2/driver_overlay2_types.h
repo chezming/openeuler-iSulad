@@ -30,6 +30,7 @@ struct overlay_options {
     const char *mount_program;
     bool skip_mount_home;
     const char *mount_options;
+    bool support_native;
 };
 
 #ifdef __cplusplus

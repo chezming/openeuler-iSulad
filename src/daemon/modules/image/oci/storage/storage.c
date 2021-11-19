@@ -1348,6 +1348,42 @@ err_out:
     return NULL;
 }
 
+// get_rolayer_size return the total size of rolayers.
+int get_rolayer_size(const char *id, int64_t *size)
+{
+    int ret = 0;
+    int64_t temp_size = 0;
+    char *parent = NULL;
+    struct layer *l = NULL;
+    imagetool_image *img = NULL;
+
+    img = image_store_get_image(id);
+    if (img == NULL) {
+        ERROR("Failed to get image store from image %s", id);
+        ret = -1;
+        goto out;
+    }
+
+    parent = util_strdup_s(img->top_layer);
+    free_imagetool_image(img);
+
+    while (parent != NULL) {
+        l = layer_store_lookup(parent);
+        free(parent);
+        if (l == NULL) {
+            break;
+        }
+        temp_size += l->uncompress_size;
+        parent = util_strdup_s(l->parent);
+        free_layer(l);
+    }
+
+    *size = temp_size;
+
+out:
+    return ret;
+}
+
 static bool parse_checked_layer_cb(const char *line, void *context)
 {
     static bool default_value = true;

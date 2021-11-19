@@ -28,6 +28,7 @@
 #include "utils.h"
 #include "isula_libutils/log.h"
 #include "image_api.h"
+#include "container_api.h"
 #include "storage.h"
 
 struct io_read_wrapper;
@@ -52,6 +53,7 @@ static const struct graphdriver_ops g_overlay2_ops = {
     .clean_up = overlay2_clean_up,
     .try_repair_lowers = overlay2_repair_lowers,
     .get_layer_fs_info = overlay2_get_layer_fs_info,
+    .get_layer_diff_size = overlay2_get_layer_diff_size,
 };
 
 /* devicemapper */
@@ -71,6 +73,7 @@ static const struct graphdriver_ops g_devmapper_ops = {
     .clean_up = devmapper_clean_up,
     .try_repair_lowers = devmapper_repair_lowers,
     .get_layer_fs_info = devmapper_get_layer_fs_info,
+    .get_layer_diff_size = devmapper_get_layer_diff_size,
 };
 
 static struct graphdriver g_drivers[] = { { .name = DRIVER_OVERLAY2_NAME, .ops = &g_overlay2_ops },
@@ -565,5 +568,156 @@ int graphdriver_get_layer_fs_info(const char *id, imagetool_fs_info *fs_info)
 
     driver_unlock();
 
+    return ret;
+}
+
+// container_get_layer_size return the real size & virtual size of the container.
+// -1 will be set when error happens.
+int graphdriver_get_container_size(const container_t *cont, container_inspect *inspect)
+{
+    int ret = 0;
+    int64_t size_rw = 0, size_root_fs = 0;
+    char *id = NULL;
+    char *image_id = NULL;
+    struct layer *rw_layer = NULL;
+
+    if (g_graphdriver == NULL) {
+        ERROR("Driver not inited yet");
+        return -1;
+    }
+
+    if (cont == NULL || inspect == NULL) {
+        ERROR("Invalid input arguments for driver get container size");
+        return -1;
+    }
+
+    if (!driver_rd_lock()) {
+        return -1;
+    }
+
+    id = container_get_id(cont);
+    if (id == NULL) {
+        ERROR("Invalid container id");
+    }
+
+    image_id = util_without_sha256_prefix(cont->image_id);
+
+    // layer-id and container-id are equal.
+    rw_layer = storage_layer_get(id);
+    if (rw_layer == NULL || rw_layer->parent == NULL) {
+        ret = -1;
+        ERROR("Failed to compute size of container rootfs %s", id);
+        goto out;
+    }
+
+    ret = g_graphdriver->ops->get_layer_diff_size(id, rw_layer->parent, g_graphdriver, &size_rw);
+    if (ret != 0) {
+        ERROR("Driver %s couldn't return diff size of container %s", g_graphdriver->name, id);
+        size_rw = -1;
+    }
+
+    ret = get_rolayer_size(image_id, &size_root_fs);
+    if (ret != 0) {
+        ERROR("Failed to compute rolayers size of container %s", id);
+        size_root_fs = -1;
+    }
+
+    if (size_rw != -1) {
+        size_root_fs += size_rw;
+    }
+
+out:
+    driver_unlock();
+    inspect->size_rw = size_rw;
+    inspect->size_root_fs = size_root_fs;
+    free(id);
+    free_layer(rw_layer);
+    return ret;
+}
+
+// naive_changes produces a list of changes between the specified layer
+// and its parent layer. If parent is NULL, then all changes will be ADD changes.
+int naive_changes(const char *id, const char *parent, const struct graphdriver *driver, struct change_result **result)
+{
+    int ret = 0;
+    char *layer_root_fs = NULL;
+    char *parent_root_fs = NULL;
+
+    if (driver == NULL) {
+        ERROR("Driver not inited yet");
+        return -1;
+    }
+
+    if (id == NULL) {
+        ERROR("Invalid input arguments for driver mount layer");
+        return -1;
+    }
+
+    layer_root_fs = driver->ops->mount_layer(id, driver, NULL);
+    if (layer_root_fs == NULL) {
+        ret = -1;
+        goto out;
+    }
+
+    if (parent != NULL) {
+        parent_root_fs = driver->ops->mount_layer(parent, driver, NULL);
+        if (parent_root_fs == NULL) {
+            ret = -1;
+            goto out;
+        }
+    }
+
+    ret = changes_dirs(layer_root_fs, parent_root_fs, result);
+out:
+    driver->ops->umount_layer(parent, driver);
+    driver->ops->umount_layer(id, driver);
+    free(layer_root_fs);
+    free(parent_root_fs);
+    return ret;
+}
+
+int naive_get_layer_diff_size(const char *id, const char *parent, const struct graphdriver *driver, int64_t *diff_size)
+{
+    int ret = 0;
+    char *layer_fs = NULL;
+    struct change_result *result = NULL;
+
+    if (driver == NULL) {
+        ERROR("Driver not inited yet");
+        return -1;
+    }
+
+    if (id == NULL) {
+        ERROR("Invalid input arguments for driver mount layer");
+        return -1;
+    }
+
+    ret = naive_changes(id, parent, driver, &result);
+    if (ret != 0) {
+        ERROR("Failed to get changes");
+        ret = -1;
+        goto out;
+    }
+
+    layer_fs = driver->ops->mount_layer(id, driver, NULL);
+    if (layer_fs == NULL) {
+        ret = -1;
+        goto out;
+    }
+
+    ret = changes_size(layer_fs, result, diff_size);
+    if (ret != 0) {
+        ERROR("Failed to calculate changes size");
+        goto out;
+    }
+
+    ret = driver->ops->umount_layer(id, driver);
+
+out:
+    if (ret != 0) {
+        *diff_size = -1;
+    }
+    free(layer_fs);
+    change_result_free(result);
     return ret;
 }

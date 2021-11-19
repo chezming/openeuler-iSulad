@@ -741,7 +741,7 @@ auto InspectContainer(const std::string &Id, Errors &err, bool with_host_config)
 {
     container_inspect *inspect_data { nullptr };
 
-    inspect_data = inspect_container((const char *)Id.c_str(), 0, with_host_config);
+    inspect_data = inspect_container((const char *)Id.c_str(), 0, with_host_config, false);
     if (inspect_data == nullptr) {
         err.Errorf("Failed to call inspect service %s", Id.c_str());
     }
