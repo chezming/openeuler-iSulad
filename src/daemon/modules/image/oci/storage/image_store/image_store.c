@@ -2627,7 +2627,6 @@ int image_store_get_all_images(imagetool_images_list *images_list)
 {
     int ret = 0;
     struct linked_list *item = NULL;
-    struct linked_list *next = NULL;
 
     if (images_list == NULL) {
         ERROR("Invalid input paratemer, memory should be allocated first");
@@ -2655,7 +2654,7 @@ int image_store_get_all_images(imagetool_images_list *images_list)
         goto unlock;
     }
 
-    linked_list_for_each_safe(item, &(g_image_store->images_list), next) {
+    linked_list_for_each(item, &(g_image_store->images_list)) {
         imagetool_image_summary *imginfo = NULL;
         image_t *img = (image_t *)item->elem;
         imginfo = get_image_summary(img);
@@ -3510,7 +3509,6 @@ out:
 static void image_store_check_all_images()
 {
     struct linked_list *item = NULL;
-    struct linked_list *next = NULL;
 
     if (g_image_store == NULL) {
         ERROR("Image store is not ready!");
@@ -3521,7 +3519,7 @@ static void image_store_check_all_images()
         return;
     }
 
-    linked_list_for_each_safe(item, &(g_image_store->images_list), next) {
+    linked_list_for_each(item, &(g_image_store->images_list)) {
         image_t *img = (image_t *)item->elem;
         if (img->spec == NULL) {
             ERROR("Failed to check spec info of image: %s, try to delete", img->simage->id);

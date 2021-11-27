@@ -373,40 +373,39 @@ static int command_parse_long_arg(command_t *self, const char *arg)
 int command_parse_args(command_t *self, int *argc, char * const **argv)
 {
     int ret = 0;
+    const char **operand = self->argv;  // index to put argv which is an operand(not an option)
+    int count = 0;
 
-    for (; self->argc; self->argc--, self->argv++) {
-        const char *arg_opt = self->argv[0];
-        if (arg_opt[0] != '-' || !arg_opt[1]) {
-            break;
-        }
+    for (const char **i = self->argv; self->argc; i++, self->argc--) {
+        const char *arg_opt = *i;
+        if (arg_opt[0] == '-') {
+            if (arg_opt[1] == '-') {
+                // avoid --
+                if (arg_opt[2] == '\0') {
+                    self->argc--;
+                    self->argv++;
+                    break;
+                }
 
-        // short option
-        if (arg_opt[1] != '-') {
-            arg_opt = arg_opt + 1;
-            ret = command_parse_short_arg(self, arg_opt);
-            if (!ret) {
-                continue;
+                // long option
+                if ((ret = command_parse_long_arg(self, arg_opt + 2)) != 0) {
+                    break;
+                }
+            } else {
+                // short option
+                if ((ret = command_parse_short_arg(self, arg_opt + 1)) != 0) {
+                    break;
+                }
             }
-            break;
+        } else {
+            // operand
+            *operand++ = arg_opt;
+            count++;
         }
-
-        // --
-        if (!arg_opt[2]) {
-            self->argc--;
-            self->argv++;
-            break;
-        }
-
-        // long option
-        arg_opt = arg_opt + 2;
-        ret = command_parse_long_arg(self, arg_opt);
-        if (ret == 0) {
-            continue;
-        }
-        break;
     }
-    if (self->argc > 0) {
-        *argc = self->argc;
+
+    if (count > 0) {
+        *argc = count;
         *argv = (char * const *)self->argv;
     }
     return ret;

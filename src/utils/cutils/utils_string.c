@@ -935,3 +935,22 @@ out:
     free(jerr);
     return marshaled;
 }
+
+void util_reverse_string(char *s)
+{
+    char tmp = '\0';
+    char *first = NULL, *last = NULL;
+
+    if (s == NULL) {
+        return;
+    }
+
+    for (last = first = s; *last != '\0'; last++);
+
+    while ((first != last) && (first != --last)) {
+        tmp = *first;
+        *first = *last;
+        *last = tmp;
+        ++first;
+    }
+}

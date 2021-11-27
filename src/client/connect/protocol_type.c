@@ -223,6 +223,24 @@ void isula_info_response_free(struct isula_info_response *response)
     free(response->driver_status);
     response->driver_status = NULL;
 
+    free(response->registry_mirrors);
+    response->registry_mirrors = NULL;
+
+    util_free_array_by_len(response->registry_mirrors, response->registry_mirrors_len);
+    response->registry_mirrors = NULL;
+    response->registry_mirrors_len = 0;
+
+    util_free_array_by_len(response->insecure_registries, response->insecure_registries_len);
+    response->insecure_registries = NULL;
+    response->insecure_registries_len = 0;
+
+    util_free_array_by_len(response->runtimes, response->runtimes_len);
+    response->runtimes = NULL;
+    response->runtimes_len = 0;
+
+    free(response->default_runtime);
+    response->default_runtime = NULL;
+
     free(response);
 }
 

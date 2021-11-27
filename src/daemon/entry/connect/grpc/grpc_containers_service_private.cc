@@ -108,6 +108,22 @@ void ContainerServiceImpl::info_response_to_grpc(const host_info_response *respo
 
     pack_driver_info_to_grpc(response, gresponse);
 
+    for (size_t i = 0; i < response->runtimes_len; i++) {
+        gresponse->add_runtimes(response->runtimes[i]);
+    }
+
+    if (response->default_runtime != nullptr) {
+        gresponse->set_default_runtime(response->default_runtime);
+    }
+
+    for (size_t i = 0; i < response->registry_mirrors_len; i++) {
+        gresponse->add_registry_mirrors(response->registry_mirrors[i]);
+    }
+
+    for (size_t i = 0; i < response->insecure_registries_len; i++) {
+        gresponse->add_insecure_registries(response->insecure_registries[i]);
+    }
+
     return;
 }
 

@@ -1334,6 +1334,7 @@ static struct linked_list *get_image_layers(const char *top_lid)
         work->elem = (void *)parent;
         linked_list_add_tail(head, work);
         l = layer_store_lookup(parent);
+        free(parent);
         parent = NULL;
         if (l == NULL) {
             break;

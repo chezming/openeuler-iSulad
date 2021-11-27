@@ -1432,7 +1432,6 @@ static void copy_json_to_layer(const layer_t *jl, struct layer *l)
 int layer_store_list(struct layer_list *resp)
 {
     struct linked_list *item = NULL;
-    struct linked_list *next = NULL;
     size_t i = 0;
     int ret = 0;
 
@@ -1452,7 +1451,7 @@ int layer_store_list(struct layer_list *resp)
         goto unlock;
     }
 
-    linked_list_for_each_safe(item, &(g_metadata.layers_list), next) {
+    linked_list_for_each(item, &(g_metadata.layers_list)) {
         layer_t *l = (layer_t *)item->elem;
         resp->layers[i] = util_common_calloc_s(sizeof(struct layer));
         if (resp->layers[i] == NULL) {
@@ -1473,7 +1472,6 @@ unlock:
 static int layers_by_digest_map(map_t *m, const char *digest, struct layer_list *resp)
 {
     struct linked_list *item = NULL;
-    struct linked_list *next = NULL;
     int ret = -1;
     digest_layer_t *id_list = NULL;
     size_t i = 0;
@@ -1495,7 +1493,7 @@ static int layers_by_digest_map(map_t *m, const char *digest, struct layer_list 
         goto free_out;
     }
 
-    linked_list_for_each_safe(item, &(id_list->layer_list), next) {
+    linked_list_for_each(item, &(id_list->layer_list)) {
         layer_t *l = NULL;
         resp->layers[i] = util_common_calloc_s(sizeof(struct layer));
         if (resp->layers[i] == NULL) {
@@ -1822,7 +1820,6 @@ static int load_layers_from_json_files()
 {
     int ret = 0;
     struct linked_list *item = NULL;
-    struct linked_list *next = NULL;
     bool should_save = false;
 
     if (!layer_store_lock(true)) {
@@ -1834,7 +1831,7 @@ static int load_layers_from_json_files()
         goto unlock_out;
     }
 
-    linked_list_for_each_safe(item, &(g_metadata.layers_list), next) {
+    linked_list_for_each(item, &(g_metadata.layers_list)) {
         layer_t *tl = (layer_t *)item->elem;
         size_t i = 0;
 

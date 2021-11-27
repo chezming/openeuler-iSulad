@@ -129,7 +129,7 @@ sysinfo_t *get_sys_info(bool quiet);
 
 char *get_default_huge_page_size(void);
 
-uint64_t get_default_total_mem_size(void);
+double get_default_total_mem_size(void);
 
 char *get_operating_system(void);
 

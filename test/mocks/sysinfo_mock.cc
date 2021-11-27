@@ -24,7 +24,7 @@ void MockSysinfo_SetMock(MockSysinfo *mock)
     g_sysinfo_mock = mock;
 }
 
-uint64_t get_default_total_mem_size(void)
+double get_default_total_mem_size(void)
 {
     if (g_sysinfo_mock != nullptr) {
         return g_sysinfo_mock->GetDefaultTotalMemSize();

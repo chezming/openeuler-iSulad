@@ -611,7 +611,6 @@ static int do_subscribe(const char *name, const types_timestamp_t *since, const 
     regex_t preg;
     regmatch_t regmatch = { 0 };
     struct linked_list *it = NULL;
-    struct linked_list *next = NULL;
     struct isulad_events_format *c_event = NULL;
 
     if (pthread_mutex_lock(&g_events_buffer.event_mutex)) {
@@ -619,7 +618,7 @@ static int do_subscribe(const char *name, const types_timestamp_t *since, const 
         return -1;
     }
 
-    linked_list_for_each_safe(it, &g_events_buffer.event_list, next) {
+    linked_list_for_each(it, &g_events_buffer.event_list) {
         c_event = (struct isulad_events_format *)it->elem;
 
         if (check_since_time(since, c_event) != 0) {

@@ -404,7 +404,7 @@ struct isula_info_response {
     char *no_proxy;
     char *driver_name;
     char *driver_status;
-    uint32_t total_mem;
+    double total_mem;
     uint32_t containers_num;
     uint32_t c_running;
     uint32_t c_paused;
@@ -412,6 +412,13 @@ struct isula_info_response {
     uint32_t images_num;
     uint32_t cpus;
     char *errmsg;
+    char **registry_mirrors;
+    size_t registry_mirrors_len;
+    char **insecure_registries;
+    size_t insecure_registries_len;
+    char **runtimes;
+    size_t runtimes_len;
+    char *default_runtime;
 };
 
 struct isula_update_request {
@@ -446,6 +453,8 @@ struct isula_create_image_response {
 };
 
 struct isula_list_images_request {
+    char *name;
+    char *tag;
     struct isula_filters *filters;
     // unuseful definition to avoid generate empty struct which will get 0 if we call sizeof
     char unuseful;

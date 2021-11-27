@@ -105,6 +105,8 @@ void map_free(map_t *map);
 
 void map_clear(map_t *map);
 
+map_t *map_copy(map_t *map, void *(*copy)(void *));
+
 #if defined(__cplusplus) || defined(c_plusplus)
 }
 #endif

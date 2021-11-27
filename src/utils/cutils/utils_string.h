@@ -85,6 +85,8 @@ char *util_str_token(char **input, const char *delimiter);
 
 char *util_marshal_string(const char *src);
 
+void util_reverse_string(char *s);
+
 #ifdef __cplusplus
 }
 #endif

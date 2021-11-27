@@ -136,7 +136,6 @@ static int gc_containers_to_disk()
     int ret = 0;
     size_t size = 0;
     struct linked_list *it = NULL;
-    struct linked_list *next = NULL;
     container_garbage_config_gc_containers_element **conts = NULL;
     container_garbage_config saves = { 0 };
 
@@ -153,7 +152,7 @@ static int gc_containers_to_disk()
             ERROR("Out of memory");
             return -1;
         }
-        linked_list_for_each_safe(it, &g_gc_containers.containers_list, next) {
+        linked_list_for_each(it, &g_gc_containers.containers_list) {
             conts[i] = (container_garbage_config_gc_containers_element *)it->elem;
             i++;
         }
@@ -174,12 +173,11 @@ bool gc_is_gc_progress(const char *id)
 {
     bool ret = false;
     struct linked_list *it = NULL;
-    struct linked_list *next = NULL;
     container_garbage_config_gc_containers_element *cont = NULL;
 
     gc_containers_lock();
 
-    linked_list_for_each_safe(it, &g_gc_containers.containers_list, next) {
+    linked_list_for_each(it, &g_gc_containers.containers_list) {
         cont = (container_garbage_config_gc_containers_element *)it->elem;
         if (strcmp(id, cont->id) == 0) {
             ret = true;
