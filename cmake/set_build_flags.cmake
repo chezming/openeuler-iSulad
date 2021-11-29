@@ -10,8 +10,8 @@ set(CMAKE_SHARED_LINKER_FLAGS "-Wl,-E -Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack
 set(CMAKE_EXE_LINKER_FLAGS "-Wl,-E -Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack -Wtrampolines -fPIE -pie")
 
 if (ISULAD_GCOV)
-    set(CMAKE_C_FLAGS_DEBUG "-Wall -fprofile-arcs -ftest-coverage")
-    set(CMAKE_CXX_FLAGS_DEBUG "-Wall -fprofile-arcs -ftest-coverage")
+    set(CMAKE_C_FLAGS_DEBUG "-Wall -fprofile-arcs -fdump-rtl-expand -ftest-coverage")
+    set(CMAKE_CXX_FLAGS_DEBUG "-Wall -fprofile-arcs -fdump-rtl-expand -ftest-coverage")
     message("-----CXXFLAGS: " ${CMAKE_CXX_FLAGS_DEBUG})
     message("------compile with gcov-------------")
     message("-----CFLAGS: " ${CMAKE_C_FLAGS_DEBUG})
