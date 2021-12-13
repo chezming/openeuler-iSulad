@@ -26,7 +26,8 @@ buildstatus=${builddir}/build.fail
 declare -a buildlogs
 build_log_crictl=${builddir}/build.crictl.log
 build_log_cni_plugins=${builddir}/build.cni_plugins.log
-buildlogs+=(${build_log_crictl} ${build_log_cni_plugins})
+build_log_cni_dnsname=${builddir}/build.cni_dnsname.log
+buildlogs+=(${build_log_crictl} ${build_log_cni_plugins} ${build_log_cni_dnsname})
 
 mkdir -p ${builddir}/bin
 mkdir -p ${builddir}/include
@@ -54,8 +55,19 @@ function make_cni_plugins()
     cd ~
     git clone https://gitee.com/duguhaotian/plugins.git
     cd plugins
-    git checkout -q "$CNI_PLUGINS_COMMIT"
-    ./build.sh
+    ./build_linux.sh
+    mkdir -p ${builddir}/cni/bin/
+    cp bin/* ${builddir}/cni/bin/
+}
+
+#install cni dnsname
+function make_cni_dnsname()
+{
+    cd ~
+    git clone https://gitee.com/zh_xiaoyu/dnsname.git
+    cd dnsname
+    git checkout v1.1.1
+    make
     mkdir -p ${builddir}/cni/bin/
     cp bin/* ${builddir}/cni/bin/
 }
@@ -77,6 +89,7 @@ function check_make_status()
 rm -rf ${buildstatus}
 check_make_status make_crictl ${build_log_crictl} &
 check_make_status make_cni_plugins ${build_log_cni_plugins} &
+check_make_status make_cni_dnsname ${build_log_cni_dnsname} &
 
 # install lxc
 cd ~

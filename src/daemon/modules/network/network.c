@@ -34,16 +34,21 @@ struct net_ops {
 
     // operators for network plane
     int (*attach)(const network_api_conf *conf, network_api_result_list *result);
+    int (*check)(const network_api_conf *conf, network_api_result_list *result);
     int (*detach)(const network_api_conf *conf, network_api_result_list *result);
 
     // operators for network configs
-    int (*conf_create)(const network_create_request *request, network_create_response **response);
+    int (*conf_create)(const network_create_request *request, char **name, uint32_t *cc);
     int (*conf_inspect)(const char *name, char **network_json);
     int (*conf_list)(const struct filters_args *filters, network_network_info ***networks, size_t *networks_len);
     int (*conf_rm)(const char *name, char **res_name);
 
-    bool (*check)(void);
+    bool (*ready)(void);
     int (*update)(void);
+
+    bool (*exist)(const char *name);
+
+    int (*add_cont)(const char *network_name, const char *cont_id);
 
     void (*destroy)(void);
 };
@@ -56,26 +61,32 @@ struct net_type {
 static const struct net_ops g_cri_ops = {
     .init = adaptor_cni_init_confs,
     .attach = adaptor_cni_setup,
+    .check = adaptor_cni_check,
     .detach = adaptor_cni_teardown,
     .conf_create = NULL,
     .conf_inspect = NULL,
     .conf_list = NULL,
     .conf_rm = NULL,
-    .check = adaptor_cni_check_inited,
+    .ready = adaptor_cni_check_inited,
     .update = adaptor_cni_update_confs,
+    .exist = NULL,
+    .add_cont = NULL,
     .destroy = NULL,
 };
 
 static const struct net_ops g_native_ops = {
     .init = native_init,
     .attach = native_attach_networks,
+    .check = NULL,
     .detach = native_detach_networks,
     .conf_create = native_config_create,
     .conf_inspect = native_config_inspect,
     .conf_list = native_config_list,
     .conf_rm = native_config_remove,
-    .check = native_check,
+    .ready = native_ready,
     .update = NULL,
+    .exist = native_network_exist,
+    .add_cont = native_network_add_container_list,
     .destroy = native_destory,
 };
 
@@ -152,6 +163,20 @@ static inline int do_annotation_insert(const char *key, const char *val, network
         return 0;
     }
 
+    if (conf == NULL) {
+        ERROR("invalid argument");
+        return -1;
+    }
+
+    if (conf->annotations == NULL) {
+        conf->annotations = map_new(MAP_STR_STR, MAP_DEFAULT_CMP_FUNC, MAP_DEFAULT_FREE_FUNC);;
+    }
+
+    if (conf->annotations == NULL) {
+        ERROR("Out of memory");
+        return -1;
+    }
+
     if (!map_replace(conf->annotations, (void *)key, (void *)val)) {
         ERROR("add %s into annotation failed", key);
         return -1;
@@ -167,7 +192,7 @@ int network_module_insert_portmapping(const char *val, network_api_conf *conf)
 
 int network_module_insert_bandwith(const char *val, network_api_conf *conf)
 {
-    return do_annotation_insert(CNI_ARGS_PORTMAPPING_KEY, val, conf);
+    return do_annotation_insert(CNI_ARGS_BANDWIDTH_KEY, val, conf);
 }
 
 int network_module_insert_iprange(const char *val, network_api_conf *conf)
@@ -189,11 +214,11 @@ int network_module_attach(const network_api_conf *conf, const char *type, networ
 
     pnet = get_net_by_type(type);
     if (pnet == NULL || pnet->ops->attach == NULL) {
-        ERROR("net type: %s unsupport attach", type);
+        ERROR("net type: %s unsupported attach", type);
         return -1;
     }
 
-    if (conf->extral_nets_len > MAX_CONFIG_FILE_COUNT) {
+    if (conf->extral_nets_len > MAX_NETWORK_CONFIG_FILE_COUNT) {
         ERROR("Too large extral networks to attach");
         return -1;
     }
@@ -207,9 +232,48 @@ int network_module_attach(const network_api_conf *conf, const char *type, networ
     if (ret != 0) {
         free_network_api_result_list(*result);
         *result = NULL;
-        ERROR("do attach to network panes failed");
+        ERROR("do attach to network planes failed");
     }
     EVENT("Event: {Object: network, Type: attached, Target: %s}", conf->pod_id);
+
+    return ret;
+}
+
+int network_module_check(const network_api_conf *conf, const char *type, network_api_result_list **result)
+{
+    const struct net_type *pnet = NULL;
+    int ret = 0;
+
+    if (conf == NULL || result == NULL) {
+        ERROR("Invalid arguments");
+        return -1;
+    }
+
+    EVENT("Event: {Object: network, Type: checking, Target: %s}", conf->pod_id);
+
+    pnet = get_net_by_type(type);
+    if (pnet == NULL || pnet->ops->check == NULL) {
+        ERROR("net type: %s unsupported check", type);
+        return -1;
+    }
+
+    if (conf->extral_nets_len > MAX_NETWORK_CONFIG_FILE_COUNT) {
+        ERROR("Too large extral networks to attach");
+        return -1;
+    }
+    *result = util_common_calloc_s(sizeof(network_api_result_list));
+    if (*result == NULL) {
+        ERROR("Out of memory");
+        return -1;
+    }
+
+    ret = pnet->ops->check(conf, *result);
+    if (ret != 0) {
+        free_network_api_result_list(*result);
+        *result = NULL;
+        ERROR("do check to network panes failed");
+    }
+    EVENT("Event: {Object: network, Type: checked, Target: %s}", conf->pod_id);
 
     return ret;
 }
@@ -228,7 +292,7 @@ int network_module_detach(const network_api_conf *conf, const char *type)
 
     pnet = get_net_by_type(type);
     if (pnet == NULL || pnet->ops->detach == NULL) {
-        ERROR("net type: %s, unsupport detach", type);
+        ERROR("net type: %s, unsupported detach", type);
         return -1;
     }
 
@@ -238,26 +302,24 @@ int network_module_detach(const network_api_conf *conf, const char *type)
     return ret;
 }
 
-int network_module_conf_create(const char *type, const network_create_request *request,
-                               network_create_response **response)
+int network_module_conf_create(const char *type, const network_create_request *request, char **name, uint32_t *cc)
 {
     const struct net_type *pnet = NULL;
     int ret = 0;
 
-    if (request == NULL || response == NULL) {
+    if (request == NULL || name == NULL || cc == NULL) {
         ERROR("Invalid arguments");
         return -1;
     }
-    EVENT("Event: {Object: network, Type: creating, Target: %s}", request->name);
 
     pnet = get_net_by_type(type);
     if (pnet == NULL || pnet->ops->conf_create == NULL) {
-        ERROR("Type: %s net, unsupport config create", type);
+        ERROR("Type: %s net, unsupported config create", type);
         return -1;
     }
 
-    ret = pnet->ops->conf_create(request, response);
-    EVENT("Event: {Object: network, Type: created, Target: %s}", request->name);
+    ret = pnet->ops->conf_create(request, name, cc);
+
     return ret;
 }
 
@@ -270,16 +332,15 @@ int network_module_conf_inspect(const char *type, const char *name, char **netwo
         ERROR("Invalid arguments");
         return -1;
     }
-    EVENT("Event: {Object: network, Type: inspecting, Target: %s}", name);
 
     pnet = get_net_by_type(type);
     if (pnet == NULL || pnet->ops->conf_inspect == NULL) {
-        ERROR("Type: %s net, unsupport config inspect", type);
+        ERROR("Type: %s net, unsupported config inspect", type);
         return -1;
     }
 
     ret = pnet->ops->conf_inspect(name, network_json);
-    EVENT("Event: {Object: network, Type: inspected, Target: %s}", name);
+
     return ret;
 }
 
@@ -293,16 +354,15 @@ int network_module_conf_list(const char *type, const struct filters_args *filter
         ERROR("Invalid arguments");
         return -1;
     }
-    EVENT("Event: {Object: network, Type: listing}");
 
     pnet = get_net_by_type(type);
     if (pnet == NULL || pnet->ops->conf_list == NULL) {
-        ERROR("Type: %s net, unsupport config list", type);
+        ERROR("Type: %s net, unsupported config list", type);
         return -1;
     }
 
     ret = pnet->ops->conf_list(filters, networks, networks_len);
-    EVENT("Event: {Object: network, Type: listed}");
+
     return ret;
 }
 
@@ -316,31 +376,28 @@ int network_module_conf_rm(const char *type, const char *name, char **res_name)
         return -1;
     }
 
-    EVENT("Event: {Object: network, Type: removing, Target: %s}", name);
-
     pnet = get_net_by_type(type);
     if (pnet == NULL || pnet->ops->conf_rm == NULL) {
-        ERROR("Type: %s net, unsupport config remove", type);
+        ERROR("Type: %s net, unsupported config remove", type);
         return -1;
     }
 
     ret = pnet->ops->conf_rm(name, res_name);
-    EVENT("Event: {Object: network, Type: removed, Target: %s}", name);
 
     return ret;
 }
 
-int network_module_check(const char *type)
+bool network_module_ready(const char *type)
 {
     const struct net_type *pnet = NULL;
 
     pnet = get_net_by_type(type);
     if (pnet == NULL) {
-        ERROR("Unsupport net type: %s", type);
+        ERROR("Unsupported net type: %s", type);
         return -1;
     }
 
-    return pnet->ops->check();
+    return pnet->ops->ready();
 }
 
 int network_module_update(const char *type)
@@ -349,7 +406,7 @@ int network_module_update(const char *type)
 
     pnet = get_net_by_type(type);
     if (pnet == NULL) {
-        ERROR("Unsupport net type: %s", type);
+        ERROR("Unsupported net type: %s", type);
         return -1;
     }
 
@@ -425,6 +482,8 @@ void free_network_api_result(struct network_api_result *ptr)
     ptr->mac = NULL;
     util_free_array_by_len(ptr->ips, ptr->ips_len);
     ptr->ips = NULL;
+    util_free_array_by_len(ptr->gateway, ptr->ips_len);
+    ptr->gateway = NULL;
     ptr->ips_len = 0;
     free(ptr);
 }
@@ -455,8 +514,8 @@ static inline size_t get_list_scale_size(size_t old_size)
         return 1;
     }
 
-    if (old_size << 1 > MAX_CONFIG_FILE_COUNT) {
-        return MAX_CONFIG_FILE_COUNT;
+    if (old_size << 1 > MAX_NETWORK_CONFIG_FILE_COUNT) {
+        return MAX_NETWORK_CONFIG_FILE_COUNT;
     }
 
     return old_size << 1;
@@ -488,7 +547,7 @@ bool network_api_result_list_append(struct network_api_result *result, network_a
             return false;
         }
 
-        // list capability less than MAX_CONFIG_FILE_COUNT(1024)
+        // list capability less than MAX_NETWORK_CONFIG_FILE_COUNT(1024)
         // so we do not need to check Overflow:
         // new_size * sizeof(*new_items) and list->len * sizeof(*list->items)
         if (util_mem_realloc((void **)&new_items, new_size * sizeof(*new_items), (void *)list->items,
@@ -529,10 +588,24 @@ struct network_api_result *network_parse_to_api_result(const char *name, const c
             ret = NULL;
             goto out;
         }
+        ret->gateway = util_smart_calloc_s(sizeof(char *), cni_result->ips_len);
+        if (ret->gateway == NULL) {
+            ERROR("Out of memory");
+            free_network_api_result(ret);
+            ret = NULL;
+            goto out;
+        }
         for (i = 0; i < cni_result->ips_len; i++) {
             ret->ips[ret->ips_len] = util_ipnet_to_string(cni_result->ips[i]->address);
             if (ret->ips[ret->ips_len] == NULL) {
                 WARN("ignore: parse cni result ip failed");
+                continue;
+            }
+            ret->gateway[ret->ips_len] = util_ip_to_string(cni_result->ips[i]->gateway, cni_result->ips[i]->gateway_len);
+            if (ret->gateway[ret->ips_len] == NULL) {
+                WARN("ignore: parse cni result gateway failed");
+                free(ret->ips[ret->ips_len]);
+                ret->ips[ret->ips_len] = NULL;
                 continue;
             }
             ret->ips_len += 1;
@@ -542,10 +615,45 @@ struct network_api_result *network_parse_to_api_result(const char *name, const c
     ret->name = util_strdup_s(name);
     ret->interface = util_strdup_s(interface);
     if (cni_result->interfaces_len > 0) {
-        ret->mac = util_strdup_s(cni_result->interfaces[0]->mac);
+        size_t i;
+        for (i = 0; i < cni_result->interfaces_len; i++) {
+            if (strcmp(cni_result->interfaces[i]->name, interface) != 0) {
+                continue;
+            }
+            ret->mac = util_strdup_s(cni_result->interfaces[i]->mac);
+            break;
+        }
+        if (i == cni_result->interfaces_len) {
+            WARN("Cannot find %s mac address", interface);
+        }
     }
 
 out:
     return ret;
 }
 
+int network_module_exist(const char *type, const char *name)
+{
+    const struct net_type *pnet = NULL;
+
+    pnet = get_net_by_type(type);
+    if (pnet == NULL || pnet->ops->exist == NULL) {
+        ERROR("net type: %s, unsupported exist", type);
+        return -1;
+    }
+
+    return pnet->ops->exist(name);
+}
+
+int network_module_container_list_add(const char *type, const char *network_name, const char *cont_id)
+{
+    const struct net_type *pnet = NULL;
+
+    pnet = get_net_by_type(type);
+    if (pnet == NULL || pnet->ops->add_cont == NULL) {
+        ERROR("net type: %s, unsupported container list add", type);
+        return -1;
+    }
+
+    return pnet->ops->add_cont(network_name, cont_id);
+}

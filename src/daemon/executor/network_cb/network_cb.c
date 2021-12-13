@@ -23,10 +23,11 @@
 #include "err_msg.h"
 #include "isula_libutils/log.h"
 #include "utils_network.h"
+#include "service_container_api.h"
 
 const char *g_accept_network_filter[] = { "name", "plugin", NULL };
 
-pthread_rwlock_t network_rwlock = PTHREAD_RWLOCK_INITIALIZER;
+static pthread_rwlock_t g_network_rwlock = PTHREAD_RWLOCK_INITIALIZER;
 enum lock_type { SHARED = 0, EXCLUSIVE };
 
 static inline bool network_conflist_lock(enum lock_type type)
@@ -34,9 +35,9 @@ static inline bool network_conflist_lock(enum lock_type type)
     int nret = 0;
 
     if (type == SHARED) {
-        nret = pthread_rwlock_rdlock(&network_rwlock);
+        nret = pthread_rwlock_rdlock(&g_network_rwlock);
     } else {
-        nret = pthread_rwlock_wrlock(&network_rwlock);
+        nret = pthread_rwlock_wrlock(&g_network_rwlock);
     }
     if (nret != 0) {
         ERROR("Lock network list failed: %s", strerror(nret));
@@ -50,24 +51,10 @@ static inline void network_conflist_unlock()
 {
     int nret = 0;
 
-    nret = pthread_rwlock_unlock(&network_rwlock);
+    nret = pthread_rwlock_unlock(&g_network_rwlock);
     if (nret != 0) {
         FATAL("Unlock network list failed: %s", strerror(nret));
     }
-}
-
-static bool network_is_valid_name(const char *name)
-{
-    if (strnlen(name, MAX_NETWORK_NAME_LEN + 1) > MAX_NETWORK_NAME_LEN) {
-        isulad_set_error_message("Network name \"%s\" too long, max length:%d", name, MAX_NETWORK_NAME_LEN);
-        return false;
-    }
-    if (!util_validate_network_name(name)) {
-        isulad_set_error_message("Invalid network name:%s, only %s are allowed", name, NETWORK_VALID_NAME_CHARS);
-        return false;
-    }
-
-    return true;
 }
 
 static int check_parameter(const network_create_request *request)
@@ -77,7 +64,8 @@ static int check_parameter(const network_create_request *request)
     size_t ip_len = 0;
     struct ipnet *net = NULL;
 
-    if (request->name != NULL && !network_is_valid_name(request->name)) {
+    if (request->name != NULL && !util_validate_network_name(request->name)) {
+        isulad_set_error_message("Invalid network name %s", request->name);
         return EINVALIDARGS;
     }
 
@@ -123,6 +111,7 @@ out:
 static int network_create_cb(const network_create_request *request, network_create_response **response)
 {
     int ret = 0;
+    uint32_t cc = ISULAD_SUCCESS;
 
     if (request == NULL || response == NULL) {
         ERROR("Invalid input arguments");
@@ -138,23 +127,24 @@ static int network_create_cb(const network_create_request *request, network_crea
 
     ret = check_parameter(request);
     if (ret != 0) {
+        cc = ISULAD_ERR_INPUT;
+        ERROR("check network parameter failed");
         goto out;
     }
 
     network_conflist_lock(EXCLUSIVE);
 
-    ret = network_module_conf_create(NETWOKR_API_TYPE_NATIVE, request, response);
+    ret = network_module_conf_create(NETWOKR_API_TYPE_NATIVE, request, &(*response)->name, &cc);
 
     network_conflist_unlock();
 
 out:
-    if (ret != 0) {
-        (*response)->cc = ISULAD_ERR_INPUT;
-        if (g_isulad_errmsg != NULL) {
-            (*response)->errmsg = util_strdup_s(g_isulad_errmsg);
-            DAEMON_CLEAR_ERRMSG();
-        }
+    (*response)->cc = cc;
+    if (g_isulad_errmsg != NULL) {
+        (*response)->errmsg = util_strdup_s(g_isulad_errmsg);
+        DAEMON_CLEAR_ERRMSG();
     }
+
     return ret;
 }
 
@@ -184,7 +174,8 @@ static int network_inspect_cb(const network_inspect_request *request, network_in
         goto out;
     }
 
-    if (!network_is_valid_name(request->name)) {
+    if (!util_validate_network_name(request->name)) {
+        isulad_set_error_message("Invalid network name %s", request->name);
         cc = ISULAD_ERR_INPUT;
         ret = EINVALIDARGS;
         goto out;
@@ -214,7 +205,7 @@ static int do_add_filters(const char *filter_key, const json_map_string_bool *fi
 
     for (i = 0; i < filter_value->len; i++) {
         if (strcmp(filter_key, "name") == 0) {
-            if (!network_is_valid_name(filter_value->keys[i])) {
+            if (!util_validate_network_name(filter_value->keys[i])) {
                 ERROR("Unrecognised filter value for name: %s", filter_value->keys[i]);
                 isulad_set_error_message("Unrecognised filter value for name: %s", filter_value->keys[i]);
                 return -1;
@@ -321,7 +312,8 @@ static int network_remove_cb(const network_remove_request *request, network_remo
         return ECOMMON;
     }
 
-    if (!network_is_valid_name(request->name)) {
+    if (!util_validate_network_name(request->name)) {
+        isulad_set_error_message("Invalid network name %s", request->name);
         cc = ISULAD_ERR_INPUT;
         ret = EINVALIDARGS;
         goto out;
@@ -330,6 +322,8 @@ static int network_remove_cb(const network_remove_request *request, network_remo
     ret = network_module_conf_rm(NETWOKR_API_TYPE_NATIVE, request->name, &(*response)->name);
     if (ret != 0) {
         cc = ISULAD_ERR_EXEC;
+        ret = ECOMMON;
+        goto out;
     }
 
 out:

@@ -26,7 +26,6 @@
 extern "C" {
 #endif
 
-#define MAX_CONFIG_FILE_COUNT 1024
 // support network type
 #define NETWOKR_API_TYPE_NATIVE "native"
 #define NETWOKR_API_TYPE_CRI "cri"
@@ -61,6 +60,7 @@ struct network_api_result {
     char *interface;
 
     char **ips;
+    char **gateway;
     size_t ips_len;
     char *mac;
 };
@@ -83,10 +83,11 @@ bool network_module_init(const char *network_plugin, const char *cache_dir, cons
 
 int network_module_attach(const network_api_conf *conf, const char *type, network_api_result_list **result);
 
+int network_module_check(const network_api_conf *conf, const char *type, network_api_result_list **result);
+
 int network_module_detach(const network_api_conf *conf, const char *type);
 
-int network_module_conf_create(const char *type, const network_create_request *request,
-                               network_create_response **response);
+int network_module_conf_create(const char *type, const network_create_request *request, char **name, uint32_t *cc);
 
 int network_module_conf_inspect(const char *type, const char *name, char **network_json);
 
@@ -95,7 +96,7 @@ int network_module_conf_list(const char *type, const struct filters_args *filter
 
 int network_module_conf_rm(const char *type, const char *name, char **res_name);
 
-int network_module_check(const char *type);
+bool network_module_ready(const char *type);
 
 int network_module_update(const char *type);
 
@@ -106,6 +107,10 @@ int network_module_insert_portmapping(const char *val, network_api_conf *conf);
 int network_module_insert_bandwith(const char *val, network_api_conf *conf);
 
 int network_module_insert_iprange(const char *val, network_api_conf *conf);
+
+int network_module_exist(const char *type, const char *name);
+
+int network_module_container_list_add(const char *type, const char *network_name, const char *cont_id);
 
 #ifdef __cplusplus
 }

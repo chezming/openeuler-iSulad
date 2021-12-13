@@ -32,6 +32,7 @@
 #include <errno.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <sys/types.h>
 
 #include "isula_libutils/log.h"
 #include "utils.h"
@@ -40,12 +41,25 @@
 #include "utils_fs.h"
 #include "utils_file.h"
 #include "constants.h"
+#include "namespace.h"
+
+#define IPV4_TO_V6_EMPTY_PREFIX_BYTES 12
+#define MAX_INTERFACE_NAME_LENGTH 15
+#define MAX_UINT_LEN 3
+// IPV6 max address "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"
+#define IPV6_MAX_ADDR_LEN 40
+const char g_HEX_DICT[16] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
 
 int util_create_netns_file(const char *netns_path)
 {
     int ret = 0;
     int fd = -1;
     char *netns_dir = NULL;
+
+    if (netns_path == NULL) {
+        ERROR("Invalid netns path");
+        return -1;
+    }
 
     if (util_file_exists(netns_path)) {
         ERROR("Namespace file %s exists", netns_path);
@@ -165,13 +179,6 @@ int util_umount_namespace(const char *netns_path)
     ERROR("Failed to umount target %s", netns_path);
     return -1;
 }
-
-#define IPV4_TO_V6_EMPTY_PREFIX_BYTES 12
-#define MAX_INTERFACE_NAME_LENGTH 15
-#define MAX_UINT_LEN 3
-// IPV6 max address "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"
-#define IPV6_MAX_ADDR_LEN 40
-const char g_HEX_DICT[16] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
 
 void util_free_ipnet(struct ipnet *val)
 {
@@ -695,14 +702,27 @@ static void generate_ip_string(const uint8_t *ip, int e0, int e1, char **result)
         } else if (i > 0) {
             (*result)[j++] = ':';
         }
+        bool skip = true;
         int nret = (ip[i] >> 4);
-        (*result)[j++] = g_HEX_DICT[nret];
+        if (nret != 0) {
+            (*result)[j++] = g_HEX_DICT[nret];
+            skip = false;
+        }
         nret = (ip[i] & 0x0f);
-        (*result)[j++] = g_HEX_DICT[nret];
+        if (nret != 0 || !skip) {
+            (*result)[j++] = g_HEX_DICT[nret];
+            skip = false;
+        }
         nret = (ip[i + 1] >> 4);
-        (*result)[j++] = g_HEX_DICT[nret];
+        if (nret != 0 || !skip) {
+            (*result)[j++] = g_HEX_DICT[nret];
+            skip = false;
+        }
         nret = (ip[i + 1] & 0x0f);
-        (*result)[j++] = g_HEX_DICT[nret];
+        if (nret != 0 || !skip) {
+            (*result)[j++] = g_HEX_DICT[nret];
+            skip = false;
+        }
     }
     return;
 }
@@ -948,6 +968,11 @@ bool util_validate_network_name(const char *name)
         return false;
     }
 
+    if (strnlen(name, MAX_NETWORK_NAME_LEN + 1) > MAX_NETWORK_NAME_LEN) {
+        ERROR("Network name \"%s\" too long, max length:%d", name, MAX_NETWORK_NAME_LEN);
+        return false;
+    }
+
     if (util_reg_match(NETWORK_VALID_NAME_CHARS, name) != 0) {
         ERROR("invalid characters found in network name: %s", name);
         return false;
@@ -955,6 +980,18 @@ bool util_validate_network_name(const char *name)
 
     return true;
 }
+
+// ignore native network when network_mode != bridge or container is syscontainer
+bool util_native_network_checker(const char *network_mode, const bool system_container)
+{
+    return namespace_is_bridge(network_mode) && !system_container;
+}
+
+bool util_post_setup_network(const char *user_remap)
+{
+    return user_remap != NULL ? true : false;
+}
+
 
 static bool is_invalid_char(char c)
 {
@@ -1014,14 +1051,14 @@ bool util_validate_network_interface(const char *if_name)
 
 bool util_validate_ipv4_address(const char *ipv4)
 {
-    struct sockaddr_in sa;
+    struct in_addr sin_addr;
 
     if (ipv4 == NULL) {
         ERROR("missing ipv4 address");
         return false;
     }
 
-    if (inet_pton(AF_INET, ipv4, &sa.sin_addr) != 1) {
+    if (inet_pton(AF_INET, ipv4, &sin_addr) != 1) {
         return false;
     }
 
@@ -1030,14 +1067,14 @@ bool util_validate_ipv4_address(const char *ipv4)
 
 bool util_validate_ipv6_address(const char *ipv6)
 {
-    struct sockaddr_in sa;
+    struct in6_addr sin_addr;
 
     if (ipv6 == NULL) {
         ERROR("missing ipv6 address");
         return false;
     }
 
-    if (inet_pton(AF_INET6, ipv6, &sa.sin_addr) != 1) {
+    if (inet_pton(AF_INET6, ipv6, &sin_addr) != 1) {
         return false;
     }
 
@@ -1072,112 +1109,18 @@ bool util_validate_mac_address(const char *mac)
     return true;
 }
 
-bool util_parse_port_range(const char *ports, struct network_port *np)
+int util_reduce_ip_by_mask(const struct ipnet *val)
 {
-    char **parts = NULL;
-    bool ret = true;
+    size_t i;
 
-    if (ports == NULL || strlen(ports) == 0) {
-        ERROR("Empty string specified for ports");
-        return false;
+    if (val == NULL || val->ip_len != val->ip_mask_len) {
+        ERROR("Invalid ipnet");
+        return -1;
     }
 
-    if (strchr(ports, '-') == NULL) {
-        if (util_safe_uint64(ports, &np->start) != 0) {
-            ERROR("invalid port: %s", ports);
-            return false;
-        }
-        np->end = np->start;
-        return true;
+    for (i = 0; i < val->ip_len; i++) {
+        val->ip[i] = val->ip[i] & val->ip_mask[i];
     }
 
-    parts = util_string_split(ports, '-');
-    if (parts == NULL || util_array_len((const char **)parts) != 2) {
-        ERROR("Invalid port: %s", ports);
-        ret = false;
-        goto out;
-    }
-
-    if (util_safe_uint64(parts[0], &np->start) != 0) {
-        ERROR("Invalid port start: %s", parts[0]);
-        ret = false;
-        goto out;
-    }
-
-    if (util_safe_uint64(parts[0], &np->end) != 0) {
-        ERROR("Invalid port end: %s", parts[1]);
-        ret = false;
-        goto out;
-    }
-
-    if (np->start > np->end) {
-        ERROR("Invalid port : %s", ports);
-        ret = false;
-        goto out;
-    }
-
-out:
-    if (!ret) {
-        np->start = 0;
-        np->end = 0;
-    }
-    util_free_array(parts);
-    return ret;
-}
-
-bool util_new_network_port(const char *proto, const char *port, struct network_port **res)
-{
-#define MAX_PORT_LEN 128
-    struct network_port *work = NULL;
-    bool ret = true;
-    char buff[MAX_PORT_LEN] = { 0 };
-
-    if (res == NULL || port == NULL) {
-        ERROR("Invalid arguments");
-        return false;
-    }
-
-    work = util_common_calloc_s(sizeof(struct network_port));
-    if (work == NULL) {
-        ERROR("Out of memory");
-        return false;
-    }
-
-    if (!util_parse_port_range(port, work)) {
-        ret = false;
-        goto out;
-    }
-
-    if (work->start == work->end) {
-        ret = sprintf(buff, "%zu/%s", work->start, proto) > 0;
-    } else {
-        ret = sprintf(buff, "%zu-%zu/%s", work->start, work->end, proto) > 0;
-    }
-    if (!ret) {
-        ERROR("format port failed");
-        goto out;
-    }
-
-    work->format_str = util_strdup_s(buff);
-    work->proto = util_strdup_s(proto);
-
-    *res = work;
-    work = NULL;
-out:
-    util_free_network_port(work);
-    return ret;
-}
-
-void util_free_network_port(struct network_port *ptr)
-{
-    if (ptr == NULL) {
-        return;
-    }
-    free(ptr->format_str);
-    ptr->format_str = NULL;
-    free(ptr->proto);
-    ptr->proto = NULL;
-    ptr->start = 0;
-    ptr->end = 0;
-    free(ptr);
+    return 0;
 }

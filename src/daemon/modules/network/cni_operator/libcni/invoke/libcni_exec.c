@@ -35,6 +35,7 @@
 #include "utils.h"
 #include "libcni_errno.h"
 #include "libcni_result_parse.h"
+#include "err_msg.h"
 
 typedef struct _plugin_exec_args_t {
     const char *path;
@@ -210,9 +211,13 @@ static int do_parse_exec_stdout_str(int exec_ret, const char *cni_net_conf_json,
 {
     int ret = 0;
     char *version = NULL;
+    char *err_msg = NULL;
 
     if (exec_ret != 0) {
-        ERROR("raw exec failed: %s", str_cni_exec_error(e_err));
+        err_msg = str_cni_exec_error(e_err);
+        ERROR("raw exec failed: %s", err_msg);
+        isulad_append_error_message("raw exec failed: %s. ", err_msg);
+        ret = -1;
         goto out;
     }
 
@@ -234,6 +239,7 @@ static int do_parse_exec_stdout_str(int exec_ret, const char *cni_net_conf_json,
 
 out:
     free(version);
+    free(err_msg);
     return ret;
 }
 
@@ -256,11 +262,12 @@ static char *env_stringify(char *(*pargs)[2], size_t len)
         return NULL;
     }
 
-    if (len > (INT_MAX / sizeof(char *)) - 1) {
+    if (len > SIZE_MAX - 1) {
         ERROR("Too large arguments");
         return NULL;
     }
-    entries = util_common_calloc_s(sizeof(char *) * (len + 1));
+
+    entries = util_smart_calloc_s(sizeof(char *), (len + 1));
     if (entries == NULL) {
         ERROR("Out of memory");
         return NULL;
@@ -323,7 +330,7 @@ static int add_cni_envs(const struct cni_args *cniargs, size_t *pos, char **resu
     }
     result[i++] = buffer;
     buffer = NULL;
-    nret = asprintf(&buffer, "%s=%s", ENV_CNI_ARGS, plugin_args_str);
+    nret = asprintf(&buffer, "%s=%s", ENV_CNI_ARGS, plugin_args_str == NULL ? "" : plugin_args_str);
     if (nret < 0) {
         ERROR("Sprintf failed");
         goto free_out;
@@ -370,13 +377,13 @@ static char **as_env(const struct cni_args *cniargs)
 
     len = util_array_len((const char **)envir);
 
-    if (len > ((SIZE_MAX / sizeof(char *)) - (CNI_ENVS_LEN + 1))) {
+    if (len > (SIZE_MAX - (CNI_ENVS_LEN + 1))) {
         ERROR("Too large arguments");
         return NULL;
     }
 
     len += (CNI_ENVS_LEN + 1);
-    result = util_common_calloc_s(len * sizeof(char *));
+    result = util_smart_calloc_s(sizeof(char *), len);
     if (result == NULL) {
         ERROR("Out of memory");
         return NULL;
@@ -430,6 +437,7 @@ int exec_plugin_with_result(const char *plugin_path, const char *cni_net_conf_js
 
     ret = raw_exec(plugin_path, cni_net_conf_json, envs, &stdout_str, &e_err);
     DEBUG("Raw exec \"%s\" result: %d", plugin_path, ret);
+    DEBUG("Raw exec stdout: %s", stdout_str);
     ret = do_parse_exec_stdout_str(ret, cni_net_conf_json, e_err, stdout_str, result);
 out:
     free(stdout_str);
@@ -440,7 +448,9 @@ out:
 
 int exec_plugin_without_result(const char *plugin_path, const char *cni_net_conf_json, const struct cni_args *cniargs)
 {
+    char *err_msg = NULL;
     char **envs = NULL;
+    char *stdout_str = NULL;
     cni_exec_error *e_err = NULL;
     int ret = 0;
 
@@ -455,14 +465,19 @@ int exec_plugin_without_result(const char *plugin_path, const char *cni_net_conf
         }
     }
 
-    ret = raw_exec(plugin_path, cni_net_conf_json, envs, NULL, &e_err);
+    ret = raw_exec(plugin_path, cni_net_conf_json, envs, &stdout_str, &e_err);
     if (ret != 0) {
-        ERROR("raw exec failed: %s", str_cni_exec_error(e_err));
+        err_msg = str_cni_exec_error(e_err);
+        ERROR("raw exec failed: %s", err_msg);
+        isulad_append_error_message("raw exec failed: %s. ", err_msg);
     }
     DEBUG("Raw exec \"%s\" result: %d", plugin_path, ret);
+    DEBUG("Raw exec stdout: %s", stdout_str);
 out:
+    free(stdout_str);
     util_free_array(envs);
     free_cni_exec_error(e_err);
+    free(err_msg);
     return ret;
 }
 

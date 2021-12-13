@@ -24,13 +24,15 @@
 
 #include <isula_libutils/log.h>
 #include <isula_libutils/cni_anno_port_mappings.h>
+#include <isula_libutils/cni_ip_ranges_array.h>
+#include <isula_libutils/cni_bandwidth_entry.h>
 #include "cri_helpers.h"
 #include "cxxutils.h"
 #include "utils.h"
 #include "errors.h"
 #include "service_container_api.h"
+#include "service_network_api.h"
 #include "network_namespace_api.h"
-
 #include "network_api.h"
 #include "err_msg.h"
 
@@ -122,7 +124,7 @@ void CniNetworkPlugin::CheckInitialized(Errors &err)
         return;
     }
 
-    if (!network_module_check(NETWOKR_API_TYPE_CRI)) {
+    if (!network_module_ready(NETWOKR_API_TYPE_CRI)) {
         err.SetError("cni config uninitialized");
     }
 
@@ -267,18 +269,9 @@ free_out:
     free_cri_pod_network_container(networks);
 }
 
-static void PrepareAdaptorAnnotations(const std::map<std::string, std::string> &annos, network_api_conf *config,
-                                      Errors &err)
+static void InsertPortmappingIntoAdaptorAnnotations(const std::map<std::string, std::string> &annos,
+                                                    network_api_conf *config, Errors &err)
 {
-    if (config->annotations == nullptr) {
-        config->annotations = map_new(MAP_STR_STR, MAP_DEFAULT_CMP_FUNC, MAP_DEFAULT_FREE_FUNC);
-    }
-    if (config->annotations == nullptr) {
-        err.SetError("Out of memory");
-        ERROR("Out of memory");
-        return;
-    }
-
     auto iter = annos.find(CRIHelpers::Constants::POD_CHECKPOINT_KEY);
     std::string jsonCheckpoint;
 
@@ -344,14 +337,137 @@ free_out:
     free_cni_anno_port_mappings_container(cni_pms);
 }
 
+static void InsertBandWidthIntoAdaptorAnnotations(const std::map<std::string, std::string> &annos,
+                                                  network_api_conf *config, Errors &err)
+{
+    cni_bandwidth_entry bandwidth { 0 };
+
+    auto iter = annos.find(CRIHelpers::Constants::CNI_CAPABILITIES_BANDWIDTH_INGRESS_KEY);
+    if (iter != annos.end()) {
+        bandwidth.ingress_rate = CRIHelpers::ParseQuantity(iter->second, err);
+        if (err.NotEmpty()) {
+            ERROR("failed to get pod bandwidth from annotations: %s", err.GetCMessage());
+            return;
+        }
+        bandwidth.ingress_burst = INT32_MAX;
+    }
+    iter = annos.find(CRIHelpers::Constants::CNI_CAPABILITIES_BANDWIDTH_ENGRESS_KEY);
+    if (iter != annos.end()) {
+        bandwidth.egress_rate = CRIHelpers::ParseQuantity(iter->second, err);
+        if (err.NotEmpty()) {
+            ERROR("failed to get pod bandwidth from annotations: %s", err.GetCMessage());
+            return;
+        }
+        bandwidth.egress_burst = INT32_MAX;
+    }
+    parser_error jerr = nullptr;
+    struct parser_context ctx = { OPT_GEN_SIMPLIFY | OPT_GEN_KEY_VALUE, 0 };
+    char *bandwidth_str = cni_bandwidth_entry_generate_json(&bandwidth, &ctx, &jerr);
+    if (bandwidth_str == NULL) {
+        ERROR("generate bandwidth json failed: %s", jerr);
+        err.SetError("generate bandwidth json failed");
+        goto out;
+    }
+
+    if (network_module_insert_bandwith(bandwidth_str, config) != 0) {
+        err.SetError("set bandwidth for network config failed");
+        goto out;
+    }
+
+out:
+    free(jerr);
+    free(bandwidth_str);
+}
+
+static void PrepareAdaptorAnnotations(const std::map<std::string, std::string> &annos, network_api_conf *config,
+                                      Errors &err)
+{
+    if (config->annotations == nullptr) {
+        config->annotations = map_new(MAP_STR_STR, MAP_DEFAULT_CMP_FUNC, MAP_DEFAULT_FREE_FUNC);
+    }
+    if (config->annotations == nullptr) {
+        err.SetError("Out of memory");
+        ERROR("Out of memory");
+        return;
+    }
+
+    InsertPortmappingIntoAdaptorAnnotations(annos, config, err);
+    if (err.NotEmpty()) {
+        ERROR("Set port mapping failed");
+        return;
+    }
+
+    InsertBandWidthIntoAdaptorAnnotations(annos, config, err);
+    if (err.NotEmpty()) {
+        ERROR("Set bandwidth failed");
+    }
+}
+
+static void InsertIPRangesIntoAdaptorAnnotations(const std::string &podCidr, network_api_conf *config, Errors &err)
+{
+    cni_ip_ranges_array_container *ip_ranges = nullptr;
+
+    if (podCidr.empty()) {
+        return;
+    }
+    ip_ranges = static_cast<cni_ip_ranges_array_container *>(util_common_calloc_s(sizeof(cni_ip_ranges_array_container)));
+    if (ip_ranges == nullptr) {
+        ERROR("Out of memory");
+        err.SetError("Out of memory");
+        return;
+    }
+    parser_error jerr = nullptr;
+    char *tmpVal = nullptr;
+
+    ip_ranges->items = static_cast<cni_ip_ranges ***>(util_smart_calloc_s(sizeof(cni_ip_ranges **), 1));
+    if (ip_ranges->items == nullptr) {
+        ERROR("Out of memory");
+        err.SetError("Out of memory");
+        goto out;
+    }
+    ip_ranges->subitem_lens = static_cast<size_t *>(util_smart_calloc_s(sizeof(size_t), 1));
+    if (ip_ranges->subitem_lens == nullptr) {
+        ERROR("Out of memory");
+        err.SetError("Out of memory");
+        goto out;
+    }
+    ip_ranges->items[0] = static_cast<cni_ip_ranges **>(util_smart_calloc_s(sizeof(cni_ip_ranges *), 1));
+    if (ip_ranges->items[0] == nullptr) {
+        ERROR("Out of memory");
+        err.SetError("Out of memory");
+        goto out;
+    }
+    ip_ranges->items[0][0] = static_cast<cni_ip_ranges *>(util_common_calloc_s(sizeof(cni_ip_ranges)));
+    if (ip_ranges->items[0][0] == nullptr) {
+        ERROR("Out of memory");
+        err.SetError("Out of memory");
+        goto out;
+    }
+    ip_ranges->items[0][0]->subnet = util_strdup_s(podCidr.c_str());
+    tmpVal = cni_ip_ranges_array_container_generate_json(ip_ranges, NULL, &jerr);
+    if (tmpVal == nullptr) {
+        ERROR("generate ip range failed: %s", jerr);
+        err.SetError("generate ip range failed");
+        goto out;
+    }
+    if (network_module_insert_iprange(tmpVal, config) != 0) {
+        err.SetError("add ip ranges failed");
+    }
+
+out:
+    free_cni_ip_ranges_array_container(ip_ranges);
+    free(jerr);
+    free(tmpVal);
+}
+
 void BuildAdaptorCNIConfig(const std::string &ns, const std::string &defaultInterface, const std::string &name,
-                           const std::string &netnsPath, const std::string &podSandboxID,
+                           const std::string &netnsPath, const std::string &podSandboxID, const std::string &podCidr,
                            const std::map<std::string, std::string> &annotations,
                            const std::map<std::string, std::string> &options, network_api_conf **api_conf, Errors &err)
 {
     network_api_conf *config = nullptr;
 
-    config = (network_api_conf *)util_common_calloc_s(sizeof(network_api_conf));
+    config = static_cast<network_api_conf *>(util_common_calloc_s(sizeof(network_api_conf)));
     if (config == nullptr) {
         ERROR("Out of memory");
         err.SetError("Out of memory");
@@ -371,11 +487,14 @@ void BuildAdaptorCNIConfig(const std::string &ns, const std::string &defaultInte
     }
 
     // fill annotations for cni runtime config
-    // 1. portmappings;
-    // 2. iprange;
+    // 1. parse annotations configs(portmapping and bandwith etc..) into config;
     PrepareAdaptorAnnotations(annotations, config, err);
+    // 2. parse other configs into config;
+    InsertIPRangesIntoAdaptorAnnotations(podCidr, config, err);
 
-    config->name = util_strdup_s(name.c_str());
+    if (!name.empty()) {
+        config->name = util_strdup_s(name.c_str());
+    }
     config->ns = util_strdup_s(ns.c_str());
     config->pod_id = util_strdup_s(podSandboxID.c_str());
     config->netns_path = util_strdup_s(netnsPath.c_str());
@@ -418,10 +537,54 @@ cleanup:
     return result;
 }
 
+auto CniNetworkPlugin::GetNetworkSettingsJson(const std::string &podSandboxID, const std::string netnsPath,
+                                              network_api_result_list *result, Errors &err) -> std::string
+{
+    std::string json;
+    parser_error jerr { nullptr };
+    std::unique_ptr<char> setting_json;
+
+    if (result == nullptr) {
+        ERROR("Invalid input param, no network result to set");
+        return json;
+    }
+
+    container_network_settings *network_settings = static_cast<container_network_settings *>(util_common_calloc_s(sizeof(
+                                                                                                                      container_network_settings)));
+    if (network_settings == nullptr) {
+        err.SetError("Out of memory");
+        goto out;
+    }
+
+    network_settings->networks = static_cast<defs_map_string_object_networks *>(util_common_calloc_s(sizeof(
+                                                                                                         defs_map_string_object_networks)));
+    if (network_settings->networks == nullptr) {
+        err.SetError("Out of memory");
+        goto out;
+    }
+
+    if (cni_update_container_networks_info(result, podSandboxID.c_str(), netnsPath.c_str(), network_settings) != 0) {
+        err.SetError("Failed to update network setting");
+        goto out;
+    }
+
+    setting_json = std::unique_ptr<char>(container_network_settings_generate_json(network_settings, nullptr, &jerr));
+    if (setting_json == nullptr) {
+        err.Errorf("Get network settings json err:%s", jerr);
+        goto out;
+    }
+
+    json = setting_json.get();
+
+out:
+    free(jerr);
+    free_container_network_settings(network_settings);
+    return json;
+}
 
 void CniNetworkPlugin::SetUpPod(const std::string &ns, const std::string &name, const std::string &interfaceName,
                                 const std::string &id, const std::map<std::string, std::string> &annotations,
-                                const std::map<std::string, std::string> &options, Errors &err)
+                                const std::map<std::string, std::string> &options, std::string &network_settings_json, Errors &err)
 {
     DAEMON_CLEAR_ERRMSG();
     CheckInitialized(err);
@@ -441,7 +604,7 @@ void CniNetworkPlugin::SetUpPod(const std::string &ns, const std::string &name, 
     }
 
     network_api_conf *config = nullptr;
-    BuildAdaptorCNIConfig(ns, interfaceName, name, netnsPath, id, annotations, options, &config, err);
+    BuildAdaptorCNIConfig(ns, interfaceName, name, netnsPath, id, m_podCidr, annotations, options, &config, err);
     if (err.NotEmpty()) {
         ERROR("build network api config failed");
         return;
@@ -462,6 +625,8 @@ void CniNetworkPlugin::SetUpPod(const std::string &ns, const std::string &name, 
             err.Errorf("setup cni for container: %s failed", id.c_str());
         }
     }
+
+    network_settings_json = GetNetworkSettingsJson(id, netnsPath, result, err);
 
     UnlockNetworkMap(err);
     free_network_api_result_list(result);
@@ -497,7 +662,7 @@ void CniNetworkPlugin::TearDownPod(const std::string &ns, const std::string &nam
 
     std::map<std::string, std::string> tmpOpts;
     network_api_conf *config = nullptr;
-    BuildAdaptorCNIConfig(ns, interfaceName, name, netnsPath, id, annotations, tmpOpts, &config, err);
+    BuildAdaptorCNIConfig(ns, interfaceName, name, netnsPath, id, m_podCidr, annotations, tmpOpts, &config, err);
     if (err.NotEmpty()) {
         ERROR("build network api config failed");
         return;
@@ -558,38 +723,96 @@ void CniNetworkPlugin::Event(const std::string &name, std::map<std::string, std:
     SetPodCidr(iter->second);
 }
 
-void CniNetworkPlugin::GetPodNetworkStatus(const std::string & /*ns*/, const std::string & /*name*/,
+void CheckNetworkStatus(const std::string &ns, const std::string &name, const std::string &podCidr,
+                        const std::string &interfaceName, const std::string &netnsPath, const std::string &podSandboxID,
+                        std::vector<std::string> &ips, Errors &err)
+{
+    // int network_module_check(const network_api_conf *conf, const char *type, network_api_result_list **result);
+    network_api_conf *config = nullptr;
+    std::map<std::string, std::string> fakeMap;
+    BuildAdaptorCNIConfig(ns, interfaceName, name, netnsPath, podSandboxID, podCidr, fakeMap, fakeMap, &config, err);
+    if (err.NotEmpty()) {
+        ERROR("build network api config failed");
+        return;
+    }
+
+    network_api_result_list *result = nullptr;
+    if (err.NotEmpty()) {
+        ERROR("%s", err.GetCMessage());
+        goto out;
+    }
+
+    if (network_module_check(config, NETWOKR_API_TYPE_CRI, &result) != 0) {
+        if (g_isulad_errmsg != nullptr) {
+            err.SetError(g_isulad_errmsg);
+        } else {
+            err.Errorf("setup cni for container: %s failed", podSandboxID.c_str());
+        }
+        goto out;
+    }
+    for (size_t i = 0; i < result->len; i++) {
+        if (result->items[i]->interface == NULL) {
+            continue;
+        }
+        if (interfaceName != result->items[i]->interface) {
+            continue;
+        }
+        for (size_t j = 0; j < result->items[i]->ips_len; j++) {
+            ips.push_back(result->items[i]->ips[j]);
+        }
+        break;
+    }
+
+out:
+    free_network_api_result_list(result);
+    free_network_api_conf(config);
+}
+
+void CniNetworkPlugin::GetPodNetworkStatus(const std::string &ns, const std::string &name,
                                            const std::string &interfaceName, const std::string &podSandboxID,
                                            PodNetworkStatus &status, Errors &err)
 {
+    DAEMON_CLEAR_ERRMSG();
     std::string netnsPath;
-    std::vector<std::string> ips;
     Errors tmpErr;
 
     if (podSandboxID.empty()) {
         err.SetError("Empty podsandbox ID");
-        goto out;
+        return;
     }
 
+    // TODO: save netns path in container_t
     netnsPath = GetNetNS(podSandboxID, tmpErr);
     if (tmpErr.NotEmpty()) {
         err.Errorf("CNI failed to retrieve network namespace path: %s", tmpErr.GetCMessage());
-        goto out;
+        return;
     }
     if (netnsPath.empty()) {
         err.Errorf("Cannot find the network namespace, skipping pod network status for container %s",
                    podSandboxID.c_str());
-        goto out;
+        return;
     }
-    GetPodIP(m_nsenterPath, netnsPath, interfaceName, ips, err);
-    if (err.NotEmpty()) {
-        ERROR("GetPodIP failed: %s", err.GetCMessage());
-        goto out;
-    }
-    status.SetIPs(ips);
+    std::vector<std::string> ips;
 
+
+    RLockNetworkMap(err);
+    CheckNetworkStatus(ns, name, m_podCidr, interfaceName, netnsPath, podSandboxID, ips, err);
+    UnlockNetworkMap(err);
+
+    if (err.Empty()) {
+        goto out;
+    }
+    WARN("Get network status by check failed: %s", err.GetCMessage());
+    err.Clear();
+
+    GetPodIP(m_nsenterPath, netnsPath, interfaceName, ips, err);
+    if (!err.Empty()) {
+        ERROR("Get ip from plugin failed: %s", err.GetCMessage());
+        return;
+    }
 out:
     INFO("Get pod: %s network status success", podSandboxID.c_str());
+    status.SetIPs(ips);
 }
 
 void CniNetworkPlugin::RLockNetworkMap(Errors &error)

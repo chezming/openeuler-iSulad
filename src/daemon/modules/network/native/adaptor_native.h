@@ -13,14 +13,14 @@
  * Description: provide network callback function definition
  *******************************************************************************/
 
-#ifndef DAEMON_MODULES_ADAPTOR_NATIVE_H
-#define DAEMON_MODULES_ADAPTOR_NATIVE_H
+#ifndef DAEMON_MODULES_NETWORK_ADAPTOR_NATIVE_H
+#define DAEMON_MODULES_NETWORK_ADAPTOR_NATIVE_H
 
 #include "network_api.h"
 
-int native_init();
+int native_init(const char *conf_dir, const char **bin_paths, const size_t bin_paths_len);
 
-bool native_check();
+bool native_ready();
 
 void native_destory();
 
@@ -28,7 +28,9 @@ int native_attach_networks(const network_api_conf *conf, network_api_result_list
 
 int native_detach_networks(const network_api_conf *conf, network_api_result_list *result);
 
-int native_config_create(const network_create_request *request, network_create_response **response);
+bool native_network_exist(const char *name);
+
+int native_config_create(const network_create_request *request, char **name, uint32_t *cc);
 
 int native_config_inspect(const char *name, char **network_json);
 
@@ -36,4 +38,6 @@ int native_config_list(const struct filters_args *filters, network_network_info 
 
 int native_config_remove(const char *name, char **res_name);
 
-#endif // DAEMON_MODULES_API_NETWORK_CONFIG_H
+int native_network_add_container_list(const char *network_name, const char *cont_id);
+
+#endif // DAEMON_MODULES_NETWORK_ADAPTOR_NATIVE_H

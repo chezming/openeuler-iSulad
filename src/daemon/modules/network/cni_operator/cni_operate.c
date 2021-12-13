@@ -45,13 +45,25 @@ typedef struct cni_manager_store_t {
     struct cni_network_list_conf *loopback_conf;
 } cni_manager_store_t;
 
-#define LOOPBACK_CONFLIST_STR "{\"cniVersion\": \"0.3.0\", \"name\": \"cni-loopback\",\"plugins\":[{\"type\": \"loopback\" }]}"
+#define LOOPBACK_CONFLIST_STR "{\"cniVersion\": \"0.3.1\", \"name\": \"cni-loopback\",\"plugins\":[{\"type\": \"loopback\" }]}"
 
 static cni_manager_store_t g_cni_manager;
 
+static void parse_inner_portmapping(const cni_inner_port_mapping *src, struct cni_port_mapping *dst)
+{
+    if (src->protocol != NULL) {
+        dst->protocol = util_strdup_s(src->protocol);
+    }
+    if (src->host_ip != NULL) {
+        dst->host_ip = util_strdup_s(src->host_ip);
+    }
+    dst->container_port = src->container_port;
+    dst->host_port = src->host_port;
+}
+
 static int bandwidth_inject(const char *value, struct runtime_conf *rt)
 {
-    int ret = -1;
+    int ret = 0;
     parser_error err = NULL;
     struct parser_context ctx = { OPT_GEN_SIMPLIFY, 0 };
     cni_bandwidth_entry *bwith = NULL;
@@ -165,12 +177,29 @@ out:
 
 static int ip_ranges_inject(const char *value, struct runtime_conf *rt)
 {
+    int ret = -1;
+    parser_error err = NULL;
+    struct parser_context ctx = { OPT_GEN_SIMPLIFY, 0 };
+    cni_ip_ranges_array_container *ip_ranges = NULL;
+
     if (value == NULL || rt == NULL) {
         ERROR("Invalid input params");
         return -1;
     }
 
-    return 0;
+    ip_ranges = cni_ip_ranges_array_container_parse_data(value, &ctx, &err);
+    if (ip_ranges == NULL) {
+        ERROR("Failed to parse ip ranges data from value:%s, err:%s", value, err);
+        ret = -1;
+        goto out;
+    }
+
+    rt->ip_ranges = ip_ranges;
+    ip_ranges = NULL;
+
+out:
+    free(err);
+    return ret;
 }
 
 static struct anno_registry_conf_rt g_registrant_rt[] = {
@@ -503,16 +532,34 @@ out:
     return ret;
 }
 
+static int inject_cni_args_into_runtime_conf(const struct cni_manager *manager, struct runtime_conf *rt)
+{
+    size_t i = 0;
+
+    if (manager->cni_args == NULL || manager->cni_args->len == 0) {
+        WARN("No cni args found");
+        return 0;
+    }
+
+    rt->args = (char *(*)[2])util_smart_calloc_s(sizeof(char *) * 2, manager->cni_args->len);
+    if (rt->args == NULL) {
+        ERROR("Out of memory");
+        return -1;
+    }
+
+    rt->args_len = manager->cni_args->len;
+    for (i = 0; i < manager->cni_args->len; i++) {
+        rt->args[i][0] = util_strdup_s(manager->cni_args->keys[i]);
+        rt->args[i][1] = util_strdup_s(manager->cni_args->values[i]);
+    }
+
+    return 0;
+}
+
 static struct runtime_conf *build_cni_runtime_conf(const struct cni_manager *manager)
 {
     int ret = 0;
     struct runtime_conf *rt = NULL;
-    size_t i = 0;
-
-    if (manager->cni_args == NULL || manager->cni_args->len == 0) {
-        ERROR("No cni args found");
-        return NULL;
-    }
 
     rt = (struct runtime_conf *)util_smart_calloc_s(sizeof(struct runtime_conf), 1);
     if (rt == NULL) {
@@ -525,17 +572,10 @@ static struct runtime_conf *build_cni_runtime_conf(const struct cni_manager *man
     rt->netns = util_strdup_s(manager->netns_path);
     rt->ifname = util_strdup_s(manager->ifname);
 
-    rt->args = (char *(*)[2])util_smart_calloc_s(sizeof(char *) * 2, manager->cni_args->len);
-    if (rt->args == NULL) {
-        ERROR("Out of memory");
+    if (inject_cni_args_into_runtime_conf(manager, rt) != 0) {
+        ERROR("Inject cni args to runtime conf failed");
         ret = -1;
         goto out;
-    }
-
-    rt->args_len = manager->cni_args->len;
-    for (i = 0; i < manager->cni_args->len; i++) {
-        rt->args[i][0] = util_strdup_s(manager->cni_args->keys[i]);
-        rt->args[i][1] = util_strdup_s(manager->cni_args->values[i]);
     }
 
     if (inject_annotations_runtime_conf(manager->annotations, rt) != 0) {
@@ -583,6 +623,133 @@ out:
     return ret;
 }
 
+static int update_runtime_conf_portmappings_by_cached(cni_cached_info *info, struct runtime_conf *rc)
+{
+    size_t i = 0;
+    struct cni_port_mapping **tmp_ports = NULL;
+    size_t tmp_ports_len = 0;
+
+    if (info->port_mappings_len == 0) {
+        return 0;
+    }
+    tmp_ports = util_smart_calloc_s(sizeof(struct cni_port_mapping), info->port_mappings_len);
+    if (tmp_ports == NULL) {
+        ERROR("Out of memory");
+        return -1;
+    }
+
+    for (i = 0; i < info->port_mappings_len; i++) {
+        tmp_ports[i] = util_common_calloc_s(sizeof(struct cni_port_mapping));
+        if (tmp_ports[i] == NULL) {
+            ERROR("Out of memory");
+            goto err_out;
+        }
+        tmp_ports_len++;
+        parse_inner_portmapping(info->port_mappings[i], tmp_ports[i]);
+    }
+    for (i = 0; i < rc->p_mapping_len; i++) {
+        free_cni_port_mapping(rc->p_mapping[i]);
+    }
+    free(rc->p_mapping);
+    rc->p_mapping = tmp_ports;
+    rc->p_mapping_len = tmp_ports_len;
+    return 0;
+err_out:
+    for (i = 0; i < tmp_ports_len; i++) {
+        free_cni_port_mapping(tmp_ports[i]);
+    }
+    free(tmp_ports);
+    return -1;
+}
+
+static int update_runtime_conf_cni_args_by_cached(cni_cached_info *info, struct runtime_conf *rc)
+{
+    size_t i = 0;
+    char *(*tmp_args)[2] = NULL;
+
+    if (info->cni_args == NULL || info->cni_args->len == 0) {
+        return 0;
+    }
+    tmp_args = util_smart_calloc_s(sizeof(char *) * 2, info->cni_args->len);
+    if (tmp_args == NULL) {
+        ERROR("Out of memory");
+        return -1;
+    }
+
+    for (i = 0; i < info->cni_args->len; i++) {
+        tmp_args[i][0] = util_strdup_s(info->cni_args->keys[i]);
+        tmp_args[i][1] = util_strdup_s(info->cni_args->values[i]);
+    }
+
+    for (i = 0; i < rc->args_len; i++) {
+        free(rc->args[i][0]);
+        free(rc->args[i][1]);
+    }
+    free(rc->args);
+    rc->args = tmp_args;
+    rc->args_len = info->cni_args->len;
+    return 0;
+}
+
+static int get_configs_from_cached(const char *network, struct runtime_conf *rc, char **conf_list)
+{
+    int ret = 0;
+    cni_cached_info *info = NULL;
+
+    info = cni_get_network_list_cached_info(network, rc);
+    if (info == NULL) {
+        return 0;
+    }
+
+    // check cache data is valid
+    if (info->network_name == NULL || strcmp(network, info->network_name) != 0) {
+        WARN("Invalid cached config: %s, ignore it", info->network_name != NULL ? info->network_name : "");
+        goto out;
+    }
+
+    // step 1: update cni_args;
+    if (update_runtime_conf_cni_args_by_cached(info, rc) != 0) {
+        ret = -1;
+        goto out;
+    }
+    // step 2: update capabilities
+    // step 2.1: update portmappings
+    if (update_runtime_conf_portmappings_by_cached(info, rc) != 0) {
+        ret = -1;
+        goto out;
+    }
+    // step 2.2: update bandwidth
+    free_cni_bandwidth_entry(rc->bandwidth);
+    rc->bandwidth = info->bandwidth;
+    info->bandwidth = NULL;
+
+    // step 2.3: update ip ranges
+    if (info->ip_ranges != NULL && info->ip_ranges_len > 0) {
+        cni_ip_ranges_array_container *tmp_ip_ranges = util_common_calloc_s(sizeof(cni_ip_ranges_array_container));
+        if (tmp_ip_ranges == NULL) {
+            ERROR("Out of memory");
+            ret = -1;
+            goto out;
+        }
+        tmp_ip_ranges->items = info->ip_ranges;
+        info->ip_ranges = NULL;
+        tmp_ip_ranges->len = info->ip_ranges_len;
+        info->ip_ranges_len = 0;
+        tmp_ip_ranges->subitem_lens = info->ip_ranges_item_lens;
+        info->ip_ranges_item_lens = NULL;
+    }
+
+    // step 3: return config list string
+    if (conf_list != NULL) {
+        *conf_list = info->config;
+        info->config = NULL;
+    }
+
+out:
+    free_cni_cached_info(info);
+    return ret;
+}
+
 int attach_network_plane(const struct cni_manager *manager, const struct cni_network_list_conf *list,
                          struct cni_opt_result **result)
 {
@@ -620,14 +787,14 @@ out:
     return ret;
 }
 
-int detach_network_plane(const struct cni_manager *manager, const struct cni_network_list_conf *list,
-                         struct cni_opt_result **result)
+int check_network_plane(const struct cni_manager *manager, const struct cni_network_list_conf *list,
+                        struct cni_opt_result **result)
 {
     int ret = 0;
     struct runtime_conf *rc = NULL;
     struct cni_network_list_conf *use_list = NULL;
 
-    if (manager == NULL) {
+    if (manager == NULL || list == NULL || list->list == NULL) {
         ERROR("Invalid input params");
         return -1;
     }
@@ -635,6 +802,57 @@ int detach_network_plane(const struct cni_manager *manager, const struct cni_net
     rc = build_cni_runtime_conf(manager);
     if (rc == NULL) {
         ERROR("Error building CNI runtime config");
+        ret = -1;
+        goto out;
+    }
+
+    ret = get_configs_from_cached(list->list->name, rc, NULL);
+    if (ret != 0) {
+        ERROR("Get cached info failed");
+        ret = -1;
+        goto out;
+    }
+
+    if (inject_annotations_json(manager->annotations, list, &use_list) != 0) {
+        ERROR("Inject annotations to net conf json failed");
+        ret = -1;
+        goto out;
+    }
+
+    if (cni_check_network_list(list, rc, result) != 0) {
+        ERROR("Error deleting network");
+        ret = -1;
+        goto out;
+    }
+
+out:
+    free_runtime_conf(rc);
+    free_cni_network_list_conf(use_list);
+    return ret;
+}
+
+int detach_network_plane(const struct cni_manager *manager, const struct cni_network_list_conf *list,
+                         struct cni_opt_result **result)
+{
+    int ret = 0;
+    struct runtime_conf *rc = NULL;
+    struct cni_network_list_conf *use_list = NULL;
+
+    if (manager == NULL || list == NULL || list->list == NULL) {
+        ERROR("Invalid input params");
+        return -1;
+    }
+
+    rc = build_cni_runtime_conf(manager);
+    if (rc == NULL) {
+        ERROR("Error building CNI runtime config");
+        ret = -1;
+        goto out;
+    }
+
+    ret = get_configs_from_cached(list->list->name, rc, NULL);
+    if (ret != 0) {
+        ERROR("Get cached info failed");
         ret = -1;
         goto out;
     }
@@ -662,6 +880,11 @@ int detach_loopback(const char *id, const char *netns)
     int ret = 0;
     struct runtime_conf *rc = NULL;
 
+    if (id == NULL || netns == NULL) {
+        ERROR("Invalid input params");
+        return -1;
+    }
+
     rc = build_loopback_runtime_conf(id, netns);
     if (rc == NULL) {
         ERROR("Error building loopback runtime config");
@@ -678,23 +901,6 @@ int detach_loopback(const char *id, const char *netns)
 out:
     free_runtime_conf(rc);
     return ret;
-}
-
-void free_cni_manager(struct cni_manager *manager)
-{
-    if (manager == NULL) {
-        return;
-    }
-
-    UTIL_FREE_AND_SET_NULL(manager->id);
-    UTIL_FREE_AND_SET_NULL(manager->ifname);
-    UTIL_FREE_AND_SET_NULL(manager->netns_path);
-    map_free(manager->annotations);
-    manager->annotations = NULL;
-    free_json_map_string_string(manager->cni_args);
-    manager->cni_args = NULL;
-
-    free(manager);
 }
 
 int cni_manager_store_init(const char *cache_dir, const char *conf_path, const char * const *bin_paths,

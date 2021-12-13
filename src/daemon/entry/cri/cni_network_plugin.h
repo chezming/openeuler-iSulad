@@ -22,11 +22,14 @@
 #include <thread>
 #include <vector>
 
+#include <isula_libutils/container_inspect.h>
+
 #include "cri_runtime_service.h"
 #include "errors.h"
 #include "network_plugin.h"
 #include "utils.h"
 #include "isula_libutils/container_inspect.h"
+#include "network_api.h"
 
 namespace Network {
 #define UNUSED(x) ((void)(x))
@@ -53,7 +56,7 @@ public:
     void SetUpPod(const std::string &ns, const std::string &name,
                   const std::string &interfaceName, const std::string &podSandboxID,
                   const std::map<std::string, std::string> &annotations,
-                  const std::map<std::string, std::string> &options, Errors &error) override;
+                  const std::map<std::string, std::string> &options, std::string &network_settings_json, Errors &error) override;
 
     void TearDownPod(const std::string &ns, const std::string &name,
                      const std::string &interfaceName, const std::string &podSandboxID,
@@ -66,7 +69,8 @@ public:
 
 private:
     auto GetNetNS(const std::string &podSandboxID, Errors &err) -> std::string;
-
+    auto GetNetworkSettingsJson(const std::string &podSandboxID, const std::string netnsPath,
+                                network_api_result_list *result, Errors &err) -> std::string;
 
 private:
     virtual void PlatformInit(Errors &error);

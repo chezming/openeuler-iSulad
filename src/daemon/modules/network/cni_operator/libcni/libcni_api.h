@@ -19,7 +19,8 @@
 
 #include <isula_libutils/cni_bandwidth_entry.h>
 #include <isula_libutils/cni_cached_info.h>
-#include "isula_libutils/cni_net_conf_list.h"
+#include <isula_libutils/cni_net_conf_list.h>
+#include <isula_libutils/cni_ip_ranges_array.h>
 
 #include "libcni_result_type.h"
 
@@ -28,6 +29,10 @@ extern "C" {
 #endif
 
 #define CURRENT_VERSION "0.4.0"
+
+#define SUPPORT_CAPABILITY_PORTMAPPINGS "portMappings"
+#define SUPPORT_CAPABILITY_BANDWIDTH "bandwidth"
+#define SUPPORT_CAPABILITY_IPRANGES "ipRanges"
 
 struct cni_port_mapping {
     int32_t host_port;
@@ -47,6 +52,8 @@ struct runtime_conf {
     size_t p_mapping_len;
 
     cni_bandwidth_entry *bandwidth;
+
+    cni_ip_ranges_array_container *ip_ranges;
 };
 
 struct cni_network_conf {
@@ -66,14 +73,15 @@ bool cni_module_init(const char *cache_dir, const char * const *paths, size_t pa
 struct cni_opt_result *cni_get_network_list_cached_result(const struct cni_network_list_conf *list,
                                                           const struct runtime_conf *rc);
 
-cni_cached_info *cni_get_network_list_cached_info(const struct cni_network_list_conf *list, struct runtime_conf *rc);
+cni_cached_info *cni_get_network_list_cached_info(const char *network, const struct runtime_conf *rc);
 
 int cni_add_network_list(const struct cni_network_list_conf *list, const struct runtime_conf *rc,
                          struct cni_opt_result **pret);
 
 int cni_del_network_list(const struct cni_network_list_conf *list, const struct runtime_conf *rc);
 
-int cni_check_network_list(const struct cni_network_list_conf *list, const struct runtime_conf *rc);
+int cni_check_network_list(const struct cni_network_list_conf *list, const struct runtime_conf *rc,
+                           struct cni_opt_result **p_result);
 
 void free_cni_port_mapping(struct cni_port_mapping *val);
 

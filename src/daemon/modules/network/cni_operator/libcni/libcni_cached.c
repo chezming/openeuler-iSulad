@@ -150,6 +150,49 @@ out:
     return ret;
 }
 
+static int do_cache_insert_cni_args(const struct runtime_conf *rc, cni_cached_info *p_info)
+{
+    size_t i;
+    int ret = 0;
+    json_map_string_string *tmp_args = NULL;
+
+    if (rc->args_len == 0) {
+        return 0;
+    }
+
+    tmp_args = util_common_calloc_s(sizeof(json_map_string_string));
+    if (tmp_args == NULL) {
+        ret = -1;
+        ERROR("Out of memory");
+        goto free_out;
+    }
+    tmp_args->keys = util_smart_calloc_s(sizeof(char *), rc->args_len);
+    if (tmp_args->keys == NULL) {
+        ret = -1;
+        ERROR("Out of memory");
+        goto free_out;
+    }
+    tmp_args->values = util_smart_calloc_s(sizeof(char *), rc->args_len);
+    if (tmp_args->values == NULL) {
+        ret = -1;
+        ERROR("Out of memory");
+        goto free_out;
+    }
+
+    for (i = 0; i < rc->args_len; i++) {
+        tmp_args->keys[i] = util_strdup_s(rc->args[i][0]);
+        tmp_args->values[i] = util_strdup_s(rc->args[i][1]);
+        tmp_args->len += 1;
+    }
+
+    p_info->cni_args = tmp_args;
+    tmp_args = NULL;
+
+free_out:
+    free_json_map_string_string(tmp_args);
+    return ret;
+}
+
 int cni_cache_add(const char *cache_dir, const struct cni_opt_result *res, const char *config, const char *net_name,
                   const struct runtime_conf *rc)
 {
@@ -193,12 +236,17 @@ int cni_cache_add(const char *cache_dir, const struct cni_opt_result *res, const
     }
     // 2. add bandwidth
 
+    // 3. add cni args
+    if (do_cache_insert_cni_args(rc, p_info) != 0) {
+        ret = -1;
+        goto free_out;
+    }
+
     p_info->kind = util_strdup_s(CNI_CACHE_V1);
     p_info->container_id = util_strdup_s(rc->container_id);
     p_info->config = util_strdup_s(config);
     p_info->if_name = util_strdup_s(rc->ifname);
     p_info->network_name = util_strdup_s(net_name);
-    // TODO: support double array of string for cni args
 
     ret = do_save_cache(file_path, p_info);
 
@@ -224,7 +272,7 @@ int cni_cache_delete(const char *cache_dir, const char *net_name, const struct r
         return -1;
     }
 
-    if (!util_remove_file(file_path, &get_err)) {
+    if (!util_force_remove_file(file_path, &get_err)) {
         ERROR("Failed to delete %s, error: %s", file_path, strerror(get_err));
     }
 
@@ -252,20 +300,8 @@ cni_cached_info *cni_cache_read(const char *cache_dir, const char *net_name, con
     info = cni_cached_info_parse_file(file_path, &ctx, &jerr);
     if (info == NULL) {
         ERROR("Parse cache info failed: %s", jerr);
-        goto error_out;
     }
 
-    if (info->kind == NULL || strcmp(info->kind, CNI_CACHE_V1) != 0) {
-        ERROR("read cache network config has wrong kind: %s", info->kind);
-        goto error_out;
-    }
-
-    goto out;
-
-error_out:
-    free_cni_cached_info(info);
-    info = NULL;
-out:
     free(jerr);
     free(file_path);
     return info;
@@ -288,46 +324,54 @@ static bool do_check_version_of_result(const cni_cached_info *c_info, const char
     }
 
     if (strcmp(c_info->result->cni_version, hope_version) != 0) {
-        ERROR("no hope version of result");
+        ERROR("hope version: %s, but get: %s", hope_version, c_info->result->cni_version);
         return false;
     }
 
     return true;
 }
 
-struct cni_opt_result *cni_get_cached_result(const char *cache_dir, const char *net_name, const char *hope_version,
-                                             const struct runtime_conf *rc)
+int cni_get_cached_result(const char *cache_dir, const char *net_name, const char *hope_version,
+                          const struct runtime_conf *rc, struct cni_opt_result **result)
 {
     cni_cached_info *c_info = NULL;
     struct cni_opt_result *cached_res = NULL;
+    int ret = 0;
 
-    if (rc == NULL) {
+    if (rc == NULL || result == NULL) {
         ERROR("Empty return arguments");
-        return NULL;
+        return -1;
     }
 
     c_info = cni_cache_read(cache_dir, net_name, rc);
     if (c_info == NULL) {
-        ERROR("failed to unmarshal cached network: %s config", net_name);
+        // ignore read errors
+        WARN("failed to unmarshal cached network: %s config", net_name);
         goto out;
     }
 
     if (c_info->kind == NULL || strcmp(c_info->kind, CNI_CACHE_V1) != 0) {
         ERROR("read cached network: %s config has wrong kind: %s", net_name, c_info->kind);
+        ret = -1;
         goto out;
     }
 
     if (!do_check_version_of_result(c_info, hope_version)) {
+        ret = -1;
         goto out;
     }
 
     cached_res = copy_result_from_current(c_info->result);
     if (cached_res == NULL) {
+        ret = -1;
         ERROR("Parse result failed");
         goto out;
     }
 
+    *result = cached_res;
+    cached_res = NULL;
 out:
+    free_cni_opt_result(cached_res);
     free_cni_cached_info(c_info);
-    return cached_res;
+    return ret;
 }

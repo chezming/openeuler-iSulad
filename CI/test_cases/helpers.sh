@@ -176,6 +176,7 @@ function init_cni_conf()
     mkdir -p /opt/cni/bin
     cp $dtpath/bins/* /opt/cni/bin/
     cp $dtpath/good.conflist /etc/cni/net.d/
+    ls /etc/cni/net.d/
 
     check_valgrind_log
     if [ $? -ne 0 ]; then
@@ -280,3 +281,30 @@ function reinstall_thinpool()
     return 0
 }
 
+function wait_container_status()
+{
+    local cont="$1"
+    local status="$2"
+    local count=1
+    local flag=1
+    while [ $count -le 10 ]
+    do
+        local st=$(isula inspect -f {{.State.Status}} ${cont})
+        if [ "x$st" == "x$status" ]
+        then
+            return 0
+        fi
+        sleep 1
+        ((count++))
+    done
+    return 1
+}
+
+function do_pretest() {
+    msg_info "#### do pretest #####"
+    isula ps -a
+    isula network ls
+    msg_info "#####################"
+}
+
+do_pretest

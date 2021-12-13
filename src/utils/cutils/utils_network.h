@@ -46,13 +46,6 @@ struct ipnet {
     size_t ip_mask_len;
 };
 
-struct network_port {
-    char *format_str;
-    char *proto;
-    uint64_t start;
-    uint64_t end;
-};
-
 void util_free_ipnet(struct ipnet *val);
 
 int util_parse_ip_from_str(const char *addr, uint8_t **ips, size_t *len);
@@ -63,9 +56,15 @@ char *util_ipnet_to_string(const struct ipnet *value);
 
 char *util_ip_to_string(const uint8_t *ip, size_t len);
 
+int util_reduce_ip_by_mask(const struct ipnet *val);
+
 bool util_net_contain_ip(const struct ipnet *ipnet, const uint8_t *ip, const size_t ip_len, bool critical);
 
 bool util_validate_network_name(const char *name);
+
+bool util_native_network_checker(const char *network_mode, const bool system_container);
+
+bool util_post_setup_network(const char *user_remap);
 
 bool util_validate_network_interface(const char *if_name);
 
@@ -76,17 +75,6 @@ bool util_validate_ipv6_address(const char *ipv6);
 bool util_validate_ip_address(const char *ip);
 
 bool util_validate_mac_address(const char *mac);
-
-bool util_parse_port_range(const char *ports, struct network_port *np);
-
-/*
-* support format of port:
-* 1. 1-10;
-* 2. 8;
-*/
-bool util_new_network_port(const char *proto, const char *port, struct network_port **res);
-
-void util_free_network_port(struct network_port *ptr);
 
 #ifdef __cplusplus
 }
