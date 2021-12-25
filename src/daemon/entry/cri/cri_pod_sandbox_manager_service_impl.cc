@@ -166,6 +166,9 @@ void PodSandboxManagerServiceImpl::MakeSandboxIsuladConfig(const runtime::v1alph
         if (error.NotEmpty()) {
             return;
         }
+    } else {
+        free(hc->network_mode);
+        hc->network_mode = util_strdup_s(CRI::Constants::namespaceModeFile.c_str());
     }
 
     hc->oom_score_adj = CRI::Constants::PodInfraOOMAdj;
