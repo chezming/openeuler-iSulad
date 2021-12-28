@@ -137,6 +137,7 @@ cd ~
 if [ -d ./runc ];then
     rm -rf ./runc
 fi
+go env -w GO111MODULE="off"
 git clone https://gitee.com/src-openeuler/runc.git
 cd runc
 tfname=$(cat runc.spec | grep Source0 | awk -F '/' '{print $NF}')
