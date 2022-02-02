@@ -1705,6 +1705,9 @@ int generate_hostconfig(const isula_host_config_t *srcconfig, char **hostconfigs
     check_and_strdup_s(&dstconfig->user_remap, srcconfig->user_remap);
     check_and_strdup_s(&dstconfig->uts_mode, srcconfig->uts_mode);
     check_and_strdup_s(&dstconfig->pid_mode, srcconfig->pid_mode);
+    check_and_strdup_s(&dstconfig->ima_mode, srcconfig->ima_mode);
+    check_and_strdup_s(&dstconfig->ima_x509, srcconfig->ima_x509path);
+    check_and_strdup_s(&dstconfig->ima_kcmd, srcconfig->ima_kcmd);
     /* hook-spec file */
     check_and_strdup_s(&dstconfig->hook_spec, srcconfig->hook_spec);
     /* env target file */
@@ -1846,6 +1849,15 @@ void isula_host_config_free(isula_host_config_t *hostconfig)
 
     free(hostconfig->userns_mode);
     hostconfig->userns_mode = NULL;
+
+    free(hostconfig->ima_mode);
+    hostconfig->ima_mode = NULL;
+	
+    free(hostconfig->ima_x509path);
+    hostconfig->ima_x509path = NULL;
+	
+    free(hostconfig->ima_kcmd);
+    hostconfig->ima_kcmd = NULL;
 
     free(hostconfig->user_remap);
     hostconfig->user_remap = NULL;

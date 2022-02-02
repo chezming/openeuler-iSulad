@@ -30,6 +30,7 @@ typedef enum {
     NAMESPACE_IPC,
     NAMESPACE_NET,
     NAMESPACE_CGROUP,
+    NAMESPACE_IMA,
     NAMESPACE_MAX
 } Namespace_Type_t;
 
@@ -47,6 +48,7 @@ typedef enum {
 #define SHARE_NAMESPACE_MNT_HOST_PATH "/proc/1/ns/mnt"
 #define SHARE_NAMESPACE_USER_HOST_PATH "/proc/1/ns/user"
 #define SHARE_NAMESPACE_CGROUP_HOST_PATH "/proc/1/ns/cgroup"
+#define SHARE_NAMESPACE_IMA_HOST_PATH "/proc/1/ns/ima"
 
 #define TYPE_NAMESPACE_PID "pid"
 #define TYPE_NAMESPACE_NETWORK "network"
@@ -55,6 +57,7 @@ typedef enum {
 #define TYPE_NAMESPACE_MOUNT "mount"
 #define TYPE_NAMESPACE_USER "user"
 #define TYPE_NAMESPACE_CGROUP "cgroup"
+#define TYPE_NAMESPACE_IMA "ima"
 
 #define ETC_HOSTS "/etc/hosts"
 #define ETC_HOSTNAME "/etc/hostname"

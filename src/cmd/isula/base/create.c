@@ -1089,6 +1089,7 @@ static void request_pack_host_namespaces(const struct client_arguments *args, is
     hostconfig->uts_mode = util_strdup_s(args->custom_conf.share_ns[NAMESPACE_UTS]);
 
     hostconfig->pid_mode = util_strdup_s(args->custom_conf.share_ns[NAMESPACE_PID]);
+    hostconfig->ima_mode = util_strdup_s(args->custom_conf.share_ns[NAMESPACE_IMA]);
 
     if (args->custom_conf.share_ns[NAMESPACE_NET] == NULL) {
         return;
@@ -1180,6 +1181,10 @@ static isula_host_config_t *request_pack_host_config(const struct client_argumen
     /* user remap */
     hostconfig->user_remap = util_strdup_s(args->custom_conf.user_remap);
 
+    /* ima namespace */
+	hostconfig->ima_x509path = util_strdup_s(args->custom_conf.ima_x509path);
+	hostconfig->ima_kcmd = util_strdup_s(args->custom_conf.ima_kcmd);
+	
     /* auto remove */
     hostconfig->auto_remove = args->custom_conf.auto_remove;
 
@@ -2112,6 +2117,24 @@ static int create_check_network(const struct client_arguments *args)
     return 0;
 }
 
+static int create_ima_checker(const struct client_arguments *args)
+{
+        char *target_file = NULL;
+
+	if (args->custom_conf.ima_x509path != NULL) {
+		target_file = args->custom_conf.ima_x509path;
+		if (target_file[0] != '/') {
+	            COMMAND_ERROR("x509 file path must be absolute path");
+	            return -1;
+	        }
+        	if (!util_file_exists(target_file)) {
+	            COMMAND_ERROR("file(%s) not exist.",target_file);
+	            return -1;
+         	}
+	}
+
+	return 0;
+}
 static int create_hostname_checker(const struct client_arguments *args)
 {
     int ret = 0;
@@ -2424,6 +2447,11 @@ int create_checker(struct client_arguments *args)
     }
 
     if (create_check_user_remap(args)) {
+        ret = -1;
+        goto out;
+    }
+
+    if (create_ima_checker(args)) {
         ret = -1;
         goto out;
     }

@@ -48,6 +48,8 @@ char *namespace_get_host_namespace_path(const char *type)
         return util_strdup_s(SHARE_NAMESPACE_USER_HOST_PATH);
     } else if (strcmp(type, TYPE_NAMESPACE_CGROUP) == 0) {
         return util_strdup_s(SHARE_NAMESPACE_CGROUP_HOST_PATH);
+    } else if (strcmp(type, TYPE_NAMESPACE_IMA) == 0) {
+        return util_strdup_s(SHARE_NAMESPACE_IMA_HOST_PATH);
     }
     return NULL;
 }

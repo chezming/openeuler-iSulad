@@ -226,6 +226,12 @@ void client_arguments_free(struct client_arguments *args)
         custom_conf->share_ns[i] = NULL;
     }
 
+    free(custom_conf->ima_x509path);
+    custom_conf->ima_x509path = NULL;
+
+    free(custom_conf->ima_kcmd);
+    custom_conf->ima_kcmd = NULL;
+
     free(args->create_rootfs);
     args->create_rootfs = NULL;
 
