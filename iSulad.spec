@@ -1,5 +1,5 @@
 %global _version 2.1.0
-%global _release 1
+%global _release 2
 %global is_systemd 1
 
 Name:      iSulad
