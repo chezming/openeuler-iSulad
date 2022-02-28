@@ -24,6 +24,7 @@
 #include <list>
 #include <array>
 #include <thread>
+#include <array>
 #include <libwebsockets.h>
 #include "route_callback_register.h"
 #include "url.h"
