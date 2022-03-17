@@ -71,6 +71,12 @@ typedef struct isula_host_config {
 
     char *user_remap;
 
+    char *ima_mode;
+
+    /* ima namespace*/
+    char *ima_x509path;
+    char *ima_kcmd;
+
     char **ulimits;
     size_t ulimits_len;
 

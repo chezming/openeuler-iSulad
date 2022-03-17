@@ -188,6 +188,22 @@ extern "C" {
       NULL },                                                                                                                                             \
     { CMD_OPT_TYPE_STRING_DUP, false, "ipc", 0, &(cmdargs).custom_conf.share_ns[NAMESPACE_IPC],                                                           \
       "IPC namespace to use",  NULL },                                                                                                                    \
+    { CMD_OPT_TYPE_STRING_DUP, false, "ima", 0, &(cmdargs).custom_conf.share_ns[NAMESPACE_IMA], 														  \
+  	  "ima namespace to use",  NULL },																													  \
+    { CMD_OPT_TYPE_STRING,                                                                                                                                \
+      false,                                                                                                                                              \
+      "ima-x509",                                                                                                                                         \
+      0,                                                                                                                                                  \
+      &(cmdargs).custom_conf.ima_x509path,                                                                                                                \
+      "Set ima x509 path for container",                                                                                                                  \
+      NULL },  																																			  \
+    { CMD_OPT_TYPE_STRING,                                                                                                                                \
+      false,                                                                                                                                              \
+      "ima-kcmd",                                                                                                                                         \
+      0,                                                                                                                                                  \
+      &(cmdargs).custom_conf.ima_kcmd,                                                                                                                    \
+      "Set ima kcmd for container",                                                                                                                       \
+      NULL },  																																			  \
     { CMD_OPT_TYPE_CALLBACK,                                                                                                                              \
       false,                                                                                                                                              \
       "shm-size",                                                                                                                                         \

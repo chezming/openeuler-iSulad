@@ -161,6 +161,10 @@ struct custom_configs {
     /* namespace mode */
     char *share_ns[NAMESPACE_MAX];
 
+    /* ima namespace*/
+    char *ima_x509path;
+    char *ima_kcmd;
+
     /* work dir */
     char *workdir;
 

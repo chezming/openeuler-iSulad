@@ -904,6 +904,25 @@ static int merge_hostname(oci_runtime_spec *oci_spec, const host_config *host_sp
     return 0;
 }
 
+static int merge_oci_imans(oci_runtime_spec *oci_spec, const host_config *host_spec)
+{
+    int ret = 0;
+
+    ret = make_sure_oci_spec_linux(oci_spec);
+    if (ret < 0) {
+        return ret;
+    }
+
+	if (host_spec->ima_x509 != NULL) {
+		oci_spec->linux->ima_x509path = util_strdup_s(host_spec->ima_x509);
+	}
+
+	if (host_spec->ima_kcmd != NULL) {
+		oci_spec->linux->ima_kcmd_path = util_strdup_s(host_spec->ima_kcmd);
+	}
+
+	return 0;
+}
 static int merge_nanocpus(oci_runtime_spec *oci_spec, int64_t nanocpus)
 {
     int ret = 0;
@@ -1537,7 +1556,13 @@ int merge_share_namespace(oci_runtime_spec *oci_spec, const host_config *host_sp
         ret = -1;
         goto out;
     }
-
+	
+    // ima
+    if (merge_share_single_namespace(oci_spec, host_spec->ima_mode, TYPE_NAMESPACE_IMA) != 0) {
+        ret = -1;
+        goto out;
+    }
+	
     ret = 0;
 out:
     return ret;
@@ -2153,7 +2178,13 @@ int merge_all_specs(host_config *host_spec, const char *real_rootfs, container_c
             goto out;
         }
     }
-
+	
+    ret = merge_oci_imans(oci_spec, host_spec);
+    if (ret != 0) {
+        ERROR("Failed to make ima namespace for container");
+        goto out;
+    }
+	
     ret = merge_oci_cgroups_path(v2_spec->id, oci_spec, host_spec);
     if (ret != 0) {
         ERROR("Failed to make cgroup parent");
