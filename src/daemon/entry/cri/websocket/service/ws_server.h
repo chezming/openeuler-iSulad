@@ -22,6 +22,7 @@
 #include <atomic>
 #include <memory>
 #include <list>
+#include <array>
 #include <thread>
 #include <array>
 #include <libwebsockets.h>
