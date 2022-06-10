@@ -144,7 +144,7 @@ static char **hold_string_list(char **line, char *buf_start, char *buf_end, cons
 
     for (; walker < (char **)buf_end; ++walker) {
         if (**line == '\0') {
-            return result;
+            goto out;
         }
 
         (void)util_trim_space(*line);
@@ -154,7 +154,8 @@ static char **hold_string_list(char **line, char *buf_start, char *buf_end, cons
             return NULL;
         }
     }
-
+out:
+    *walker = NULL;
     return result;
 }
 
