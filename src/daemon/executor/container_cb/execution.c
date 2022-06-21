@@ -328,7 +328,7 @@ static void handle_start_io_thread_by_cc(uint32_t cc, int sync_fd, pthread_t thr
     if (cc == ISULAD_SUCCESS) {
         if (thread_id > 0) {
             if (pthread_detach(thread_id) != 0) {
-                SYSERROR("Failed to detach 0x%lx", thread_id);
+                SYSERROR("Failed to detach %lu", thread_id);
             }
         }
         if (sync_fd >= 0) {
@@ -342,7 +342,7 @@ static void handle_start_io_thread_by_cc(uint32_t cc, int sync_fd, pthread_t thr
         }
         if (thread_id > 0) {
             if (pthread_join(thread_id, NULL) != 0) {
-                ERROR("Failed to join thread: 0x%lx", thread_id);
+                ERROR("Failed to join thread: %lu", thread_id);
             }
         }
         if (sync_fd >= 0) {
