@@ -520,7 +520,7 @@ static int pm_register_plugin(const char *name, const char *addr)
         goto failed;
     }
 
-    INFO("add activated plugin %s 0x%" PRIx64, plugin->name, plugin->manifest->watch_event);
+    INFO("add activated plugin %s", plugin->name);
     return 0;
 
 failed:
@@ -861,7 +861,7 @@ bool plugin_is_watching(plugin_t *plugin, uint64_t pe)
     }
     plugin_unlock(plugin);
 
-    INFO("plugin %s watching=%s for event 0x%" PRIx64, plugin->name, (ok ? "true" : "false"), pe);
+    INFO("plugin %s watching=%s", plugin->name, (ok ? "true" : "false"));
 
     return ok;
 }
@@ -892,7 +892,6 @@ static int unpack_activate_response(const struct parsed_http_message *message, v
         goto out;
     }
 
-    INFO("get resp 0x%" PRIx64, resp->watch_event);
     manifest->init_type = resp->init_type;
     manifest->watch_event = resp->watch_event;
 
