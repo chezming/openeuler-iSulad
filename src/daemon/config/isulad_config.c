@@ -1656,6 +1656,13 @@ int merge_json_confs_into_global(struct service_arguments *args)
     tmp_json_confs->sup_groups_len = 0;
 #endif
 
+#ifdef ENABLE_SUP_GROUPS
+    args->json_confs->sup_groups = tmp_json_confs->sup_groups;
+    tmp_json_confs->sup_groups = NULL;
+    args->json_confs->sup_groups_len = tmp_json_confs->sup_groups_len;
+    tmp_json_confs->sup_groups_len = 0;
+#endif
+
     // Daemon storage-driver
     if (merge_storage_conf_into_global(args, tmp_json_confs)) {
         ret = -1;
