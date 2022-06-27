@@ -100,6 +100,8 @@ rb_tree_t *rbtree_new(key_comparator comparator, key_value_freer kvfreer)
         return NULL;
     }
     tree->nil = rbtree_create_node(NULL, NULL, NULL, NULL, NULL);
+
+    
     tree->root = tree->nil;
     tree->comparator = comparator;
     tree->kvfreer = kvfreer;
