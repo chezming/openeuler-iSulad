@@ -378,12 +378,14 @@ struct client_arguments {
 
     json_map_string_string *annotations;
 
+#ifdef ENABLE_GRPC_REMOTE_ACCESS
     // gRPC tls config
     bool tls;
     bool tls_verify;
     char *ca_file;
     char *cert_file;
     char *key_file;
+#endif
 
     do_resize_call_back_t resize_cb;
     struct winsize s_pre_wsz;
@@ -405,9 +407,8 @@ struct client_arguments {
 
 #define LOG_OPTIONS(log) { CMD_OPT_TYPE_BOOL_FALSE, false, "debug", 'D', &(log).quiet, "Enable debug mode", NULL },
 
-#define COMMON_OPTIONS(cmdargs)                                                                                         \
-    { CMD_OPT_TYPE_STRING_DUP, false, "host", 'H', &(cmdargs).socket, "Daemon socket(s) to connect to",                 \
-        command_valid_socket },                                                                                           \
+#ifdef ENABLE_GRPC_REMOTE_ACCESS
+#define COMMON_TLS_OPTIONS(cmdargs)                                                                             \
     { CMD_OPT_TYPE_BOOL, false, "tls", 0, &(cmdargs).tls, "Use TLS; implied by --tlsverify", NULL },            \
     { CMD_OPT_TYPE_BOOL, false, "tlsverify", 0, &(cmdargs).tls_verify, "Use TLS and verify the remote", NULL }, \
     { CMD_OPT_TYPE_STRING_DUP,                                                                                  \
@@ -430,7 +431,14 @@ struct client_arguments {
       0,                                                                                                        \
       &(cmdargs).key_file,                                                                                      \
       "Path to TLS key file (default \"/root/.iSulad/key.pem\")",                                               \
-      NULL },                                                                                                   \
+      NULL },
+#else
+#define COMMON_TLS_OPTIONS(cmdargs)
+#endif
+
+#define COMMON_OPTIONS(cmdargs)                                                                                 \
+    { CMD_OPT_TYPE_STRING_DUP, false, "host", 'H', &(cmdargs).socket, "Daemon socket(s) to connect to",         \
+        command_valid_socket },                                                                                                    \
     { CMD_OPT_TYPE_BOOL, false, "help", 0, &(cmdargs).help, "Print usage", NULL },
 
 #define VERSION_OPTIONS(cmdargs) \

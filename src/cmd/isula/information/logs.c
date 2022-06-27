@@ -106,7 +106,7 @@ static int cmd_logs_init(int argc, const char **argv)
     }
     g_cmd_logs_args.progname = argv[0];
     struct command_option options[] = { LOG_OPTIONS(lconf) LOGS_OPTIONS(g_cmd_logs_args)
-        COMMON_OPTIONS(g_cmd_logs_args)
+        COMMON_OPTIONS(g_cmd_logs_args) COMMON_TLS_OPTIONS(g_cmd_logs_args)
     };
 
     isula_libutils_default_log_config(argv[0], &lconf);

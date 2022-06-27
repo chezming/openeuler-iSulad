@@ -139,7 +139,7 @@ int cmd_volume_ls_main(int argc, const char **argv)
     }
     g_cmd_volume_ls_args.progname = util_string_join(" ", argv, 2);
     struct command_option options[] = { LOG_OPTIONS(lconf) VOLUME_OPTIONS(g_cmd_volume_ls_args)
-        COMMON_OPTIONS(g_cmd_volume_ls_args)
+        COMMON_OPTIONS(g_cmd_volume_ls_args) COMMON_TLS_OPTIONS(g_cmd_volume_ls_args)
     };
 
     isula_libutils_default_log_config(argv[0], &lconf);

@@ -321,7 +321,7 @@ int cmd_images_main(int argc, const char **argv)
     }
     g_cmd_images_args.progname = argv[0];
     struct command_option options[] = { LOG_OPTIONS(lconf) IMAGES_OPTIONS(g_cmd_images_args),
-               COMMON_OPTIONS(g_cmd_images_args)
+               COMMON_OPTIONS(g_cmd_images_args) COMMON_TLS_OPTIONS(g_cmd_images_args)
     };
 
     isula_libutils_default_log_config(argv[0], &lconf);

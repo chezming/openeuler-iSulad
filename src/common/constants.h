@@ -117,8 +117,10 @@ extern "C" {
 
 #define OCI_IMAGE_GRAPH_ROOTPATH_NAME "storage"
 
+#ifdef ENABLE_GRPC_REMOTE_ACCESS
 #define DEFAULT_TCP_HOST "tcp://localhost:2375"
 #define DEFAULT_TLS_HOST "tcp://localhost:2376"
+#endif
 
 #define AUTH_PLUGIN "authz-broker"
 

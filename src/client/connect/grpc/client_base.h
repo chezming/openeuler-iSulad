@@ -44,9 +44,12 @@ public:
         auto *arguments = reinterpret_cast<client_connect_config_t *>(args);
 
         std::string socket_address = arguments->socket;
+#ifdef ENABLE_GRPC_REMOTE_ACCESS
         const std::string tcp_prefix = "tcp://";
+#endif
         deadline = arguments->deadline;
 
+#ifdef ENABLE_GRPC_REMOTE_ACCESS
         if (socket_address.compare(0, tcp_prefix.length(), tcp_prefix) == 0) {
             socket_address.erase(0, tcp_prefix.length());
         }
@@ -76,9 +79,12 @@ public:
             // Connect to gRPC server with ssl/tls authentication mechanism.
             stub_ = SV::NewStub(channel);
         } else {
+#endif
             // Connect to gRPC server without ssl/tls authentication mechanism.
             stub_ = SV::NewStub(grpc::CreateChannel(socket_address, grpc::InsecureChannelCredentials()));
+#ifdef ENABLE_GRPC_REMOTE_ACCESS
         }
+#endif
     }
     virtual ~ClientBase() = default;
 
@@ -109,12 +115,14 @@ public:
             context.set_deadline(tDeadline);
         }
 
+#ifdef ENABLE_GRPC_REMOTE_ACCESS
         // Set metadata for authorization
         if (SetMetadataInfo(context) != 0) {
             ERROR("Failed to set metadata info for authorization");
             response->cc = ISULAD_ERR_INPUT;
             return -1;
         }
+#endif
 
         ret = request_to_grpc(request, &req);
         if (ret != 0) {
@@ -187,6 +195,7 @@ protected:
         return ss.str();
     }
 
+#ifdef ENABLE_GRPC_REMOTE_ACCESS
     auto SetMetadataInfo(ClientContext &context) -> int
     {
         // Set common name from cert.perm
@@ -204,10 +213,13 @@ protected:
 
         return 0;
     }
+#endif
 
     std::unique_ptr<sTB> stub_;
+#ifdef ENABLE_GRPC_REMOTE_ACCESS
     std::string m_tlsMode { ClientBaseConstants::TLS_OFF };
     std::string m_certFile;
+#endif
 
     unsigned int deadline;
 };

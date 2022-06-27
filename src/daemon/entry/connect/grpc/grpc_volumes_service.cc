@@ -118,10 +118,13 @@ int VolumeServiceImpl::volume_prune_response_to_grpc(volume_prune_volume_respons
 
 Status VolumeServiceImpl::List(ServerContext *context, const ListVolumeRequest *request, ListVolumeResponse *reply)
 {
+#ifdef ENABLE_GRPC_REMOTE_ACCESS
     auto status = GrpcServerTlsAuth::auth(context, "volume_list");
     if (!status.ok()) {
         return status;
     }
+#endif
+
     auto *cb = get_service_executor();
     if (cb == nullptr || cb->volume.list == nullptr) {
         return Status(StatusCode::UNIMPLEMENTED, "Unimplemented callback");
@@ -152,10 +155,13 @@ Status VolumeServiceImpl::List(ServerContext *context, const ListVolumeRequest *
 Status VolumeServiceImpl::Remove(ServerContext *context, const RemoveVolumeRequest *request,
                                  RemoveVolumeResponse *reply)
 {
+#ifdef ENABLE_GRPC_REMOTE_ACCESS
     auto status = GrpcServerTlsAuth::auth(context, "volume_remove");
     if (!status.ok()) {
         return status;
     }
+#endif
+
     service_executor_t *cb = get_service_executor();
     if (cb == nullptr || cb->volume.remove == nullptr) {
         return Status(StatusCode::UNIMPLEMENTED, "Unimplemented callback");
@@ -185,10 +191,13 @@ Status VolumeServiceImpl::Remove(ServerContext *context, const RemoveVolumeReque
 
 Status VolumeServiceImpl::Prune(ServerContext *context, const PruneVolumeRequest *request, PruneVolumeResponse *reply)
 {
+#ifdef ENABLE_GRPC_REMOTE_ACCESS
     auto status = GrpcServerTlsAuth::auth(context, "volume_prune");
     if (!status.ok()) {
         return status;
     }
+#endif
+
     service_executor_t *cb = get_service_executor();
     if (cb == nullptr || cb->volume.prune == nullptr) {
         return Status(StatusCode::UNIMPLEMENTED, "Unimplemented callback");

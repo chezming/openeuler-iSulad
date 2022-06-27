@@ -375,7 +375,7 @@ int cmd_inspect_main(int argc, const char **argv)
     }
     g_cmd_inspect_args.progname = argv[0];
     struct command_option options[] = { LOG_OPTIONS(lconf) INSPECT_OPTIONS(g_cmd_inspect_args),
-               COMMON_OPTIONS(g_cmd_inspect_args)
+               COMMON_OPTIONS(g_cmd_inspect_args) COMMON_TLS_OPTIONS(g_cmd_inspect_args)
     };
 
     isula_libutils_default_log_config(argv[0], &lconf);

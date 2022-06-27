@@ -85,7 +85,7 @@ int cmd_export_main(int argc, const char **argv)
     }
     g_cmd_export_args.progname = argv[0];
     struct command_option options[] = { LOG_OPTIONS(lconf) COMMON_OPTIONS(g_cmd_export_args)
-        EXPORT_OPTIONS(g_cmd_export_args)
+        COMMON_TLS_OPTIONS(g_cmd_export_args) EXPORT_OPTIONS(g_cmd_export_args)
     };
 
     command_init(&cmd, options, sizeof(options) / sizeof(options[0]), argc, (const char **)argv, g_cmd_export_desc,

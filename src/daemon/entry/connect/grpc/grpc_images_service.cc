@@ -245,10 +245,13 @@ Status ImagesServiceImpl::List(ServerContext *context, const ListImagesRequest *
 {
     prctl(PR_SET_NAME, "ImageList");
 
+#ifdef ENABLE_GRPC_REMOTE_ACCESS
     auto status = GrpcServerTlsAuth::auth(context, "image_list");
     if (!status.ok()) {
         return status;
     }
+#endif
+
     service_executor_t *cb = get_service_executor();
     if (cb == nullptr || cb->image.list == nullptr) {
         return Status(StatusCode::UNIMPLEMENTED, "Unimplemented callback");
@@ -276,10 +279,13 @@ Status ImagesServiceImpl::Delete(ServerContext *context, const DeleteImageReques
 {
     prctl(PR_SET_NAME, "ImageDelete");
 
+#ifdef ENABLE_GRPC_REMOTE_ACCESS
     auto status = GrpcServerTlsAuth::auth(context, "image_delete");
     if (!status.ok()) {
         return status;
     }
+#endif
+
     service_executor_t *cb = get_service_executor();
     if (cb == nullptr || cb->image.remove == nullptr) {
         return Status(StatusCode::UNIMPLEMENTED, "Unimplemented callback");
@@ -307,10 +313,13 @@ Status ImagesServiceImpl::Tag(ServerContext *context, const TagImageRequest *req
 {
     prctl(PR_SET_NAME, "ImageTag");
 
+#ifdef ENABLE_GRPC_REMOTE_ACCESS
     auto status = GrpcServerTlsAuth::auth(context, "image_tag");
     if (!status.ok()) {
         return status;
     }
+#endif
+
     service_executor_t *cb = get_service_executor();
     if (cb == nullptr || cb->image.tag == nullptr) {
         return Status(StatusCode::UNIMPLEMENTED, "Unimplemented callback");
@@ -354,10 +363,13 @@ Status ImagesServiceImpl::Import(ServerContext *context, const ImportRequest *re
 {
     prctl(PR_SET_NAME, "ImageImport");
 
+#ifdef ENABLE_GRPC_REMOTE_ACCESS
     auto status = GrpcServerTlsAuth::auth(context, "image_import");
     if (!status.ok()) {
         return status;
     }
+#endif
+
     service_executor_t *cb = get_service_executor();
     if (cb == nullptr || cb->image.import == nullptr) {
         return Status(StatusCode::UNIMPLEMENTED, "Unimplemented callback");
@@ -385,10 +397,13 @@ Status ImagesServiceImpl::Load(ServerContext *context, const LoadImageRequest *r
 {
     prctl(PR_SET_NAME, "ImageLoad");
 
+#ifdef ENABLE_GRPC_REMOTE_ACCESS
     auto status = GrpcServerTlsAuth::auth(context, "image_load");
     if (!status.ok()) {
         return status;
     }
+#endif
+
     service_executor_t *cb = get_service_executor();
     if (cb == nullptr || cb->image.load == nullptr) {
         return Status(StatusCode::UNIMPLEMENTED, "Unimplemented callback");
@@ -422,10 +437,12 @@ Status ImagesServiceImpl::Inspect(ServerContext *context, const InspectImageRequ
 
     prctl(PR_SET_NAME, "ImageInspect");
 
+#ifdef ENABLE_GRPC_REMOTE_ACCESS
     Status status = GrpcServerTlsAuth::auth(context, "image_inspect");
     if (!status.ok()) {
         return status;
     }
+#endif
 
     cb = get_service_executor();
     if (cb == nullptr || cb->image.inspect == nullptr) {
@@ -496,10 +513,13 @@ Status ImagesServiceImpl::Login(ServerContext *context, const LoginRequest *requ
 {
     prctl(PR_SET_NAME, "RegistryLogin");
 
+#ifdef ENABLE_GRPC_REMOTE_ACCESS
     auto status = GrpcServerTlsAuth::auth(context, "login");
     if (!status.ok()) {
         return status;
     }
+#endif
+
     service_executor_t *cb = get_service_executor();
     if (cb == nullptr || cb->image.login == nullptr) {
         return Status(StatusCode::UNIMPLEMENTED, "Unimplemented callback");
@@ -527,10 +547,13 @@ Status ImagesServiceImpl::Logout(ServerContext *context, const LogoutRequest *re
 {
     prctl(PR_SET_NAME, "RegistryLogout");
 
+#ifdef ENABLE_GRPC_REMOTE_ACCESS
     auto status = GrpcServerTlsAuth::auth(context, "logout");
     if (!status.ok()) {
         return status;
     }
+#endif
+
     service_executor_t *cb = get_service_executor();
     if (cb == nullptr || cb->image.logout == nullptr) {
         return Status(StatusCode::UNIMPLEMENTED, "Unimplemented callback");

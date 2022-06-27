@@ -37,6 +37,54 @@ int update_hosts(struct service_arguments *args);
 int update_default_ulimit(struct service_arguments *args);
 int command_default_ulimit_append(command_option_t *option, const char *arg);
 
+#ifdef ENABLE_GRPC_REMOTE_ACCESS
+#define ISULAD_TLS_OPTIONS(cmdargs)
+    { CMD_OPT_TYPE_STRING_DUP,                                                                                    \
+      false,                                                                                                      \
+      "authorization-plugin",                                                                                     \
+      0,                                                                                                          \
+      &(cmdargs)->json_confs->authorization_plugin,                                                               \
+      "Use authorization plugin",                                                                                 \
+      NULL },                                                                                                     \
+    { CMD_OPT_TYPE_BOOL, false, "tls", 0, &(cmdargs)->json_confs->tls, "Use TLS; implied by --tlsverify", NULL }, \
+    { CMD_OPT_TYPE_BOOL,                                                                                          \
+      false,                                                                                                      \
+      "tlsverify",                                                                                                \
+      0,                                                                                                          \
+      &(cmdargs)->json_confs->tls_verify,                                                                         \
+      "Use TLS and verify the remote",                                                                            \
+      NULL },                                                                                                     \
+      { CMD_OPT_TYPE_BOOL,                                                                                        \
+      false,                                                                                                      \
+      "tls-with-encrypted-key",                                                                                                \
+      0,                                                                                                          \
+      &(cmdargs)->json_confs->tls_with_encrypted_key,                                                                         \
+      "Use TLS and encrypted private key",                                                                            \
+      NULL },                                                                                                     \
+    { CMD_OPT_TYPE_STRING_DUP,                                                                                    \
+      false,                                                                                                      \
+      "tlscacert",                                                                                                \
+      0,                                                                                                          \
+      &(cmdargs)->json_confs->tls_config->ca_file,                                                                \
+      "Trust certs signed only by this CA (default \"/root/.iSulad/ca.pem\")",                                    \
+      NULL },                                                                                                     \
+    { CMD_OPT_TYPE_STRING_DUP,                                                                                    \
+      false,                                                                                                      \
+      "tlscert",                                                                                                  \
+      0,                                                                                                          \
+      &(cmdargs)->json_confs->tls_config->cert_file,                                                              \
+      "Path to TLS certificate file (default \"/root/.iSulad/cert.pem\")",                                        \
+      NULL },                                                                                                     \
+    { CMD_OPT_TYPE_STRING_DUP,                                                                                    \
+      false,                                                                                                      \
+      "tlskey",                                                                                                   \
+      0,                                                                                                          \
+      &(cmdargs)->json_confs->tls_config->key_file,                                                               \
+      "Path to TLS key file (default \"/root/.iSulad/key.pem\")",                                                 \
+      NULL },
+#else
+#define ISULAD_TLS_OPTIONS(cmdargs)
+#endif
 
 #ifdef ENABLE_SUP_GROUPS
 #define SUP_GROUPS_OPT(cmdargs)                                                                                   \
