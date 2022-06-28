@@ -90,7 +90,7 @@ void Errors::SetAggregate(const std::vector<std::string> &msgs)
     std::string result;
     size_t size = msgs.size();
 
-    if (!size) {
+    if (size == 0) {
         return;
     }
 
@@ -117,8 +117,7 @@ void Errors::Errorf(const char *fmt, ...)
 
     ret = vsnprintf(errbuf, BUFSIZ, fmt, argp);
     va_end(argp);
-    if (ret < 0 || ret >= BUFSIZ) {
-        m_message = "Error message is too long";
+    if (ret < 0) {
         return;
     }
 

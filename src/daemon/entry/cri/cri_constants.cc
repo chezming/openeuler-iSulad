@@ -12,14 +12,14 @@
  * Create: 2020-12-21
  * Description: provide cri constants definition
  *********************************************************************************/
-# include "cri_constants.h"
+#include "cri_constants.h"
 
 namespace CRI {
 const std::string Constants::namespaceModeHost { "host" };
-const std::string Constants::namespaceModeFile { "file" };
+const std::string Constants::namespaceModeCNI { "cni" };
 const std::string Constants::nameDelimiter { "_" };
 const std::string Constants::kubePrefix { "k8s" };
 const std::string Constants::sandboxContainerName { "POD" };
 const std::string Constants::kubeAPIVersion { "0.1.0" };
 const std::string Constants::iSulaRuntimeName { "iSulad" };
-}
+} // namespace CRI

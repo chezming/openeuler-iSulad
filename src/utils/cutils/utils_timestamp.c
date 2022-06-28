@@ -105,6 +105,15 @@ int util_types_timestamp_cmp(const types_timestamp_t *t1, const types_timestamp_
     return 0;
 }
 
+static int isdst_now()
+{
+    const time_t now_time = time(NULL);
+    struct tm now_tm;
+
+    (void)localtime_r(&now_time, &now_tm);
+    return now_tm.tm_isdst;
+}
+
 /* get timestamp */
 bool util_get_timestamp(const char *str_time, types_timestamp_t *timestamp)
 {
@@ -122,8 +131,10 @@ bool util_get_timestamp(const char *str_time, types_timestamp_t *timestamp)
         return false;
     }
 
-    // set tm_isdst be kept as -1 to let the system decide if its dst or not
-    tm_day.tm_isdst = -1;
+    // assume input time's DST is the same as now.
+    // do not use -1 because the system do not know the DST when
+    // GMT time and DST time overlaps
+    tm_day.tm_isdst = isdst_now();
 
     seconds = (int64_t)mktime(&tm_day);
     timestamp->has_seconds = true;
@@ -178,8 +189,7 @@ bool get_time_buffer_help(const types_timestamp_t *timestamp, char *timebuffer, 
     if (tm_zone >= 0) {
         nret = snprintf(timebuffer + strlen(timebuffer), tmp_size, ".%09d+%02d:00", nanos, tm_zone);
     } else {
-        nret = snprintf(timebuffer + strlen(timebuffer), tmp_size, ".%09d-%02d:00", nanos,
-                        -tm_zone);
+        nret = snprintf(timebuffer + strlen(timebuffer), tmp_size, ".%09d-%02d:00", nanos, -tm_zone);
     }
 
 out:
@@ -513,7 +523,7 @@ static char *tm_get_zp(const char *tmstr)
     return zp;
 }
 
-static inline bool hasnil(const char *str, struct tm *tm, int32_t *nanos, struct types_timezone *tz)
+static inline bool hasnil(const char *str, const struct tm *tm, const int32_t *nanos, const struct types_timezone *tz)
 {
     if (str == NULL || tm == NULL || nanos == NULL || tz == NULL) {
         return true;
@@ -609,11 +619,7 @@ static int64_t get_minmus_time(struct tm *tm1, struct tm *tm2)
         return -1;
     }
 
-    // set tm_isdst be kept as -1 to let the system decide if its dst or not
-    tm1->tm_isdst = -1;
     tmseconds1 = (int64_t)mktime(tm1);
-    // set tm_isdst be kept as -1 to let the system decide if its dst or not
-    tm2->tm_isdst = -1;
     tmseconds2 = (int64_t)mktime(tm2);
     result = tmseconds1 - tmseconds2;
     return result;
@@ -649,9 +655,9 @@ int64_t util_time_seconds_since(const char *in)
 
     if (result > 0) {
         return result;
-    } else {
-        return 0;
     }
+
+    return 0;
 }
 
 struct time_human_duration_rule_t {
@@ -966,10 +972,7 @@ int util_to_unix_nanos_from_str(const char *str, int64_t *nanos)
         return -1;
     }
 
-    // set tm_isdst be kept as -1 to let the system decide if its dst or not
-    tm.tm_isdst = -1;
-
-    *nanos = mktime(&tm) * Time_Second + nano;
+    *nanos = (timegm(&tm) - (int64_t)tz.hour * 3600 - (int64_t)tz.min * 60) * Time_Second + nano;
     return 0;
 }
 

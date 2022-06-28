@@ -40,6 +40,8 @@ const char g_cmd_list_usage[] = "ps [command options]";
 struct client_arguments g_cmd_list_args = {
     .dispname = false,
     .list_all = false,
+    .list_latest = false,
+    .list_last_n = 0,
     .no_trunc = false,
 };
 
@@ -181,7 +183,7 @@ static int handle_running_status(const char *start_at, const struct isula_contai
     int nret;
 
     if (in->health_state != NULL) {
-        nret = snprintf(status, len, "Up %s %s", start_at, in->health_state);
+        nret = snprintf(status, len, "Up %s (%s)", start_at, in->health_state);
         if (nret < 0 || nret >= len) {
             ERROR("Failed to compose string");
             ret = -1;
@@ -658,15 +660,32 @@ static int client_list(const struct client_arguments *args, const struct filters
     }
     request.all = args->list_all;
 
+    if (args->list_last_n > 0 || args->list_latest) {
+        size_t lastest_n = args->list_last_n;
+        if (args->list_latest) {
+            lastest_n = 1;
+        }
+
+        isula_filters_last_parse_args(lastest_n, &request.filters);
+        if (request.filters == NULL) {
+            ERROR("Failed to parse lastest n containers filters args");
+            ret = -1;
+            goto out;
+        }
+    }
+
     config = get_connect_config(args);
     ret = ops->container.list(&request, response, &config);
     if (ret) {
         client_print_error(response->cc, response->server_errono, response->errmsg);
         goto out;
     }
-    if (response->container_num != 0)
+
+    /* ps -a need sort again, ps -l/-n is already sorted */
+    if (response->container_num != 0 && args->list_all) {
         qsort(response->container_summary, (size_t)(response->container_num),
               sizeof(struct isula_container_summary_info *), (int (*)(const void *, const void *))isula_container_cmp);
+    }
 
     if (args->dispname) {
         list_print_quiet(response->container_summary, response->container_num, &max_len);
@@ -765,21 +784,15 @@ static int get_header_field(const char *patten, struct filters *ff)
 
 static int format_field_check(const char *source, const char *patten)
 {
-#define MATCH_NUM 1
 #define CHECK_FAILED (-1)
     int status = 0;
-    regmatch_t pmatch[MATCH_NUM] = { { 0 } };
-    regex_t reg;
 
     if (source == NULL) {
         ERROR("Filter string is NULL.");
         return CHECK_FAILED;
     }
 
-    regcomp(&reg, patten, REG_EXTENDED);
-
-    status = regexec(&reg, source, MATCH_NUM, pmatch, 0);
-    regfree(&reg);
+    status = util_reg_match(patten, source);
 
     if (status != 0) {
         return CHECK_FAILED;
@@ -841,7 +854,11 @@ static bool valid_format_field(const char *field)
 
 static int append_header_item_field(const char *index, const char *prefix, const char *suffix, struct filters *ff)
 {
+#ifdef __ANDROID__
+#define SINGLE_PATTEN "{{[ \t\r\n\v\f]*\\.[0-9A-Za-z_]+[ \t\r\n\v\f]*}}"
+#else
 #define SINGLE_PATTEN "\\{\\{\\s*\\.\\w+\\s*\\}\\}"
+#endif
     int ret = 0;
     char *filter_string = NULL;
     struct filter_field *field = NULL;
@@ -872,6 +889,7 @@ static int append_header_item_field(const char *index, const char *prefix, const
         goto out;
     }
     field->name = filter_string;
+    filter_string = NULL;
     field->is_field = true;
     if (append_field(ff, field) != 0) {
         ERROR("Failed to append field");
@@ -880,7 +898,6 @@ static int append_header_item_field(const char *index, const char *prefix, const
     }
 
     field = NULL;
-    filter_string = NULL;
 
 out:
     free(sub_patten);
@@ -906,14 +923,16 @@ static int append_non_header_item_field(const char *prefix, const char *non_fiel
         ret = -1;
         goto out;
     }
+
     field->name = non_field_string;
+    non_field_string = NULL;
     field->is_field = false;
+
     if (append_field(ff, field) != 0) {
         ERROR("Failed to append field");
         ret = -1;
         goto out;
     }
-    non_field_string = NULL;
     field = NULL;
 
 out:
@@ -924,7 +943,6 @@ out:
 
 static int get_filter_field(const char *patten, struct filters *ff)
 {
-#define SINGLE_PATTEN "\\{\\{\\s*\\.\\w+\\s*\\}\\}"
 #define DEFAULT_CONTAINER_TABLE_FORMAT          \
     "table {{.ID}}\t{{.Image}}\t{{.Command}}\t" \
     "{{.Created}}\t{{.Status}}\t{{.Ports}}\t{{.Names}}"

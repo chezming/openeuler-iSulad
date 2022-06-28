@@ -20,7 +20,6 @@
 #include <strings.h>
 
 #include "constants.h"
-#include "linked_list.h"
 #include "isulad_config.h"
 #include "isula_libutils/log.h"
 #include "utils.h"
@@ -29,31 +28,27 @@
 #include "daemon_arguments.h"
 #include "utils_file.h"
 
-struct isulad_engine_operation_lists {
+struct isulad_engine_operation {
     pthread_rwlock_t isulad_engines_op_rwlock;
-    struct linked_list isulad_engines_op_list;
+    struct engine_operation *op;
 };
 
-static struct isulad_engine_operation_lists g_isulad_engines_lists;
-
-typedef int (*engine_init_func_t)(struct engine_operation *ops);
+static struct isulad_engine_operation g_isulad_engines;
 
 /* engine global init */
 int engines_global_init()
 {
     int ret = 0;
 
-    (void)memset(&g_isulad_engines_lists, 0, sizeof(struct isulad_engine_operation_lists));
+    (void)memset(&g_isulad_engines, 0, sizeof(struct isulad_engine_operation));
     /* init isulad_engines_op_rwlock */
 
-    ret = pthread_rwlock_init(&g_isulad_engines_lists.isulad_engines_op_rwlock, NULL);
+    ret = pthread_rwlock_init(&g_isulad_engines.isulad_engines_op_rwlock, NULL);
     if (ret != 0) {
         ERROR("Failed to init isulad conf rwlock");
         ret = -1;
         goto out;
     }
-
-    linked_list_init(&g_isulad_engines_lists.isulad_engines_op_list);
 
 out:
     return ret;
@@ -111,7 +106,7 @@ out:
 /* engine operation free */
 void engine_operation_free(struct engine_operation *eop)
 {
-    if (eop->engine_type != NULL) {
+    if (eop != NULL && eop->engine_type != NULL) {
         free(eop->engine_type);
         eop->engine_type = NULL;
     }
@@ -121,12 +116,15 @@ void engine_operation_free(struct engine_operation *eop)
 static int create_engine_root_path(const char *path)
 {
     int ret = -1;
+#ifdef ENABLE_USERNS_REMAP
     char *tmp_path = NULL;
     char *p = NULL;
-    char *userns_remap = NULL;
+    char *userns_remap = conf_get_isulad_userns_remap();
+#endif
+    mode_t mode = CONFIG_DIRECTORY_MODE;
 
     if (path == NULL) {
-        return ret;
+        goto out;
     }
 
     if (util_dir_exists(path)) {
@@ -134,12 +132,18 @@ static int create_engine_root_path(const char *path)
         goto out;
     }
 
-    if (util_mkdir_p(path, CONFIG_DIRECTORY_MODE) != 0) {
+#ifdef ENABLE_USERNS_REMAP
+    if (userns_remap != NULL) {
+        mode = USER_REMAP_DIRECTORY_MODE;
+    }
+#endif
+
+    if (util_mkdir_p(path, mode) != 0) {
         ERROR("Unable to create engine root path: %s", path);
         goto out;
     }
 
-    userns_remap = conf_get_isulad_userns_remap();
+#ifdef ENABLE_USERNS_REMAP
     if (userns_remap != NULL) {
         if (set_file_owner_for_userns_remap(path, userns_remap) != 0) {
             ERROR("Unable to change directory %s owner for user remap.", path);
@@ -160,32 +164,24 @@ static int create_engine_root_path(const char *path)
             goto out;
         }
     }
+#endif
     ret = 0;
 
 out:
+#ifdef ENABLE_USERNS_REMAP
     free(tmp_path);
     free(userns_remap);
+#endif
     return ret;
 }
 
-static struct engine_operation *query_engine_locked(const char *name)
+static struct engine_operation *query_engine(const char *name)
 {
     struct engine_operation *engine_op = NULL;
-    struct linked_list *it = NULL;
-    struct linked_list *next = NULL;
 
-    linked_list_for_each_safe(it, &g_isulad_engines_lists.isulad_engines_op_list, next) {
-        engine_op = (struct engine_operation *)it->elem;
-        if (engine_op == NULL) {
-            DEBUG("Invalid engine list elem");
-            linked_list_del(it);
-            continue;
-        }
-
-        if (strcasecmp(name, engine_op->engine_type) == 0) {
-            break;
-        }
-        engine_op = NULL;
+    if (g_isulad_engines.op != NULL && g_isulad_engines.op->engine_type != NULL &&
+        strcasecmp(name, g_isulad_engines.op->engine_type) == 0) {
+        engine_op = g_isulad_engines.op;
     }
 
     return engine_op;
@@ -240,18 +236,17 @@ int engines_discovery(const char *name)
 {
     int ret = 0;
     struct engine_operation *engine_op = NULL;
-    struct linked_list *newnode = NULL;
 
     if (name == NULL) {
         return -1;
     }
 
-    if (pthread_rwlock_wrlock(&g_isulad_engines_lists.isulad_engines_op_rwlock)) {
+    if (pthread_rwlock_wrlock(&g_isulad_engines.isulad_engines_op_rwlock)) {
         ERROR("Failed to acquire isulad engines list write lock");
         return -1;
     }
 
-    engine_op = query_engine_locked(name);
+    engine_op = query_engine(name);
     if (engine_op != NULL) {
         goto unlock_out;
     }
@@ -262,21 +257,11 @@ int engines_discovery(const char *name)
         goto unlock_out;
     }
 
-    newnode = util_common_calloc_s(sizeof(struct linked_list));
-    if (newnode == NULL) {
-        CRIT("Memory allocation error.");
-        ret = -1;
-
-        engine_operation_free(engine_op);
-        free(engine_op);
-        goto unlock_out;
-    }
-
-    linked_list_add_elem(newnode, engine_op);
-    linked_list_add_tail(&g_isulad_engines_lists.isulad_engines_op_list, newnode);
+    engine_operation_free(g_isulad_engines.op);
+    g_isulad_engines.op = engine_op;
 
 unlock_out:
-    if (pthread_rwlock_unlock(&g_isulad_engines_lists.isulad_engines_op_rwlock)) {
+    if (pthread_rwlock_unlock(&g_isulad_engines.isulad_engines_op_rwlock)) {
         ERROR("Failed to release isulad engines list write lock");
         ret = -1;
     }
@@ -288,34 +273,20 @@ unlock_out:
 static struct engine_operation *engines_check_handler_exist(const char *name)
 {
     struct engine_operation *engine_op = NULL;
-    struct linked_list *it = NULL;
-    struct linked_list *next = NULL;
 
     if (name == NULL) {
         goto out;
     }
 
-    if (pthread_rwlock_rdlock(&g_isulad_engines_lists.isulad_engines_op_rwlock)) {
+    if (pthread_rwlock_rdlock(&g_isulad_engines.isulad_engines_op_rwlock)) {
         ERROR("Failed to acquire isulad engines list read lock");
         engine_op = NULL;
         goto out;
     }
 
-    linked_list_for_each_safe(it, &g_isulad_engines_lists.isulad_engines_op_list, next) {
-        engine_op = (struct engine_operation *)it->elem;
-        if (engine_op == NULL) {
-            DEBUG("Invalid engine list elem");
-            linked_list_del(it);
-            continue;
-        }
-        if (strcasecmp(name, engine_op->engine_type) == 0) {
-            /* find the matched handle */
-            break;
-        }
-        engine_op = NULL;
-    }
+    engine_op = query_engine(name);
 
-    if (pthread_rwlock_unlock(&g_isulad_engines_lists.isulad_engines_op_rwlock)) {
+    if (pthread_rwlock_unlock(&g_isulad_engines.isulad_engines_op_rwlock)) {
         CRIT("Failed to release isulad engines list read lock");
         engine_op = NULL;
         goto out;

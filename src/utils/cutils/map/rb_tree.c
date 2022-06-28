@@ -100,6 +100,11 @@ rb_tree_t *rbtree_new(key_comparator comparator, key_value_freer kvfreer)
         return NULL;
     }
     tree->nil = rbtree_create_node(NULL, NULL, NULL, NULL, NULL);
+    if (tree->nil == NULL) {
+        ERROR("failed to create nil tree node!");
+        free(tree);
+        return NULL;
+    }
     tree->root = tree->nil;
     tree->comparator = comparator;
     tree->kvfreer = kvfreer;
@@ -133,6 +138,10 @@ void rbtree_clear(rb_tree_t *tree)
 
 void rbtree_free(rb_tree_t *tree)
 {
+    if (tree == NULL) {
+        return;
+    }
+
     rbtree_clear(tree);
     free(tree->nil);
     tree->nil = NULL;

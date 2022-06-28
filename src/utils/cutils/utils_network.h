@@ -25,12 +25,6 @@
 extern "C" {
 #endif
 
-int util_create_netns_file(const char *netns_path);
-
-int util_mount_namespace(const char *netns_path);
-
-int util_umount_namespace(const char *netns_path);
-
 #define IPV4LEN 4
 
 #define IPV6LEN 16
@@ -62,7 +56,7 @@ bool util_net_contain_ip(const struct ipnet *ipnet, const uint8_t *ip, const siz
 
 bool util_validate_network_name(const char *name);
 
-bool util_native_network_checker(const char *network_mode, const bool system_container);
+bool util_native_network_checker(const char *network_mode);
 
 bool util_post_setup_network(const char *user_remap);
 

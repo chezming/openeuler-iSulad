@@ -120,25 +120,29 @@ struct command g_commands[] = {
         // `exec` sub-command
         "exec", false, cmd_exec_main, g_cmd_exec_desc, NULL, &g_cmd_exec_args
     },
+#if defined(ENABLE_OCI_IMAGE) || defined(ENABLE_EMBEDDED_IMAGE)
     {
         // `images` sub-command
         "images", false, cmd_images_main, g_cmd_images_desc, NULL, &g_cmd_images_args
     },
+#endif
 #ifdef ENABLE_OCI_IMAGE
     {
         // `info` sub-command
         "info", false, cmd_info_main, g_cmd_info_desc, NULL, &g_cmd_info_args
     },
 #endif
+#if defined(ENABLE_OCI_IMAGE) || defined(ENABLE_EMBEDDED_IMAGE)
     {
         // `remove images` sub-command
         "rmi", false, cmd_rmi_main, g_cmd_rmi_desc, NULL, &g_cmd_rmi_args
     },
-#ifdef ENABLE_OCI_IMAGE
+#endif
     {
         // `wait` sub-command
         "wait", false, cmd_wait_main, g_cmd_wait_desc, NULL, &g_cmd_wait_args
     },
+#ifdef ENABLE_OCI_IMAGE
     {
         // `logs` sub-command
         "logs", false, cmd_logs_main, g_cmd_logs_desc, NULL, &g_cmd_logs_args
@@ -152,10 +156,12 @@ struct command g_commands[] = {
         // `kill` sub-command
         "kill", false, cmd_kill_main, g_cmd_kill_desc, NULL, &g_cmd_kill_args
     },
+#if defined(ENABLE_OCI_IMAGE) || defined(ENABLE_EMBEDDED_IMAGE)
     {
         // `load` sub-command
         "load", false, cmd_load_main, g_cmd_load_desc, NULL, &g_cmd_load_args
     },
+#endif
 #ifdef ENABLE_OCI_IMAGE
     {
         // `update` sub-command
@@ -217,6 +223,7 @@ struct command g_commands[] = {
     { NULL, NULL, NULL, NULL, NULL } // End of the list
 };
 
+#ifdef ENABLE_OCI_IMAGE
 static int set_locale()
 {
     int ret = 0;
@@ -231,12 +238,15 @@ static int set_locale()
 out:
     return ret;
 }
+#endif
 
 int main(int argc, char **argv)
 {
+#ifdef ENABLE_OCI_IMAGE
     if (set_locale() != 0) {
         exit(ECOMMON);
     }
+#endif
 
     if (connect_client_ops_init()) {
         return ECOMMON;

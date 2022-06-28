@@ -42,11 +42,11 @@
 
 static const char * const g_system_caps[] = { "SYS_BOOT",     "SETPCAP", "NET_RAW", "NET_BIND_SERVICE",
 #ifdef CAP_AUDIT_WRITE
-                                              "AUDIT_WRITE",
+                                             "AUDIT_WRITE",
 #endif
-                                              "DAC_OVERRIDE", "SETFCAP", "SETGID",  "SETUID",           "MKNOD", "CHOWN",
-                                              "FOWNER",       "FSETID",  "KILL",    "SYS_CHROOT"
-                                            };
+                                             "DAC_OVERRIDE", "SETFCAP", "SETGID",  "SETUID",           "MKNOD", "CHOWN",
+                                             "FOWNER",       "FSETID",  "KILL",    "SYS_CHROOT"
+                                           };
 
 static int append_capability(char ***dstcaps, size_t *dstcaps_len, const char *cap)
 {
@@ -83,12 +83,7 @@ static int copy_capabilities(char ***dstcaps, size_t *dstcaps_len, const char **
         *dstcaps_len = 0;
         return ret;
     }
-    if (srccaps_len > SIZE_MAX / sizeof(char *)) {
-        ERROR("Too many capabilities to copy!");
-        return -1;
-    }
-
-    *dstcaps = util_common_calloc_s(srccaps_len * sizeof(char *));
+    *dstcaps = util_smart_calloc_s(sizeof(char *), srccaps_len);
     if (*dstcaps == NULL) {
         ret = -1;
         goto out;
@@ -320,6 +315,7 @@ static char *seccomp_trans_arch_for_docker(const char *arch)
         { "SCMP_ARCH_S390X", "s390x" },
         { "SCMP_ARCH_PARISC", "parisc" },
         { "SCMP_ARCH_PARISC64", "parisc64" },
+        { "SCMP_ARCH_RISCV64", "riscv64" },
         { "SCMP_ARCH_ALL", "all" }
     };
     for (i = 0; i < sizeof(arch_map) / sizeof(arch_map[0]); i++) {
@@ -457,43 +453,121 @@ static bool meet_filtering_rules(const docker_seccomp *seccomp, const docker_sec
     return meet_include_arch && meet_include_cap && meet_exclude_arch && meet_exclude_cap;
 }
 
-static size_t docker_seccomp_arches_count(const docker_seccomp *docker_seccomp_spec)
+static size_t docker_seccomp_arches_count(const char *seccomp_architecture, const docker_seccomp *docker_seccomp_spec)
 {
     size_t count = 0;
     size_t i = 0;
-    for (i = 0; i < docker_seccomp_spec->arch_map_len; i++) {
-        count += docker_seccomp_spec->arch_map[i]->sub_architectures_len + 1;
+
+    if (seccomp_architecture == NULL) {
+        ERROR("Invalid input seccomp architecture");
+        return -1;
     }
+
+    for (i = 0; i < docker_seccomp_spec->arch_map_len; ++i) {
+        if (docker_seccomp_spec->arch_map[i] == NULL || docker_seccomp_spec->arch_map[i]->architecture == NULL) {
+            continue;
+        }
+        if (strcmp(seccomp_architecture, docker_seccomp_spec->arch_map[i]->architecture) == 0) {
+            count = docker_seccomp_spec->arch_map[i]->sub_architectures_len + 1;
+            break;
+        }
+    }
+
+    if (count == 0) {
+        ERROR("seccomp architecture not found");
+        count = -1;
+    }
+
     return count;
 }
 
-static int dup_architectures_to_oci_spec(const docker_seccomp *docker_seccomp_spec,
+static int dup_architectures_to_oci_spec(const char *seccomp_architecture, const docker_seccomp *docker_seccomp_spec,
                                          oci_runtime_config_linux_seccomp *oci_seccomp_spec)
 {
+    size_t i = 0;
+    size_t j = 0;
     size_t arch_size = 0;
 
-    arch_size = docker_seccomp_arches_count(docker_seccomp_spec);
-    if (arch_size != 0) {
-        size_t i;
-        size_t j;
-        if (arch_size > (SIZE_MAX / sizeof(char *))) {
-            return -1;
+    if (seccomp_architecture == NULL) {
+        oci_seccomp_spec->architectures_len = 0;
+        return 0;
+    }
+
+    arch_size = docker_seccomp_arches_count(seccomp_architecture, docker_seccomp_spec);
+    if (arch_size < 0) {
+        ERROR("Failed to get arches count from docker seccomp spec");
+        return -1;
+    }
+
+    oci_seccomp_spec->architectures = util_smart_calloc_s(sizeof(char *), arch_size);
+    if (oci_seccomp_spec->architectures == NULL) {
+        ERROR("Failed to calloc memory for architectures in seccomp spec");
+        return -1;
+    }
+
+    for (i = 0; i < docker_seccomp_spec->arch_map_len; ++i) {
+        if (docker_seccomp_spec->arch_map[i] == NULL || docker_seccomp_spec->arch_map[i]->architecture == NULL) {
+            continue;
         }
-        oci_seccomp_spec->architectures = util_common_calloc_s(arch_size * sizeof(char *));
-        if (oci_seccomp_spec->architectures == NULL) {
-            return -1;
-        }
-        for (i = 0; i < docker_seccomp_spec->arch_map_len; i++) {
+        if (strcmp(seccomp_architecture, docker_seccomp_spec->arch_map[i]->architecture) == 0) {
             oci_seccomp_spec->architectures[oci_seccomp_spec->architectures_len++] =
                 util_strdup_s(docker_seccomp_spec->arch_map[i]->architecture);
-            for (j = 0; j < docker_seccomp_spec->arch_map[i]->sub_architectures_len; j++) {
+
+            for (j = 0; j < docker_seccomp_spec->arch_map[i]->sub_architectures_len; ++j) {
                 oci_seccomp_spec->architectures[oci_seccomp_spec->architectures_len++] =
                     util_strdup_s(docker_seccomp_spec->arch_map[i]->sub_architectures[j]);
             }
+            break;
         }
     }
 
     return 0;
+}
+
+// return 0 when normalized_arch has been properly set into seccomp spec
+static int normalized_arch_to_seccomp_arch(const char *host_arch, const docker_seccomp *docker_seccomp_spec,
+                                           oci_runtime_config_linux_seccomp *oci_seccomp_spec)
+{
+    INFO("host architecture is %s", host_arch);
+    // x86 archs
+    if (strcasecmp(host_arch, "386") == 0 || strcasecmp(host_arch, "amd64") == 0) {
+        return dup_architectures_to_oci_spec(SCMP_ARCH_X86_64, docker_seccomp_spec, oci_seccomp_spec);
+    }
+    // arm archs
+    if (strcasecmp(host_arch, "arm64") == 0 || strcasecmp(host_arch, "arm") == 0) {
+        return dup_architectures_to_oci_spec(SCMP_ARCH_AARCH64, docker_seccomp_spec, oci_seccomp_spec);
+    }
+    //other archs
+    return dup_architectures_to_oci_spec(NULL, docker_seccomp_spec, oci_seccomp_spec);
+}
+
+static int load_architectures_into_oci_spec(const docker_seccomp *docker_seccomp_spec,
+                                            oci_runtime_config_linux_seccomp *oci_seccomp_spec)
+{
+    int ret = 0;
+    char *host_os = NULL;
+    char *host_arch = NULL;
+    char *host_variant = NULL;
+
+    ret = util_normalized_host_os_arch(&host_os, &host_arch, &host_variant);
+    if (ret != 0) {
+        ERROR("get host os and arch for import failed");
+        isulad_try_set_error_message("get host os and arch for import failed");
+        goto out;
+    }
+
+    ret = normalized_arch_to_seccomp_arch(host_arch, docker_seccomp_spec, oci_seccomp_spec);
+    if (ret != 0) {
+        ERROR("transfer normalized arch to seccomp arch failed");
+        isulad_try_set_error_message("transfer normalized arch to seccomp arch failed");
+        goto out;
+    }
+
+out:
+    free(host_os);
+    free(host_arch);
+    free(host_variant);
+    return ret;
 }
 
 static int dup_syscall_args_to_oci_spec(const docker_seccomp_syscalls_element *docker_syscall,
@@ -504,12 +578,7 @@ static int dup_syscall_args_to_oci_spec(const docker_seccomp_syscalls_element *d
     if (docker_syscall->args_len == 0) {
         return 0;
     }
-
-    if (docker_syscall->args_len > (SIZE_MAX / sizeof(defs_syscall_arg *))) {
-        return -1;
-    }
-
-    oci_syscall->args = util_common_calloc_s(docker_syscall->args_len * sizeof(defs_syscall_arg *));
+    oci_syscall->args = util_smart_calloc_s(sizeof(defs_syscall_arg *), docker_syscall->args_len);
     if (oci_syscall->args == NULL) {
         return -1;
     }
@@ -542,11 +611,7 @@ static int dup_syscall_to_oci_spec(const docker_seccomp *docker_seccomp_spec,
         return 0;
     }
 
-    if (docker_seccomp_spec->syscalls_len > (SIZE_MAX / sizeof(defs_syscall *))) {
-        return -1;
-    }
-
-    oci_seccomp_spec->syscalls = util_common_calloc_s(docker_seccomp_spec->syscalls_len * sizeof(defs_syscall *));
+    oci_seccomp_spec->syscalls = util_smart_calloc_s(sizeof(defs_syscall *), docker_seccomp_spec->syscalls_len);
     if (oci_seccomp_spec->syscalls == NULL) {
         return -1;
     }
@@ -561,12 +626,8 @@ static int dup_syscall_to_oci_spec(const docker_seccomp *docker_seccomp_spec,
         }
         oci_seccomp_spec->syscalls_len++;
 
-        if (docker_seccomp_spec->syscalls[i]->names_len > (SIZE_MAX / sizeof(char *))) {
-            return -1;
-        }
-
         oci_seccomp_spec->syscalls[k]->names =
-            util_common_calloc_s(docker_seccomp_spec->syscalls[i]->names_len * sizeof(char *));
+            util_smart_calloc_s(sizeof(char *), docker_seccomp_spec->syscalls[i]->names_len);
         if (oci_seccomp_spec->syscalls[k]->names == NULL) {
             return -1;
         }
@@ -592,8 +653,9 @@ static int dup_syscall_to_oci_spec(const docker_seccomp *docker_seccomp_spec,
     return 0;
 }
 
-static oci_runtime_config_linux_seccomp *trans_docker_seccomp_to_oci_format(const docker_seccomp *docker_seccomp_spec,
-                                                                            const defs_process_capabilities *capabilities)
+static oci_runtime_config_linux_seccomp *
+trans_docker_seccomp_to_oci_format(const docker_seccomp *docker_seccomp_spec,
+                                   const defs_process_capabilities *capabilities)
 {
     oci_runtime_config_linux_seccomp *oci_seccomp_spec = NULL;
 
@@ -606,7 +668,7 @@ static oci_runtime_config_linux_seccomp *trans_docker_seccomp_to_oci_format(cons
     oci_seccomp_spec->default_action = util_strdup_s(docker_seccomp_spec->default_action);
 
     // architectures
-    if (dup_architectures_to_oci_spec(docker_seccomp_spec, oci_seccomp_spec)) {
+    if (load_architectures_into_oci_spec(docker_seccomp_spec, oci_seccomp_spec)) {
         goto out;
     }
 
@@ -693,11 +755,7 @@ static defs_syscall *make_seccomp_syscalls_element(const char **names, size_t na
     ret->action = util_strdup_s(action ? action : "");
     ret->args_len = args_len;
     if (args_len) {
-        if (args_len > SIZE_MAX / sizeof(defs_syscall_arg *)) {
-            CRIT("Too many seccomp syscalls!");
-            goto out;
-        }
-        ret->args = util_common_calloc_s(args_len * sizeof(defs_syscall_arg *));
+        ret->args = util_smart_calloc_s(sizeof(defs_syscall_arg *), args_len);
         if (ret->args == NULL) {
             CRIT("Memory allocation error.");
             goto out;
@@ -716,11 +774,7 @@ static defs_syscall *make_seccomp_syscalls_element(const char **names, size_t na
     }
 
     ret->names_len = names_len;
-    if (names_len > SIZE_MAX / sizeof(char *)) {
-        CRIT("Too many syscalls!");
-        goto out;
-    }
-    ret->names = util_common_calloc_s(names_len * sizeof(char *));
+    ret->names = util_smart_calloc_s(sizeof(char *), names_len);
     if (ret->names == NULL) {
         CRIT("Memory allocation error.");
         goto out;

@@ -462,7 +462,7 @@ Container_Status container_state_get_status(container_state_t *s)
     return status;
 }
 
-int container_dup_health_check_status(defs_health **dst, const defs_health *src)
+static int container_dup_health_check_status(defs_health **dst, const defs_health *src)
 {
     int ret = 0;
     size_t i = 0;
@@ -479,12 +479,7 @@ int container_dup_health_check_status(defs_health **dst, const defs_health *src)
     result->status = src->status ? util_strdup_s(src->status) : NULL;
     result->failing_streak = src->failing_streak;
     if (src->log_len != 0) {
-        if (src->log_len > SIZE_MAX / sizeof(defs_health_log_element *)) {
-            ERROR("Invalid log size");
-            ret = -1;
-            goto error;
-        }
-        result->log = util_common_calloc_s(sizeof(defs_health_log_element *) * src->log_len);
+        result->log = util_smart_calloc_s(sizeof(defs_health_log_element *), src->log_len);
         if (result->log == NULL) {
             ERROR("Out of memory");
             ret = -1;

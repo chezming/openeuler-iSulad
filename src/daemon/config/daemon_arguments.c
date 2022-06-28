@@ -108,7 +108,6 @@ int service_arguments_init(struct service_arguments *args)
     if (args->json_confs == NULL) {
         goto free_out;
     }
-    args->json_confs->engine = util_strdup_s("lcr");
     args->json_confs->group = util_strdup_s("isula");
     args->json_confs->graph = util_strdup_s(ISULAD_ROOT_PATH);
     args->json_confs->state = util_strdup_s(ISULAD_STATE_PATH);
@@ -118,11 +117,11 @@ int service_arguments_init(struct service_arguments *args)
     if (args->json_confs->log_opts == NULL) {
         goto free_out;
     }
-    args->json_confs->log_opts->keys = (char **)util_common_calloc_s(sizeof(char *) * DEFAULT_LOG_OPTS_LEN);
+    args->json_confs->log_opts->keys = (char **)util_smart_calloc_s(sizeof(char *), DEFAULT_LOG_OPTS_LEN);
     if (args->json_confs->log_opts->keys == NULL) {
         goto free_out;
     }
-    args->json_confs->log_opts->values = (char **)util_common_calloc_s(sizeof(char *) * DEFAULT_LOG_OPTS_LEN);
+    args->json_confs->log_opts->values = (char **)util_smart_calloc_s(sizeof(char *), DEFAULT_LOG_OPTS_LEN);
     if (args->json_confs->log_opts->values == NULL) {
         goto free_out;
     }
@@ -138,14 +137,14 @@ int service_arguments_init(struct service_arguments *args)
     args->max_size = 1024 * 1024;
 
     // init container log configs
-    args->json_confs->container_log = (isulad_daemon_configs_container_log *)util_common_calloc_s(sizeof(
-                                                                                                      isulad_daemon_configs_container_log));
+    args->json_confs->container_log =
+        (isulad_daemon_configs_container_log *)util_common_calloc_s(sizeof(isulad_daemon_configs_container_log));
     if (args->json_confs->container_log == NULL) {
         ERROR("Out of memory");
         goto free_out;
     }
 
-    args->json_confs->pidfile = util_strdup_s("/var/run/isulad.pid");
+    args->json_confs->pidfile = util_strdup_s(DEFAULT_PID_FILE);
     args->json_confs->storage_driver = util_strdup_s("overlay2");
     args->json_confs->native_umask = util_strdup_s(UMASK_SECURE);
     args->json_confs->image_service = true;

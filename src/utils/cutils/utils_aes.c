@@ -28,8 +28,6 @@
 #include "openssl/evp.h"
 #include "utils_file.h"
 
-#define AES_256_CFB_IV_LEN 16
-
 int util_aes_key(char *key_file, bool create, unsigned char *aeskey)
 {
     char *key_dir = NULL;
@@ -83,7 +81,6 @@ int util_aes_key(char *key_file, bool create, unsigned char *aeskey)
 
 out:
     free(key_dir);
-    key_dir = NULL;
     if (fd != 0) {
         close(fd);
     }
@@ -95,9 +92,9 @@ size_t util_aes_decode_buf_len(size_t len)
 {
     if (len % AES_BLOCK_SIZE == 0) {
         return len;
-    } else {
-        return (len / AES_BLOCK_SIZE * AES_BLOCK_SIZE) + AES_BLOCK_SIZE;
     }
+
+    return (len / AES_BLOCK_SIZE) * AES_BLOCK_SIZE + AES_BLOCK_SIZE;
 }
 
 size_t util_aes_encode_buf_len(size_t len)
@@ -113,7 +110,11 @@ int util_aes_encode(unsigned char *aeskey, unsigned char *bytes, size_t len, uns
     int size = 0;
     int expected_size = len;
     unsigned char *iv = NULL;
+#ifdef OPENSSL_IS_BORINGSSL
+    const EVP_CIPHER *cipher = EVP_aes_256_ofb();
+#else
     const EVP_CIPHER *cipher = EVP_aes_256_cfb();
+#endif
     EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
 
     if (ctx == NULL || cipher == NULL) {
@@ -134,7 +135,11 @@ int util_aes_encode(unsigned char *aeskey, unsigned char *bytes, size_t len, uns
         goto out;
     }
 
+#ifdef OPENSSL_IS_BORINGSSL
+    evp_ret = EVP_EncryptInit_ex(ctx, cipher, NULL, aeskey, iv);
+#else
     evp_ret = EVP_EncryptInit(ctx, cipher, aeskey, iv);
+#endif
     if (evp_ret != 1) {
         ERROR("init evp decrypt failed, result %d: %s", evp_ret, strerror(errno));
         ret = -1;
@@ -149,7 +154,11 @@ int util_aes_encode(unsigned char *aeskey, unsigned char *bytes, size_t len, uns
     }
     size = tmp_out_len;
 
+#ifdef OPENSSL_IS_BORINGSSL
+    evp_ret = EVP_EncryptFinal_ex(ctx, (*out) + AES_256_CFB_IV_LEN + tmp_out_len, &tmp_out_len);
+#else
     evp_ret = EVP_EncryptFinal(ctx, (*out) + AES_256_CFB_IV_LEN + tmp_out_len, &tmp_out_len);
+#endif
     if (evp_ret != 1) {
         ERROR("evp encrypt final failed, result %d: %s", evp_ret, strerror(errno));
         ret = -1;
@@ -167,7 +176,6 @@ int util_aes_encode(unsigned char *aeskey, unsigned char *bytes, size_t len, uns
 
 out:
     EVP_CIPHER_CTX_free(ctx);
-    ctx = NULL;
     if (ret != 0) {
         free(*out);
         *out = NULL;
@@ -184,7 +192,11 @@ int util_aes_decode(unsigned char *aeskey, unsigned char *bytes, size_t len, uns
     int size = 0;
     int expected_size = 0;
     unsigned char *iv = NULL;
+#ifdef OPENSSL_IS_BORINGSSL
+    const EVP_CIPHER *cipher = EVP_aes_256_ofb();
+#else
     const EVP_CIPHER *cipher = EVP_aes_256_cfb();
+#endif
     EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
 
     if (ctx == NULL || cipher == NULL) {
@@ -204,7 +216,11 @@ int util_aes_decode(unsigned char *aeskey, unsigned char *bytes, size_t len, uns
     }
 
     iv = bytes;
+#ifdef OPENSSL_IS_BORINGSSL
+    evp_ret = EVP_DecryptInit_ex(ctx, cipher, NULL, aeskey, iv);
+#else
     evp_ret = EVP_DecryptInit(ctx, cipher, aeskey, iv);
+#endif
     if (evp_ret != 1) {
         ERROR("init evp decrypt failed, result %d: %s", evp_ret, strerror(errno));
         ret = -1;
@@ -220,7 +236,11 @@ int util_aes_decode(unsigned char *aeskey, unsigned char *bytes, size_t len, uns
     }
     size = tmp_out_len;
 
+#ifdef OPENSSL_IS_BORINGSSL
+    evp_ret = EVP_DecryptFinal_ex(ctx, (*out) + tmp_out_len, &tmp_out_len);
+#else
     evp_ret = EVP_DecryptFinal(ctx, (*out) + tmp_out_len, &tmp_out_len);
+#endif
     if (evp_ret != 1) {
         ERROR("evp decrypt final failed, result %d: %s", evp_ret, strerror(errno));
         ret = -1;
@@ -238,7 +258,6 @@ int util_aes_decode(unsigned char *aeskey, unsigned char *bytes, size_t len, uns
 
 out:
     EVP_CIPHER_CTX_free(ctx);
-    ctx = NULL;
     if (ret != 0) {
         free(*out);
         *out = NULL;

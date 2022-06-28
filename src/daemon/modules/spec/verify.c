@@ -34,6 +34,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <linux/oom.h>
+#include <inttypes.h>
 
 #include "constants.h"
 #include "err_msg.h"
@@ -45,6 +46,9 @@
 #include "utils_convert.h"
 #include "utils_file.h"
 #include "utils_verify.h"
+#ifdef ENABLE_USERNS_REMAP
+#include "isulad_config.h"
+#endif
 
 /* verify hook timeout */
 static int verify_hook_timeout(int t)
@@ -236,8 +240,8 @@ out:
     return ret;
 }
 
-/* check kernel version */
-static bool check_kernel_version(const char *version)
+/* check kerver version greater or equal than 4.0.0 */
+static bool check_kernel_version_ge4()
 {
     struct utsname uts;
     int ret;
@@ -246,9 +250,8 @@ static bool check_kernel_version(const char *version)
     if (ret < 0) {
         WARN("Can not get kernel version: %s", strerror(errno));
     } else {
-        if (strverscmp(uts.release, version) < 0) {
-            return false;
-        }
+        /* greater or equal than 4.0.0, check first part is enough */
+        return atoi(uts.release) >= 4;
     }
     return true;
 }
@@ -273,7 +276,7 @@ static int verify_memory_kernel(const sysinfo_t *sysinfo, int64_t kernel)
         goto out;
     }
 
-    if (kernel > 0 && !check_kernel_version("4.0.0")) {
+    if (kernel > 0 && !check_kernel_version_ge4()) {
         WARN("You specified a kernel memory limit on a kernel older than 4.0. "
              "Kernel memory limits are experimental on older kernels, "
              "it won't work as expected and can cause your system to be unstable.");
@@ -624,16 +627,12 @@ static bool is_cpuset_list_available(const char *provided, const char *available
     }
 
     cpu_num = sysinfo->ncpus;
-    if ((size_t)cpu_num > SIZE_MAX / sizeof(bool)) {
-        ERROR("invalid cpu num");
-        goto out;
-    }
-    parsed_provided = util_common_calloc_s(sizeof(bool) * (unsigned int)cpu_num);
+    parsed_provided = util_smart_calloc_s(sizeof(bool), (unsigned int)cpu_num);
     if (parsed_provided == NULL) {
         ERROR("memory alloc failed!");
         goto out;
     }
-    parsed_available = util_common_calloc_s(sizeof(bool) * (unsigned int)cpu_num);
+    parsed_available = util_smart_calloc_s(sizeof(bool), (unsigned int)cpu_num);
     if (parsed_available == NULL) {
         ERROR("memory alloc failed!");
         goto out;
@@ -962,8 +961,8 @@ static bool check_hugetlbs_repeated(size_t newlen, const char *pagesize,
 
     for (j = 0; j < newlen; j++) {
         if (newtlb[j] != NULL && newtlb[j]->page_size != NULL && !strcmp(newtlb[j]->page_size, pagesize)) {
-            WARN("hugetlb-limit setting of %s is repeated, former setting %lu will be replaced with %lu", pagesize,
-                 newtlb[j]->limit, hugetlb->limit);
+            WARN("hugetlb-limit setting of %s is repeated, former setting %" PRIu64 " will be replaced with %" PRIu64,
+                 pagesize, newtlb[j]->limit, hugetlb->limit);
             newtlb[j]->limit = hugetlb->limit;
             repeated = true;
             goto out;
@@ -1090,7 +1089,7 @@ static int verify_resources_device(defs_resources *resources)
 
     for (i = 0; i < resources->devices_len; i++) {
         if (!util_valid_device_mode(resources->devices[i]->access)) {
-            ERROR("Invalid device mode \"%s\" for device \"%ld %ld\"", resources->devices[i]->access,
+            ERROR("Invalid device mode \"%s\" for device \"%" PRId64 " %" PRId64 "\"", resources->devices[i]->access,
                   resources->devices[i]->major, resources->devices[i]->minor);
             isulad_set_error_message("Invalid device mode \"%s\" for device \"%ld %ld\"", resources->devices[i]->access,
                                      resources->devices[i]->major, resources->devices[i]->minor);
@@ -1488,6 +1487,16 @@ static int verify_custom_mount(defs_mount **mounts, size_t len)
     int ret = 0;
     size_t i;
     defs_mount *iter = NULL;
+#ifdef ENABLE_USERNS_REMAP
+    char *userns_remap = conf_get_isulad_userns_remap();
+#endif
+    mode_t mode = CONFIG_DIRECTORY_MODE;
+
+#ifdef ENABLE_USERNS_REMAP
+    if (userns_remap != NULL) {
+        mode = USER_REMAP_DIRECTORY_MODE;
+    }
+#endif
 
     for (i = 0; i < len; ++i) {
         iter = *(mounts + i);
@@ -1495,7 +1504,11 @@ static int verify_custom_mount(defs_mount **mounts, size_t len)
             continue;
         }
 
-        if (!util_file_exists(iter->source) && util_mkdir_p(iter->source, CONFIG_DIRECTORY_MODE)) {
+#ifdef ENABLE_USERNS_REMAP
+        if (!util_file_exists(iter->source) && util_mkdir_p_userns_remap(iter->source, mode, userns_remap)) {
+#else
+        if (!util_file_exists(iter->source) && util_mkdir_p(iter->source, mode)) {
+#endif
             ERROR("Failed to create directory '%s': %s", iter->source, strerror(errno));
             isulad_try_set_error_message("Failed to create directory '%s': %s", iter->source, strerror(errno));
             ret = -1;
@@ -1504,6 +1517,9 @@ static int verify_custom_mount(defs_mount **mounts, size_t len)
     }
 
 out:
+#ifdef ENABLE_USERNS_REMAP
+    free(userns_remap);
+#endif
     return ret;
 }
 
@@ -1678,7 +1694,7 @@ static int add_hugetbl_element(host_config_hugetlbs_element ***hugetlb, size_t *
     for (j = 0; j < *len; j++) {
         if (strcmp((*hugetlb)[j]->page_size, pagesize) == 0) {
             WARN("Hostconfig: hugetlb-limit setting of %s is repeated, "
-                 "former setting %lu will be replaced with %lu",
+                 "former setting %" PRIu64 " will be replaced with %" PRIu64,
                  pagesize, (*hugetlb)[j]->limit, element->limit);
             (*hugetlb)[j]->limit = element->limit;
             goto out;
@@ -2023,10 +2039,22 @@ out:
 int verify_host_config_settings(host_config *hostconfig, bool update)
 {
     int ret = 0;
+#ifdef ENABLE_USERNS_REMAP
+    char *userns_remap = conf_get_isulad_userns_remap();
+#endif
 
     if (hostconfig == NULL) {
-        return 0;
+        goto out;
     }
+
+#ifdef ENABLE_USERNS_REMAP
+    if (userns_remap != NULL && hostconfig->user_remap != NULL) {
+        ERROR("invalid --user-remap command option, daemon already configed --userns-remap");
+        isulad_set_error_message("invalid --user-remap command option, daemon already configed --userns-remap");
+        ret = -1;
+        goto out;
+    }
+#endif
 
     // restart policy
     ret = host_config_settings_restart_policy(hostconfig);
@@ -2059,6 +2087,9 @@ int verify_host_config_settings(host_config *hostconfig, bool update)
 #endif
 
 out:
+#ifdef ENABLE_USERNS_REMAP
+    free(userns_remap);
+#endif
     return ret;
 }
 

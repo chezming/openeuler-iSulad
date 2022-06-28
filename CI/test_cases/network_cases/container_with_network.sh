@@ -5,7 +5,7 @@
 # spend time: 118
 
 #######################################################################
-##- @Copyright (C) Huawei Technologies., Ltd. 2021. All rights reserved.
+##- Copyright (c) Huawei Technologies Co., Ltd. 2021. All rights reserved.
 # - iSulad licensed under the Mulan PSL v2.
 # - You can use this software according to the terms and conditions of the Mulan PSL v2.
 # - You may obtain a copy of Mulan PSL v2 at:
@@ -103,7 +103,7 @@ function test_container_with_networks()
     ping_ipv6_address ${IP2}
     [[ $? -ne 0 ]] && msg_err "${FUNCNAME[0]}:${LINENO} - ping ${IP2} failed " && return ${FAILURE}
 
-    isula stop ${cont_name}
+    isula stop -t 0 ${cont_name}
     [[ $? -ne 0 ]] && msg_err "${FUNCNAME[0]}:${LINENO} - stop ${cont_name} failed " && return ${FAILURE}
 
     isula inspect -f '{{json .NetworkSettings.Networks}}' ${cont_name} | grep "{}"
@@ -115,7 +115,7 @@ function test_container_with_networks()
     ping6 -c 3 -w 10 ${IP2}
     [[ $? -eq 0 ]] && msg_err "${FUNCNAME[0]}:${LINENO} - ping ${IP2} success, but should failed " && return ${FAILURE}
 
-    isula stop ${cont_name}
+    isula stop -t 0 ${cont_name}
     [[ $? -ne 0 ]] && msg_err "${FUNCNAME[0]}:${LINENO} - stop exited ${cont_name} failed " && return ${FAILURE}
 
     isula start ${cont_name}

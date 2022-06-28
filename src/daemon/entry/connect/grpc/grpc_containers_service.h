@@ -112,11 +112,12 @@ private:
             gresponse->set_cc(ISULAD_ERR_MEMOUT);
             return;
         }
+
         gresponse->set_cc(response->cc);
+
         if (response->errmsg != nullptr) {
             gresponse->set_errmsg(response->errmsg);
         }
-        return;
     }
 
     int version_request_from_grpc(const VersionRequest *grequest, container_version_request **request);
@@ -127,25 +128,9 @@ private:
 
     void info_response_to_grpc(const host_info_response *response, InfoResponse *gresponse);
 
-    int create_request_from_grpc(const CreateRequest *grequest, container_create_request **request);
-
-    void create_response_to_grpc(const container_create_response *response, CreateResponse *gresponse);
-
-    int start_request_from_grpc(const StartRequest *grequest, container_start_request **request);
-
     int top_request_from_grpc(const TopRequest *grequest, container_top_request **request);
 
     void top_response_to_grpc(const container_top_response *response, TopResponse *gresponse);
-
-    int stop_request_from_grpc(const StopRequest *grequest, container_stop_request **request);
-
-    int restart_request_from_grpc(const RestartRequest *grequest, container_restart_request **request);
-
-    int kill_request_from_grpc(const KillRequest *grequest, container_kill_request **request);
-
-    int delete_request_from_grpc(const DeleteRequest *grequest, container_delete_request **request);
-
-    void delete_response_to_grpc(const container_delete_response *response, DeleteResponse *gresponse);
 
     int exec_request_from_grpc(const ExecRequest *grequest, container_exec_request **request);
 
@@ -158,10 +143,6 @@ private:
     int list_request_from_grpc(const ListRequest *grequest, container_list_request **request);
 
     void list_response_to_grpc(const container_list_response *response, ListResponse *gresponse);
-
-    int pause_request_from_grpc(const PauseRequest *grequest, container_pause_request **request);
-
-    int resume_request_from_grpc(const ResumeRequest *grequest, container_resume_request **request);
 
     int container_rename_request_from_grpc(const RenameRequest *grequest,
                                            struct isulad_container_rename_request **request);

@@ -253,6 +253,11 @@ int console_fifo_open(const char *fifo_path, int *fdout, int flags)
 {
     int fd = 0;
 
+    if (fifo_path == NULL || fdout == NULL) {
+        ERROR("Argument must not be NULL");
+        return -1;
+    }
+
     fd = util_open(fifo_path, flags, (mode_t)0);
     if (fd < 0) {
         ERROR("Failed to open fifo %s to send message: %s.", fifo_path, strerror(errno));
@@ -301,6 +306,11 @@ int setup_tios(int fd, struct termios *curr_tios)
 {
     struct termios tmptios;
     int ret = 0;
+
+    if (curr_tios == NULL) {
+        ERROR("Empty terminal io setting");
+        return -1;
+    }
 
     if (!isatty(fd)) {
         ERROR("Specified fd: '%d' is not a tty", fd);
@@ -437,17 +447,14 @@ err_out:
 
 /* console loop copy */
 int console_loop_io_copy(int sync_fd, const int *srcfds, struct io_write_wrapper *writers,
-                         transfer_channel_type *channels, size_t len)
+                         const transfer_channel_type *channels, size_t len)
 {
     int ret = 0;
     size_t i = 0;
     struct epoll_descr descr;
     struct tty_state *ts = NULL;
-    if (len > (SIZE_MAX / sizeof(struct tty_state)) - 1) {
-        ERROR("Invalid io size");
-        return -1;
-    }
-    ts = util_common_calloc_s(sizeof(struct tty_state) * (len + 1));
+
+    ts = util_smart_calloc_s(sizeof(struct tty_state), (len + 1));
     if (ts == NULL) {
         ERROR("Out of memory");
         return -1;

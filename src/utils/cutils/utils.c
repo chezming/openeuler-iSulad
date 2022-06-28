@@ -16,7 +16,9 @@
 #define _GNU_SOURCE
 #include "utils.h"
 #include <errno.h>
+#ifndef __ANDROID__
 #include <execinfo.h>
+#endif
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -44,6 +46,18 @@
 #include "utils_regex.h"
 #include "utils_string.h"
 #include "utils_verify.h"
+
+#ifdef __ANDROID__
+int mallopt(int param, int value)
+{
+    return 1;
+}
+
+int malloc_trim(size_t pad)
+{
+    return 1;
+}
+#endif
 
 int util_mem_realloc(void **newptr, size_t newsize, void *oldptr, size_t oldsize)
 {
@@ -502,7 +516,7 @@ static void set_stderr_buf(char **stderr_buf, const char *format, ...)
     int nret = vsnprintf(errbuf, BUFSIZ, format, argp);
     va_end(argp);
 
-    if (nret < 0 || nret >= BUFSIZ) {
+    if (nret < 0) {
         return;
     }
 
@@ -867,6 +881,10 @@ bool util_exec_cmd(exec_func_t cb_func, void *args, const char *stdin_msg, char 
 
 char **util_get_backtrace(void)
 {
+#ifdef __ANDROID__
+    /* android has no backtrace */
+    return NULL;
+#else
 #define BACKTRACE_SIZE 16
     int addr_cnts;
     void *buffer[BACKTRACE_SIZE];
@@ -883,6 +901,7 @@ char **util_get_backtrace(void)
     }
 
     return syms;
+#endif
 }
 
 /* isulad: get starttime of process pid */
@@ -1351,11 +1370,73 @@ static char *get_cpu_variant()
     return variant;
 }
 
+static void normalized_host_arch(char **host_arch, struct utsname uts) {
+    const char *arch_map[][2] = { { "i386", "386" },
+        { "x86_64", "amd64" },
+        { "x86-64", "amd64" },
+        { "aarch64", "arm64" },
+        { "armhf", "arm" },
+        { "armel", "arm" },
+        { "mips64le", "mips64le" },
+        { "mips64el", "mips64le" }
+    };
+    int i = 0;
+
+    *host_arch = util_strdup_s(uts.machine);
+
+    for (i = 0; i < sizeof(arch_map) / sizeof(arch_map[0]); ++i) {
+        if (strcasecmp(uts.machine, arch_map[i][0]) == 0) {
+            free(*host_arch);
+            *host_arch = util_strdup_s(arch_map[i][1]);
+            break;
+        }
+    }
+}
+
+static void normalized_host_variant(const char *host_arch, char **host_variant) {
+    int i = 0;
+    char *tmp_variant = NULL;
+    const char *variant_map[][2] = { { "5", "v5" },
+        { "6", "v6" },
+        { "7", "v7" },
+        { "8", "v8" },
+        { "9", "v9" }
+    };
+
+    if (strcmp(host_arch, "arm") && strcmp(host_arch, "arm64")) {
+        return;
+    }
+
+    *host_variant = get_cpu_variant();
+    if (!strcmp(host_arch, "arm64") && *host_variant != NULL &&
+        (!strcmp(*host_variant, "8") || !strcmp(*host_variant, "v8"))) {
+        free(host_variant);
+        host_variant = NULL;
+    }
+
+    if (!strcmp(host_arch, "arm") && *host_variant == NULL) {
+        *host_variant = util_strdup_s("v7");
+        return;
+    }
+
+    if (!strcmp(host_arch, "arm") && *host_variant != NULL) {
+        tmp_variant = *host_variant;
+        *host_variant = util_strdup_s(tmp_variant);
+        for (i = 0; i < sizeof(variant_map) / sizeof(variant_map[0]); ++i) {
+            if (!strcmp(tmp_variant, variant_map[i][0])) {
+                free(*host_variant);
+                *host_variant = util_strdup_s(variant_map[i][1]);
+                break;
+            }
+        }
+        free(tmp_variant);
+        tmp_variant = NULL;
+    }
+}
+
 int util_normalized_host_os_arch(char **host_os, char **host_arch, char **host_variant)
 {
-    int ret = 0;
     struct utsname uts;
-    char *tmp_variant = NULL;
 
     if (host_os == NULL || host_arch == NULL || host_variant == NULL) {
         ERROR("Invalid NULL pointer");
@@ -1364,65 +1445,14 @@ int util_normalized_host_os_arch(char **host_os, char **host_arch, char **host_v
 
     if (uname(&uts) < 0) {
         ERROR("Failed to read host arch and os: %s", strerror(errno));
-        ret = -1;
-        goto out;
+        return -1;
     }
 
     *host_os = util_strings_to_lower(uts.sysname);
+    normalized_host_arch(host_arch, uts);
+    normalized_host_variant(*host_arch, host_variant);
 
-    if (strcasecmp("i386", uts.machine) == 0) {
-        *host_arch = util_strdup_s("386");
-    } else if ((strcasecmp("x86_64", uts.machine) == 0) || (strcasecmp("x86-64", uts.machine) == 0)) {
-        *host_arch = util_strdup_s("amd64");
-    } else if (strcasecmp("aarch64", uts.machine) == 0) {
-        *host_arch = util_strdup_s("arm64");
-    } else if ((strcasecmp("armhf", uts.machine) == 0) || (strcasecmp("armel", uts.machine) == 0)) {
-        *host_arch = util_strdup_s("arm");
-    } else if ((strcasecmp("mips64le", uts.machine) == 0) || (strcasecmp("mips64el", uts.machine) == 0)) {
-        *host_arch = util_strdup_s("mips64le");
-    } else {
-        *host_arch = util_strdup_s(uts.machine);
-    }
-
-    if (!strcmp(*host_arch, "arm") || !strcmp(*host_arch, "arm64")) {
-        *host_variant = get_cpu_variant();
-        if (!strcmp(*host_arch, "arm64") && *host_variant != NULL &&
-            (!strcmp(*host_variant, "8") || !strcmp(*host_variant, "v8"))) {
-            free(*host_variant);
-            *host_variant = NULL;
-        }
-        if (!strcmp(*host_arch, "arm") && *host_variant == NULL) {
-            *host_variant = util_strdup_s("v7");
-        } else if (!strcmp(*host_arch, "arm") && *host_variant != NULL) {
-            tmp_variant = *host_variant;
-            *host_variant = NULL;
-            if (!strcmp(tmp_variant, "5")) {
-                *host_variant = util_strdup_s("v5");
-            } else if (!strcmp(tmp_variant, "6")) {
-                *host_variant = util_strdup_s("v6");
-            } else if (!strcmp(tmp_variant, "7")) {
-                *host_variant = util_strdup_s("v7");
-            } else if (!strcmp(tmp_variant, "8")) {
-                *host_variant = util_strdup_s("v8");
-            } else {
-                *host_variant = util_strdup_s(tmp_variant);
-            }
-            free(tmp_variant);
-            tmp_variant = NULL;
-        }
-    }
-
-out:
-    if (ret != 0) {
-        free(*host_os);
-        *host_os = NULL;
-        free(*host_arch);
-        *host_arch = NULL;
-        free(*host_variant);
-        *host_variant = NULL;
-    }
-
-    return ret;
+    return 0;
 }
 
 int util_read_pid_ppid_info(uint32_t pid, pid_ppid_info_t *pid_info)
@@ -1468,32 +1498,32 @@ void util_parse_user_group(const char *username, char **user, char **group, char
         return;
     }
 
-    if (username != NULL) {
-        tmp = util_strdup_s(username);
-
-        // for free tmp in caller
-        *tmp_dup = tmp;
-
-        pdot = strstr(tmp, ":");
-        if (pdot != NULL) {
-            *pdot = '\0';
-            if (pdot != tmp) {
-                // User found
-                *user = tmp;
-            }
-            if (*(pdot + 1) != '\0') {
-                // group found
-                *group = pdot + 1;
-            }
-        } else {
-            // No : found
-            if (*tmp != '\0') {
-                *user = tmp;
-            }
-        }
+    if (username == NULL) {
+        return;
     }
 
-    return;
+    tmp = util_strdup_s(username);
+
+    // for free tmp in caller
+    *tmp_dup = tmp;
+
+    pdot = strstr(tmp, ":");
+    if (pdot != NULL) {
+        *pdot = '\0';
+        if (pdot != tmp) {
+            // User found
+            *user = tmp;
+        }
+        if (*(pdot + 1) != '\0') {
+            // group found
+            *group = pdot + 1;
+        }
+    } else {
+        // No : found
+        if (*tmp != '\0') {
+            *user = tmp;
+        }
+    }
 }
 
 defs_map_string_object *dup_map_string_empty_object(defs_map_string_object *src)
@@ -1542,7 +1572,7 @@ out:
 int convert_v2_runtime(const char *runtime, char *binary)
 {
     char **parts = NULL;
-    int parts_len = 0;
+    size_t parts_len = 0;
     char buf[PATH_MAX]  = {0};
     int ret = 0;
 

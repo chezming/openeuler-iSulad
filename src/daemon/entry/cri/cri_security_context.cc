@@ -41,11 +41,7 @@ static void ModifyHostConfigCapabilities(const runtime::v1alpha2::LinuxContainer
 
     const google::protobuf::RepeatedPtrField<std::string> &capAdd = sc.capabilities().add_capabilities();
     if (!capAdd.empty()) {
-        if (static_cast<size_t>(capAdd.size()) > SIZE_MAX / sizeof(char *)) {
-            error.SetError("Invalid capability add size");
-            return;
-        }
-        hostConfig->cap_add = (char **)util_common_calloc_s(sizeof(char *) * capAdd.size());
+        hostConfig->cap_add = (char **)util_smart_calloc_s(sizeof(char *), capAdd.size());
         if (hostConfig->cap_add == nullptr) {
             error.SetError("Out of memory");
             return;
@@ -57,11 +53,7 @@ static void ModifyHostConfigCapabilities(const runtime::v1alpha2::LinuxContainer
     }
     const google::protobuf::RepeatedPtrField<std::string> &capDrop = sc.capabilities().drop_capabilities();
     if (!capDrop.empty()) {
-        if (static_cast<size_t>(capDrop.size()) > SIZE_MAX / sizeof(char *)) {
-            error.SetError("Invalid capability drop size");
-            return;
-        }
-        hostConfig->cap_drop = (char **)util_common_calloc_s(sizeof(char *) * capDrop.size());
+        hostConfig->cap_drop = (char **)util_smart_calloc_s(sizeof(char *), capDrop.size());
         if (hostConfig->cap_drop == nullptr) {
             error.SetError("Out of memory");
             return;
@@ -169,11 +161,8 @@ static void ModifyHostNetworkOptionForSandbox(const runtime::v1alpha2::Namespace
         hostConfig->network_mode = util_strdup_s(CRI::Constants::namespaceModeHost.c_str());
         free(hostConfig->uts_mode);
         hostConfig->uts_mode = util_strdup_s(CRI::Constants::namespaceModeHost.c_str());
-    } else {
-        free(hostConfig->network_mode);
-        hostConfig->network_mode = util_strdup_s(CRI::Constants::namespaceModeFile.c_str());
     }
-    // Note: default networkMode is not supported
+    // Note: default networkMode is CNI
 }
 
 static void ModifyContainerNamespaceOptions(const runtime::v1alpha2::NamespaceOption &nsOpts,

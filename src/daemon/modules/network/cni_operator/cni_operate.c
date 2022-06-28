@@ -177,7 +177,7 @@ out:
 
 static int ip_ranges_inject(const char *value, struct runtime_conf *rt)
 {
-    int ret = -1;
+    int ret = 0;
     parser_error err = NULL;
     struct parser_context ctx = { OPT_GEN_SIMPLIFY, 0 };
     cni_ip_ranges_array_container *ip_ranges = NULL;
@@ -188,9 +188,14 @@ static int ip_ranges_inject(const char *value, struct runtime_conf *rt)
     }
 
     ip_ranges = cni_ip_ranges_array_container_parse_data(value, &ctx, &err);
-    if (ip_ranges == NULL) {
+    if (err != NULL) {
         ERROR("Failed to parse ip ranges data from value:%s, err:%s", value, err);
         ret = -1;
+        goto out;
+    }
+
+    if (ip_ranges == NULL) {
+        DEBUG("Empty ip ranges: %s", value);
         goto out;
     }
 
@@ -504,14 +509,14 @@ static int inject_annotations_json(map_t *annotations, const struct cni_network_
     size_t i = 0;
     char *value = NULL;
 
-    if (annotations == NULL) {
-        DEBUG("Empty extension configs");
-        return 0;
-    }
-
     if (old == NULL || p_new == NULL) {
         ERROR("Invalid input param");
         return -1;
+    }
+
+    if (annotations == NULL) {
+        DEBUG("Empty extension configs");
+        return 0;
     }
 
     for (i = 0; i < g_numregistrants_json; i++) {
@@ -775,7 +780,7 @@ int attach_network_plane(const struct cni_manager *manager, const struct cni_net
         goto out;
     }
 
-    if (cni_add_network_list(list, rc, result) != 0) {
+    if (cni_add_network_list(use_list != NULL ? use_list : list, rc, result) != 0) {
         ERROR("Add CNI network failed");
         ret = -1;
         goto out;
@@ -819,7 +824,7 @@ int check_network_plane(const struct cni_manager *manager, const struct cni_netw
         goto out;
     }
 
-    if (cni_check_network_list(list, rc, result) != 0) {
+    if (cni_check_network_list(use_list != NULL ? use_list : list, rc, result) != 0) {
         ERROR("Error deleting network");
         ret = -1;
         goto out;
@@ -863,7 +868,7 @@ int detach_network_plane(const struct cni_manager *manager, const struct cni_net
         goto out;
     }
 
-    if (cni_del_network_list(list, rc) != 0) {
+    if (cni_del_network_list(use_list != NULL ? use_list : list, rc) != 0) {
         ERROR("Error deleting network");
         ret = -1;
         goto out;

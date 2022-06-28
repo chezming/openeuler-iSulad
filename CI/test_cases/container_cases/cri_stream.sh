@@ -24,7 +24,7 @@ function set_up()
     check_valgrind_log
     [[ $? -ne 0 ]] && msg_err "${FUNCNAME[0]}:${LINENO} - failed to stop isulad" && return ${FAILURE}
 
-    start_isulad_with_valgrind
+    start_isulad_without_valgrind
     [[ $? -ne 0 ]] && msg_err "${FUNCNAME[0]}:${LINENO} - failed to start isulad" && return ${FAILURE}
 
     isula load -i ${pause_img_path}/pause.tar
@@ -104,6 +104,11 @@ function test_cri_attach
     nohup cricli attach -i ${cid} &
     pid=$!
     sleep 2
+
+    ps -T -p $(cat /var/run/isulad.pid) | grep IoCopy
+    [[ $? -ne 0 ]] && msg_err "${FUNCNAME[0]}:${LINENO} - residual IO copy thread in CRI attach operation" && ((ret++))
+
+
     kill -9 $pid
     sleep 2
 
@@ -131,7 +136,7 @@ function tear_down()
     [[ $? -ne 0 ]] && msg_err "${FUNCNAME[0]}:${LINENO} - failed to rm sandbox" && ((ret++))
 
     cp -f /etc/isulad/daemon.bak /etc/isulad/daemon.json
-    check_valgrind_log
+    stop_isulad_without_valgrind
     start_isulad_with_valgrind
 
     return ${ret}

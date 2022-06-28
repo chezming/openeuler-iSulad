@@ -915,6 +915,11 @@ int find_cgroup_mountpoint_and_root(const char *subsystem, char **mountpoint, ch
     size_t length = 0;
     char *pline = NULL;
 
+    if (subsystem == NULL) {
+        ERROR("Empty subsystem");
+        return -1;
+    }
+
     fp = util_fopen("/proc/self/mountinfo", "r");
     if (fp == NULL) {
         ERROR("Failed to open \"/proc/self/mountinfo\"\n");
@@ -1010,7 +1015,7 @@ free_out:
 
 static int get_cgroup_version()
 {
-    struct statfs fs = {0};
+    struct statfs fs = { 0 };
 
     if (statfs(CGROUP_MOUNTPOINT, &fs) != 0) {
         ERROR("failed to statfs %s: %s", CGROUP_MOUNTPOINT, strerror(errno));
@@ -1019,9 +1024,9 @@ static int get_cgroup_version()
 
     if (fs.f_type == CGROUP2_SUPER_MAGIC) {
         return CGROUP_VERSION_2;
-    } else {
-        return CGROUP_VERSION_1;
     }
+
+    return CGROUP_VERSION_1;
 }
 
 static bool is_hugetlb_max(const char *name)
@@ -1102,7 +1107,6 @@ static char **get_huge_page_sizes()
         hps[index] = util_strdup_s(pos);
 dup_free:
         free(dup);
-        continue;
     }
 free_out:
 
@@ -1259,13 +1263,11 @@ static int cgroup2_enable_all()
     char *controllers_str = NULL;
     char *subtree_controller_str = NULL;
     char **controllers = NULL;
-    char enable_controllers[PATH_MAX] = {0};
+    char enable_controllers[PATH_MAX] = { 0 };
 
     controllers_str = util_read_content_from_file(CGROUP2_CONTROLLERS_PATH);
-    if (controllers_str == NULL || strlen(controllers_str) == 0 ||
-        strcmp(controllers_str, "\n") == 0) {
-        ERROR("read cgroup controllers failed");
-        ret = -1;
+    if (controllers_str == NULL || strlen(controllers_str) == 0 || strcmp(controllers_str, "\n") == 0) {
+        WARN("no cgroup controller found");
         goto out;
     }
 
@@ -1305,6 +1307,22 @@ out:
     return ret;
 }
 
+#ifdef __ANDROID__
+static bool cgroup2_no_controller()
+{
+    char *controllers_str = NULL;
+
+    controllers_str = util_read_content_from_file(CGROUP2_CONTROLLERS_PATH);
+    if (controllers_str == NULL || strlen(controllers_str) == 0 || strcmp(controllers_str, "\n") == 0) {
+        free(controllers_str);
+        return true;
+    }
+
+    free(controllers_str);
+    return false;
+}
+#endif
+
 static int make_sure_cgroup2_isulad_path_exist()
 {
     int ret = 0;
@@ -1316,6 +1334,13 @@ static int make_sure_cgroup2_isulad_path_exist()
     if (cgroup2_enable_all() != 0) {
         return -1;
     }
+
+#ifdef __ANDROID__
+    if (cgroup2_no_controller()) {
+        DEBUG("no cgroup controller found");
+        return 0;
+    }
+#endif
 
     ret = mkdir(CGROUP_ISULAD_PATH, DEFAULT_CGROUP_DIR_MODE);
     if (ret != 0 && (errno != EEXIST || !util_dir_exists(CGROUP_ISULAD_PATH))) {
@@ -1330,7 +1355,7 @@ static int get_cgroup_info_v2(sysinfo_t *sysinfo, bool quiet)
     int ret = 0;
     int nret = 0;
     char *size = NULL;
-    char path[PATH_MAX] = {0};
+    char path[PATH_MAX] = { 0 };
 
     if (make_sure_cgroup2_isulad_path_exist() != 0) {
         return -1;
@@ -1512,7 +1537,7 @@ mountinfo_t *get_mount_info(const char *pline)
 
     info->mountpoint = util_strdup_s(list[4]);
 
-    if (strcmp(list[6], "-")) {
+    if (strcmp(list[6], "-") != 0) {
         info->optional = util_strdup_s(list[6]);
     }
 
@@ -1546,6 +1571,10 @@ mountinfo_t *find_mount_info(mountinfo_t **minfos, const char *dir)
 {
     mountinfo_t **it = NULL;
 
+    if (dir == NULL) {
+        return NULL;
+    }
+
     for (it = minfos; it && *it; it++) {
         if ((*it)->mountpoint && !strcmp((*it)->mountpoint, dir)) {
             return *it;
@@ -1571,7 +1600,7 @@ mountinfo_t **getmountsinfo(void)
 
     while (getline(&pline, &length, fp) != -1) {
         int index;
-        mountinfo_t *info;
+        mountinfo_t *info = NULL;
 
         info = get_mount_info(pline);
         if (info == NULL) {

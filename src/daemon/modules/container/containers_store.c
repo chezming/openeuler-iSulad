@@ -247,6 +247,11 @@ int containers_store_list(container_t ***out, size_t *size)
     container_t **conts = NULL;
     map_itor *itor = NULL;
 
+    if (out == NULL || size == NULL) {
+        ERROR("Invalid arguments");
+        return -1;
+    }
+
     if (pthread_rwlock_rdlock(&g_containers_store->rwlock) != 0) {
         ERROR("lock memory store failed");
         return -1;
@@ -257,11 +262,7 @@ int containers_store_list(container_t ***out, size_t *size)
         ret = 0;
         goto unlock;
     }
-    if (*size > SIZE_MAX / sizeof(container_t *)) {
-        ERROR("Containers store list is too long!");
-        goto unlock;
-    }
-    conts = util_common_calloc_s(sizeof(container_t *) * (*size));
+    conts = util_smart_calloc_s(sizeof(container_t *), (*size));
     if (conts == NULL) {
         ERROR("Out of memory");
         goto unlock;

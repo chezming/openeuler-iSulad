@@ -31,6 +31,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/select.h>
+#include <inttypes.h>
 
 #include "isula_libutils/log.h"
 #include "plugin_api.h"
@@ -327,7 +328,7 @@ static int get_plugin_dir(char *plugin_dir)
         goto failed;
     }
 
-    ret = util_mkdir_p(plugin_dir, DEFAULT_SECURE_FILE_MODE);
+    ret = util_mkdir_p(plugin_dir, DEFAULT_SECURE_DIRECTORY_MODE);
     if (ret < 0) {
         goto failed;
     }
@@ -519,7 +520,7 @@ static int pm_register_plugin(const char *name, const char *addr)
         goto failed;
     }
 
-    INFO("add activated plugin %s 0x%lx", plugin->name, plugin->manifest->watch_event);
+    INFO("add activated plugin %s 0x%" PRIx64, plugin->name, plugin->manifest->watch_event);
     return 0;
 
 failed:
@@ -759,8 +760,14 @@ plugin_t *plugin_new(const char *name, const char *addr)
     plugin_t *plugin = NULL;
     int errcode = 0;
 
+    if (name == NULL || addr == NULL) {
+        ERROR("Empty arguments");
+        return NULL;
+    }
+
     plugin = util_common_calloc_s(sizeof(plugin_t));
     if (plugin == NULL) {
+        ERROR("Out of memory");
         goto bad;
     }
 
@@ -784,7 +791,7 @@ bad:
     return NULL;
 }
 
-int plugin_set_activated(plugin_t *plugin, bool activated, const char *errmsg)
+static int plugin_set_activated(plugin_t *plugin, bool activated, const char *errmsg)
 {
     plugin_wrlock(plugin);
     plugin->activated = activated;
@@ -854,7 +861,7 @@ bool plugin_is_watching(plugin_t *plugin, uint64_t pe)
     }
     plugin_unlock(plugin);
 
-    INFO("plugin %s watching=%s for event 0x%lx", plugin->name, (ok ? "true" : "false"), pe);
+    INFO("plugin %s watching=%s for event 0x%" PRIx64, plugin->name, (ok ? "true" : "false"), pe);
 
     return ok;
 }
@@ -885,7 +892,7 @@ static int unpack_activate_response(const struct parsed_http_message *message, v
         goto out;
     }
 
-    INFO("get resp 0x%lx", resp->watch_event);
+    INFO("get resp 0x%" PRIx64, resp->watch_event);
     manifest->init_type = resp->init_type;
     manifest->watch_event = resp->watch_event;
 
@@ -1116,12 +1123,7 @@ static int pm_init_plugin(const plugin_t *plugin)
      * prepare or delete dirty resource.
      */
     if (container_num) {
-        if (container_num > SIZE_MAX / sizeof(plugin_init_plugin_request_containers_element *)) {
-            ERROR("Invalid container nums");
-            ret = -1;
-            goto out;
-        }
-        reqs.containers = util_common_calloc_s(container_num * sizeof(plugin_init_plugin_request_containers_element *));
+        reqs.containers = util_smart_calloc_s(sizeof(plugin_init_plugin_request_containers_element *), container_num);
         if (reqs.containers == NULL) {
             ERROR("Out of memory");
             ret = -1;
@@ -1233,58 +1235,6 @@ void pm_put_plugin(plugin_t *plugin)
     plugin_put(plugin);
 }
 
-int pm_get_plugins_nolock(uint64_t pe, plugin_t ***rplugins, size_t *count)
-{
-    int ret = 0;
-    int i = 0;
-    size_t size = 0;
-    plugin_t **plugins = NULL;
-    map_itor *itor = NULL;
-
-    size = map_size(g_plugin_manager->np);
-    if (size == 0) { /* empty */
-        return 0;
-    }
-    if (size > SIZE_MAX / sizeof(plugin_t *)) {
-        ret = -1;
-        ERROR("Invalid plugins size");
-        goto out;
-    }
-
-    plugins = util_common_calloc_s(sizeof(plugin_t *) * size);
-    if (plugins == NULL) {
-        ret = -1;
-        ERROR("Out of memory");
-        goto out;
-    }
-
-    itor = map_itor_new(g_plugin_manager->np);
-    if (itor == NULL) {
-        ret = -1;
-        ERROR("Out of memory");
-        goto out;
-    }
-
-    for (i = 0; i < (int)size && map_itor_valid(itor); i++, map_itor_next(itor)) {
-        plugins[i] = map_itor_value(itor);
-        /* plugin_put() called in pm_put_plugins() */
-        plugin_get(plugins[i]);
-    }
-
-    *rplugins = plugins;
-    *count = (size_t)i;
-
-out:
-    map_itor_free(itor);
-    itor = NULL;
-
-    if (ret < 0) {
-        UTIL_FREE_AND_SET_NULL(plugins);
-    }
-
-    return ret;
-}
-
 static void pm_np_item_free(void *key, void *val)
 {
     plugin_t *plugin = val;
@@ -1371,7 +1321,7 @@ static int plugin_event_handle_dispath_impl(const char *cid, const char *plugins
                 ret = plugin_event_post_remove_handle(plugin, cid);
                 break;
             default:
-                ERROR("plugin event %ld not support.", pe);
+                ERROR("plugin event %" PRIu64 " not support.", pe);
                 ret = -1;
                 break;
         }

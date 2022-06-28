@@ -36,8 +36,6 @@ extern "C" {
 /* max arguments can be specify in client */
 #define MAX_CLIENT_ARGS 1000
 
-#define CLIENT_RUNDIR "/var/run/isula"
-
 struct client_arguments;
 struct custom_configs;
 
@@ -315,6 +313,13 @@ struct client_arguments {
     // list
     bool dispname;
     bool list_all;
+    bool list_latest;
+    /*
+     * list_last_n < 0: invalid value list_last_n
+     * list_last_n = 0: as the default value
+     * list_last_n > 0: show number of containers set by list_last_n
+     * */
+    uint list_last_n;
     char **filters;
     bool no_trunc;
 

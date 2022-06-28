@@ -37,6 +37,21 @@ int update_hosts(struct service_arguments *args);
 int update_default_ulimit(struct service_arguments *args);
 int command_default_ulimit_append(command_option_t *option, const char *arg);
 
+
+#ifdef ENABLE_SUP_GROUPS
+#define SUP_GROUPS_OPT(cmdargs)                                                                                   \
+    { CMD_OPT_TYPE_CALLBACK,                                                                                      \
+      false,                                                                                                      \
+      "sup-groups",                                                                                               \
+      0,                                                                                                          \
+      (cmdargs)->json_confs,                                                                                      \
+      "Set the supplementary group IDs for isulad, can be specified multiple times",                              \
+      command_append_sup_groups },                                                                                \
+
+#else
+#define SUP_GROUPS_OPT(cmdargs)
+#endif
+
 #if (defined GRPC_CONNECTOR) && (defined ENABLE_METRICS)
 #define METRICS_PORT_OPT(cmdargs)                                           \
     { CMD_OPT_TYPE_CALLBACK,                                            \
@@ -47,6 +62,20 @@ int command_default_ulimit_append(command_option_t *option, const char *arg);
 
 #else
 #define METRICS_PORT_OPT(cmdargs)
+#endif
+
+#ifdef ENABLE_USERNS_REMAP
+#define USERNS_REMAP_OPT(cmdargs)                                                                                 \
+    { CMD_OPT_TYPE_STRING_DUP,                                                                                    \
+        false,                                                                                                    \
+        "userns-remap",                                                                                           \
+        0,                                                                                                        \
+        &(cmdargs)->json_confs->userns_remap,                                                                     \
+        "User/Group setting for user namespaces",                                                                 \
+        NULL },                                                                                                   \
+
+#else
+#define USERNS_REMAP_OPT(cmdargs)
 #endif
 
 #define ISULAD_OPTIONS(cmdargs)                                                                                   \
@@ -88,8 +117,6 @@ int command_default_ulimit_append(command_option_t *option, const char *arg);
       &(cmdargs)->json_confs->start_timeout,                                                                      \
       "timeout duration for waiting on a container to start before it is killed",                                 \
       NULL },                                                                                                     \
-    { CMD_OPT_TYPE_STRING_DUP, false, "engine", 'e', &(cmdargs)->json_confs->engine,                              \
-      "Select backend engine", NULL },                                                                            \
     { CMD_OPT_TYPE_STRING_DUP,                                                                                    \
       false,                                                                                                      \
       "log-level",                                                                                                \
@@ -147,6 +174,7 @@ int command_default_ulimit_append(command_option_t *option, const char *arg);
       &(cmdargs)->json_confs->storage_opts,                                                                       \
       "Storage driver options",                                                                                   \
       command_append_array },                                                                                     \
+    SUP_GROUPS_OPT(cmdargs)                                                                                       \
     { CMD_OPT_TYPE_CALLBACK,                                                                                      \
       false,                                                                                                      \
       "registry-mirrors",                                                                                         \
@@ -180,8 +208,7 @@ int command_default_ulimit_append(command_option_t *option, const char *arg);
       "pod-sandbox-image",                                                                                        \
       0,                                                                                                          \
       &(cmdargs)->json_confs->pod_sandbox_image,                                                                  \
-      "The image whose network/ipc namespaces containers in each pod will use. "                                  \
-      "(default \"pause-${machine}:3.0\")",                                                                       \
+      "The image whose network/ipc namespaces containers in each pod will use. (default \"pause-${machine}:3.0\")", \
       NULL },                                                                                                     \
     { CMD_OPT_TYPE_STRING_DUP,                                                                                    \
       false,                                                                                                      \
@@ -275,18 +302,12 @@ int command_default_ulimit_append(command_option_t *option, const char *arg);
       &(cmdargs)->json_confs->websocket_server_listening_port,                                                    \
       "CRI websocket streaming service listening port (default 10350)",                                           \
       command_convert_uint },                                                                                     \
+    METRICS_PORT_OPT(cmdargs)                                                                                     \
+    USERNS_REMAP_OPT(cmdargs)                                                                                     \
     { CMD_OPT_TYPE_BOOL,                                                                                          \
       false, "selinux-enabled", 0, &(cmdargs)->json_confs->selinux_enabled,                                       \
       "Enable selinux support", NULL                                                                              \
     },                                                                                                            \
-    METRICS_PORT_OPT(cmdargs)                                                                                     \
-    { CMD_OPT_TYPE_STRING_DUP,                                                                                    \
-        false,                                                                                                      \
-        "userns-remap",                                                                                             \
-        0,                                                                                                          \
-        &(cmdargs)->json_confs->userns_remap,                                                                       \
-        "User/Group setting for user namespaces",                                                                   \
-        NULL }
 
 #ifdef __cplusplus
 }

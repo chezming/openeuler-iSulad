@@ -27,7 +27,7 @@
 #include "cri_runtime_service.h"
 
 namespace Network {
-static void run_modprobe(void *args)
+static void run_modprobe(void * /*args*/)
 {
     execlp("modprobe", "modprobe", "br-netfilter", nullptr);
 }
@@ -188,7 +188,7 @@ void InitNetworkPlugin(std::vector<std::shared_ptr<NetworkPlugin>> *plugins, std
                        std::string hairpinMode, std::string nonMasqueradeCIDR, int mtu,
                        std::shared_ptr<NetworkPlugin> *result, Errors &err)
 {
-    std::string allErr { "" };
+    std::string allErr;
 
     if (networkPluginName.empty()) {
         DEBUG("network plugin name empty");
@@ -231,7 +231,6 @@ void InitNetworkPlugin(std::vector<std::shared_ptr<NetworkPlugin>> *plugins, std
     }
 
     pluginMap.clear();
-    return;
 }
 
 const std::string &NetworkPluginConf::GetDockershimRootDirectory() const
@@ -414,30 +413,10 @@ void PluginManager::Status(Errors &error)
     }
 }
 
-void PluginManager::GetPodNetworkStatus(const std::string &ns, const std::string &name,
-                                        const std::string &interfaceName, const std::string &podSandboxID,
-                                        PodNetworkStatus &status, Errors &error)
-{
-    std::string fullName = name + "_" + ns;
-
-    Lock(fullName, error);
-    if (error.NotEmpty()) {
-        return;
-    }
-    if (m_plugin != nullptr) {
-        Errors tmpErr;
-        m_plugin->GetPodNetworkStatus(ns, name, interfaceName, podSandboxID, status, tmpErr);
-        if (tmpErr.NotEmpty()) {
-            error.Errorf("NetworkPlugin %s failed on the status hook for pod %s: %s", m_plugin->Name().c_str(),
-                         fullName.c_str(), tmpErr.GetCMessage());
-        }
-    }
-    Unlock(fullName, error);
-}
-
 void PluginManager::SetUpPod(const std::string &ns, const std::string &name, const std::string &interfaceName,
-                             const std::string &podSandboxID, std::map<std::string, std::string> &annotations,
-                             const std::map<std::string, std::string> &options, std::string &network_settings_json, Errors &error)
+                             const std::string &podSandboxID, const std::map<std::string, std::string> &annotations,
+                             const std::map<std::string, std::string> &options, std::string &network_settings_json,
+                             Errors &error)
 {
     if (m_plugin == nullptr) {
         return;
@@ -483,8 +462,8 @@ unlock:
     Unlock(fullName, error);
 }
 
-void NoopNetworkPlugin::Init(const std::string &hairpinMode,
-                             const std::string &nonMasqueradeCIDR, int mtu, Errors &error)
+void NoopNetworkPlugin::Init(const std::string &hairpinMode, const std::string &nonMasqueradeCIDR, int mtu,
+                             Errors &error)
 {
     char *stderr_str { nullptr };
     char *stdout_str { nullptr };
@@ -535,7 +514,8 @@ std::map<int, bool> *NoopNetworkPlugin::Capabilities()
 
 void NoopNetworkPlugin::SetUpPod(const std::string &ns, const std::string &name, const std::string &interfaceName,
                                  const std::string &podSandboxID, const std::map<std::string, std::string> &annotations,
-                                 const std::map<std::string, std::string> &options, std::string &network_settings_json, Errors &error)
+                                 const std::map<std::string, std::string> &options, std::string &network_settings_json,
+                                 Errors &error)
 {
     return;
 }
@@ -543,13 +523,6 @@ void NoopNetworkPlugin::SetUpPod(const std::string &ns, const std::string &name,
 void NoopNetworkPlugin::TearDownPod(const std::string &ns, const std::string &name, const std::string &interfaceName,
                                     const std::string &podSandboxID,
                                     const std::map<std::string, std::string> &annotations, Errors &error)
-{
-    return;
-}
-
-void NoopNetworkPlugin::GetPodNetworkStatus(const std::string &ns, const std::string &name,
-                                            const std::string &interfaceName, const std::string &podSandboxID,
-                                            PodNetworkStatus &status, Errors &error)
 {
     return;
 }

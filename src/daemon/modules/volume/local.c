@@ -23,7 +23,9 @@
 #include <sys/stat.h>
 
 #include "isula_libutils/log.h"
+#ifdef ENABLE_USERNS_REMAP
 #include "isulad_config.h"
+#endif
 #include "volume_api.h"
 #include "utils.h"
 #include "map.h"
@@ -85,7 +87,7 @@ void free_volumes_info(struct volumes_info *vols)
     return;
 }
 
-static struct volume * dup_volume(char *name, char *path)
+static struct volume *dup_volume(char *name, char *path)
 {
     struct volume *vol = NULL;
 
@@ -103,7 +105,7 @@ static struct volume * dup_volume(char *name, char *path)
     return vol;
 }
 
-struct volume * local_volume_get(char *name)
+struct volume *local_volume_get(char *name)
 {
     struct volume *v = NULL;
 
@@ -157,7 +159,9 @@ out:
 static int init_volume_root_dir(struct volumes_info *vols_info, char *root_dir)
 {
     int ret = 0;
+#ifdef ENABLE_USERNS_REMAP
     char *userns_remap = conf_get_isulad_userns_remap();
+#endif
 
     ret = util_mkdir_p(root_dir, LOCAL_VOLUME_ROOT_DIR_MODE);
     if (ret != 0) {
@@ -165,16 +169,20 @@ static int init_volume_root_dir(struct volumes_info *vols_info, char *root_dir)
         goto out;
     }
 
+#ifdef ENABLE_USERNS_REMAP
     if (set_file_owner_for_userns_remap(root_dir, userns_remap) != 0) {
         ERROR("Unable to change directory %s owner for user remap.", root_dir);
         ret = -1;
         goto out;
     }
+#endif
 
     vols_info->root_dir = util_strdup_s(root_dir);
 
 out:
+#ifdef ENABLE_USERNS_REMAP
     free(userns_remap);
+#endif
     return ret;
 }
 
@@ -281,7 +289,7 @@ out:
 
 static int load_volumes(struct volumes_info *vols)
 {
-    return util_scan_subdirs((const char*)vols->root_dir, load_volume, vols);
+    return util_scan_subdirs((const char *)vols->root_dir, load_volume, vols);
 }
 
 static int local_volume_init(char *scope)
@@ -331,7 +339,7 @@ static int create_volume_meminfo(char *name, struct volume **vol)
     struct volume *v = NULL;
     int ret = 0;
     int sret = 0;
-    char path[PATH_MAX] = {0};
+    char path[PATH_MAX] = { 0 };
 
     v = util_common_calloc_s(sizeof(struct volume));
     if (v == NULL) {
@@ -359,10 +367,13 @@ out:
     return ret;
 }
 
-static struct volume * volume_create_nolock(char *name)
+static struct volume *volume_create_nolock(char *name)
 {
     struct volume *v = NULL;
     int ret = 0;
+#ifdef ENABLE_USERNS_REMAP
+    char *userns_remap = NULL;
+#endif
 
     v = map_search(g_volumes->vols_by_name, name);
     if (v != NULL) {
@@ -381,12 +392,24 @@ static struct volume * volume_create_nolock(char *name)
         goto out;
     }
 
+#ifdef ENABLE_USERNS_REMAP
+    userns_remap = conf_get_isulad_userns_remap();
+    if (set_file_owner_for_userns_remap(v->path, userns_remap) != 0) {
+        ERROR("Unable to change directory %s owner for user remap.", v->path);
+        ret = -1;
+        goto out;
+    }
+#endif
+
     if (!map_insert(g_volumes->vols_by_name, v->name, v)) {
         ERROR("failed to insert volume %s", v->name);
         goto out;
     }
 
 out:
+#ifdef ENABLE_USERNS_REMAP
+    free(userns_remap);
+#endif
     if (ret != 0) {
         (void)util_recursive_rmdir(v->path, 0);
         free_volume(v);
@@ -396,7 +419,7 @@ out:
     return v;
 }
 
-struct volume * local_volume_create(char *name)
+struct volume *local_volume_create(char *name)
 {
     struct volume *v_out = NULL;
     struct volume *v = NULL;
@@ -450,7 +473,7 @@ static struct volumes *new_empty_volumes(size_t size)
         return vols;
     }
 
-    vols->vols = util_common_calloc_s(sizeof(struct volume*) * size);
+    vols->vols = util_smart_calloc_s(sizeof(struct volume *), size);
     if (vols->vols == NULL) {
         ERROR("out of memory");
         free_volumes(vols);
@@ -460,7 +483,7 @@ static struct volumes *new_empty_volumes(size_t size)
     return vols;
 }
 
-struct volumes * local_volume_list(void)
+struct volumes *local_volume_list(void)
 {
     int ret = 0;
     map_itor *itor = NULL;
@@ -638,4 +661,3 @@ out:
 
     return ret;
 }
-

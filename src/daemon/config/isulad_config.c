@@ -227,6 +227,10 @@ int conf_get_cgroup_cpu_rt(int64_t *cpu_rt_period, int64_t *cpu_rt_runtime)
 {
     struct service_arguments *conf = NULL;
 
+    if (cpu_rt_period == NULL || cpu_rt_runtime == NULL) {
+        return -1;
+    }
+
     if (isulad_server_conf_rdlock() != 0) {
         return -1;
     }
@@ -319,7 +323,7 @@ char *conf_get_routine_rootdir(const char *runtime)
         ERROR("The size of path exceeds the limit");
         goto out;
     }
-    path = util_common_calloc_s(sizeof(char) * len);
+    path = util_smart_calloc_s(sizeof(char), len);
     if (path == NULL) {
         ERROR("Out of memory");
         goto out;
@@ -591,28 +595,6 @@ out:
     return cgroup_parent;
 }
 
-/* conf get isulad engine */
-char *conf_get_isulad_engine()
-{
-    char *engine = NULL;
-    struct service_arguments *conf = NULL;
-
-    if (isulad_server_conf_rdlock() != 0) {
-        return NULL;
-    }
-
-    conf = conf_get_server_conf();
-    if (conf == NULL || conf->json_confs->engine == NULL) {
-        goto out;
-    }
-
-    engine = util_strdup_s(conf->json_confs->engine);
-
-out:
-    (void)isulad_server_conf_unlock();
-    return engine;
-}
-
 /* conf get isulad loglevel */
 char *conf_get_isulad_loglevel()
 {
@@ -656,7 +638,7 @@ char *get_log_file_helper(const struct service_arguments *conf, const char *suff
         ERROR("The size of path exceeds the limit");
         return NULL;
     }
-    logfile = util_common_calloc_s(len * sizeof(char));
+    logfile = util_smart_calloc_s(sizeof(char), len);
     if (logfile == NULL) {
         ERROR("Out of memory");
         goto out;
@@ -756,7 +738,7 @@ char *conf_get_engine_log_file()
         ERROR("The size of path exceeds the limit");
         goto out;
     }
-    full_path = util_common_calloc_s(len * sizeof(char));
+    full_path = util_smart_calloc_s(sizeof(char), len);
     if (full_path == NULL) {
         FATAL("Out of Memory");
         goto out;
@@ -776,6 +758,11 @@ out:
 
 int conf_get_daemon_log_config(char **loglevel, char **logdriver, char **engine_log_path)
 {
+    if (loglevel == NULL || logdriver == NULL || engine_log_path == NULL) {
+        ERROR("Empty arguments");
+        return -1;
+    }
+
     *loglevel = conf_get_isulad_loglevel();
     if (*loglevel == NULL) {
         ERROR("DoStart: Failed to get log level");
@@ -981,10 +968,7 @@ HOOKS_ELEM_DUP_DEF(poststop)
     int hooks_##item##_dup(oci_runtime_spec_hooks *dest, const oci_runtime_spec_hooks *src) \
     {                                                                                       \
         int i = 0;                                                                          \
-        if (src->item##_len > SIZE_MAX / sizeof(defs_hook *) - 1) {                         \
-            return -1;                                                                      \
-        }                                                                                   \
-        dest->item = util_common_calloc_s(sizeof(defs_hook *) * (src->item##_len + 1));     \
+        dest->item = util_smart_calloc_s(sizeof(defs_hook *), (src->item##_len + 1));       \
         if (dest->item == NULL)                                                             \
             return -1;                                                                      \
         dest->item##_len = src->item##_len;                                                 \
@@ -1068,6 +1052,10 @@ int conf_get_isulad_default_ulimit(host_config_ulimits_element ***ulimit)
     int ret = 0;
     size_t i, ulimit_len;
     struct service_arguments *conf = NULL;
+
+    if (ulimit == NULL) {
+        return -1;
+    }
 
     if (isulad_server_conf_rdlock() != 0) {
         return -1;
@@ -1157,6 +1145,7 @@ out:
     return plugins;
 }
 
+#ifdef ENABLE_USERNS_REMAP
 char *conf_get_isulad_userns_remap()
 {
     struct service_arguments *conf = NULL;
@@ -1179,6 +1168,7 @@ out:
     (void)isulad_server_conf_unlock();
     return userns_remap;
 }
+#endif
 
 /* conf get cni config dir */
 char *conf_get_cni_conf_dir()
@@ -1591,10 +1581,11 @@ int merge_json_confs_into_global(struct service_arguments *args)
 
     override_string_value(&args->json_confs->pidfile, &tmp_json_confs->pidfile);
     // iSulad runtime execution options
-    override_string_value(&args->json_confs->engine, &tmp_json_confs->engine);
     override_string_value(&args->json_confs->hook_spec, &tmp_json_confs->hook_spec);
     override_string_value(&args->json_confs->enable_plugins, &tmp_json_confs->enable_plugins);
+#ifdef ENABLE_USERNS_REMAP
     override_string_value(&args->json_confs->userns_remap, &tmp_json_confs->userns_remap);
+#endif
     override_string_value(&args->json_confs->native_umask, &tmp_json_confs->native_umask);
     override_string_value(&args->json_confs->cgroup_parent, &tmp_json_confs->cgroup_parent);
     override_string_value(&args->json_confs->rootfsmntdir, &tmp_json_confs->rootfsmntdir);
@@ -1609,6 +1600,13 @@ int merge_json_confs_into_global(struct service_arguments *args)
 
     args->json_confs->cri_runtimes = tmp_json_confs->cri_runtimes;
     tmp_json_confs->cri_runtimes = NULL;
+
+#ifdef ENABLE_SUP_GROUPS
+    args->json_confs->sup_groups = tmp_json_confs->sup_groups;
+    tmp_json_confs->sup_groups = NULL;
+    args->json_confs->sup_groups_len = tmp_json_confs->sup_groups_len;
+    tmp_json_confs->sup_groups_len = 0;
+#endif
 
     // Daemon storage-driver
     if (merge_storage_conf_into_global(args, tmp_json_confs)) {

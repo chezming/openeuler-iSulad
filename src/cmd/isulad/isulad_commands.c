@@ -19,6 +19,7 @@
 #include <limits.h>
 #include <isula_libutils/host_config.h>
 #include <strings.h>
+#include <inttypes.h>
 
 #include "config.h"
 #include "isula_libutils/log.h"
@@ -250,7 +251,7 @@ static int check_args_log_conf(const struct service_arguments *args)
     /* validate max-size */
     if ((args->json_confs->log_driver && strcasecmp("file", args->json_confs->log_driver) == 0) &&
         (args->max_size < (4 * 1024))) {
-        ERROR("Max-size \"%ld\" must large than 4KB.", args->max_size);
+        ERROR("Max-size \"%" PRId64 "\" must large than 4KB.", args->max_size);
         ret = -1;
         goto out;
     }
@@ -359,7 +360,7 @@ static int check_args_auth_plugin(const struct service_arguments *args)
     int ret = 0;
 
     if (args->json_confs->authorization_plugin != NULL) {
-        if (strcmp(args->json_confs->authorization_plugin, AUTH_PLUGIN)) {
+        if (strcmp(args->json_confs->authorization_plugin, AUTH_PLUGIN) != 0) {
             COMMAND_ERROR("Invalid authorization plugin '%s'", args->json_confs->authorization_plugin);
             ERROR("Invalid authorization plugin '%s'", args->json_confs->authorization_plugin);
             ret = -1;
@@ -467,7 +468,7 @@ static int do_merge_conf_hosts_into_global(struct service_arguments *args)
 
     if (args->hosts_len == 0) {
         /* set default host */
-        args->hosts = (char **)util_common_calloc_s(sizeof(char *) * DEFAULT_HOSTS_LEN);
+        args->hosts = (char **)util_smart_calloc_s(sizeof(char *), DEFAULT_HOSTS_LEN);
         if (args->hosts == NULL) {
             ERROR("Out of memory");
             return -1;
@@ -516,7 +517,6 @@ out:
 static int do_merge_conf_default_ulimit_into_global(struct service_arguments *args)
 {
     size_t i, j, json_default_ulimit_len;
-    isulad_daemon_configs_default_ulimits_element *ptr = NULL;
 
     if (args->json_confs->default_ulimits == NULL) {
         return 0;
@@ -524,6 +524,9 @@ static int do_merge_conf_default_ulimit_into_global(struct service_arguments *ar
 
     json_default_ulimit_len = args->json_confs->default_ulimits->len;
     for (i = 0; i < json_default_ulimit_len; i++) {
+        isulad_daemon_configs_default_ulimits_element *ptr = NULL;
+        host_config_ulimits_element telem = { 0 };
+
         ptr = args->json_confs->default_ulimits->values[i];
         for (j = 0; j < args->default_ulimit_len; j++) {
             if (strcmp(ptr->name, args->default_ulimit[j]->name) == 0) {
@@ -531,13 +534,17 @@ static int do_merge_conf_default_ulimit_into_global(struct service_arguments *ar
             }
         }
 
+        // ulimit of name setted, just update values
         if (j < args->default_ulimit_len) {
             args->default_ulimit[j]->soft = ptr->soft;
             args->default_ulimit[j]->hard = ptr->hard;
             continue;
         }
-        if (ulimit_array_append(&args->default_ulimit, (host_config_ulimits_element *)ptr, args->default_ulimit_len) !=
-            0) {
+
+        telem.name = ptr->name;
+        telem.hard = ptr->hard;
+        telem.soft = ptr->soft;
+        if (ulimit_array_append(&args->default_ulimit, &telem, args->default_ulimit_len) != 0) {
             ERROR("merge json confs default ulimit config failed");
             return -1;
         }
@@ -649,7 +656,7 @@ static int check_conf_default_ulimit(const struct service_arguments *args)
             ret = -1;
             goto out;
         }
-        if (strcmp(ptr->name, type) != 0) {
+        if (type == NULL || strcmp(ptr->name, type) != 0) {
             COMMAND_ERROR("Ulimit Name \"%s\" must same as type \"%s\" in %s", ptr->name, type,
                           ISULAD_DAEMON_JSON_CONF_FILE);
             ret = -1;

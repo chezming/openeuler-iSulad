@@ -40,9 +40,7 @@
 #include "specs_api.h"
 #include "verify.h"
 #include "container_api.h"
-#ifdef ENABLE_NETWORK
 #include "execution_network.h"
-#endif
 #include "plugin_api.h"
 #include "image_api.h"
 #include "utils.h"
@@ -62,7 +60,7 @@
 #include "utils_verify.h"
 #include "selinux_label.h"
 #include "opt_log.h"
-#include "network_namespace_api.h"
+#include "network_namespace.h"
 
 static int do_init_cpurt_cgroups_path(const char *path, int recursive_depth, const char *mnt_root,
                                       int64_t cpu_rt_period, int64_t cpu_rt_runtime);
@@ -111,6 +109,12 @@ out:
         return ret;
     }
 
+#ifdef ENABLE_GVISOR
+    if (strcmp(name, "runsc") == 0) {
+        *runtime_res = true;
+        return ret;
+    }
+#endif
     if (convert_v2_runtime(name, NULL) == 0) {
         *runtime_res = true;
     }
@@ -592,7 +596,7 @@ static char *try_generate_id()
     char *id = NULL;
     char *value = NULL;
 
-    id = util_common_calloc_s(sizeof(char) * (CONTAINER_ID_MAX_LEN + 1));
+    id = util_smart_calloc_s(sizeof(char), (CONTAINER_ID_MAX_LEN + 1));
     if (id == NULL) {
         ERROR("Out of memory");
         return NULL;
@@ -678,14 +682,8 @@ static int conf_get_image_id(const char *image, char **id)
         goto out;
     }
 
-    if (strlen(ir->id) > SIZE_MAX / sizeof(char) - strlen("sha256:")) {
-        ERROR("Invalid image id");
-        ret = -1;
-        goto out;
-    }
-
     len = strlen("sha256:") + strlen(ir->id) + 1;
-    image_id = (char *)util_common_calloc_s(len * sizeof(char));
+    image_id = (char *)util_smart_calloc_s(sizeof(char), len);
     if (image_id == NULL) {
         ERROR("Out of memory");
         ret = -1;
@@ -709,7 +707,8 @@ out:
 }
 
 static int register_new_container(const char *id, const char *image_id, const char *runtime, host_config *host_spec,
-                                  container_config_v2_common_config *v2_spec, container_network_settings *network_settings)
+                                  container_config_v2_common_config *v2_spec,
+                                  container_network_settings *network_settings)
 {
     int ret = -1;
     bool registered = false;
@@ -753,10 +752,12 @@ static int register_new_container(const char *id, const char *image_id, const ch
         goto out;
     }
 
+#ifdef ENABLE_NETWORK
     if (container_fill_network_settings(cont, network_settings) != 0) {
         ERROR("Failed to fill network settings");
         goto out;
     }
+#endif
 
     if (container_fill_log_configs(cont) != 0) {
         ERROR("Failed to fill container log configs");
@@ -863,29 +864,56 @@ static int prepare_host_channel(const host_config_host_channel *host_channel, co
     unsigned int host_uid = 0;
     unsigned int host_gid = 0;
     unsigned int size = 0;
+    mode_t mode = HOST_PATH_MODE;
+    int ret = 0;
+    const char *userns_remap = user_remap;
+#ifdef ENABLE_USERNS_REMAP
+    char *daemon_userns_remap = conf_get_isulad_userns_remap();
+    if (daemon_userns_remap != NULL) {
+        userns_remap = (const char *)daemon_userns_remap;
+    }
+#endif
 
     if (host_channel == NULL) {
-        return 0;
+        goto out;
     }
     if (util_dir_exists(host_channel->path_on_host)) {
         ERROR("Host path '%s' already exist", host_channel->path_on_host);
-        return -1;
+        ret = -1;
+        goto out;
     }
-    if (util_mkdir_p(host_channel->path_on_host, HOST_PATH_MODE)) {
+
+#ifdef ENABLE_USERNS_REMAP
+    if (daemon_userns_remap != NULL) {
+        mode = HOST_PATH_MODE_USERNS_REMAP;
+    }
+
+    if (util_mkdir_p_userns_remap(host_channel->path_on_host, mode, userns_remap)) {
+#else
+    if (util_mkdir_p(host_channel->path_on_host, mode)) {
+#endif
         ERROR("Failed to create host path '%s'.", host_channel->path_on_host);
-        return -1;
+        ret = -1;
+        goto out;
     }
-    if (user_remap != NULL) {
-        if (util_parse_user_remap(user_remap, &host_uid, &host_gid, &size)) {
-            ERROR("Failed to split string '%s'.", user_remap);
-            return -1;
+    if (userns_remap != NULL) {
+        if (util_parse_user_remap(userns_remap, &host_uid, &host_gid, &size)) {
+            ERROR("Failed to split string '%s'.", userns_remap);
+            ret = -1;
+            goto out;
         }
         if (chown(host_channel->path_on_host, host_uid, host_gid) != 0) {
             ERROR("Failed to chown host path '%s'.", host_channel->path_on_host);
-            return -1;
+            ret = -1;
+            goto out;
         }
     }
-    return 0;
+
+out:
+#ifdef ENABLE_USERNS_REMAP
+    free(daemon_userns_remap);
+#endif
+    return ret;
 }
 
 static void umount_shm_by_configs(host_config *host_spec, container_config_v2_common_config *v2_spec)
@@ -914,7 +942,9 @@ static int create_container_root_dir(const char *id, const char *runtime_root)
     int nret;
     char container_root[PATH_MAX] = { 0x00 };
     mode_t mask = umask(S_IWOTH);
-    char* userns_remap = conf_get_isulad_userns_remap();
+#ifdef ENABLE_USERNS_REMAP
+    char *userns_remap = conf_get_isulad_userns_remap();
+#endif
 
     nret = snprintf(container_root, sizeof(container_root), "%s/%s", runtime_root, id);
     if ((size_t)nret >= sizeof(container_root) || nret < 0) {
@@ -929,15 +959,19 @@ static int create_container_root_dir(const char *id, const char *runtime_root)
         goto out;
     }
 
+#ifdef ENABLE_USERNS_REMAP
     if (set_file_owner_for_userns_remap(container_root, userns_remap) != 0) {
         ERROR("Unable to change directory %s owner for user remap.", container_root);
         ret = -1;
         goto out;
     }
+#endif
 
 out:
     umask(mask);
+#ifdef ENABLE_USERNS_REMAP
     free(userns_remap);
+#endif
     return ret;
 }
 
@@ -1027,7 +1061,7 @@ static int get_request_image_info(const container_create_request *request, char 
     }
 
     // Do not use none image because none image has no config.
-    if (strcmp(request->image, "none") && strcmp(request->image, "none:latest")) {
+    if (strcmp(request->image, "none") != 0 && strcmp(request->image, "none:latest") != 0) {
         *image_name = util_strdup_s(request->image);
     }
 
@@ -1569,13 +1603,11 @@ int container_create_cb(const container_create_request *request, container_creat
         goto clean_container_root_dir;
     }
 
-#ifdef ENABLE_NETWORK
     if (init_container_network_confs(id, runtime_root, host_spec, v2_spec) != 0) {
         ERROR("Init Network files failed");
         cc = ISULAD_ERR_INPUT;
         goto clean_container_root_dir;
     }
-#endif
 
     ret = do_image_create_container_roofs_layer(id, image_type, image_name, v2_spec->mount_label, request->rootfs,
                                                 host_spec->storage_opt, &real_rootfs);
@@ -1615,23 +1647,12 @@ int container_create_cb(const container_create_request *request, container_creat
         goto umount_shm;
     }
 
-#ifdef ENABLE_NETWORK
-    if (namespace_is_file(host_spec->network_mode)){
-        network_settings = cri_generate_network_settings(host_spec);
-#ifdef ENABLE_NATIVE_NETWORK
-    // TODO: maybe can merge
-    } else if (util_native_network_checker(host_spec->network_mode, host_spec->system_container)) {
-        network_settings = native_generate_network_settings(host_spec);
-#endif
-    } else {
-        network_settings = (container_network_settings *)util_common_calloc_s(sizeof(container_network_settings));
-    }
+    network_settings = generate_network_settings(host_spec);
     if (network_settings == NULL) {
         ERROR("Failed to generate network settings");
         cc = ISULAD_ERR_EXEC;
         goto umount_shm;
     }
-#endif
 
     if (merge_config_for_syscontainer(request, host_spec, v2_spec->config, oci_spec) != 0) {
         ERROR("Failed to merge config for syscontainer");
@@ -1639,13 +1660,12 @@ int container_create_cb(const container_create_request *request, container_creat
         goto umount_shm;
     }
 
-#ifdef ENABLE_NETWORK
+    // merge hostname, resolv.conf, hosts, required for all container
     if (merge_network(host_spec, request->rootfs, runtime_root, id, container_spec->hostname) != 0) {
         ERROR("Failed to merge network config");
         cc = ISULAD_ERR_EXEC;
         goto umount_shm;
     }
-#endif
 
     /* modify oci_spec by plugin. */
     if (plugin_event_container_pre_create(id, oci_spec) != 0) {

@@ -171,8 +171,6 @@ static void find_selinux_fs(char **fs)
     }
     // slow path: try to find among the mounts
     find_selinux_fs_among_mounts(fs);
-
-    return;
 }
 
 static int get_state_selinuxfs(char **fs)
@@ -594,13 +592,17 @@ static int container_label(char **process_label, char **file_label)
         return 0;
     }
 
+#ifdef __ANDROID__
+    lxc_path = ISULAD_DAEMON_CONTAINER_CONTEXTS;
+#else
     lxc_path = selinux_lxc_contexts_path();
+#endif
     if (lxc_path == NULL) {
         ERROR("Failed to get selinux lxc contexts path");
         return -1;
     }
 
-    file = fopen(lxc_path, "re");
+    file = util_fopen(lxc_path, "re");
     if (file == NULL) {
         ERROR("Failed to open '%s'", lxc_path);
         return -1;
@@ -778,6 +780,11 @@ int init_label(const char **label_opts, size_t label_opts_len, char **dst_proces
 
     if (!selinux_get_enable()) {
         return 0;
+    }
+
+    if (dst_process_label == NULL || dst_mount_label == NULL) {
+        ERROR("Empty arguments");
+        return -1;
     }
 
     if (container_label(&process_label, &mount_label) != 0) {

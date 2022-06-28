@@ -57,8 +57,8 @@ public:
             response->cc = ISULAD_ERR_MEMOUT;
             return -1;
         }
-        auto volumes = static_cast<struct isula_volume_info *>(
-                           util_common_calloc_s(sizeof(struct isula_volume_info) * static_cast<size_t>(num)));
+        auto *volumes = static_cast<struct isula_volume_info *>(
+                            util_smart_calloc_s(sizeof(struct isula_volume_info), static_cast<size_t>(num)));
         if (volumes == nullptr) {
             ERROR("out of memory");
             response->cc = ISULAD_ERR_MEMOUT;
@@ -89,9 +89,8 @@ public:
     }
 };
 
-class VolumeRemove : public
-    ClientBase<VolumeService, VolumeService::Stub, isula_remove_volume_request, RemoveVolumeRequest,
-    isula_remove_volume_response, RemoveVolumeResponse> {
+class VolumeRemove : public ClientBase<VolumeService, VolumeService::Stub, isula_remove_volume_request,
+    RemoveVolumeRequest, isula_remove_volume_response, RemoveVolumeResponse> {
 public:
     explicit VolumeRemove(void *args)
         : ClientBase(args)
@@ -135,15 +134,15 @@ public:
         return 0;
     }
 
-    auto grpc_call(ClientContext *context, const RemoveVolumeRequest &req, RemoveVolumeResponse *reply) -> Status override
+    auto grpc_call(ClientContext *context, const RemoveVolumeRequest &req, RemoveVolumeResponse *reply)
+    -> Status override
     {
         return stub_->Remove(context, req, reply);
     }
 };
 
-class VolumePrune : public
-    ClientBase<VolumeService, VolumeService::Stub, isula_prune_volume_request, PruneVolumeRequest,
-    isula_prune_volume_response, PruneVolumeResponse> {
+class VolumePrune : public ClientBase<VolumeService, VolumeService::Stub, isula_prune_volume_request,
+    PruneVolumeRequest, isula_prune_volume_response, PruneVolumeResponse> {
 public:
     explicit VolumePrune(void *args)
         : ClientBase(args)
@@ -157,8 +156,8 @@ public:
     {
         auto size = gresponse->volumes_size();
         if (size != 0) {
-            response->volumes = static_cast<char **>(util_common_calloc_s(sizeof(char *) * size));
-            if (response->volumes == NULL) {
+            response->volumes = static_cast<char **>(util_smart_calloc_s(sizeof(char *), size));
+            if (response->volumes == nullptr) {
                 return -1;
             }
 

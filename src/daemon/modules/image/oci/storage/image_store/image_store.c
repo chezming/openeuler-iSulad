@@ -734,6 +734,7 @@ static int image_store_append_image(const char *id, const char *searchable_diges
 {
     int ret = 0;
     size_t i = 0;
+    size_t record_name_len = 0;
     struct linked_list *item = NULL;
 
     item = util_smart_calloc_s(sizeof(struct linked_list), 1);
@@ -748,33 +749,52 @@ static int image_store_append_image(const char *id, const char *searchable_diges
     if (!map_insert(g_image_store->byid, (void *)id, (void *)img)) {
         ERROR("Failed to insert image to image store");
         ret = -1;
-        goto out;
+        goto list_err_out;
     }
 
     if (append_image_according_to_digest(g_image_store->bydigest, searchable_digest, img) != 0) {
         ERROR("Failed to insert image to image store digest index");
         ret = -1;
-        goto out;
+        goto id_err_out;
     }
 
     for (i = 0; i < img->simage->names_len; i++) {
         if (map_search(g_image_store->byname, (void *)img->simage->names[i]) != NULL) {
             ERROR("Image name is already in use : %s", img->simage->names[i]);
             ret = -1;
-            goto out;
+            goto err_out;
         }
         if (!map_insert(g_image_store->byname, (void *)img->simage->names[i], (void *)img)) {
             ERROR("Failed to insert image to image store's byname");
             ret = -1;
-            goto out;
+            goto err_out;
         }
     }
 
-out:
-    if (ret != 0) {
-        linked_list_del(item);
-        free(item);
+    return 0;
+
+err_out:
+    record_name_len = i;
+    for (i = 0; i < record_name_len; i++) {
+        if (!map_remove(g_image_store->byname, (void *)img->simage->names[i])) {
+            ERROR("Failed to remove image from image store's byname");
+        }
     }
+
+    if (remove_image_from_digest_index(img, searchable_digest) != 0) {
+        ERROR("Failed to remove image from image store digest index");
+    }
+
+id_err_out:
+    if (!map_remove(g_image_store->byid, (void *)id)) {
+        ERROR("Failed to remove image from ids map in image store");
+    }
+
+list_err_out:
+    linked_list_del(item);
+    g_image_store->images_list_len--;
+    free(item);
+
     return ret;
 }
 
@@ -1999,7 +2019,6 @@ out:
 static bool validate_digest(const char *digest)
 {
     bool ret = true;
-    const char *digest_patten = "^[a-z0-9]+(?:[.+_-][a-z0-9]+)*:[a-zA-Z0-9=_-]+$";
     const char *sha256_encode_patten = "^[a-f0-9]{64}$";
     char *value = util_strdup_s(digest);
     char *index = strchr(value, ':');
@@ -2019,12 +2038,7 @@ static bool validate_digest(const char *digest)
     encode = index;
     // Currently only support SHA256 algorithm
     if (strcmp(alg, "sha256") != 0) {
-        if (util_reg_match(digest_patten, digest) != 0) {
-            INFO("Invalid checksum digest format");
-            ret = false;
-            goto out;
-        }
-        ERROR("Unsupported digest algorithm");
+        DEBUG("Unsupported digest algorithm: %s", alg);
         ret = false;
         goto out;
     }
@@ -2242,7 +2256,7 @@ static int pack_health_check_from_image(const oci_image_spec *spec, imagetool_im
         goto out;
     }
 
-    healthcheck->test = util_common_calloc_s(sizeof(char *) * spec->config->healthcheck->test_len);
+    healthcheck->test = util_smart_calloc_s(sizeof(char *), spec->config->healthcheck->test_len);
     if (healthcheck->test == NULL) {
         ERROR("Out of memory");
         ret = -1;
@@ -2648,7 +2662,7 @@ int image_store_get_all_images(imagetool_images_list *images_list)
         goto unlock;
     }
 
-    images_list->images = util_common_calloc_s(g_image_store->images_list_len * sizeof(imagetool_image *));
+    images_list->images = util_smart_calloc_s(g_image_store->images_list_len, sizeof(imagetool_image *));
     if (images_list->images == NULL) {
         ERROR("Out of memory");
         ret = -1;
@@ -2898,8 +2912,6 @@ static void strip_host_prefix(char **name)
 
     free(*name);
     *name = new_image_name;
-
-    return;
 }
 
 static int deduplicate_names(storage_image *im)
@@ -3161,7 +3173,7 @@ static int get_layers_from_manifest(const registry_manifest_schema1 *manifest, l
         goto out;
     }
 
-    layers = util_common_calloc_s(sizeof(layer_blob) * manifest->fs_layers_len);
+    layers = util_smart_calloc_s(sizeof(layer_blob), manifest->fs_layers_len);
     if (layers == NULL) {
         ERROR("out of memory");
         ret = -1;

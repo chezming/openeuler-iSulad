@@ -348,6 +348,7 @@ public:
             ERROR("Missing container id in the request");
             return -1;
         }
+#ifdef OPENSSL_VERIFY
         // Set common name from cert.perm
         char common_name_value[ClientBaseConstants::COMMON_NAME_LEN] = { 0 };
         int ret = get_common_name_from_tls_cert(m_certFile.c_str(), common_name_value,
@@ -358,6 +359,7 @@ public:
         }
         context.AddMetadata("username", std::string(common_name_value, strlen(common_name_value)));
         context.AddMetadata("tls_mode", m_tlsMode);
+#endif
         context.AddMetadata("container-id", std::string(request->name));
         context.AddMetadata("attach-stdin", request->attach_stdin ? "true" : "false");
         context.AddMetadata("attach-stdout", request->attach_stdout ? "true" : "false");
@@ -493,7 +495,7 @@ public:
             ERROR("Too many summary info!");
             return -1;
         }
-        response->processes = static_cast<char **>(util_common_calloc_s(num * sizeof(char *)));
+        response->processes = static_cast<char **>(util_smart_calloc_s(sizeof(char *), num));
         if (response->processes == nullptr) {
             ERROR("out of memory");
             response->cc = ISULAD_ERR_MEMOUT;
@@ -911,8 +913,6 @@ public:
         parser_error err = nullptr;
         container_exec_request exec = { 0 };
         struct parser_context ctx = { OPT_GEN_SIMPLIFY, 0 };
-        // Set common name from cert.perm
-        char common_name_value[ClientBaseConstants::COMMON_NAME_LEN] = { 0 };
 
         if (request == nullptr || request->name == nullptr) {
             ERROR("Missing container id in the request");
@@ -936,16 +936,22 @@ public:
             ret = -1;
             goto out;
         }
-        ret = get_common_name_from_tls_cert(m_certFile.c_str(), common_name_value,
-                                            ClientBaseConstants::COMMON_NAME_LEN);
-        if (ret != 0) {
-            ERROR("Failed to get common name in: %s", m_certFile.c_str());
-            ret = -1;
-            goto out;
-        }
-        context.AddMetadata("username", std::string(common_name_value, strlen(common_name_value)));
-        context.AddMetadata("tls_mode", m_tlsMode);
         context.AddMetadata("isulad-remote-exec", json);
+#ifdef OPENSSL_VERIFY
+        {
+            // Set common name from cert.perm
+            char common_name_value[ClientBaseConstants::COMMON_NAME_LEN] = { 0 };
+            ret = get_common_name_from_tls_cert(m_certFile.c_str(), common_name_value,
+                                                ClientBaseConstants::COMMON_NAME_LEN);
+            if (ret != 0) {
+                ERROR("Failed to get common name in: %s", m_certFile.c_str());
+                ret = -1;
+                goto out;
+            }
+            context.AddMetadata("username", std::string(common_name_value, strlen(common_name_value)));
+            context.AddMetadata("tls_mode", m_tlsMode);
+        }
+#endif
 out:
         free(err);
         free(json);
@@ -1232,12 +1238,8 @@ private:
         response->container_summary[index]->exit_code = in.exit_code();
         response->container_summary[index]->restart_count = static_cast<uint32_t>(in.restartcount());
         response->container_summary[index]->created = static_cast<int64_t>(in.created());
-        std::string healthState;
-        if (!in.health_state().empty()) {
-            healthState = "(" + in.health_state() + ")";
-        }
-        response->container_summary[index]->health_state = !healthState.empty() ? util_strdup_s(healthState.c_str()) :
-                                                           nullptr;
+        response->container_summary[index]->health_state =
+            !in.health_state().empty() ? util_strdup_s(in.health_state().c_str()) : nullptr;
         response->container_num++;
 
         return 0;
@@ -1342,6 +1344,7 @@ public:
             ERROR("Missing container id in the request");
             return -1;
         }
+#ifdef OPENSSL_VERIFY
         // Set common name from cert.perm
         char common_name_value[ClientBaseConstants::COMMON_NAME_LEN] = { 0 };
         int ret = get_common_name_from_tls_cert(m_certFile.c_str(), common_name_value,
@@ -1352,11 +1355,11 @@ public:
         }
         context.AddMetadata("username", std::string(common_name_value, strlen(common_name_value)));
         context.AddMetadata("tls_mode", m_tlsMode);
+#endif
         context.AddMetadata("container-id", std::string(request->name));
         context.AddMetadata("attach-stdin", request->attach_stdin ? "true" : "false");
         context.AddMetadata("attach-stdout", request->attach_stdout ? "true" : "false");
         context.AddMetadata("attach-stderr", request->attach_stderr ? "true" : "false");
-
         return 0;
     }
     static void get_server_trailing_metadata(ClientContext &context, isula_attach_response *response)
@@ -1663,8 +1666,8 @@ public:
     {
         int size = gresponse->containers_size();
         if (size > 0) {
-            response->container_stats = static_cast<isula_container_info *>(
-                                            util_common_calloc_s(size * sizeof(struct isula_container_info)));
+            response->container_stats =
+                static_cast<isula_container_info *>(util_smart_calloc_s(sizeof(struct isula_container_info), size));
             if (response->container_stats == nullptr) {
                 ERROR("Out of memory");
                 return -1;
@@ -1916,6 +1919,7 @@ public:
             return -1;
         }
 
+#ifdef OPENSSL_VERIFY
         // Set common name from cert.perm
         char common_name_value[ClientBaseConstants::COMMON_NAME_LEN] = { 0 };
         ret = get_common_name_from_tls_cert(m_certFile.c_str(), common_name_value,
@@ -1926,6 +1930,7 @@ public:
         }
         ctx->context.AddMetadata("username", std::string(common_name_value, strlen(common_name_value)));
         ctx->context.AddMetadata("tls_mode", m_tlsMode);
+#endif
         auto reader = stub_->CopyFromContainer(&ctx->context, ctx->request);
         reader->WaitForInitialMetadata();
 
@@ -2037,8 +2042,6 @@ public:
         char *err = nullptr;
         container_copy_to_request copy = { 0 };
         struct parser_context ctx = { OPT_GEN_SIMPLIFY, 0 };
-        // Set common name from cert.perm
-        char common_name_value[ClientBaseConstants::COMMON_NAME_LEN] = { 0 };
 
         if (request == nullptr || request->id == nullptr) {
             ERROR("Missing container id in the request");
@@ -2057,16 +2060,23 @@ public:
             ret = -1;
             goto out;
         }
-        ret = get_common_name_from_tls_cert(m_certFile.c_str(), common_name_value,
-                                            ClientBaseConstants::COMMON_NAME_LEN);
-        if (ret != 0) {
-            ERROR("Failed to get common name in: %s", m_certFile.c_str());
-            ret = -1;
-            goto out;
-        }
-        context.AddMetadata("username", std::string(common_name_value, strlen(common_name_value)));
-        context.AddMetadata("tls_mode", m_tlsMode);
         context.AddMetadata("isulad-copy-to-container", json);
+#ifdef OPENSSL_VERIFY
+        {
+            // Set common name from cert.perm
+            char common_name_value[ClientBaseConstants::COMMON_NAME_LEN] = { 0 };
+            ret = get_common_name_from_tls_cert(m_certFile.c_str(), common_name_value,
+                                                ClientBaseConstants::COMMON_NAME_LEN);
+            if (ret != 0) {
+                ERROR("Failed to get common name in: %s", m_certFile.c_str());
+                ret = -1;
+                goto out;
+            }
+            context.AddMetadata("username", std::string(common_name_value, strlen(common_name_value)));
+            context.AddMetadata("tls_mode", m_tlsMode);
+        }
+#endif
+
 out:
         free(err);
         free(json);
@@ -2123,18 +2133,19 @@ public:
     {
         ClientContext context;
         LogsRequest grequest;
-        int ret = -1;
 
+#ifdef OPENSSL_VERIFY
         // Set common name from cert.perm
         char common_name_value[ClientBaseConstants::COMMON_NAME_LEN] = { 0 };
-        ret = get_common_name_from_tls_cert(m_certFile.c_str(), common_name_value,
-                                            ClientBaseConstants::COMMON_NAME_LEN);
+        int ret = get_common_name_from_tls_cert(m_certFile.c_str(), common_name_value,
+                                                ClientBaseConstants::COMMON_NAME_LEN);
         if (ret != 0) {
             ERROR("Failed to get common name in: %s", m_certFile.c_str());
             return -1;
         }
         context.AddMetadata("username", std::string(common_name_value, strlen(common_name_value)));
         context.AddMetadata("tls_mode", m_tlsMode);
+#endif
 
         if (logs_request_to_grpc(request, &grequest) != 0) {
             ERROR("Failed to transform container request to grpc");

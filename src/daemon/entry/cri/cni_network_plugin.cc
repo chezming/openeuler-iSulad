@@ -32,7 +32,7 @@
 #include "errors.h"
 #include "service_container_api.h"
 #include "network_tools.h"
-#include "network_namespace_api.h"
+#include "network_namespace.h"
 #include "network_api.h"
 #include "err_msg.h"
 
@@ -192,7 +192,7 @@ static void PrepareAdaptorArgs(const std::string &podName, const std::string &po
         podUID = iter->second;
     }
 
-    auto cniArgs = std::map<std::string, std::string>{
+    auto cniArgs = std::map<std::string, std::string> {
         {"K8S_POD_UID", podUID},
         {"IgnoreUnknown", "1"},
         {"K8S_POD_NAMESPACE", podNs},
@@ -244,7 +244,8 @@ static void PrepareAdaptorAttachNetworks(const std::map<std::string, std::string
     if (networks == nullptr) {
         goto free_out;
     }
-    config->extral_nets = static_cast<struct attach_net_conf **>(util_smart_calloc_s(sizeof(struct attach_net_conf *), networks->len));
+    config->extral_nets = static_cast<struct attach_net_conf **>(util_smart_calloc_s(sizeof(struct attach_net_conf *),
+                                                                                     networks->len));
     if (config->extral_nets == nullptr) {
         ERROR("Out of memory");
         err.SetError("Prepare Adaptor Attach Networks failed");
@@ -305,6 +306,11 @@ static void InsertPortmappingIntoAdaptorAnnotations(const std::map<std::string, 
     }
     cni_pms->items = (cni_anno_port_mappings_element **)util_smart_calloc_s(sizeof(cni_anno_port_mappings_element *),
                                                                             checkpoint.GetData()->GetPortMappings().size());
+    if (cni_pms->items == nullptr) {
+        ERROR("Out of memory");
+        err.SetError("Out of memory");
+        goto free_out;
+    }
 
     for (const auto &pm : checkpoint.GetData()->GetPortMappings()) {
         cni_anno_port_mappings_element *elem = (cni_anno_port_mappings_element *)util_common_calloc_s(sizeof(
@@ -314,9 +320,11 @@ static void InsertPortmappingIntoAdaptorAnnotations(const std::map<std::string, 
             err.SetError("Out of memory");
             goto free_out;
         }
-        if (pm.GetHostPort() != nullptr && *pm.GetHostPort() > 0) {
-            elem->host_port = *pm.GetHostPort();
+        if (pm.GetHostPort() == nullptr || *pm.GetHostPort() <= 0) {
+            continue;
         }
+        elem->host_port = *pm.GetHostPort();
+
         if (pm.GetContainerPort() != nullptr) {
             elem->container_port = *pm.GetContainerPort();
         }
@@ -326,6 +334,10 @@ static void InsertPortmappingIntoAdaptorAnnotations(const std::map<std::string, 
         cni_pms->items[i++] = elem;
         cni_pms->len += 1;
     }
+    
+    if(cni_pms->len <= 0)
+        return;
+
     tmpVal = cni_anno_port_mappings_container_generate_json(cni_pms, nullptr, &jerr);
     if (network_module_insert_portmapping(tmpVal, config) != 0) {
         err.SetError("add portmappings failed");
@@ -537,7 +549,7 @@ cleanup:
     return result;
 }
 
-auto CniNetworkPlugin::GetNetworkSettingsJson(const std::string &podSandboxID, const std::string netnsPath,
+auto CniNetworkPlugin::GetNetworkSettingsJson(const std::string &podSandboxID, const std::string &netnsPath,
                                               network_api_result_list *result, Errors &err) -> std::string
 {
     std::string json;
@@ -771,53 +783,6 @@ void CheckNetworkStatus(const std::string &ns, const std::string &name, const st
 out:
     free_network_api_result_list(result);
     free_network_api_conf(config);
-}
-
-void CniNetworkPlugin::GetPodNetworkStatus(const std::string &ns, const std::string &name,
-                                           const std::string &interfaceName, const std::string &podSandboxID,
-                                           PodNetworkStatus &status, Errors &err)
-{
-    DAEMON_CLEAR_ERRMSG();
-    std::string netnsPath;
-    Errors tmpErr;
-
-    if (podSandboxID.empty()) {
-        err.SetError("Empty podsandbox ID");
-        return;
-    }
-
-    // TODO: save netns path in container_t
-    netnsPath = GetNetNS(podSandboxID, tmpErr);
-    if (tmpErr.NotEmpty()) {
-        err.Errorf("CNI failed to retrieve network namespace path: %s", tmpErr.GetCMessage());
-        return;
-    }
-    if (netnsPath.empty()) {
-        err.Errorf("Cannot find the network namespace, skipping pod network status for container %s",
-                   podSandboxID.c_str());
-        return;
-    }
-    std::vector<std::string> ips;
-
-
-    RLockNetworkMap(err);
-    CheckNetworkStatus(ns, name, m_podCidr, interfaceName, netnsPath, podSandboxID, ips, err);
-    UnlockNetworkMap(err);
-
-    if (err.Empty()) {
-        goto out;
-    }
-    WARN("Get network status by check failed: %s", err.GetCMessage());
-    err.Clear();
-
-    GetPodIP(m_nsenterPath, netnsPath, interfaceName, ips, err);
-    if (!err.Empty()) {
-        ERROR("Get ip from plugin failed: %s", err.GetCMessage());
-        return;
-    }
-out:
-    INFO("Get pod: %s network status success", podSandboxID.c_str());
-    status.SetIPs(ips);
 }
 
 void CniNetworkPlugin::RLockNetworkMap(Errors &error)

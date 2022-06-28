@@ -303,11 +303,7 @@ static char **util_shrink_array(char **orig_array, size_t new_size)
     if (new_size == 0) {
         return orig_array;
     }
-    if (new_size > SIZE_MAX / sizeof(char *)) {
-        ERROR("Invalid arguments");
-        return orig_array;
-    }
-    new_array = util_common_calloc_s(new_size * sizeof(char *));
+    new_array = util_smart_calloc_s(sizeof(char *), new_size);
     if (new_array == NULL) {
         return orig_array;
     }
@@ -724,11 +720,7 @@ int util_dup_array_of_strings(const char **src, size_t src_len, char ***dst, siz
 
     *dst = NULL;
     *dst_len = 0;
-    if (src_len > SIZE_MAX / sizeof(char *)) {
-        ERROR("Src elements is too much!");
-        return -1;
-    }
-    *dst = (char **)util_common_calloc_s(src_len * sizeof(char *));
+    *dst = (char **)util_smart_calloc_s(sizeof(char *), src_len);
     if (*dst == NULL) {
         ERROR("Out of memory");
         return -1;
@@ -795,7 +787,7 @@ bool util_has_prefix(const char *str, const char *prefix)
         return false;
     }
 
-    if (strncmp(str, prefix, strlen(prefix))) {
+    if (strncmp(str, prefix, strlen(prefix)) != 0) {
         return false;
     }
 
@@ -817,7 +809,7 @@ bool util_has_suffix(const char *str, const char *suffix)
         return false;
     }
 
-    if (strcmp(str + str_len - suffix_len, suffix)) {
+    if (strcmp(str + str_len - suffix_len, suffix) != 0) {
         return false;
     }
 
@@ -853,7 +845,7 @@ int util_string_array_unique(const char **elements, size_t length, char ***uniqu
     }
 
     tmp_elements_len = map_size(map);
-    tmp_elements = (char **)util_common_calloc_s(tmp_elements_len * sizeof(char *));
+    tmp_elements = (char **)util_smart_calloc_s(sizeof(char *), tmp_elements_len);
     if (tmp_elements == NULL) {
         ERROR("Out of memory");
         ret = -1;

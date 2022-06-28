@@ -40,6 +40,9 @@
 #include <string.h>
 #include <strings.h>
 #include <sys/time.h>
+#ifdef ENABLE_SUP_GROUPS
+#include <grp.h>
+#endif
 #ifdef SYSTEMD_NOTIFY
 #include <systemd/sd-daemon.h>
 #endif
@@ -81,7 +84,7 @@ sem_t g_daemon_wait_shutdown_sem;
 static int create_client_run_path(const char *group)
 {
     int ret = 0;
-    const char *rundir = "/var/run/isula";
+    const char *rundir = CLIENT_RUNDIR;
 
     if (group == NULL) {
         return -1;
@@ -116,7 +119,9 @@ static int mount_rootfs_mnt_dir(const char *mountdir)
     char *rootfsdir = NULL;
     mountinfo_t **minfos = NULL;
     mountinfo_t *info = NULL;
+#ifdef ENABLE_USERNS_REMAP
     char *userns_remap = conf_get_isulad_userns_remap();
+#endif
 
     if (mountdir == NULL) {
         ERROR("parent mount path is NULL");
@@ -131,6 +136,7 @@ static int mount_rootfs_mnt_dir(const char *mountdir)
         goto out;
     }
 
+#ifdef ENABLE_USERNS_REMAP
     if (userns_remap != NULL) {
         ret = chmod(rootfsdir, USER_REMAP_DIRECTORY_MODE);
         if (ret != 0) {
@@ -138,6 +144,7 @@ static int mount_rootfs_mnt_dir(const char *mountdir)
             goto out;
         }
     }
+#endif
 
     // find parent directory
     p = strrchr(rootfsdir, '/');
@@ -147,6 +154,7 @@ static int mount_rootfs_mnt_dir(const char *mountdir)
     }
     *p = '\0';
 
+#ifdef ENABLE_USERNS_REMAP
     if (userns_remap != NULL) {
         ret = chmod(rootfsdir, USER_REMAP_DIRECTORY_MODE);
         if (ret != 0) {
@@ -154,6 +162,7 @@ static int mount_rootfs_mnt_dir(const char *mountdir)
             goto out;
         }
     }
+#endif
 
     minfos = getmountsinfo();
     if (minfos == NULL) {
@@ -173,7 +182,9 @@ static int mount_rootfs_mnt_dir(const char *mountdir)
 
 out:
     free(rootfsdir);
+#ifdef ENABLE_USERNS_REMAP
     free(userns_remap);
+#endif
     free_mounts_info(minfos);
     return ret;
 }
@@ -326,6 +337,9 @@ static int add_shutdown_signal_handler()
         ERROR("Failed to init wait daemon shutdown sem");
         return -1;
     }
+
+    // ensure SIGCHLD not be ignore, otherwise waitpid() will failed
+    signal(SIGCHLD, SIG_DFL);
 
     sa.sa_handler = sigint_handler;
     sigemptyset(&sa.sa_mask);
@@ -608,21 +622,14 @@ static void update_isulad_rlimits()
 
 static int validate_time_duration(const char *value)
 {
-    regex_t preg;
+#define PATTEN_STR "^([1-9][0-9]*)+([s,m])$"
     int status = 0;
-    regmatch_t regmatch = { 0 };
 
     if (value == NULL) {
         return -1;
     }
 
-    if (regcomp(&preg, "^([1-9][0-9]*)+([s,m])$", REG_NOSUB | REG_EXTENDED)) {
-        ERROR("Failed to compile the regex\n");
-        return -1;
-    }
-
-    status = regexec(&preg, value, 1, &regmatch, 0);
-    regfree(&preg);
+    status = util_reg_match(PATTEN_STR, value);
     if (status != 0) {
         ERROR("Error start-timeout value: %s\n", value);
         COMMAND_ERROR("Invalid time duration value(%s) in server conf, "
@@ -686,6 +693,7 @@ out:
     return ret;
 }
 
+#ifdef ENABLE_USERNS_REMAP
 static int update_graph_for_userns_remap(struct service_arguments *args)
 {
     int ret = 0;
@@ -705,7 +713,7 @@ static int update_graph_for_userns_remap(struct service_arguments *args)
         goto out;
     }
 
-    nret = snprintf(graph, sizeof(graph), "%s/%d.%d", ISULAD_ROOT_PATH, host_uid, host_gid);
+    nret = snprintf(graph, sizeof(graph), "%s/%u.%u", args->json_confs->graph, host_uid, host_gid);
     if (nret < 0 || (size_t)nret >= sizeof(graph)) {
         ERROR("Path is too long");
         ret = -1;
@@ -718,6 +726,8 @@ static int update_graph_for_userns_remap(struct service_arguments *args)
 out:
     return ret;
 }
+#endif
+
 // update values for options after flag parsing is complete
 static int update_tls_options(struct service_arguments *args)
 {
@@ -815,6 +825,7 @@ out:
 }
 
 #ifdef ENABLE_SELINUX
+#ifdef ENABLE_OCI_IMAGE
 static int overlay_supports_selinux(bool *supported)
 {
 #define KALLSYMS_ITEM_MAX_LEN 100
@@ -855,6 +866,7 @@ out:
     fclose(fp);
     return ret;
 }
+#endif
 
 static int configure_kernel_security_support(const struct service_arguments *args)
 {
@@ -869,6 +881,7 @@ static int configure_kernel_security_support(const struct service_arguments *arg
             return 0;
         }
 
+#ifdef ENABLE_OCI_IMAGE
         if (strcmp(args->json_confs->storage_driver, "overlay") == 0 ||
             strcmp(args->json_confs->storage_driver, "overlay2") == 0) {
             // If driver is overlay or overlay2, make sure kernel
@@ -883,6 +896,7 @@ static int configure_kernel_security_support(const struct service_arguments *arg
                      args->json_confs->storage_driver);
             }
         }
+#endif
     } else {
         selinux_set_disabled();
     }
@@ -961,10 +975,12 @@ static int update_server_args(struct service_arguments *args)
 {
     int ret = 0;
 
+#ifdef ENABLE_USERNS_REMAP
     if (update_graph_for_userns_remap(args) != 0) {
         ret = -1;
         goto out;
     }
+#endif
 
     if (update_tls_options(args)) {
         ret = -1;
@@ -1155,7 +1171,21 @@ static int isulad_server_pre_init(const struct service_arguments *args, const ch
                                   const char *fifo_full_path)
 {
     int ret = 0;
+#ifdef ENABLE_USERNS_REMAP
     char* userns_remap = conf_get_isulad_userns_remap();
+    char *isulad_root = NULL;
+#endif
+    mode_t mode = CONFIG_DIRECTORY_MODE;
+
+#ifdef ENABLE_SUP_GROUPS
+    if (args->json_confs->sup_groups_len > 0) {
+        if (setgroups(args->json_confs->sup_groups_len, args->json_confs->sup_groups) != 0) {
+            SYSERROR("failed to setgroups");
+            ret = -1;
+            goto out;
+        }
+    }
+#endif
 
     if (check_and_save_pid(args->json_confs->pidfile) != 0) {
         ERROR("Failed to save pid");
@@ -1168,21 +1198,30 @@ static int isulad_server_pre_init(const struct service_arguments *args, const ch
         goto out;
     }
 
-    if (util_mkdir_p(args->json_confs->state, DEFAULT_SECURE_FILE_MODE) != 0) {
+    if (util_mkdir_p(args->json_confs->state, DEFAULT_SECURE_DIRECTORY_MODE) != 0) {
         ERROR("Unable to create state directory %s.", args->json_confs->state);
         ret = -1;
         goto out;
     }
 
-    if (util_mkdir_p(args->json_confs->graph, CONFIG_DIRECTORY_MODE) != 0) {
+#ifdef ENABLE_USERNS_REMAP
+    if (userns_remap != NULL) {
+        mode = USER_REMAP_DIRECTORY_MODE;
+    }
+#endif
+
+    ret = util_mkdir_p(args->json_confs->graph, mode);
+    if (ret != 0) {
         ERROR("Unable to create root directory %s.", args->json_confs->graph);
         ret = -1;
         goto out;
     }
 
+#ifdef ENABLE_USERNS_REMAP
     if (userns_remap != NULL) {
-        if (chmod(ISULAD_ROOT_PATH, USER_REMAP_DIRECTORY_MODE) != 0) {
-            ERROR("Failed to chmod isulad root dir '%s' for user remap", ISULAD_ROOT_PATH);
+        isulad_root = util_path_dir(args->json_confs->graph);
+        if (chmod(isulad_root, USER_REMAP_DIRECTORY_MODE) != 0) {
+            ERROR("Failed to chmod isulad root dir '%s' for user remap", isulad_root);
             ret = -1;
             goto out;
         }
@@ -1193,6 +1232,7 @@ static int isulad_server_pre_init(const struct service_arguments *args, const ch
             goto out;
         }
     }
+#endif
 
     if (mount_rootfs_mnt_dir(args->json_confs->rootfsmntdir)) {
         ERROR("Create and mount parent directory failed");
@@ -1207,7 +1247,10 @@ static int isulad_server_pre_init(const struct service_arguments *args, const ch
     }
 
 out:
+#ifdef ENABLE_USERNS_REMAP
+    free(isulad_root);
     free(userns_remap);
+#endif
     return ret;
 }
 
@@ -1522,6 +1565,7 @@ out:
     return ret;
 }
 
+#ifdef ENABLE_OCI_IMAGE
 static int set_locale()
 {
     int ret = 0;
@@ -1536,6 +1580,7 @@ static int set_locale()
 out:
     return ret;
 }
+#endif
 
 /*
  * Takes socket path as argument
@@ -1552,9 +1597,11 @@ int main(int argc, char **argv)
         exit(ECOMMON);
     }
 
+#ifdef ENABLE_OCI_IMAGE
     if (set_locale() != 0) {
         exit(ECOMMON);
     }
+#endif
 
     http_global_init();
 

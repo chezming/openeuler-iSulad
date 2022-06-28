@@ -1,7 +1,7 @@
 #!/bin/sh
 
 #######################################################################
-##- @Copyright (C) Huawei Technologies., Ltd. 2020. All rights reserved.
+##- Copyright (c) Huawei Technologies Co., Ltd. 2020. All rights reserved.
 # - iSulad licensed under the Mulan PSL v2.
 # - You can use this software according to the terms and conditions of the Mulan PSL v2.
 # - You may obtain a copy of Mulan PSL v2 at:
@@ -28,13 +28,11 @@ umask 0022
 echo "/tmp/coredump/core-%e-%p-%t" > /proc/sys/kernel/core_pattern
 ldconfig
 
-function echo_success()
-{
+function echo_success() {
     echo -e "\033[1;32m"$@"\033[0m"
 }
 
-function echo_error()
-{
+function echo_error() {
     echo -e "\033[1;31m"$@"\033[0m"
 }
 

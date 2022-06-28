@@ -5,7 +5,7 @@
 # spend time: 11
 
 #######################################################################
-##- @Copyright (C) Huawei Technologies., Ltd. 2020. All rights reserved.
+##- Copyright (c) Huawei Technologies Co., Ltd. 2020. All rights reserved.
 # - iSulad licensed under the Mulan PSL v2.
 # - You can use this software according to the terms and conditions of the Mulan PSL v2.
 # - You may obtain a copy of Mulan PSL v2 at:
@@ -61,7 +61,31 @@ function do_test_t()
         TC_RET_T=$(($TC_RET_T+1))
     fi
 
-    isula stop $containername2
+    # ps latest container
+    cut_output_lines isula ps -l
+
+    if [[ "${lines[1]}" != *"$containername3"* ]];then
+        echo "test failed"
+        TC_RET_T=$(($TC_RET_T+1))
+    fi
+
+    # ps last n containers
+    cut_output_lines isula ps -n 3
+
+    if [[ "${lines[1]}" != *"$containername3"* ]];then
+        echo "test failed"
+        TC_RET_T=$(($TC_RET_T+1))
+    fi
+    if [[ "${lines[2]}" != *"$containername2"* ]];then
+        echo "test failed"
+        TC_RET_T=$(($TC_RET_T+1))
+    fi
+    if [[ "${lines[3]}" != *"$containername"* ]];then
+        echo "test failed"
+        TC_RET_T=$(($TC_RET_T+1))
+    fi
+
+    isula stop -t 0 $containername2
     fn_check_eq "$?" "0" "stop failed"
 
     isula rm $containername $containername2 $containername3

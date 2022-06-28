@@ -49,6 +49,7 @@
 #include "utils_file.h"
 #include "utils_string.h"
 #include "utils_verify.h"
+#include "utils_fs.h"
 #include "image_api.h"
 #include "volume_api.h"
 #include "parse_volume.h"
@@ -375,7 +376,7 @@ static defs_mount *mount_point_to_defs_mnt(container_config_v2_common_config_mou
         return NULL;
     }
     mnt->options =
-        util_common_calloc_s(sizeof(char *) * (options_len + 3)); // +2 for readonly/propagation/selinux_relabel
+        util_smart_calloc_s(sizeof(char *), (options_len + 3)); // +2 for readonly/propagation/selinux_relabel
     if (mnt->options == NULL) {
         ERROR("Out of memory");
         ret = -1;
@@ -580,7 +581,7 @@ out:
 static int append_tmpfs_option_size(defs_mount *m, size_t size)
 {
     int nret = 0;
-    char kvbuf[MOUNT_PROPERTIES_SIZE] = {0};
+    char kvbuf[MOUNT_PROPERTIES_SIZE] = { 0 };
 
     if (size == 0) {
         return 0;
@@ -604,7 +605,7 @@ static int append_tmpfs_option_size(defs_mount *m, size_t size)
 static int append_tmpfs_option_mode(defs_mount *m, uint32_t mode)
 {
     int nret = 0;
-    char kvbuf[MOUNT_PROPERTIES_SIZE] = {0};
+    char kvbuf[MOUNT_PROPERTIES_SIZE] = { 0 };
 
     if (mode == 0) {
         return 0;
@@ -625,19 +626,8 @@ static int append_tmpfs_option_mode(defs_mount *m, uint32_t mode)
     return 0;
 }
 
-static defs_mount *parse_mount(mount_spec *spec)
+static int parse_basic_mount_spec_fileds(const mount_spec *spec, defs_mount *m)
 {
-    int ret = 0;
-    defs_mount *m = NULL;
-    bool has_pro = false;
-    bool has_sel = false;
-
-    m = util_common_calloc_s(sizeof(defs_mount));
-    if (m == NULL) {
-        ERROR("Out of memory");
-        return NULL;
-    }
-
     m->type = util_strdup_s(spec->type);
     if (strcmp(m->type, MOUNT_TYPE_TMPFS) == 0) {
         m->source = util_strdup_s("tmpfs");
@@ -652,58 +642,122 @@ static defs_mount *parse_mount(mount_spec *spec)
     if (spec->readonly) {
         if (util_array_append(&m->options, "ro")) {
             ERROR("append ro mode to array failed");
-            ret = -1;
-            goto out;
+            return -1;
         }
         m->options_len++;
     }
 
-    if (spec->bind_options != NULL) {
-        if (spec->bind_options->propagation != NULL) {
-            if (util_array_append(&m->options, spec->bind_options->propagation)) {
-                ERROR("append propagation to array failed");
-                ret = -1;
-                goto out;
-            }
-            m->options_len++;
-            has_pro = true;
-        }
-        if (spec->bind_options->selinux_opts != NULL) {
-            if (util_array_append(&m->options, spec->bind_options->selinux_opts)) {
-                ERROR("append selinux opts to array failed");
-                ret = -1;
-                goto out;
-            }
-            m->options_len++;
-            has_sel = true;
-        }
+    return 0;
+}
+
+static int append_spec_bind_mount_options(const mount_spec *spec, defs_mount *m, bool *has_pro, bool *has_sel)
+{
+    if (spec->bind_options == NULL) {
+        return 0;
     }
 
-    if (spec->volume_options != NULL && spec->volume_options->no_copy) {
-        if (util_array_append(&m->options, "nocopy")) {
-            ERROR("append nocopy to array failed");
-            ret = -1;
-            goto out;
+    if (spec->bind_options->propagation != NULL) {
+        if (util_array_append(&m->options, spec->bind_options->propagation)) {
+            ERROR("append propagation to array failed");
+            return -1;
         }
         m->options_len++;
+        *has_pro = true;
+    }
+    if (spec->bind_options->selinux_opts != NULL) {
+        if (util_array_append(&m->options, spec->bind_options->selinux_opts)) {
+            ERROR("append selinux opts to array failed");
+            return -1;
+        }
+        m->options_len++;
+        *has_sel = true;
     }
 
-    if (strcmp(m->type, MOUNT_TYPE_TMPFS) == 0 && spec->tmpfs_options != NULL) {
-        if (append_tmpfs_option_size(m, (size_t) spec->tmpfs_options->size_bytes) != 0) {
-            ERROR("append tmpfs option size failed");
-            ret = -1;
-            goto out;
-        }
+    return 0;
+}
 
-        if (append_tmpfs_option_mode(m, spec->tmpfs_options->mode) != 0) {
-            ERROR("append tmpfs option mode failed");
-            ret = -1;
-            goto out;
-        }
+static int append_spec_volume_options(const mount_spec *spec, defs_mount *m)
+{
+    if (spec->volume_options == NULL || !spec->volume_options->no_copy) {
+        return 0;
+    }
+
+    if (util_array_append(&m->options, "nocopy")) {
+        ERROR("append nocopy to array failed");
+        return -1;
+    }
+    m->options_len++;
+
+    return 0;
+}
+
+static int append_spec_tmpfs_options(const mount_spec *spec, defs_mount *m)
+{
+    if (strcmp(m->type, MOUNT_TYPE_TMPFS) != 0 || spec->tmpfs_options == NULL) {
+        return 0;
+    }
+
+    if (append_tmpfs_option_size(m, (size_t)spec->tmpfs_options->size_bytes) != 0) {
+        ERROR("append tmpfs option size failed");
+        return -1;
+    }
+
+    if (append_tmpfs_option_mode(m, spec->tmpfs_options->mode) != 0) {
+        ERROR("append tmpfs option mode failed");
+        return -1;
+    }
+
+    return 0;
+}
+
+static int append_spec_mount_options(const mount_spec *spec, defs_mount *m, bool *has_pro, bool *has_sel)
+{
+    if (append_spec_bind_mount_options(spec, m, has_pro, has_sel) != 0) {
+        ERROR("Failed to append bind options in v2_spec");
+        return -1;
+    }
+
+    if (append_spec_volume_options(spec, m) != 0) {
+        ERROR("Failed to append volume options in v2_spec");
+        return -1;
+    }
+
+    if (append_spec_tmpfs_options(spec, m) != 0) {
+        ERROR("Failed to append tmpfs options in v2_spec");
+        return -1;
+    }
+
+    return 0;
+}
+
+static defs_mount *parse_mount(const mount_spec *spec)
+{
+    int ret = 0;
+    defs_mount *m = NULL;
+    bool has_pro = false;
+    bool has_sel = false;
+
+    m = util_common_calloc_s(sizeof(defs_mount));
+    if (m == NULL) {
+        ERROR("Out of memory");
+        return NULL;
+    }
+
+    ret = parse_basic_mount_spec_fileds(spec, m);
+    if (ret != 0) {
+        ERROR("Failed to parse basic mount fileds in v2_spec");
+        goto out;
+    }
+
+    ret = append_spec_mount_options(spec, m, &has_pro, &has_sel);
+    if (ret != 0) {
+        ERROR("Failed to append spec mount options");
+        goto out;
     }
 
     ret = append_default_mount_options(m, true, has_pro, has_sel);
     if (ret != 0) {
+        ERROR("Failed to append default mount options");
         goto out;
     }
 
@@ -1100,12 +1154,7 @@ static host_config_devices_element **parse_multi_devices(const char *dir_host, c
         return NULL;
     }
 
-    if (devices_len > SIZE_MAX / sizeof(host_config_devices_element *)) {
-        ERROR("Too many devices");
-        return NULL;
-    }
-
-    dev_maps = util_common_calloc_s(devices_len * sizeof(host_config_devices_element *));
+    dev_maps = util_smart_calloc_s(sizeof(host_config_devices_element *), devices_len);
     if (dev_maps == NULL) {
         ERROR("Memory out");
         return NULL;
@@ -2036,21 +2085,25 @@ static int parse_device_cgroup_rule(defs_device_cgroup *spec_dev_cgroup, const c
     if (strcmp(file_mode[0], "*") == 0) {
         spec_dev_cgroup->major = -1;
     } else {
-        if (util_safe_llong(file_mode[0], (long long *)&spec_dev_cgroup->major) != 0) {
+        long long converted = 0;
+        if (util_safe_llong(file_mode[0], &converted) != 0) {
             ERROR("Invalid rule mode %s", file_mode[0]);
             ret = -1;
             goto free_out;
         }
+        spec_dev_cgroup->major = converted;
     }
 
     if (strcmp(file_mode[1], "*") == 0) {
         spec_dev_cgroup->minor = -1;
     } else {
-        if (util_safe_llong(file_mode[1], (long long *)&spec_dev_cgroup->minor) != 0) {
+        long long converted = 0;
+        if (util_safe_llong(file_mode[1], &converted) != 0) {
             ERROR("Invalid rule mode %s", file_mode[1]);
             ret = -1;
             goto free_out;
         }
+        spec_dev_cgroup->minor = (int64_t)converted;
     }
 
 free_out:
@@ -2254,7 +2307,7 @@ static bool mount_file(defs_mount ***all_mounts, size_t *all_mounts_len, const c
     bool ret = false;
     defs_mount *tmp_mounts = NULL;
 
-    options = util_common_calloc_s(options_len * sizeof(char *));
+    options = util_smart_calloc_s(sizeof(char *), options_len);
     if (options == NULL) {
         ERROR("Out of memory");
         goto out_free;
@@ -2301,7 +2354,7 @@ static bool add_host_channel_mount(defs_mount ***all_mounts, size_t *all_mounts_
     bool ret = false;
     defs_mount *tmp_mounts = NULL;
 
-    options = util_common_calloc_s(options_len * sizeof(char *));
+    options = util_smart_calloc_s(sizeof(char *), options_len);
     if (options == NULL) {
         ERROR("Out of memory");
         goto out_free;
@@ -2339,6 +2392,7 @@ out_free:
     return ret;
 }
 
+#ifndef ENABLE_GVISOR
 static int change_dev_shm_size(oci_runtime_spec *oci_spec, host_config *host_spec)
 {
     size_t i = 0;
@@ -2380,6 +2434,7 @@ static int change_dev_shm_size(oci_runtime_spec *oci_spec, host_config *host_spe
     ERROR("/dev/shm mount point not exist");
     return -1;
 }
+#endif
 
 static inline bool is_mount_destination_hosts(const char *destination)
 {
@@ -2517,10 +2572,11 @@ static int chown_for_shm(const char *shm_path, const char *user_remap)
 
 static char *get_prepare_share_shm_path(const char *truntime, const char *cid)
 {
-#define SHM_MOUNT_FILE_NAME "/mounts/shm/"
+#define SHM_MOUNT_FILE_NAME "/mounts/shm"
     char *c_root_path = NULL;
     size_t slen = 0;
     char *spath = NULL;
+    char real_root_path[PATH_MAX] = { 0 };
     int nret = 0;
 
     if (truntime == NULL) {
@@ -2531,19 +2587,24 @@ static char *get_prepare_share_shm_path(const char *truntime, const char *cid)
         goto err_out;
     }
 
-    // c_root_path + "/" + cid + "/mounts/shm"
-    if (strlen(c_root_path) > (((PATH_MAX - strlen(cid)) - 1) - strlen(SHM_MOUNT_FILE_NAME)) - 1) {
+    if (realpath(c_root_path, real_root_path) == NULL) {
+        ERROR("Failed to get %s realpath", c_root_path);
+        goto err_out;
+    }
+
+    // real_root_path + "/" + cid + "/mounts/shm"
+    if (strlen(real_root_path) > (((PATH_MAX - strlen(cid)) - 1) - strlen(SHM_MOUNT_FILE_NAME)) - 1) {
         ERROR("Too large path");
         goto err_out;
     }
-    slen = strlen(c_root_path) + 1 + strlen(cid) + strlen(SHM_MOUNT_FILE_NAME) + 1;
+    slen = strlen(real_root_path) + 1 + strlen(cid) + strlen(SHM_MOUNT_FILE_NAME) + 1;
     spath = util_smart_calloc_s(sizeof(char), slen);
     if (spath == NULL) {
         ERROR("Out of memory");
         goto err_out;
     }
 
-    nret = snprintf(spath, slen, "%s/%s/mounts/shm/", c_root_path, cid);
+    nret = snprintf(spath, slen, "%s/%s/mounts/shm", real_root_path, cid);
     if (nret < 0 || nret >= slen) {
         ERROR("Sprintf failed");
         goto err_out;
@@ -2580,7 +2641,60 @@ out:
     return ret;
 }
 
-static int prepare_share_shm(host_config *host_spec, container_config_v2_common_config *v2_spec)
+#ifdef ENABLE_USERNS_REMAP
+static int change_shm_parent_dirs_owner_for_userns_remap(const host_config *host_spec, const char *spath)
+{
+    int ret = 0;
+    char *tmp_path = NULL;
+    char *p = NULL;
+    char *userns_remap = NULL;
+
+    if (host_spec->user_remap != NULL) {
+        return 0;
+    }
+    userns_remap = conf_get_isulad_userns_remap();
+    if (userns_remap == NULL) {
+        return 0;
+    }
+
+    // find parent directory
+    tmp_path = util_strdup_s(spath);
+    p = strrchr(tmp_path, '/');
+    if (p == NULL) {
+        ERROR("Failed to find parent directory for %s", tmp_path);
+        ret = -1;
+        goto out;
+    }
+    *p = '\0';
+
+    if (set_file_owner_for_userns_remap(tmp_path, userns_remap) != 0) {
+        ERROR("Unable to change directory %s owner for user remap.", tmp_path);
+        ret = -1;
+        goto out;
+    }
+
+    p = strrchr(tmp_path, '/');
+    if (p == NULL) {
+        ERROR("Failed to find parent directory for %s", tmp_path);
+        ret = -1;
+        goto out;
+    }
+    *p = '\0';
+
+    if (set_file_owner_for_userns_remap(tmp_path, userns_remap) != 0) {
+        ERROR("Unable to change directory %s owner for user remap.", tmp_path);
+        ret = -1;
+        goto out;
+    }
+
+out:
+    free(tmp_path);
+    free(userns_remap);
+    return ret;
+}
+#endif
+
+int setup_ipc_dirs(host_config *host_spec, container_config_v2_common_config *v2_spec)
 {
 #define MAX_PROPERTY_LEN 64
     char shmproperty[MAX_PROPERTY_LEN] = { 0 };
@@ -2588,17 +2702,26 @@ static int prepare_share_shm(host_config *host_spec, container_config_v2_common_
     int nret = 0;
     bool has_mount = false;
     char *spath = NULL;
-    char *tmp_path = NULL;
-    char *p = NULL;
-    char *userns_remap = NULL;
-    // has mount for /dev/shm
-    if (has_mount_shm(host_spec, v2_spec)) {
+
+    // ignore shm of system container
+    if (host_spec->system_container) {
+        return 0;
+    }
+    // setup shareable dirs
+    if (host_spec->ipc_mode != NULL && !namespace_is_shareable(host_spec->ipc_mode)) {
         return 0;
     }
 
     spath = get_prepare_share_shm_path(host_spec->runtime, v2_spec->id);
     if (spath == NULL) {
-        goto out;
+        return -1;
+    }
+
+    // container shm has been mounted
+    if (util_detect_mounted(spath)) {
+        DEBUG("shm path %s has been mounted", spath);
+        free(spath);
+        return 0;
     }
 
     nret = util_mkdir_p(spath, 0700);
@@ -2624,65 +2747,45 @@ static int prepare_share_shm(host_config *host_spec, container_config_v2_common_
         goto out;
     }
 
-    v2_spec->shm_path = spath;
-    userns_remap = conf_get_isulad_userns_remap();
-
-    if (host_spec->user_remap == NULL && userns_remap != NULL) {
-        // find parent directory
-        tmp_path = util_strdup_s(spath);
-        p = strrchr(tmp_path, '/');
-        if (p == NULL) {
-            ERROR("Failed to find parent directory for %s", tmp_path);
-            goto out;
-        }
-        *p = '\0';
-
-        if (set_file_owner_for_userns_remap(tmp_path, userns_remap) != 0) {
-            ERROR("Unable to change directory %s owner for user remap.", tmp_path);
-            goto out;
-        }
-
-        p = strrchr(tmp_path, '/');
-        if (p == NULL) {
-            ERROR("Failed to find parent directory for %s", tmp_path);
-            goto out;
-        }
-        *p = '\0';
-
-        if (set_file_owner_for_userns_remap(tmp_path, userns_remap) != 0) {
-            ERROR("Unable to change directory %s owner for user remap.", tmp_path);
-            goto out;
-        }
+#ifdef ENABLE_USERNS_REMAP
+    if (change_shm_parent_dirs_owner_for_userns_remap(host_spec, spath) != 0) {
+        ERROR("Failed to change shm directory owner for user remap.");
+        goto out;
     }
+#endif
 
-    spath = NULL;
     ret = 0;
 out:
     if (ret != 0 && has_mount) {
         (void)umount(spath);
     }
     free(spath);
-    free(tmp_path);
-    free(userns_remap);
     return ret;
 }
 
 static bool add_shm_mount(defs_mount ***all_mounts, size_t *all_mounts_len, const char *shm_path)
 {
     char **options = NULL;
-    size_t options_len = 3;
+    size_t options_len = 2;
     bool ret = false;
     defs_mount *tmp_mounts = NULL;
 
-    options = util_common_calloc_s(options_len * sizeof(char *));
+#ifndef ENABLE_GVISOR
+    options_len += 1;
+#endif
+    options = util_smart_calloc_s(sizeof(char *), options_len);
     if (options == NULL) {
         ERROR("Out of memory");
         goto out_free;
     }
     options[0] = util_strdup_s("rbind");
     options[1] = util_strdup_s("rprivate");
-    // default shm size is 64MB
-    options[2] = util_strdup_s("size=65536k");
+#ifndef ENABLE_GVISOR
+    /* runsc won't distinguish this mount option, the mount operation is performed by high-lever runtime,
+     * and ignored this option for low-level runtime.
+     */
+    options[2] = util_strdup_s("size=65536k"); // default shm size is 64MB
+#endif
     /* generate mount node */
     tmp_mounts = util_common_calloc_s(sizeof(defs_mount));
     if (tmp_mounts == NULL) {
@@ -2714,8 +2817,22 @@ out_free:
     return ret;
 }
 
+static int set_share_shm(const host_config *host_spec, container_config_v2_common_config *v2_spec)
+{
+    char *spath = NULL;
+
+    spath = get_prepare_share_shm_path(host_spec->runtime, v2_spec->id);
+    if (spath == NULL) {
+        return -1;
+    }
+
+    v2_spec->shm_path = spath;
+
+    return 0;
+}
+
 #define SHM_MOUNT_POINT "/dev/shm"
-static int setup_ipc_dirs(host_config *host_spec, container_config_v2_common_config *v2_spec)
+static int set_shm_path(host_config *host_spec, container_config_v2_common_config *v2_spec)
 {
     int ret = 0;
     container_t *cont = NULL;
@@ -2728,7 +2845,7 @@ static int setup_ipc_dirs(host_config *host_spec, container_config_v2_common_con
     }
     // setup shareable dirs
     if (host_spec->ipc_mode == NULL || namespace_is_shareable(host_spec->ipc_mode)) {
-        return prepare_share_shm(host_spec, v2_spec);
+        return set_share_shm(host_spec, v2_spec);
     }
 
     if (namespace_is_container(host_spec->ipc_mode)) {
@@ -2851,8 +2968,7 @@ static void add_mount(defs_mount **merged_mounts, size_t *merged_mounts_len, def
     *merged_mounts_len += 1;
 }
 
-static int add_embedded_layers(container_config *container_spec, defs_mount **merged_mounts,
-                               size_t *merged_mounts_len)
+static int add_embedded_layers(container_config *container_spec, defs_mount **merged_mounts, size_t *merged_mounts_len)
 {
     int ret = 0;
     size_t i = 0;
@@ -2970,7 +3086,7 @@ out:
 
 static char *get_valid_tmpfs_dst_path(char *tmpfs)
 {
-    char dstpath[PATH_MAX] = {0};
+    char dstpath[PATH_MAX] = { 0 };
 
     if (tmpfs == NULL) {
         return NULL;
@@ -3169,7 +3285,7 @@ static int merge_all_fs_mounts(host_config *host_spec, container_config *contain
         return 0;
     }
 
-    merged_mounts = util_common_calloc_s(sizeof(defs_mount *) * len);
+    merged_mounts = util_smart_calloc_s(sizeof(defs_mount *), len);
     if (merged_mounts == NULL) {
         ERROR("out of memory");
         ret = -1;
@@ -3272,6 +3388,12 @@ int merge_conf_mounts(oci_runtime_spec *oci_spec, host_config *host_spec, contai
         goto out;
     }
 
+    if (set_shm_path(host_spec, v2_spec) != 0) {
+        ERROR("Failed to set shm path");
+        ret = -1;
+        goto out;
+    }
+
     /* add ipc mount */
     if (v2_spec->shm_path != NULL) {
         // check whether duplication
@@ -3294,6 +3416,7 @@ int merge_conf_mounts(oci_runtime_spec *oci_spec, host_config *host_spec, contai
         goto out;
     }
 
+#ifndef ENABLE_GVISOR
     if (!has_mount_shm(host_spec, v2_spec) && host_spec->shm_size > 0) {
         ret = change_dev_shm_size(oci_spec, host_spec);
         if (ret) {
@@ -3301,6 +3424,7 @@ int merge_conf_mounts(oci_runtime_spec *oci_spec, host_config *host_spec, contai
             goto out;
         }
     }
+#endif
 
 out:
     if (mounted) {

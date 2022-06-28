@@ -419,12 +419,7 @@ static int pack_hostconfig_ulimits(host_config *dstconfig, const isula_host_conf
         goto out;
     }
 
-    if (srcconfig->ulimits_len > SIZE_MAX / sizeof(host_config_ulimits_element *)) {
-        COMMAND_ERROR("Too many ulimit elements in host config");
-        ret = -1;
-        goto out;
-    }
-    dstconfig->ulimits = util_common_calloc_s(srcconfig->ulimits_len * sizeof(host_config_ulimits_element *));
+    dstconfig->ulimits = util_smart_calloc_s(sizeof(host_config_ulimits_element *), srcconfig->ulimits_len);
     if (dstconfig->ulimits == NULL) {
         COMMAND_ERROR("Out of memory");
         ret = -1;
@@ -534,6 +529,7 @@ static int parse_blkio_throttle_bps_device(const char *device, char **path, uint
 {
     int ret = 0;
     char **split = NULL;
+    int64_t converted = 0;
 
     split = util_string_split_multi(device, ':');
     if (split == NULL || util_array_len((const char **)split) != 2) {
@@ -548,13 +544,16 @@ static int parse_blkio_throttle_bps_device(const char *device, char **path, uint
         goto out;
     }
 
-    if (util_parse_byte_size_string(split[1], (int64_t *)rate) != 0) {
+    ret = util_parse_byte_size_string(split[1], &converted);
+    if (ret != 0 || converted < 0) {
         COMMAND_ERROR("invalid rate for device: %s. The correct format is <device-path>:<number>[<unit>]."
                       " Number must be a positive integer. Unit is optional and can be kb, mb, or gb",
                       device);
         ret = -1;
         goto out;
     }
+
+    *rate = converted;
     *path = util_strdup_s(split[0]);
 
 out:
@@ -709,6 +708,7 @@ static host_config_hugetlbs_element *pase_hugetlb_limit(const char *input)
     char *trans_page = NULL;
     uint64_t limit = 0;
     uint64_t page = 0;
+    int64_t tconverted = 0;
     host_config_hugetlbs_element *limit_element = NULL;
 
     temp = util_strdup_s(input);
@@ -722,18 +722,21 @@ static host_config_hugetlbs_element *pase_hugetlb_limit(const char *input)
         goto free_out;
     }
 
-    ret = util_parse_byte_size_string(limit_value, (int64_t *)(&limit));
-    if (ret != 0) {
+    ret = util_parse_byte_size_string(limit_value, &tconverted);
+    if (ret != 0 || tconverted < 0) {
         COMMAND_ERROR("Parse limit value: %s failed:%s", limit_value, strerror(-ret));
         goto free_out;
     }
+    limit = (uint64_t)tconverted;
 
     if (pagesize != NULL) {
-        ret = util_parse_byte_size_string(pagesize, (int64_t *)(&page));
-        if (ret != 0) {
+        tconverted = 0;
+        ret = util_parse_byte_size_string(pagesize, &tconverted);
+        if (ret != 0 || tconverted < 0) {
             COMMAND_ERROR("Parse pagesize error.Invalid hugepage size: %s: %s", pagesize, strerror(-ret));
             goto free_out;
         }
+        page = (uint64_t)tconverted;
 
         trans_page = util_human_size(page);
         if (trans_page == NULL) {
@@ -860,15 +863,18 @@ static bool parse_size(const char *input, const char *token, host_config_host_ch
     uint64_t size = 0;
     uint64_t mem_total_size = 0;
     uint64_t mem_available_size = 0;
+    int64_t converted = 0;
 
     if (strcmp(token, "") == 0) {
         host_channel->size = 64 * SIZE_MB;
         return true;
     }
-    if (util_parse_byte_size_string(token, (int64_t *)(&size))) {
+    if (util_parse_byte_size_string(token, &converted) != 0 || converted < 0) {
         COMMAND_ERROR("Invalid size limit for host channel: %s", input);
         return false;
     }
+    size = (uint64_t)converted;
+
     if (size < HOST_CHANNLE_MIN_SIZE) {
         COMMAND_ERROR("Invalid size, larger than 4KB is allowed");
         return false;
@@ -1134,12 +1140,7 @@ int generate_devices(host_config *dstconfig, const isula_host_config_t *srcconfi
         goto out;
     }
 
-    if (srcconfig->devices_len > SIZE_MAX / sizeof(host_config_devices_element *)) {
-        ERROR("Too many devices to be populated into container");
-        ret = -1;
-        goto out;
-    }
-    dstconfig->devices = util_common_calloc_s(sizeof(host_config_devices_element *) * srcconfig->devices_len);
+    dstconfig->devices = util_smart_calloc_s(sizeof(host_config_devices_element *), srcconfig->devices_len);
     if (dstconfig->devices == NULL) {
         ret = -1;
         goto out;
@@ -1479,13 +1480,7 @@ static int generate_mounts(host_config *dstconfig, const isula_host_config_t *sr
         goto out;
     }
 
-    if (srcconfig->mounts_len > SIZE_MAX / sizeof(char *)) {
-        COMMAND_ERROR("Too many mounts to mount!");
-        ret = -1;
-        goto out;
-    }
-
-    dstconfig->mounts = util_common_calloc_s(srcconfig->mounts_len * sizeof(mount_spec*));
+    dstconfig->mounts = util_smart_calloc_s(sizeof(mount_spec *), srcconfig->mounts_len);
     if (dstconfig->mounts == NULL) {
         ret = -1;
         goto out;
@@ -1547,13 +1542,7 @@ int generate_security(host_config *dstconfig, const isula_host_config_t *srcconf
         goto out;
     }
 
-    if (srcconfig->security_len > SIZE_MAX / sizeof(char *)) {
-        COMMAND_ERROR("Too many security opts!");
-        ret = -1;
-        goto out;
-    }
-
-    dstconfig->security_opt = util_common_calloc_s(srcconfig->security_len * sizeof(char *));
+    dstconfig->security_opt = util_smart_calloc_s(sizeof(char *), srcconfig->security_len);
     if (dstconfig->security_opt == NULL) {
         ret = -1;
         goto out;
@@ -1924,7 +1913,7 @@ void isula_host_config_free(isula_host_config_t *hostconfig)
 
     free(hostconfig->mac_address);
     hostconfig->mac_address = NULL;
-    
+
     free_defs_map_string_object_port_bindings(hostconfig->port_bindings);
     hostconfig->port_bindings = NULL;
 #endif

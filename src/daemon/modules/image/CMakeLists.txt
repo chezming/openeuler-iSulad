@@ -42,10 +42,11 @@ set(IMAGE_INCS
     PARENT_SCOPE
     )
 
+if (EANBLE_IMAGE_LIBARAY)
 # set sources and headers for libisulad_img
 set(LIB_ISULAD_IMG libisulad_img)
 
-add_library(${LIB_ISULAD_IMG} ${LIBTYPE}
+set(LIB_ISULAD_IMG_SRCS
     ${local_image_srcs}
     ${CMAKE_SOURCE_DIR}/src/utils/cutils/utils.c
     ${CMAKE_SOURCE_DIR}/src/utils/cutils/utils_regex.c
@@ -66,14 +67,29 @@ add_library(${LIB_ISULAD_IMG} ${LIBTYPE}
     ${CMAKE_SOURCE_DIR}/src/utils/sha256/sha256.c
     ${CMAKE_SOURCE_DIR}/src/utils/buffer/buffer.c
     ${CMAKE_SOURCE_DIR}/src/daemon/common/err_msg.c
-    ${CMAKE_SOURCE_DIR}/src/daemon/common/selinux_label.c
     ${CMAKE_SOURCE_DIR}/src/daemon/common/sysinfo.c
-    ${CMAKE_SOURCE_DIR}/src/utils/tar/isulad_tar.c
-    ${CMAKE_SOURCE_DIR}/src/utils/tar/util_archive.c
     ${CMAKE_SOURCE_DIR}/src/utils/tar/util_gzip.c
     ${CMAKE_SOURCE_DIR}/src/daemon/config/isulad_config.c
     ${CMAKE_SOURCE_DIR}/src/daemon/config/daemon_arguments.c
     )
+
+if (ENABLE_SELINUX)
+    list(APPEND LIB_ISULAD_IMG_SRCS
+        ${CMAKE_SOURCE_DIR}/src/daemon/common/selinux_label.c
+        )
+endif()
+
+if (ENABLE_OCI_IMAGE)
+    list(APPEND LIB_ISULAD_IMG_SRCS
+        ${CMAKE_SOURCE_DIR}/src/utils/tar/isulad_tar.c
+        ${CMAKE_SOURCE_DIR}/src/utils/tar/util_archive.c
+        )
+endif()
+
+add_library(${LIB_ISULAD_IMG} ${LIBTYPE}
+    ${LIB_ISULAD_IMG_SRCS}
+    )
+set_target_properties(${LIB_ISULAD_IMG} PROPERTIES LINKER_LANGUAGE "C")
 
 target_include_directories(${LIB_ISULAD_IMG} PUBLIC
     ${local_image_incs}
@@ -97,11 +113,29 @@ target_link_libraries(${LIB_ISULAD_IMG}
     ${ISULA_LIBUTILS_LIBRARY}
     ${DEVMAPPER_LIBRARY}
     ${LIBTAR_LIBRARY}
-    ${SELINUX_LIBRARY}
-    ${LIBARCHIVE_LIBRARY}
-    -lpthread -lcrypto -lz libhttpclient)
+    ${CRYPTO_LIBRARY}
+    ${ZLIB_LIBRARY}
+    libhttpclient)
+
+if (NOT ANDROID)
+    target_link_libraries(${LIB_ISULAD_IMG} -lpthread)
+endif()
+
+if (ENABLE_OCI_IMAGE)
+    target_link_libraries(${LIB_ISULAD_IMG}
+        ${LIBARCHIVE_LIBRARY}
+        )
+endif()
+
+if (ENABLE_SELINUX)
+    target_link_libraries(${LIB_ISULAD_IMG}
+        ${SELINUX_LIBRARY}
+        )
+endif()
 
 target_compile_definitions(${LIB_ISULAD_IMG} PRIVATE LIB_ISULAD_IMG_SO)
 
 install(TARGETS ${LIB_ISULAD_IMG}
-    LIBRARY DESTINATION ${LIB_INSTALL_DIR_DEFAULT} PERMISSIONS OWNER_READ OWNER_EXECUTE GROUP_READ GROUP_EXECUTE)
+    ${INSTALL_TYPE} DESTINATION ${LIB_INSTALL_DIR_DEFAULT} PERMISSIONS OWNER_READ OWNER_EXECUTE GROUP_READ GROUP_EXECUTE)
+
+endif() # EANBLE_IMAGE_LIBARAY

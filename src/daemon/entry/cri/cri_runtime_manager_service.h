@@ -10,7 +10,7 @@
  * See the Mulan PSL v2 for more details.
  * Author: wujing
  * Create: 2020-12-15
- * Description: provide cri pod sandbox manager service function definition
+ * Description: provide cri runtime manager service function implementation
  *********************************************************************************/
 #ifndef DAEMON_ENTRY_CRI_RUNTIME_MANAGER_H
 #define DAEMON_ENTRY_CRI_RUNTIME_MANAGER_H
@@ -20,12 +20,28 @@
 
 #include "api.pb.h"
 #include "errors.h"
+#include "network_plugin.h"
+#include "callback.h"
+
 namespace CRI {
 class RuntimeManagerService {
 public:
-    virtual void UpdateRuntimeConfig(const runtime::v1alpha2::RuntimeConfig &config, Errors &error) = 0;
+    RuntimeManagerService(service_executor_t *cb, std::shared_ptr<Network::PluginManager> pluginManager)
+        : m_cb(cb)
+        , m_pluginManager(pluginManager)
+    {
+    }
+    RuntimeManagerService(const RuntimeManagerService &) = delete;
+    auto operator=(const RuntimeManagerService &) -> RuntimeManagerService & = delete;
+    virtual ~RuntimeManagerService() = default;
 
-    virtual auto Status(Errors &error) -> std::unique_ptr<runtime::v1alpha2::RuntimeStatus> = 0;
+    void UpdateRuntimeConfig(const runtime::v1alpha2::RuntimeConfig &config, Errors &error);
+
+    auto Status(Errors &error) -> std::unique_ptr<runtime::v1alpha2::RuntimeStatus>;
+
+private:
+    service_executor_t *m_cb;
+    std::shared_ptr<Network::PluginManager> m_pluginManager;
 };
 } // namespace CRI
 

@@ -1,6 +1,6 @@
 #! /bin/bash
 #######################################################################
-##- @Copyright (C) Huawei Technologies., Ltd. 2020. All rights reserved.
+##- Copyright (c) Huawei Technologies Co., Ltd. 2020. All rights reserved.
 # - iSulad licensed under the Mulan PSL v2.
 # - You can use this software according to the terms and conditions of the Mulan PSL v2.
 # - You may obtain a copy of Mulan PSL v2 at:
@@ -23,7 +23,7 @@ umask 0022
 
 if [ "x$subcmd" == "xrun" ];then
     rm -rf $resultfail $resultpass $logfile
-    $testcase > $logfile 2>&1
+    bash $testcase > $logfile 2>&1
     if [ $? -eq 0 ];then
         touch $resultpass
     else

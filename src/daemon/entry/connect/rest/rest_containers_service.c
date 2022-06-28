@@ -64,6 +64,26 @@ static int version_request_check(void *req)
     return 0;
 }
 
+/* info request check */
+static int info_request_check(void *req)
+{
+    return 0;
+}
+
+/* export request check */
+static int export_request_check(void *req)
+{
+    int ret = 0;
+
+    container_export_request *req_export = (container_export_request *)req;
+    if (req_export->id == NULL) {
+        ERROR("Container name required!");
+        ret = -1;
+    }
+
+    return ret;
+}
+
 /* stop request check */
 static int stop_request_check(void *req)
 {
@@ -142,6 +162,18 @@ out:
     return ret;
 }
 
+/* attach request check */
+static int attach_request_check(void *req)
+{
+    container_attach_request *req_attach = (container_attach_request *)req;
+    if (req_attach->container_id == NULL) {
+        ERROR("Missing container name in the attach request!");
+        return -1;
+    }
+
+    return 0;
+}
+
 /* list request check */
 static int list_request_check(void *req)
 {
@@ -199,6 +231,48 @@ out:
     return ret;
 }
 
+/* pause request check */
+static int pause_request_check(void *req)
+{
+    container_pause_request *req_pause = (container_pause_request *)req;
+    if (req_pause->id == NULL) {
+        ERROR("Container name required: pause()");
+        return -1;
+    }
+
+    return 0;
+}
+
+/* resume request check */
+static int resume_request_check(void *req)
+{
+    container_resume_request *req_resume = (container_resume_request *)req;
+    if (req_resume->id == NULL) {
+        ERROR("Container name required: resume()");
+        return -1;
+    }
+
+    return 0;
+}
+
+/* rename request check */
+static int rename_request_check(void *req)
+{
+    container_rename_request *req_resume = (container_rename_request *)req;
+
+    if (req_resume->new_name == NULL) {
+        ERROR("Container new name required for rename()");
+        return -1;
+    }
+
+    if (req_resume->old_name == NULL) {
+        ERROR("Container old name required for rename()");
+        return -1;
+    }
+
+    return 0;
+}
+
 /* evhtp send create repsponse */
 static void evhtp_send_create_repsponse(evhtp_request_t *req, container_create_response *response, int rescode)
 {
@@ -224,7 +298,6 @@ static void evhtp_send_create_repsponse(evhtp_request_t *req, container_create_r
 out:
     free(err);
     free(responsedata);
-    return;
 }
 
 static struct rest_handle_st g_rest_handle[] = {
@@ -269,6 +342,11 @@ static struct rest_handle_st g_rest_handle[] = {
         .request_check = exec_request_check,
     },
     {
+        .name = ContainerServiceAttach,
+        .request_parse_data = (void *)container_attach_request_parse_data,
+        .request_check = attach_request_check,
+    },
+    {
         .name = ContainerServiceRemove,
         .request_parse_data = (void *)container_delete_request_parse_data,
         .request_check = remove_request_check,
@@ -287,6 +365,31 @@ static struct rest_handle_st g_rest_handle[] = {
         .name = ContainerServiceInspect,
         .request_parse_data = (void *)container_inspect_request_parse_data,
         .request_check = container_inspect_request_check,
+    },
+    {
+        .name = ContainerServiceInfo,
+        .request_parse_data = (void *)host_info_request_parse_data,
+        .request_check = info_request_check,
+    },
+    {
+        .name = ContainerServiceExport,
+        .request_parse_data = (void *)container_export_request_parse_data,
+        .request_check = export_request_check,
+    },
+    {
+        .name = ContainerServicePause,
+        .request_parse_data = (void *)container_pause_request_parse_data,
+        .request_check = pause_request_check,
+    },
+    {
+        .name = ContainerServiceResume,
+        .request_parse_data = (void *)container_resume_request_parse_data,
+        .request_check = resume_request_check,
+    },
+    {
+        .name = ContainerServiceRename,
+        .request_parse_data = (void *)container_rename_request_parse_data,
+        .request_check = rename_request_check,
     },
 };
 
@@ -361,7 +464,6 @@ static void evhtp_send_start_repsponse(evhtp_request_t *req, container_start_res
 out:
     free(err);
     free(responsedata);
-    return;
 }
 
 /* evhtp send list repsponse */
@@ -389,7 +491,6 @@ static void evhtp_send_list_repsponse(evhtp_request_t *req, container_list_respo
 out:
     free(err);
     free(responsedata);
-    return;
 }
 
 /* evhtp send wait repsponse */
@@ -411,7 +512,6 @@ static void evhtp_send_wait_repsponse(evhtp_request_t *req, container_wait_respo
 out:
     free(err);
     free(responsedata);
-    return;
 }
 
 /* rest create cb */
@@ -421,6 +521,8 @@ static void rest_create_cb(evhtp_request_t *req, void *arg)
     service_executor_t *cb = NULL;
     container_create_response *cresponse = NULL;
     container_create_request *crequest = NULL;
+
+    prctl(PR_SET_NAME, "ContCreate");
 
     // only deal with POST request
     if (evhtp_request_get_method(req) != htp_method_POST) {
@@ -457,6 +559,8 @@ static void rest_start_cb(evhtp_request_t *req, void *arg)
     container_start_response *cresponse = NULL;
     container_start_request *crequest = NULL;
 
+    prctl(PR_SET_NAME, "ContStart");
+
     // only deal with POST request
     if (evhtp_request_get_method(req) != htp_method_POST) {
         evhtp_send_reply(req, RESTFUL_RES_NOTIMPL);
@@ -491,6 +595,8 @@ static void rest_wait_cb(evhtp_request_t *req, void *arg)
     service_executor_t *cb = NULL;
     container_wait_request *crequest = NULL;
     container_wait_response *cresponse = NULL;
+
+    prctl(PR_SET_NAME, "ContWait");
 
     // only deal with POST request
     if (evhtp_request_get_method(req) != htp_method_POST) {
@@ -544,7 +650,6 @@ static void evhtp_send_stop_repsponse(evhtp_request_t *req, container_stop_respo
 out:
     free(err);
     free(responsedata);
-    return;
 }
 
 /* rest stop cb */
@@ -554,6 +659,8 @@ static void rest_stop_cb(evhtp_request_t *req, void *arg)
     service_executor_t *cb = NULL;
     container_stop_request *crequest = NULL;
     container_stop_response *cresponse = NULL;
+
+    prctl(PR_SET_NAME, "ContStop");
 
     // only deal with POST request
     if (evhtp_request_get_method(req) != htp_method_POST) {
@@ -606,7 +713,6 @@ static void evhtp_send_restart_response(evhtp_request_t *req, container_restart_
 out:
     free(err);
     free(responsedata);
-    return;
 }
 
 /* rest restart cb */
@@ -616,6 +722,8 @@ static void rest_restart_cb(evhtp_request_t *req, void *arg)
     service_executor_t *cb = NULL;
     container_restart_request *crequest = NULL;
     container_restart_response *cresponse = NULL;
+
+    prctl(PR_SET_NAME, "ContRestart");
 
     if (evhtp_request_get_method(req) != htp_method_POST) {
         evhtp_send_reply(req, RESTFUL_RES_NOTIMPL);
@@ -663,7 +771,6 @@ static void evhtp_send_version_repsponse(evhtp_request_t *req, container_version
 out:
     free(err);
     free(responsedata);
-    return;
 }
 
 /* rest version cb */
@@ -673,6 +780,8 @@ static void rest_version_cb(evhtp_request_t *req, void *arg)
     service_executor_t *cb = NULL;
     container_version_request *crequest = NULL;
     container_version_response *cresponse = NULL;
+
+    prctl(PR_SET_NAME, "VersionOp");
 
     // only deal with POST request
     if (evhtp_request_get_method(req) != htp_method_POST) {
@@ -701,6 +810,71 @@ out:
     free_container_version_response(cresponse);
 }
 
+/* evhtp send info response */
+static void evhtp_send_info_response(evhtp_request_t *req, host_info_response *response, int rescode)
+{
+    parser_error err = NULL;
+    struct parser_context ctx = { OPT_GEN_SIMPLIFY, 0 };
+    char *responsedata = NULL;
+
+    if (response == NULL) {
+        ERROR("Failed to generate info response info");
+        evhtp_send_reply(req, RESTFUL_RES_ERROR);
+        goto out;
+    }
+
+    responsedata = host_info_response_generate_json(response, &ctx, &err);
+    if (responsedata == NULL) {
+        ERROR("Failed to generate info request json:%s", err);
+        evhtp_send_reply(req, RESTFUL_RES_ERROR);
+        goto out;
+    }
+
+    evhtp_send_response(req, responsedata, rescode);
+
+out:
+    free(err);
+    free(responsedata);
+}
+
+/* rest info cb */
+static void rest_info_cb(evhtp_request_t *req, void *arg)
+{
+    int tret;
+    service_executor_t *cb = NULL;
+    host_info_request *crequest = NULL;
+    host_info_response *cresponse = NULL;
+
+    prctl(PR_SET_NAME, "InfoOp");
+
+    // only deal with post request
+    if (evhtp_request_get_method(req) != htp_method_POST) {
+        evhtp_send_reply(req, RESTFUL_RES_NOTIMPL);
+        return;
+    }
+
+    cb = get_service_executor();
+    if (cb == NULL || cb->container.info == NULL) {
+        ERROR("Unimplemented callback!");
+        evhtp_send_reply(req, RESTFUL_RES_NOTIMPL);
+        return;
+    }
+
+    tret = action_request_from_rest(req, (void **)&crequest, ContainerServiceInfo);
+    if (tret < 0) {
+        ERROR("Bad request");
+        evhtp_send_reply(req, RESTFUL_RES_SERVERR);
+        goto out;
+    }
+
+    (void)cb->container.info(crequest, &cresponse);
+    evhtp_send_info_response(req, cresponse, RESTFUL_RES_OK);
+
+out:
+    free_host_info_request(crequest);
+    free_host_info_response(cresponse);
+}
+
 /* evhtp send update repsponse */
 static void evhtp_send_update_repsponse(evhtp_request_t *req, container_update_response *response, int rescode)
 {
@@ -726,7 +900,6 @@ static void evhtp_send_update_repsponse(evhtp_request_t *req, container_update_r
 out:
     free(err);
     free(responsedata);
-    return;
 }
 
 /* rest update cb */
@@ -736,6 +909,8 @@ static void rest_update_cb(evhtp_request_t *req, void *arg)
     service_executor_t *cb = NULL;
     container_update_request *container_req = NULL;
     container_update_response *container_res = NULL;
+
+    prctl(PR_SET_NAME, "ContUpdate");
 
     // only deal with POST request
     if (evhtp_request_get_method(req) != htp_method_POST) {
@@ -788,7 +963,6 @@ static void evhtp_send_kill_repsponse(evhtp_request_t *req, container_kill_respo
 out:
     free(err);
     free(responsedata);
-    return;
 }
 
 /* rest kill cb */
@@ -798,6 +972,8 @@ static void rest_kill_cb(evhtp_request_t *req, void *arg)
     service_executor_t *cb = NULL;
     container_kill_request *crequest = NULL;
     container_kill_response *cresponse = NULL;
+
+    prctl(PR_SET_NAME, "ContKill");
 
     // only deal with POST request
     if (evhtp_request_get_method(req) != htp_method_POST) {
@@ -852,7 +1028,6 @@ static void evhtp_send_container_inspect_repsponse(evhtp_request_t *req, contain
 out:
     free(err);
     free(responsedata);
-    return;
 }
 
 /* rest container inspect cb */
@@ -862,6 +1037,8 @@ static void rest_container_inspect_cb(evhtp_request_t *req, void *arg)
     service_executor_t *cb = NULL;
     container_inspect_request *crequest = NULL;
     container_inspect_response *cresponse = NULL;
+
+    prctl(PR_SET_NAME, "ContInspect");
 
     // only deal with POST request
     if (evhtp_request_get_method(req) != htp_method_POST) {
@@ -915,7 +1092,6 @@ static void evhtp_send_exec_repsponse(evhtp_request_t *req, container_exec_respo
 out:
     free(err);
     free(responsedata);
-    return;
 }
 
 /* rest exec cb */
@@ -925,6 +1101,8 @@ static void rest_exec_cb(evhtp_request_t *req, void *arg)
     service_executor_t *cb = NULL;
     container_exec_request *crequest = NULL;
     container_exec_response *cresponse = NULL;
+
+    prctl(PR_SET_NAME, "ContExec");
 
     // only deal with POST request
     if (evhtp_request_get_method(req) != htp_method_POST) {
@@ -953,6 +1131,71 @@ out:
     free_container_exec_response(cresponse);
 }
 
+/* evhtp send attach repsponse */
+static void evhtp_send_attach_repsponse(evhtp_request_t *req, container_attach_response *response, int rescode)
+{
+    parser_error err = NULL;
+    struct parser_context ctx = { OPT_GEN_SIMPLIFY, 0 };
+    char *responsedata = NULL;
+
+    if (response == NULL) {
+        ERROR("Failed to generate attach response info");
+        evhtp_send_reply(req, RESTFUL_RES_ERROR);
+        goto out;
+    }
+
+    responsedata = container_attach_response_generate_json(response, &ctx, &err);
+    if (responsedata == NULL) {
+        ERROR("Failed to generate attach request json:%s", err);
+        evhtp_send_reply(req, RESTFUL_RES_ERROR);
+        goto out;
+    }
+
+    evhtp_send_response(req, responsedata, rescode);
+
+out:
+    free(err);
+    free(responsedata);
+    return;
+}
+
+/* rest attach cb */
+static void rest_attach_cb(evhtp_request_t *req, void *arg)
+{
+    int tret;
+    service_executor_t *cb = NULL;
+    container_attach_request *crequest = NULL;
+    container_attach_response *cresponse = NULL;
+
+    prctl(PR_SET_NAME, "ContAttach");
+
+    // only deal with POST request
+    if (evhtp_request_get_method(req) != htp_method_POST) {
+        evhtp_send_reply(req, RESTFUL_RES_NOTIMPL);
+        return;
+    }
+    cb = get_service_executor();
+    if (cb == NULL || !cb->container.attach) {
+        ERROR("Unimplemented attach callback");
+        evhtp_send_reply(req, RESTFUL_RES_NOTIMPL);
+        return;
+    }
+
+    tret = action_request_from_rest(req, (void **)&crequest, ContainerServiceAttach);
+    if (tret < 0) {
+        ERROR("bad request");
+        evhtp_send_reply(req, RESTFUL_RES_SERVERR);
+        goto out;
+    }
+
+    (void)cb->container.attach(crequest, &cresponse, -1, NULL, NULL);
+
+    evhtp_send_attach_repsponse(req, cresponse, RESTFUL_RES_OK);
+out:
+    free_container_attach_request(crequest);
+    free_container_attach_response(cresponse);
+}
+
 /* evhtp send remove repsponse */
 static void evhtp_send_remove_repsponse(evhtp_request_t *req, container_delete_response *response, int rescode)
 {
@@ -977,7 +1220,6 @@ static void evhtp_send_remove_repsponse(evhtp_request_t *req, container_delete_r
 out:
     free(err);
     free(responsedata);
-    return;
 }
 
 /* rest remove cb */
@@ -987,6 +1229,8 @@ static void rest_remove_cb(evhtp_request_t *req, void *arg)
     service_executor_t *cb = NULL;
     container_delete_request *crequest = NULL;
     container_delete_response *cresponse = NULL;
+
+    prctl(PR_SET_NAME, "ContRemove");
 
     // only deal with POST request
     if (evhtp_request_get_method(req) != htp_method_POST) {
@@ -1023,6 +1267,8 @@ static void rest_list_cb(evhtp_request_t *req, void *arg)
     container_list_request *crequest = NULL;
     container_list_response *cresponse = NULL;
 
+    prctl(PR_SET_NAME, "ContList");
+
     // only deal with POST request
     if (evhtp_request_get_method(req) != htp_method_POST) {
         evhtp_send_reply(req, RESTFUL_RES_NOTIMPL);
@@ -1048,6 +1294,279 @@ static void rest_list_cb(evhtp_request_t *req, void *arg)
 out:
     free_container_list_request(crequest);
     free_container_list_response(cresponse);
+}
+
+/* evhtp send export response */
+static void evhtp_send_export_response(evhtp_request_t *req, container_export_response *response, int rescode)
+{
+    parser_error err = NULL;
+    struct parser_context ctx = { OPT_GEN_SIMPLIFY, 0 };
+    char *resp_str = NULL;
+
+    if (response == NULL) {
+        ERROR("Responded information is null");
+        evhtp_send_reply(req, RESTFUL_RES_ERROR);
+        goto out;
+    }
+
+    resp_str = container_export_response_generate_json(response, &ctx, &err);
+    if (resp_str == NULL) {
+        ERROR("Failed to generate export request json, err: %s", err);
+        evhtp_send_reply(req, RESTFUL_RES_ERROR);
+        goto out;
+    }
+
+    evhtp_send_response(req, resp_str, rescode);
+
+out:
+    free(err);
+    free(resp_str);
+}
+
+/* rest export cb */
+static void rest_export_cb(evhtp_request_t *req, void *arg)
+{
+    int tret;
+    service_executor_t *cb = NULL;
+    container_export_request *crequest = NULL;
+    container_export_response *cresponse = NULL;
+
+    prctl(PR_SET_NAME, "ContExport");
+
+    // only deal with post request
+    if (evhtp_request_get_method(req) != htp_method_POST) {
+        ERROR("Only deal with post request");
+        evhtp_send_reply(req, RESTFUL_RES_NOTIMPL);
+        return;
+    }
+
+    cb = get_service_executor();
+    if (cb == NULL || cb->container.export_rootfs == NULL) {
+        ERROR("Unimplemented callback: export()");
+        evhtp_send_reply(req, RESTFUL_RES_NOTIMPL);
+        return;
+    }
+
+    tret = action_request_from_rest(req, (void **)&crequest, ContainerServiceExport);
+    if (tret < 0) {
+        ERROR("Bad request");
+        evhtp_send_reply(req, RESTFUL_RES_SERVERR);
+        goto out;
+    }
+
+    (void)cb->container.export_rootfs(crequest, &cresponse);
+    evhtp_send_export_response(req, cresponse, RESTFUL_RES_OK);
+
+out:
+    free_container_export_request(crequest);
+    free_container_export_response(cresponse);
+}
+
+/* evhtp send pause response */
+static void evhtp_send_pause_response(evhtp_request_t *req, container_pause_response *response, int rescode)
+{
+    struct parser_context ctx = { OPT_GEN_SIMPLIFY, 0 };
+    parser_error err = NULL;
+    char *resp_str = NULL;
+
+    if (response == NULL) {
+        ERROR("Responded information is null: pause()");
+        evhtp_send_reply(req, RESTFUL_RES_ERROR);
+        return;
+    }
+
+    resp_str = container_pause_response_generate_json(response, &ctx, &err);
+    if (resp_str == NULL) {
+        ERROR("Failed to generate pause request json, err: %s", err);
+        evhtp_send_reply(req, RESTFUL_RES_ERROR);
+        goto out;
+    }
+
+    evhtp_send_response(req, resp_str, rescode);
+
+out:
+    free(resp_str);
+    free(err);
+}
+
+/* rest pause cb */
+static void rest_pause_cb(evhtp_request_t *req, void *arg)
+{
+    int tret;
+    service_executor_t *cb = NULL;
+    container_pause_request *crequest = NULL;
+    container_pause_response *cresponse = NULL;
+
+    prctl(PR_SET_NAME, "ContPause");
+
+    // only deal with post request
+    if (evhtp_request_get_method(req) != htp_method_POST) {
+        ERROR("Only deal with post request: pause()");
+        evhtp_send_reply(req, RESTFUL_RES_NOTIMPL);
+        return;
+    }
+
+    cb = get_service_executor();
+    if (cb == NULL || cb->container.pause == NULL) {
+        ERROR("Unimplemented callback: pause()");
+        evhtp_send_reply(req, RESTFUL_RES_NOTIMPL);
+        return;
+    }
+
+    tret = action_request_from_rest(req, (void **)&crequest, ContainerServicePause);
+    if (tret < 0) {
+        ERROR("Bad request: pause()");
+        evhtp_send_reply(req, RESTFUL_RES_SERVERR);
+        goto out;
+    }
+
+    (void)cb->container.pause(crequest, &cresponse);
+    evhtp_send_pause_response(req, cresponse, RESTFUL_RES_OK);
+
+out:
+    free_container_pause_response(cresponse);
+    free_container_pause_request(crequest);
+}
+
+/* evhtp send resume response */
+static void evhtp_send_resume_response(evhtp_request_t *req, container_resume_response *response, int rescode)
+{
+    struct parser_context ctx = { OPT_GEN_SIMPLIFY, 0 };
+    parser_error err = NULL;
+    char *resp_str = NULL;
+
+    if (response == NULL) {
+        ERROR("Responded information is null: resume()");
+        evhtp_send_reply(req, RESTFUL_RES_ERROR);
+        return;
+    }
+
+    resp_str = container_resume_response_generate_json(response, &ctx, &err);
+    if (resp_str == NULL) {
+        ERROR("Failed to generate resume request json, err: %s", err);
+        evhtp_send_reply(req, RESTFUL_RES_ERROR);
+        goto out;
+    }
+
+    evhtp_send_response(req, resp_str, rescode);
+
+out:
+    free(resp_str);
+    free(err);
+}
+
+/* rest resume cb */
+static void rest_resume_cb(evhtp_request_t *req, void *arg)
+{
+    int tret;
+    service_executor_t *cb = NULL;
+    container_resume_request *crequest = NULL;
+    container_resume_response *cresponse = NULL;
+
+    prctl(PR_SET_NAME, "ContResume");
+
+    // only deal with post request
+    if (evhtp_request_get_method(req) != htp_method_POST) {
+        ERROR("Only deal with post request: resume()");
+        evhtp_send_reply(req, RESTFUL_RES_NOTIMPL);
+        return;
+    }
+
+    cb = get_service_executor();
+    if (cb == NULL || cb->container.resume == NULL) {
+        ERROR("Unimplemented callback: resume()");
+        evhtp_send_reply(req, RESTFUL_RES_NOTIMPL);
+        return;
+    }
+
+    tret = action_request_from_rest(req, (void **)&crequest, ContainerServiceResume);
+    if (tret < 0) {
+        ERROR("Bad request: resume()");
+        evhtp_send_reply(req, RESTFUL_RES_SERVERR);
+        goto out;
+    }
+
+    (void)cb->container.resume(crequest, &cresponse);
+    evhtp_send_resume_response(req, cresponse, RESTFUL_RES_OK);
+
+out:
+    free_container_resume_response(cresponse);
+    free_container_resume_request(crequest);
+}
+
+/* evhtp send rename response */
+static void evhtp_send_rename_response(evhtp_request_t *req, struct isulad_container_rename_response *isuladresp,
+                                       int rescode)
+{
+    struct parser_context ctx = { OPT_GEN_SIMPLIFY, 0 };
+    parser_error err = NULL;
+    char *resp_str = NULL;
+    container_rename_response cresponse = { 0 };
+
+    if (isuladresp == NULL) {
+        ERROR("Responded information is null: rename()");
+        evhtp_send_reply(req, RESTFUL_RES_ERROR);
+        return;
+    }
+    cresponse.cc = isuladresp->cc;
+    cresponse.errmsg = isuladresp->errmsg;
+    cresponse.id = isuladresp->id;
+
+    resp_str = container_rename_response_generate_json(&cresponse, &ctx, &err);
+    if (resp_str == NULL) {
+        ERROR("Failed to generate rename request json, err: %s", err);
+        evhtp_send_reply(req, RESTFUL_RES_ERROR);
+        goto out;
+    }
+
+    evhtp_send_response(req, resp_str, rescode);
+
+out:
+    free(resp_str);
+    free(err);
+}
+
+/* rest rename cb */
+static void rest_rename_cb(evhtp_request_t *req, void *arg)
+{
+    int tret;
+    service_executor_t *cb = NULL;
+    container_rename_request *crequest = NULL;
+    struct isulad_container_rename_request isuladreq = { 0 };
+    struct isulad_container_rename_response *isuladres = NULL;
+
+    prctl(PR_SET_NAME, "ContRename");
+
+    // only deal with post request
+    if (evhtp_request_get_method(req) != htp_method_POST) {
+        ERROR("Only deal with post request: rename()");
+        evhtp_send_reply(req, RESTFUL_RES_NOTIMPL);
+        return;
+    }
+
+    cb = get_service_executor();
+    if (cb == NULL || cb->container.rename == NULL) {
+        ERROR("Unimplemented callback: rename()");
+        evhtp_send_reply(req, RESTFUL_RES_NOTIMPL);
+        return;
+    }
+
+    tret = action_request_from_rest(req, (void **)&crequest, ContainerServiceRename);
+    if (tret < 0) {
+        ERROR("Bad request: rename()");
+        evhtp_send_reply(req, RESTFUL_RES_SERVERR);
+        goto out;
+    }
+
+    // container.rename() use isuladreq as a const argument, so just use pointer to filed of crequest
+    isuladreq.new_name = crequest->new_name;
+    isuladreq.old_name = crequest->old_name;
+    (void)cb->container.rename(&isuladreq, &isuladres);
+    evhtp_send_rename_response(req, isuladres, RESTFUL_RES_OK);
+
+out:
+    isulad_container_rename_response_free(isuladres);
+    free_container_rename_request(crequest);
 }
 
 /* rest register containers handler */
@@ -1085,6 +1604,10 @@ int rest_register_containers_handler(evhtp_t *htp)
         ERROR("Failed to register exec callback");
         return -1;
     }
+    if (evhtp_set_cb(htp, ContainerServiceAttach, rest_attach_cb, NULL) == NULL) {
+        ERROR("Failed to register attach callback");
+        return -1;
+    }
     if (evhtp_set_cb(htp, ContainerServiceRemove, rest_remove_cb, NULL) == NULL) {
         ERROR("Failed to register remove callback");
         return -1;
@@ -1100,6 +1623,26 @@ int rest_register_containers_handler(evhtp_t *htp)
 
     if (evhtp_set_cb(htp, ContainerServiceWait, rest_wait_cb, NULL) == NULL) {
         ERROR("Failed to register wait callback");
+        return -1;
+    }
+    if (evhtp_set_cb(htp, ContainerServiceInfo, rest_info_cb, NULL) == NULL) {
+        ERROR("Failed to register info callback");
+        return -1;
+    }
+    if (evhtp_set_cb(htp, ContainerServiceExport, rest_export_cb, NULL) == NULL) {
+        ERROR("Failed to register export callback");
+        return -1;
+    }
+    if (evhtp_set_cb(htp, ContainerServicePause, rest_pause_cb, NULL) == NULL) {
+        ERROR("Failed to register pause callback");
+        return -1;
+    }
+    if (evhtp_set_cb(htp, ContainerServiceResume, rest_resume_cb, NULL) == NULL) {
+        ERROR("Failed to register resume callback");
+        return -1;
+    }
+    if (evhtp_set_cb(htp, ContainerServiceRename, rest_rename_cb, NULL) == NULL) {
+        ERROR("Failed to register rename callback");
         return -1;
     }
     return 0;

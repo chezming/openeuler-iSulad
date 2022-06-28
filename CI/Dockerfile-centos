@@ -1,5 +1,5 @@
 #######################################################################
-##- @Copyright (C) Huawei Technologies., Ltd. 2019. All rights reserved.
+##- Copyright (c) Huawei Technologies Co., Ltd. 2019. All rights reserved.
 # - lcr licensed under the Mulan PSL v2.
 # - You can use this software according to the terms and conditions of the Mulan PSL v2.
 # - You may obtain a copy of Mulan PSL v2 at:
@@ -89,7 +89,8 @@ RUN yum clean all && yum makecache && yum install -y epel-release && yum swap -y
 			e2fsprogs \
 			lcov \
 			libasan \
-			lvm2
+			lvm2 \
+			tcpdump
 
 RUN yum clean all && \
     (cd /lib/systemd/system/sysinit.target.wants/; for i in *; \
