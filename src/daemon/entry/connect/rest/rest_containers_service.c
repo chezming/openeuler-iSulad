@@ -273,6 +273,23 @@ static int rename_request_check(void *req)
     return 0;
 }
 
+static int resize_request_check(void *req)
+{
+    container_resize_request *req_resize = (container_resize_request *)req;
+
+    if (req_resize->id == NULL) {
+        ERROR("Container name required: resize()");
+        return -1;
+    }
+
+    return 0;
+}
+
+static int stats_request_check(void *req)
+{
+    return 0;
+}
+
 /* evhtp send create repsponse */
 static void evhtp_send_create_repsponse(evhtp_request_t *req, container_create_response *response, int rescode)
 {
@@ -391,6 +408,16 @@ static struct rest_handle_st g_rest_handle[] = {
         .request_parse_data = (void *)container_rename_request_parse_data,
         .request_check = rename_request_check,
     },
+    {
+        .name = ContainerServiceResize,
+        .request_parse_data = (void *)container_resize_request_parse_data,
+        .request_check = resize_request_check,
+    },
+    {
+        .name = ContainerServiceStats,
+        .request_parse_data = (void *)container_stats_request_parse_data,
+        .request_check = stats_request_check,
+    }
 };
 
 static int action_request_from_rest(evhtp_request_t *req, void **request, const char *req_type)
@@ -1569,6 +1596,143 @@ out:
     free_container_rename_request(crequest);
 }
 
+static void evhtp_send_resize_response(evhtp_request_t *req, struct isulad_container_resize_response *isuladresp,
+                                       int rescode)
+{
+    struct parser_context ctx = { OPT_GEN_SIMPLIFY, 0 };
+    parser_error err = NULL;
+    char *resp_str = NULL;
+    container_resize_response cresponse = { 0 };
+
+    if (isuladresp == NULL) {
+        ERROR("Responded informationis null: resize()");
+        evhtp_send_reply(req, RESTFUL_RES_ERROR);
+        return;
+    }
+
+    cresponse.cc = isuladresp->cc;
+    cresponse.errmsg = isuladresp->errmsg;
+    cresponse.id = isuladresp->id;
+
+    resp_str = container_resize_response_generate_json(&cresponse, &ctx, &err);
+    if (resp_str == NULL) {
+        ERROR("Failed to generate resize response json, err: %s", err);
+        evhtp_send_reply(req, RESTFUL_RES_ERROR);
+        goto out;
+    }
+
+    evhtp_send_response(req, resp_str, rescode);
+
+out:
+    free(resp_str);
+    free(err);
+}
+
+static void rest_resize_cb(evhtp_request_t *req, void *arg)
+{
+    int tret;
+    service_executor_t *cb = NULL;
+    container_resize_request *crequest = NULL;
+    struct isulad_container_resize_request isuladreq = { 0 };
+    struct isulad_container_resize_response *isuladres = NULL;
+
+    prctl(PR_SET_NAME, "ContResize");
+
+    if (evhtp_request_get_method(req) != htp_method_POST) {
+        ERROR("only deal with post request: resize()");
+        evhtp_send_reply(req, RESTFUL_RES_NOTIMPL);
+        return;
+    }
+
+    cb = get_service_executor();
+    if (cb == NULL || cb->container.resize == NULL) {
+        ERROR("Unimplemented callback: resize()");
+        evhtp_send_reply(req, RESTFUL_RES_NOTIMPL);
+        return;
+    }
+
+    tret = action_request_from_rest(req, (void **)&crequest, ContainerServiceResize);
+    if (tret < 0) {
+        ERROR("Bad request: resize()");
+        evhtp_send_reply(req, RESTFUL_RES_SERVERR);
+        goto out;
+    }
+
+    isuladreq.id = crequest->id;
+    isuladreq.suffix = crequest->suffix;
+    isuladreq.width = crequest->width;
+    isuladreq.height = crequest->height;
+    (void)cb->container.resize(&isuladreq, &isuladres);
+    evhtp_send_resize_response(req, isuladres, RESTFUL_RES_OK);
+
+out:
+    isulad_container_resize_response_free(isuladres);
+    free_container_resize_request(crequest);
+}
+
+static void evhtp_send_stats_response(evhtp_request_t *req, container_stats_response *response, int rescode)
+{
+    struct parser_context ctx = { OPT_GEN_SIMPLIFY, 0 };
+    parser_error err = NULL;
+    char *resp_str = NULL;
+
+    if (response == NULL) {
+        ERROR("Responded information is null: stats()");
+        evhtp_send_reply(req, RESTFUL_RES_ERROR);
+        return;
+    }
+
+    resp_str = container_stats_response_generate_json(response, &ctx, &err);
+    if (resp_str == NULL) {
+        ERROR("Failed to generate stats response json, err: %s", err);
+        evhtp_send_reply(req, RESTFUL_RES_ERROR);
+        goto out;
+    }
+
+    evhtp_send_response(req, resp_str, rescode);
+
+out:
+    free(resp_str);
+    free(err);
+}
+
+static void rest_stats_cb(evhtp_request_t *req, void *arg)
+{
+    int tret;
+    service_executor_t *cb = NULL;
+    container_stats_request *crequest = NULL;
+    container_stats_response *cresponse = NULL;
+
+    prctl(PR_SET_NAME, "ContStats");
+
+    if (evhtp_request_get_method(req) != htp_method_POST) {
+        ERROR("only deal with post request: stats()");
+        evhtp_send_reply(req, RESTFUL_RES_NOTIMPL);
+        return;
+    }
+
+    cb = get_service_executor();
+    if (cb == NULL || cb->container.stats == NULL) {
+        ERROR("Unimplemented callback: stats()");
+        evhtp_send_reply(req, RESTFUL_RES_NOTIMPL);
+        return;
+    }
+
+    tret = action_request_from_rest(req, (void **)&crequest, ContainerServiceStats);
+    if (tret < 0) {
+        ERROR("Bad request: stats()");
+        evhtp_send_reply(req, RESTFUL_RES_SERVERR);
+        goto out;
+    }
+
+    (void)cb->container.stats(crequest, &cresponse);
+    evhtp_send_stats_response(req, cresponse, RESTFUL_RES_OK);
+
+out:
+    free_container_stats_request(crequest);
+    free_container_stats_response(cresponse);
+}
+
 /* rest register containers handler */
 int rest_register_containers_handler(evhtp_t *htp)
 {
@@ -1643,6 +1807,14 @@ int rest_register_containers_handler(evhtp_t *htp)
     }
     if (evhtp_set_cb(htp, ContainerServiceRename, rest_rename_cb, NULL) == NULL) {
         ERROR("Failed to register rename callback");
+        return -1;
+    }
+    if (evhtp_set_cb(htp, ContainerServiceResize, rest_resize_cb, NULL) == NULL) {
+        ERROR("Failed to register resize callback");
+        return -1;
+    }
+    if (evhtp_set_cb(htp, ContainerServiceStats, rest_stats_cb, NULL) == NULL) {
+        ERROR("Failed to register stats callback");
         return -1;
     }
     return 0;
