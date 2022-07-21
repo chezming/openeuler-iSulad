@@ -44,7 +44,7 @@
 #include <grp.h>
 #endif
 #ifdef SYSTEMD_NOTIFY
-#include <systemd/sd-daemon.h>
+#include <isula_libutils/common.h>
 #endif
 
 #include "constants.h"
@@ -1582,6 +1582,31 @@ out:
 }
 #endif
 
+#ifdef SYSTEMD_NOTIFY
+static int notify_service_manager()
+{
+    const char *msg = "READY=1";
+    const char *socket_path = getenv("NOTIFY_SOCKET");
+
+    if (socket_path == NULL) {
+        WARN("No service manager socket path");
+        return 0;
+    }
+
+    if (strlen(socket_path) <= 1 || (socket_path[0] != '/' && socket_path[0] != '@')) {
+        ERROR("Invalid service manager socket path %s", socket_path);
+        return -1;
+    }
+
+    if (send_msg_to_socket(socket_path, msg) != 0) {
+        ERROR("Failed to send message '%s' to socket '%s'", msg, socket_path);
+        return -1;
+    }
+
+    return 0;
+}
+#endif
+
 /*
  * Takes socket path as argument
  */
@@ -1651,7 +1676,7 @@ int main(int argc, char **argv)
 #endif
 
 #ifdef SYSTEMD_NOTIFY
-    if (sd_notify(0, "READY=1") < 0) {
+    if (notify_service_manager() != 0) {
         msg = "Failed to send notify the service manager about state changes";
         goto failure;
     }
