@@ -162,7 +162,7 @@ $ tar -zxf lxc-4.0.3.tar.gz
 $ ./apply-patches
 $ cd lxc-4.0.3
 $ sudo -E ./autogen.sh
-$ sudo -E ./configure
+$ sudo -E ./configure --enable-isulad=yes
 $ sudo -E make -j $(nproc)
 $ sudo -E make install
 ```

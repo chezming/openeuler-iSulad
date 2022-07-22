@@ -21,7 +21,7 @@ cd lxc
 ./apply-patches
 cd lxc-4.0.3
 ./autogen.sh
-./configure
+./configure --enable-isulad=yes
 make -j $(nproc)
 make install
 

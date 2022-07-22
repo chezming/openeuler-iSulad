@@ -37,7 +37,7 @@ pushd lxc
 rm -rf lxc-4.0.3
 ./apply-patches || exit 1
 pushd lxc-4.0.3
-./autogen.sh && ./configure || exit 1
+./autogen.sh && ./configure --enable-isulad=yes || exit 1
 make -j $(nproc) || exit 1
 make install
 popd
