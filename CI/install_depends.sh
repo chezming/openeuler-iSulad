@@ -112,7 +112,7 @@ do
 done
 sed -i 's/fd == STDIN_FILENO || fd == STDOUT_FILENO || fd == STDERR_FILENO/fd == 0 || fd == 1 || fd == 2 || fd >= 1000/g' ./src/lxc/start.c
 ./autogen.sh
-./configure --prefix=${builddir} enable_werror=no
+./configure --prefix=${builddir} enable_werror=no --enable-isulad=yes
 make -j $(nproc)
 make install
 ldconfig

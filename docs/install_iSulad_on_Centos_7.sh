@@ -102,7 +102,7 @@ tar -zxf lxc-4.0.3.tar.gz
 ./apply-patches
 cd lxc-4.0.3
 ./autogen.sh
-./configure
+./configure --enable-isulad=yes
 make -j
 make install
 
