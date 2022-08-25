@@ -1489,6 +1489,7 @@ static int merge_logs_conf_into_global(struct service_arguments *args, isulad_da
     return do_merge_container_logs_conf(args, tmp_json_confs);
 }
 
+#ifdef ENABLE_GRPC_REMOTE_ACCESS
 static int merge_authorization_conf_into_global(struct service_arguments *args, isulad_daemon_configs *tmp_json_confs)
 {
     args->json_confs->tls = tmp_json_confs->tls;
@@ -1504,6 +1505,7 @@ static int merge_authorization_conf_into_global(struct service_arguments *args, 
 
     return 0;
 }
+#endif
 
 static int merge_storage_conf_into_global(struct service_arguments *args, isulad_daemon_configs *tmp_json_confs)
 {
@@ -1644,10 +1646,12 @@ int merge_json_confs_into_global(struct service_arguments *args)
         args->json_confs->insecure_skip_verify_enforce = tmp_json_confs->insecure_skip_verify_enforce;
     }
 
+#ifdef ENABLE_GRPC_REMOTE_ACCESS
     if (merge_authorization_conf_into_global(args, tmp_json_confs)) {
         ret = -1;
         goto out;
     }
+#endif
 
     if (merge_default_ulimits_conf_into_global(args, tmp_json_confs)) {
         ret = -1;

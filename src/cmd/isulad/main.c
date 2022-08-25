@@ -728,6 +728,7 @@ out:
 }
 #endif
 
+#ifdef ENABLE_GRPC_REMOTE_ACCESS
 // update values for options after flag parsing is complete
 static int update_tls_options(struct service_arguments *args)
 {
@@ -778,6 +779,7 @@ static int update_tls_options(struct service_arguments *args)
 out:
     return ret;
 }
+#endif
 
 static int update_set_default_log_file(struct service_arguments *args)
 {
@@ -982,10 +984,12 @@ static int update_server_args(struct service_arguments *args)
     }
 #endif
 
+#ifdef ENABLE_GRPC_REMOTE_ACCESS
     if (update_tls_options(args)) {
         ret = -1;
         goto out;
     }
+#endif
 
     if (update_set_default_log_file(args) != 0) {
         ret = -1;
@@ -1317,11 +1321,15 @@ static char *parse_host(bool tls, const char *val)
     char *tmp = util_strdup_s(val);
     tmp = util_trim_space(tmp);
     if (tmp == NULL) {
+#ifdef ENABLE_GRPC_REMOTE_ACCESS
         if (tls) {
             host = util_strdup_s(DEFAULT_TLS_HOST);
         } else {
+#endif
             host = util_strdup_s(DEFAULT_UNIX_SOCKET);
+#ifdef ENABLE_GRPC_REMOTE_ACCESS
         }
+#endif
     } else {
         host = util_strdup_s(val);
     }
@@ -1361,7 +1369,11 @@ static int load_listener(const struct service_arguments *args)
     for (i = 0; i < args->hosts_len; i++) {
         char *proto_addr = NULL;
 
+#ifdef ENABLE_GRPC_REMOTE_ACCESS
         proto_addr = parse_host(args->json_confs->tls, args->hosts[i]);
+#else
+        proto_addr = parse_host(false, args->hosts[i]);
+#endif
         proto = strtok_r(proto_addr, delim, &addr);
         if (proto == NULL) {
             ERROR("Failed to get proto");
@@ -1371,11 +1383,13 @@ static int load_listener(const struct service_arguments *args)
         }
         addr += strlen("://") - 1;
 
+#ifdef ENABLE_GRPC_REMOTE_ACCESS
         if (strncmp(proto, "tcp", strlen("tcp")) == 0 &&
             (args->json_confs->tls_config == NULL || !args->json_confs->tls_verify)) {
             WARN("[!] DON'T BIND ON ANY IP ADDRESS WITHOUT setting"
                  " --tlsverify IF YOU DON'T KNOW WHAT YOU'RE DOING [!]");
         }
+#endif
 
         // note: If we're binding to a TCP port, make sure that a container doesn't try to use it.
         ret = listener_init(proto, args->hosts[i], args->json_confs->group);

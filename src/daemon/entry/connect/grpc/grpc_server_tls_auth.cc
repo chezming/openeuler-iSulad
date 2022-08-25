@@ -25,6 +25,7 @@ std::string auth_plugin = "";
 namespace GrpcServerTlsAuth {
 Status auth(ServerContext *context, std::string action)
 {
+#ifndef ENABLE_GRPC_REMOTE_ACCESS
     const std::multimap<grpc::string_ref, grpc::string_ref> &init_metadata = context->client_metadata();
     auto tls_mode_kv = init_metadata.find("tls_mode");
     if (tls_mode_kv == init_metadata.end()) {
@@ -55,6 +56,8 @@ Status auth(ServerContext *context, std::string action)
     } else {
         return Status(StatusCode::UNIMPLEMENTED, "authorization plugin invalid");
     }
+#endif
+
     return Status::OK;
 }
 } // namespace GrpcServerTlsAuth

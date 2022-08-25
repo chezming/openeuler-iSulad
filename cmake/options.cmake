@@ -92,6 +92,12 @@ if (ENABLE_SELINUX STREQUAL "ON")
     message("${Green}--  Enable selinux${ColourReset}")
 endif()
 
+option(ENABLE_GRPC_REMOTE_ACCESS "enable gRPC remote access" OFF)
+if (ENABLE_GRPC_REMOTE_ACCESS STREQUAL "ON")
+	add_definitions(-DENABLE_GRPC_REMOTE_ACCESS=1)
+	set(ENABLE_GRPC_REMOTE_ACCESS 1)
+endif()
+
 option(ENABLE_SHIM_V2 "enable shim v2 runtime" OFF)
 if (ENABLE_SHIM_V2 STREQUAL "ON")
 	add_definitions(-DENABLE_SHIM_V2=1)

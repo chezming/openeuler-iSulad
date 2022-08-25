@@ -81,7 +81,9 @@ int cmd_rmi_main(int argc, const char **argv)
     struct isula_libutils_log_config lconf = { 0 };
     int exit_code = 1; /* exit 1 if remove failed because docker return 1 */
     command_t cmd;
-    struct command_option options[] = { LOG_OPTIONS(lconf) COMMON_OPTIONS(g_cmd_rmi_args) RMI_OPTIONS(g_cmd_rmi_args) };
+    struct command_option options[] = { LOG_OPTIONS(lconf) COMMON_OPTIONS(g_cmd_rmi_args) COMMON_TLS_OPTIONS(g_cmd_rmi_args) 
+        RMI_OPTIONS(g_cmd_rmi_args) 
+    };
 
     if (client_arguments_init(&g_cmd_rmi_args)) {
         COMMAND_ERROR("client arguments init failed");

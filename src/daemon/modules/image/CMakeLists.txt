@@ -63,7 +63,6 @@ set(LIB_ISULAD_IMG_SRCS
     ${CMAKE_SOURCE_DIR}/src/utils/cutils/filters.c
     ${CMAKE_SOURCE_DIR}/src/utils/cutils/path.c
     ${CMAKE_SOURCE_DIR}/src/utils/cutils/map/map.c
-    ${CMAKE_SOURCE_DIR}/src/utils/cutils/map/rb_tree.c
     ${CMAKE_SOURCE_DIR}/src/utils/sha256/sha256.c
     ${CMAKE_SOURCE_DIR}/src/utils/buffer/buffer.c
     ${CMAKE_SOURCE_DIR}/src/daemon/common/err_msg.c

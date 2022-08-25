@@ -87,7 +87,7 @@ int cmd_volume_prune_main(int argc, const char **argv)
     size_t volumes_len = 0;
     char ch = 'n';
     struct command_option options[] = { LOG_OPTIONS(lconf) COMMON_OPTIONS(g_cmd_volume_prune_args)
-        PRUNE_OPTIONS(g_cmd_volume_prune_args)
+        COMMON_TLS_OPTIONS(g_cmd_volume_prune_args) PRUNE_OPTIONS(g_cmd_volume_prune_args)
     };
 
     if (client_arguments_init(&g_cmd_volume_prune_args)) {
