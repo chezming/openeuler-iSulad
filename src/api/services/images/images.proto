@@ -30,6 +30,7 @@ service ImagesService {
 	rpc Tag(TagImageRequest) returns (TagImageResponse);
 	rpc Import(ImportRequest) returns (ImportResponse);
 	rpc Search(SearchRequest) returns (SearchResponse);
+	rpc History(HistoryRequest) returns (HistoryResponse);
 }
 
 message Descriptor {
@@ -95,6 +96,25 @@ message ImportRequest {
 
 message ImportResponse {
 	string id = 1;
+	uint32 cc = 2;
+	string errmsg = 3;
+}
+
+message HistoryInfo {
+	string id = 1;
+	string create_by = 2;
+	string comment = 3;
+	google.protobuf.Timestamp created = 4;
+	int64 size = 5;
+}
+
+message HistoryRequest {
+	string name = 1;
+	string type = 2;
+}
+
+message HistoryResponse {
+	repeated HistoryInfo info = 1;
 	uint32 cc = 2;
 	string errmsg = 3;
 }

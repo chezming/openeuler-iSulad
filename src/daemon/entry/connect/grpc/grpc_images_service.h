@@ -62,6 +62,8 @@ public:
     Status Search(ServerContext *context, const SearchRequest *request, SearchResponse *reply) override;
 #endif
 
+    Status History(ServerContext *context, const HistoryRequest *request, HistoryResponse *reply) override;
+
 private:
     template <class T1, class T2>
     void response_to_grpc(const T1 *response, T2 *gresponse)
@@ -104,6 +106,10 @@ private:
 
     void search_response_to_grpc(const image_search_images_response *response, SearchResponse *gresponse);
 #endif
+
+    int history_request_from_grpc(const HistoryRequest *grequest, image_history_request **request);
+
+    void history_response_to_grpc(const image_history_response *response, HistoryResponse *gresponse);
 };
 
 #endif // DAEMON_ENTRY_CONNECT_GRPC_GRPC_IMAGES_SERVICE_H

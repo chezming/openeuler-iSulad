@@ -289,6 +289,15 @@ char *util_strdup_s(const char *src)
     return dst;
 }
 
+char *util_strdup_with_default_s(const char *src, const char *def)
+{
+    if (src != NULL) { 
+        return util_strdup_s(src);
+    }
+
+    return util_strdup_s(def);
+}
+
 int util_wait_for_pid(pid_t pid)
 {
     int st;

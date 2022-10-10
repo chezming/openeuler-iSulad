@@ -324,6 +324,8 @@ void *util_common_calloc_s(size_t size);
 
 char *util_strdup_s(const char *src);
 
+char *util_strdup_with_default_s(const char *src, const char *def);
+
 int util_wait_for_pid(pid_t pid);
 
 void util_contain_errmsg(const char *errmsg, int *exit_code);
