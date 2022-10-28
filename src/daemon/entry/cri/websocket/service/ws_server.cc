@@ -81,7 +81,14 @@ int SessionData::PushMessage(unsigned char *message)
 
     // In extreme scenarios, websocket data cannot be processed,
     // ignore the data coming in later to prevent iSulad from getting stuck
-    if (close || buffer.size() >= FIFO_LIST_BUFFER_MAX_LEN) {
+    if (close) {
+        free(message);
+        sessionMutex->unlock();
+        return -1;
+    }
+
+    if (buffer.size() >= FIFO_LIST_BUFFER_MAX_LEN) {
+        ERROR("buffer size exceed BUFF_MAX_LEN, drop data %s", message);
         free(message);
         sessionMutex->unlock();
         return -1;
