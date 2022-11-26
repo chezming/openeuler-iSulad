@@ -108,9 +108,17 @@ void PodSandboxManagerService::MakeSandboxIsuladConfig(const runtime::v1alpha2::
     if (error.NotEmpty()) {
         return;
     }
+    // Apply a label to distinguish sandboxes from regular containers.
     if (append_json_map_string_string(custom_config->labels, CRIHelpers::Constants::CONTAINER_TYPE_LABEL_KEY.c_str(),
                                       CRIHelpers::Constants::CONTAINER_TYPE_LABEL_SANDBOX.c_str()) != 0) {
         error.SetError("Append container type into labels failed");
+        return;
+    }
+    // Apply a container name label for infra container. This is used in summary v1.
+    if (append_json_map_string_string(custom_config->labels,
+                                      CRIHelpers::Constants::KUBERNETES_CONTAINER_NAME_LABEL.c_str(),
+                                      CRIHelpers::Constants::POD_INFRA_CONTAINER_NAME.c_str()) != 0) {
+        error.SetError("Append kubernetes container name into labels failed");
         return;
     }
 
@@ -182,6 +190,8 @@ void PodSandboxManagerService::MakeSandboxIsuladConfig(const runtime::v1alpha2::
     const char securityOptSep = '=';
     const ::runtime::v1alpha2::LinuxSandboxSecurityContext &context = c.linux().security_context();
 
+    // Note: In new k8s version, run sandbox with no-new-privileges and
+    // using runtime/default sending no "seccomp=" means iSulad will use default profile
     // Security Opts
     if (c.linux().has_security_context()) {
         std::vector<std::string> securityOpts =
@@ -307,6 +317,7 @@ PodSandboxManagerService::GenerateSandboxCreateContainerRequest(const runtime::v
         error.SetError("Out of memory");
         goto error_out;
     }
+    hostconfig->ipc_mode = util_strdup_s(SHARE_NAMESPACE_SHAREABLE);
 
     custom_config = (container_config *)util_common_calloc_s(sizeof(container_config));
     if (custom_config == nullptr) {
@@ -372,6 +383,7 @@ auto PodSandboxManagerService::CreateSandboxContainer(const runtime::v1alpha2::P
         goto cleanup;
     }
     response_id = create_response->id;
+
 cleanup:
     free_container_create_request(create_request);
     free_container_create_response(create_response);
