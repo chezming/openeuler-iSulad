@@ -15,6 +15,44 @@
 #include "utils.h"
 #include "cleanup.h"
 #include "oci_rootfs_clean.h"
+#include "cleanup_api.h"
+
+struct clean_ctx g_clean_ctx = { 0 };
+
+void clean_ctx_init()
+{
+    linked_list_init(&(g_clean_ctx.broken_rootfs_list));
+}
+
+static void clean_ctx_destroy(struct clean_ctx *ctx)
+{
+    struct linked_list *it = NULL;
+    struct linked_list *next = NULL;
+    char *id = NULL;    
+
+    linked_list_for_each_safe(it, &(ctx->broken_rootfs_list), next) {
+        id = (char *)it->elem;
+        linked_list_del(it);
+        free(id);
+        free(it);
+        it = NULL;
+    }
+}
+
+void clean_ctx_add_broken_rootfs(const char *id) {
+    struct linked_list *new_node = NULL;
+    char *broken_id = NULL;
+
+    new_node = util_common_calloc_s(sizeof(struct linked_list));
+    if (new_node == NULL) {
+        ERROR("Out of memory");
+        abort();
+    }
+
+    broken_id = util_strdup_s(id);
+    linked_list_add_elem(new_node, broken_id);
+    linked_list_add_tail(&g_clean_ctx.broken_rootfs_list, new_node);
+}
 
 static struct cleaners *create_cleaners()
 {
@@ -44,6 +82,8 @@ static void destroy_cleaners(struct cleaners *clns)
         free(it);
         it = NULL;
     }
+
+    clean_ctx_destroy(&g_clean_ctx);
 
     free(clns);
 }
@@ -96,6 +136,11 @@ static struct cleaners *cleaner_init()
     }
 
 #ifdef ENABLE_OCI_IMAGE
+    ret = add_clean_node(clns, oci_broken_rootfs_cleaner, "clean broken rootfs");
+    if (ret != 0) {
+        ERROR("clean broken rootfs failed");
+    }
+
     ret = add_clean_node(clns, oci_rootfs_cleaner, "clean rootfs");
     if (ret != 0) {
         ERROR("add oci_rootfs_cleaner error");
@@ -114,7 +159,7 @@ static void do_clean(struct cleaners * clns)
 
     linked_list_for_each_safe(it, &(clns->cleaner_list), next) {
         c_node = (struct clean_node *)it->elem;
-        if (c_node->cleaner() != 0) {
+        if (c_node->cleaner(&g_clean_ctx) != 0) {
             ERROR("failed to clean for: %s", c_node->desc);
         } else {
             DEBUG("do clean success for: %s", c_node->desc);

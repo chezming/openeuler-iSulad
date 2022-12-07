@@ -27,6 +27,7 @@
 #include "utils.h"
 #include "utils_images.h"
 #include "storage.h"
+#include "layer_store.h"
 #include "oci_load.h"
 #include "oci_import.h"
 #include "oci_export.h"
@@ -370,6 +371,17 @@ int oci_merge_conf_rf(const char *img_name, container_config *container_spec)
 
 out:
     return ret;
+}
+
+int oci_delete_broken_rf(const im_delete_rootfs_request *request)
+{
+    if (request == NULL) {
+        ERROR("Request is NULL");
+        return -1;
+    }
+
+    // delete rootfs and rw layer, rw layer has the same name as rootfs
+    return layer_store_delete(request->name_id);
 }
 
 int oci_delete_rf(const im_delete_rootfs_request *request)

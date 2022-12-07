@@ -19,12 +19,13 @@
 
 #include "linked_list.h"
 #include "isula_libutils/log.h"
+#include "cleanup_api.h"
 
 #if defined(__cplusplus) || defined(c_plusplus)
 extern "C" {
 #endif
 
-typedef int clean_func_t(void);
+typedef int clean_func_t(struct clean_ctx *ctx);
 
 struct clean_node {
     const char *desc;
@@ -38,9 +39,7 @@ struct cleaners {
     struct linked_list cleaner_list;
 };
 
-
 void clean_leftover();
-
 
 #if defined(__cplusplus) || defined(c_plusplus)
 }

@@ -35,6 +35,7 @@
 #include "utils_regex.h"
 #include "utils_string.h"
 #include "utils_timestamp.h"
+#include "cleanup_api.h"
 
 #define CONTAINER_JSON "container.json"
 
@@ -168,8 +169,9 @@ static int append_container_by_directory(const char *container_dir)
 
     nret = snprintf(container_path, sizeof(container_path), "%s/%s", container_dir, CONTAINER_JSON);
     if (nret < 0 || (size_t)nret >= sizeof(container_path)) {
+        // snprintf error, return 0 but don't append
         ERROR("Failed to get container path");
-        return -1;
+        return -2;
     }
 
     c = storage_rootfs_parse_file(container_path, NULL, &err);
@@ -180,8 +182,9 @@ static int append_container_by_directory(const char *container_dir)
     }
 
     if (do_append_container(c) != 0) {
+        // append error, return 0, not append
         ERROR("Failed to append container");
-        ret = -1;
+        ret = -2;
         goto out;
     }
 
@@ -197,6 +200,7 @@ static int get_containers_from_json()
 {
     int ret = 0;
     int nret;
+    int append_ret = 0;
     char **container_dirs = NULL;
     size_t container_dirs_num = 0;
     size_t i;
@@ -229,12 +233,18 @@ static int get_containers_from_json()
             continue;
         }
 
-        if (append_container_by_directory(container_path) != 0) {
+        append_ret = append_container_by_directory(container_path);
+        if (append_ret == -1) {
+            clean_ctx_add_broken_rootfs(container_dirs[i]);
             ERROR("Found container path but load json failed: %s, deleting...", container_path);
             if (util_recursive_rmdir(container_path, 0) != 0) {
                 ERROR("Failed to delete rootfs directory : %s", container_path);
             }
             continue;
+        }
+
+        if (append_ret == -2) {
+            ERROR("Found container path but append failed, rootfs %s not stored", container_path);
         }
     }
 
