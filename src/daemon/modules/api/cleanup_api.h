@@ -1,3 +1,4 @@
+
 /******************************************************************************
  * Copyright (c) Huawei Technologies Co., Ltd. 2018-2022. All rights reserved.
  * iSulad licensed under the Mulan PSL v2.
@@ -9,21 +10,25 @@
  * PURPOSE.
  * See the Mulan PSL v2 for more details.
  * Author: wangrunze
- * Create: 2022-10-31
- * Description: provide rootfs cleaner definition
+ * Create: 2022-12-7
+ * Description: provide cleanup functions
  *********************************************************************************/
-#ifndef DAEMON_MODULES_CONTAINER_ROOTFS_CLEAN_H
-#define DAEMON_MODULES_CONTAINER_ROOTFS_CLEAN_H
+#ifndef DAEMON_MODULES_API_CLEANUP_API_H
+#define DAEMON_MODULES_API_CLEANUP_API_H
 
-#include "cleanup.h"
+#include "linked_list.h"
 
 #if defined(__cplusplus) || defined(c_plusplus)
 extern "C" {
 #endif
 
-int oci_rootfs_cleaner(struct clean_ctx *ctx);
+struct clean_ctx {
+    struct linked_list broken_rootfs_list;
+};
 
-int oci_broken_rootfs_cleaner(struct clean_ctx *ctx);
+void clean_ctx_init();
+
+void clean_ctx_add_broken_rootfs(const char *id);
 
 #if defined(__cplusplus) || defined(c_plusplus)
 }

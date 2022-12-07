@@ -73,6 +73,7 @@
 #include "utils_string.h"
 #include "utils_verify.h"
 #include "volume_api.h"
+#include "cleanup_api.h"
 #include "opt_log.h"
 #ifdef ENABLE_NETWORK
 #include "network_api.h"
@@ -1228,6 +1229,8 @@ static int isulad_server_init_common()
     if (isulad_server_pre_init(args, log_full_path, fifo_full_path) != 0) {
         goto out;
     }
+
+    clean_ctx_init();    
 
     if (volume_init(args->json_confs->graph) != 0) {
         ERROR("Failed to init volume");
