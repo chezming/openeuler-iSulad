@@ -30,7 +30,7 @@ extern "C" {
 
 TEST(utils_string_ut, test_strings_count)
 {
-    ASSERT_EQ(util_strings_count("aaaaaaaaaaaaaaaaaaaa", 'a'), 20);
+    ASSERT_EQ(util_strings_count("aaaaaaaaaaaaaaaaaaaa", 'a'), 10);
     ASSERT_EQ(util_strings_count("a", 'a'), 1);
     ASSERT_EQ(util_strings_count("", 'a'), 0);
     ASSERT_EQ(util_strings_count(nullptr, 'c'), 0);

@@ -91,6 +91,6 @@ mkdir build
 pushd build
 cmake -DDEBUG=ON -DCMAKE_INSTALL_PREFIX=/usr -DENABLE_UT=ON -DENABLE_SHIM_V2=OFF ../ || exit 1
 make -j $(nproc) || exit 1
-ctest -V
+ctest -V || exit 1
 popd
 popd
