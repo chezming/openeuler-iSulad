@@ -21,6 +21,7 @@
 #include "isula_libutils/log.h"
 #include "isula_connect.h"
 #include "connect.h"
+#include "client_console.h"
 
 #include "utils.h"
 #include "utils_verify.h"
@@ -72,6 +73,9 @@ static int client_kill(const struct client_arguments *args)
     }
 
 out:
+    if (delete_client_fifo_home_dir(response->id) != 0) {
+        WARN("Failed to delete client fifo home dir");
+    }
     isula_kill_response_free(response);
     return ret;
 }
