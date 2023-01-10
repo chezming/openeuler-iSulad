@@ -20,6 +20,9 @@
 #include <isula_libutils/json_common.h>
 #include <stdbool.h>
 #include <stddef.h>
+#ifdef ENABLE_REMOTE_LAYER_STORE
+#include <remote_support.h>
+#endif
 
 #include "storage.h"
 #include "io_wrapper.h"
@@ -76,8 +79,13 @@ void free_layer_opts(struct layer_opts *opts);
 int layer_store_get_layer_fs_info(const char *layer_id, imagetool_fs_info *fs_info);
 
 int layer_store_check(const char *id);
+int load_one_layer(const char *id);
 
 container_inspect_graph_driver *layer_store_get_metadata_by_layer_id(const char *id);
+
+#ifdef ENABLE_REMOTE_LAYER_STORE
+RemoteSupport *layer_store_impl_remote_support();
+#endif
 
 #ifdef __cplusplus
 }

@@ -12,6 +12,7 @@
  * Create: 2020-04-02
  * Description: provide overlay2 function definition
  ******************************************************************************/
+#define _GNU_SOURCE
 #include "driver_overlay2.h"
 
 #include <string.h>
@@ -36,6 +37,7 @@
 #include "driver.h"
 #include "driver_overlay2_types.h"
 #include "image_api.h"
+#include "linked_list.h"
 #include "utils_array.h"
 #include "utils_convert.h"
 #include "utils_file.h"
@@ -46,6 +48,10 @@
 #include "err_msg.h"
 
 struct io_read_wrapper;
+
+#ifdef ENABLE_REMOTE_LAYER_STORE
+#define OVERLAY_RO_DIR "RO"
+#endif
 
 #define OVERLAY_LINK_DIR "l"
 #define OVERLAY_LAYER_DIFF "diff"
@@ -343,6 +349,13 @@ int overlay2_init(struct graphdriver *driver, const char *driver_home, const cha
         return -1;
     }
 
+#ifdef ENABLE_REMOTE_LAYER_STORE
+    if (driver->enable_remote_layer && remote_overlay_init(driver_home) != 0) {
+        ERROR("Failed to init overlay remote");
+        return -1;
+    }
+#endif
+
     driver->home = util_strdup_s(driver_home);
 
     root_dir = util_path_dir(driver_home);
@@ -423,7 +436,7 @@ static int mk_diff_directory(const char *layer_dir)
     int ret = 0;
     char *diff_dir = NULL;
 #ifdef ENABLE_USERNS_REMAP
-    char* userns_remap = conf_get_isulad_userns_remap();
+    char *userns_remap = conf_get_isulad_userns_remap();
 #endif
 
     diff_dir = util_path_join(layer_dir, OVERLAY_LAYER_DIFF);
@@ -538,7 +551,7 @@ static int mk_work_directory(const char *layer_dir)
     int ret = 0;
     char *work_dir = NULL;
 #ifdef ENABLE_USERNS_REMAP
-    char* userns_remap = conf_get_isulad_userns_remap();
+    char *userns_remap = conf_get_isulad_userns_remap();
 #endif
 
     work_dir = util_path_join(layer_dir, OVERLAY_LAYER_WORK);
@@ -575,7 +588,7 @@ static int mk_merged_directory(const char *layer_dir)
     int ret = 0;
     char *merged_dir = NULL;
 #ifdef ENABLE_USERNS_REMAP
-    char* userns_remap = conf_get_isulad_userns_remap();
+    char *userns_remap = conf_get_isulad_userns_remap();
 #endif
 
     merged_dir = util_path_join(layer_dir, OVERLAY_LAYER_MERGED);
@@ -852,13 +865,97 @@ out:
     return ret;
 }
 
+#ifdef ENABLE_REMOTE_LAYER_STORE
+static int do_create_remote_ro(const char *id, const char *parent, const struct graphdriver *driver,
+                               const struct driver_create_opts *create_opts)
+{
+    int ret = 0;
+    int get_err = 0;
+    char *ro_symlink = NULL;
+    char *ro_home = NULL;
+    char *layer_dir = NULL;
+#ifdef ENABLE_USERNS_REMAP
+    char *userns_remap = conf_get_isulad_userns_remap();
+#endif
+
+    ro_home = util_path_join(driver->home, OVERLAY_RO_DIR);
+    layer_dir = util_path_join(ro_home, id);
+    ro_symlink = util_path_join(driver->home, id);
+
+    if (layer_dir == NULL) {
+        ERROR("Failed to join layer dir:%s", id);
+        ret = -1;
+        goto out;
+    }
+
+    if (check_parent_valid(parent, driver) != 0) {
+        ret = -1;
+        goto out;
+    }
+
+    if (util_mkdir_p(layer_dir, 0700) != 0) {
+        ERROR("Unable to create layer directory %s.", layer_dir);
+        ret = -1;
+        goto out;
+    }
+
+    // mk symbol link
+    if (symlink(layer_dir, ro_symlink) != 0) {
+        SYSERROR("Unable to create symbol link to layer directory %s", layer_dir);
+        ret = -1;
+        goto err_out;
+    }
+
+#ifdef ENABLE_USERNS_REMAP
+    if (set_file_owner_for_userns_remap(layer_dir, userns_remap) != 0) {
+        ERROR("Unable to change directory %s owner for user remap.", layer_dir);
+        ret = -1;
+        goto out;
+    }
+#endif
+
+    if (create_opts->storage_opt != NULL && create_opts->storage_opt->len != 0) {
+        if (set_layer_quota(layer_dir, create_opts->storage_opt, driver) != 0) {
+            ERROR("Unable to set layer quota %s", layer_dir);
+            ret = -1;
+            goto err_out;
+        }
+    }
+
+    if (mk_sub_directories(id, parent, layer_dir, driver->home) != 0) {
+        ret = -1;
+        goto err_out;
+    }
+
+    goto out;
+
+err_out:
+    if (util_recursive_rmdir(layer_dir, 0)) {
+        ERROR("Failed to delete layer path: %s", layer_dir);
+    }
+
+    // to remove a file
+    if (util_fileself_exists(ro_symlink) && !util_force_remove_file(ro_symlink, &get_err)) {
+        ERROR("Failed to remove symbol link %s", ro_symlink);
+    }
+
+out:
+    free(layer_dir);
+    free(ro_home);
+#ifdef ENABLE_USERNS_REMAP
+    free(userns_remap);
+#endif
+    return ret;
+}
+#endif
+
 static int do_create(const char *id, const char *parent, const struct graphdriver *driver,
                      const struct driver_create_opts *create_opts)
 {
     int ret = 0;
     char *layer_dir = NULL;
 #ifdef ENABLE_USERNS_REMAP
-    char* userns_remap = conf_get_isulad_userns_remap();
+    char *userns_remap = conf_get_isulad_userns_remap();
 #endif
 
     layer_dir = util_path_join(driver->home, id);
@@ -1002,7 +1099,15 @@ int overlay2_create_ro(const char *id, const char *parent, const struct graphdri
         return -1;
     }
 
+#ifdef ENABLE_REMOTE_LAYER_STORE
+    if (driver->enable_remote_layer) {
+        return do_create_remote_ro(id, parent, driver, create_opts);
+    } else {
+        return do_create(id, parent, driver, create_opts);
+    }
+#else
     return do_create(id, parent, driver, create_opts);
+#endif
 }
 
 static char *read_layer_link_file(const char *layer_dir)
@@ -1047,6 +1152,9 @@ int overlay2_rm_layer(const char *id, const struct graphdriver *driver)
     char *link_id = NULL;
     char link_path[PATH_MAX] = { 0 };
     char clean_path[PATH_MAX] = { 0 };
+#ifdef ENABLE_REMOTE_LAYER_STORE
+    struct stat stat_buf;
+#endif
 
     if (id == NULL || driver == NULL) {
         ERROR("Invalid input arguments");
@@ -1079,11 +1187,34 @@ int overlay2_rm_layer(const char *id, const struct graphdriver *driver)
         }
     }
 
+#ifdef ENABLE_REMOTE_LAYER_STORE
+    if (lstat(layer_dir, &stat_buf) < 0) {
+        SYSERROR("Failed to lstat path: %s", layer_dir);
+        ret = -1;
+        goto out;
+    }
+
+    if (driver->enable_remote_layer && S_ISLNK(stat_buf.st_mode)) {
+        // jusdge if the dir is symlink?
+        if (remote_overlay_remove_ro_dir(id) != 0) {
+            ERROR("Failed to delete symlink to layer dir: %s", layer_dir);
+            ret = -1;
+            goto out;
+        }
+    } else {
+        if (util_recursive_rmdir(layer_dir, 0) != 0) {
+            SYSERROR("Failed to remove layer directory %s", layer_dir);
+            ret = -1;
+            goto out;
+        }
+    }
+#else
     if (util_recursive_rmdir(layer_dir, 0) != 0) {
         SYSERROR("Failed to remove layer directory %s", layer_dir);
         ret = -1;
         goto out;
     }
+#endif
 
 out:
     free(layer_dir);
@@ -1747,7 +1878,7 @@ int overlay2_apply_diff(const char *id, const struct graphdriver *driver, const 
     int ret = 0;
 #ifdef ENABLE_USERNS_REMAP
     unsigned int size = 0;
-    char* userns_remap = conf_get_isulad_userns_remap();
+    char *userns_remap = conf_get_isulad_userns_remap();
 #endif
     char *layer_dir = NULL;
     char *layer_diff = NULL;
@@ -2166,3 +2297,202 @@ out:
     free(layer_diff);
     return ret;
 }
+
+#ifdef ENABLE_REMOTE_LAYER_STORE
+struct remote_overlay_data {
+    const char *overlay_home;
+    const char *overlay_ro;
+    struct linked_list new_overlay_list;
+};
+
+static void *remote_support_create(const char *remote_home, const char *remote_ro)
+{
+    struct remote_overlay_data *data = util_common_calloc_s(sizeof(struct remote_overlay_data));
+    if (data == NULL) {
+        ERROR("Out of memory");
+        return NULL;
+    }
+    data->overlay_home = remote_home;
+    data->overlay_ro = remote_ro;
+    linked_list_init(&(data->new_overlay_list));
+
+    return data;
+}
+
+static void remote_support_destroy(void *data)
+{
+    struct linked_list *it = NULL;
+    struct linked_list *next = NULL;
+    struct remote_overlay_data *remote_data = data;
+    char *overlay_layer_id = NULL;
+
+    if (data == NULL) {
+        return;
+    }
+
+    linked_list_for_each_safe(it, &(remote_data->new_overlay_list), next) {
+        overlay_layer_id = (char *)it->elem;
+        linked_list_del(it);
+        free(overlay_layer_id);
+        free(it);
+        it = NULL;
+    }
+
+    free(data);
+}
+
+static bool overlay_walk_dir_cb(const char *path_name, const struct dirent *sub_dir, void *context)
+{
+    struct remote_overlay_data *remote_data = context;
+    char *ro_symlink = NULL;
+    const char *root_dir = remote_data->overlay_home;
+    bool ret = true;
+    struct linked_list *new_node = NULL;
+    char *overlay_layer_id = NULL;
+
+    ro_symlink = util_path_join(root_dir, sub_dir->d_name);
+
+    if (ro_symlink == NULL) {
+        ERROR("Failed to join ro symlink path: %s", sub_dir->d_name);
+        ret = false;
+        goto free_out;
+    }
+
+    if (!util_fileself_exists(ro_symlink)) {
+        new_node = util_common_calloc_s(sizeof(struct linked_list));
+        if (new_node == NULL) {
+            ERROR("Out of memory, new found RO layer %s not added", sub_dir->d_name);
+            ret = false;
+            goto free_out;
+        }
+        overlay_layer_id = util_strdup_s(sub_dir->d_name);
+        linked_list_add_elem(new_node, overlay_layer_id);
+        linked_list_add_tail(&remote_data->new_overlay_list, new_node);
+        ret = true;
+    }
+
+free_out:
+    free(ro_symlink);
+
+    return ret;
+}
+
+static int remote_support_scan(void *data)
+{
+    struct remote_overlay_data *remote_data = data;
+    return util_scan_subdirs(remote_data->overlay_ro, overlay_walk_dir_cb, data);
+}
+
+static int add_one_remote_overlay_layer(struct remote_overlay_data *data, char *overlay_id)
+{
+    char *ro_symlink = NULL;
+    char *layer_dir = NULL;
+    char *link_file = NULL;
+    char *diff_symlink = NULL;
+    int ret = 0;
+
+    ro_symlink = util_path_join(data->overlay_home, overlay_id);
+    layer_dir = util_path_join(data->overlay_ro, overlay_id);
+
+    if (ro_symlink == NULL) {
+        ERROR("Failed to join ro symlink path: %s", overlay_id);
+        ret = -1;
+        goto free_out;
+    }
+
+    if (layer_dir == NULL) {
+        ERROR("Failed to join ro layer dir: %s", overlay_id);
+        ret = -1;
+        goto free_out;
+    }
+    // add RO symbol link first
+    if (!util_fileself_exists(ro_symlink) && symlink(layer_dir, ro_symlink) != 0) {
+        SYSERROR("Unable to create symbol link to layer directory: %s", layer_dir);
+        ret = -1;
+        goto free_out;
+    }
+
+    // maintain link
+    // try read link file in layer_dir
+    // mk symlink between ro_symlink
+    link_file = util_path_join(layer_dir, OVERLAY_LAYER_LINK);
+    if (link_file == NULL) {
+        ERROR("Failed to get layer link file %s", layer_dir);
+        ret = -1;
+        goto free_out;
+    }
+
+    if (!util_fileself_exists(link_file)) {
+        ERROR("link file for layer %s not exist", layer_dir);
+        ret = -1;
+        goto free_out;
+    }
+
+    diff_symlink = util_read_content_from_file(link_file);
+    if (link_file == NULL) {
+        ERROR("Failed to read content from link file of layer %s", layer_dir);
+        ret = -1;
+        goto free_out;
+    }
+
+    if (do_diff_symlink(overlay_id, diff_symlink, data->overlay_home) != 0) {
+        ERROR("Failed to add diff link for layer %s", overlay_id);
+        ret = -1;
+    }
+
+free_out:
+    free(ro_symlink);
+    free(layer_dir);
+    free(link_file);
+
+    return ret;
+}
+
+static int remote_support_add(void *data)
+{
+    int ret = 0;
+
+    if (data == NULL) {
+        return -1;
+    }
+
+    struct remote_overlay_data *remote_data = data;
+    struct linked_list *it = NULL;
+    struct linked_list *next = NULL;
+    char *new_overlay_id = NULL;
+
+    linked_list_for_each_safe(it, &(remote_data->new_overlay_list), next) {
+        new_overlay_id = (char *)it->elem;
+        if (add_one_remote_overlay_layer(data, new_overlay_id) != 0) {
+            ret = -1;
+        }
+        linked_list_del(it);
+        free(new_overlay_id);
+        free(it);
+        it = NULL;
+    }
+
+    return ret;
+}
+
+static int remote_support_delete(void *data)
+{
+    return 0;
+}
+
+RemoteSupport *overlay_driver_impl_remote_support()
+{
+    RemoteSupport *rs = util_common_calloc_s(sizeof(RemoteSupport));
+    if (rs == NULL) {
+        return NULL;
+    }
+
+    rs->create = remote_support_create;
+    rs->destroy = remote_support_destroy;
+    rs->scan_remote_dir = remote_support_scan;
+    rs->load_item = remote_support_add;
+    rs->delete_item = remote_support_delete;
+
+    return rs;
+}
+#endif

@@ -28,6 +28,9 @@
 #include "isula_libutils/imagetool_image.h"
 #include "isula_libutils/imagetool_images_list.h"
 #include "isula_libutils/imagetool_image_summary.h"
+#ifdef ENABLE_REMOTE_LAYER_STORE
+#include "remote_support.h"
+#endif
 
 struct storage_module_init_options;
 
@@ -103,10 +106,16 @@ size_t image_store_get_images_number();
 // Retrieves image file system info
 int image_store_get_fs_info(imagetool_fs_info *fs_info);
 
+int remote_load_new_images_from_json();
+
 // Free memory of image store, but will not delete the persisted files
 void image_store_free();
 
 imagetool_image_summary *image_store_get_image_summary(const char *id);
+
+#ifdef ENABLE_REMOTE_LAYER_STORE
+RemoteSupport *image_store_impl_remote_support();
+#endif
 
 #ifdef __cplusplus
 }
