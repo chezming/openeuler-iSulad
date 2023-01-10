@@ -1318,6 +1318,8 @@ message CpuUsage {
     int64 timestamp = 1;
     // Cumulative CPU usage (sum across all cores) since object creation.
     UInt64Value usage_core_nano_seconds = 2;
+    // Total CPU usage (sum of all cores) averaged over the sample window
+    UInt64Value usage_nano_cores = 3;
 }
 
 // MemoryUsage provides the memory usage information.

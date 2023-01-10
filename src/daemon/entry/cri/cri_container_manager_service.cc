@@ -650,7 +650,7 @@ void ContainerManagerService::ListContainersToGRPC(container_list_response *resp
             CRIHelpers::ContainerStatusToRuntime(Container_Status(response->containers[i]->status));
         container->set_state(state);
 
-        pods->push_back(move(container));
+        pods->push_back(std::move(container));
     }
 }
 
@@ -842,8 +842,12 @@ void ContainerManagerService::ContainerStatsToGRPC(
                 response->container_stats[i]->cpu_use_nanos);
             container->mutable_cpu()->set_timestamp(timestamp);
         }
-
-        containerstats->push_back(move(container));
+        if (response->container_stats[i]->usage_nano_cores != 0u) {
+            container->mutable_cpu()->mutable_usage_nano_cores()->set_value(
+                    response->container_stats[i]->usage_nano_cores);
+            container->mutable_cpu()->set_timestamp(timestamp);
+        }
+        containerstats->push_back(std::move(container));
     }
 }
 

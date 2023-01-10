@@ -71,21 +71,22 @@ message Container_info {
 	string id = 1;
 	uint64 pids_current = 2;
 	uint64 cpu_use_nanos = 3;
-	uint64 cpu_use_user = 4;
-	uint64 cpu_use_kernel = 5;
-	uint64 cpu_system_use = 6;
-	uint32 online_cpus = 7;
-	uint64 blkio_read = 8;
-	uint64 blkio_write = 9;
-	uint64 mem_used = 10;
-	uint64 mem_limit = 11;
-	uint64 kmem_used = 12;
-	uint64 kmem_limit = 13;
-	string name = 14;
-	string status = 15;
-	uint64 cache = 16;
-	uint64 cache_total = 17;
-	uint64 inactive_file_total = 18;
+	uint64 usage_nano_cores = 4;
+	uint64 cpu_use_user = 5;
+	uint64 cpu_use_kernel = 6;
+	uint64 cpu_system_use = 7;
+	uint32 online_cpus = 8;
+	uint64 blkio_read = 9;
+	uint64 blkio_write = 10;
+	uint64 mem_used = 11;
+	uint64 mem_limit = 12;
+	uint64 kmem_used = 13;
+	uint64 kmem_limit = 14;
+	string name = 15;
+	string status = 16;
+	uint64 cache = 17;
+	uint64 cache_total = 18;
+	uint64 inactive_file_total = 19;
 }
 
 message Event {
