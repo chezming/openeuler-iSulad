@@ -1678,6 +1678,7 @@ public:
                 }
                 response->container_stats[i].pids_current = gresponse->containers(i).pids_current();
                 response->container_stats[i].cpu_use_nanos = gresponse->containers(i).cpu_use_nanos();
+                response->container_stats[i].usage_nano_cores = gresponse->containers(i).usage_nano_cores();
                 response->container_stats[i].cpu_system_use = gresponse->containers(i).cpu_system_use();
                 response->container_stats[i].online_cpus = gresponse->containers(i).online_cpus();
                 response->container_stats[i].blkio_read = gresponse->containers(i).blkio_read();

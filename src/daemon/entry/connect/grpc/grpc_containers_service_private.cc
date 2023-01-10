@@ -758,6 +758,7 @@ void ContainerServiceImpl::stats_response_to_grpc(const container_stats_response
             }
             stats->set_pids_current(response->container_stats[i]->pids_current);
             stats->set_cpu_use_nanos(response->container_stats[i]->cpu_use_nanos);
+            stats->set_usage_nano_cores(response->container_stats[i]->usage_nano_cores);
             stats->set_cpu_system_use(response->container_stats[i]->cpu_system_use);
             stats->set_online_cpus(response->container_stats[i]->online_cpus);
             stats->set_blkio_read(response->container_stats[i]->blkio_read);
