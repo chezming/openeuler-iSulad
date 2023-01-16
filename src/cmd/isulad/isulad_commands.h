@@ -37,7 +37,6 @@ int update_hosts(struct service_arguments *args);
 int update_default_ulimit(struct service_arguments *args);
 int command_default_ulimit_append(command_option_t *option, const char *arg);
 
-
 #ifdef ENABLE_SUP_GROUPS
 #define SUP_GROUPS_OPT(cmdargs)                                                                                   \
     { CMD_OPT_TYPE_CALLBACK,                                                                                      \
@@ -50,18 +49,6 @@ int command_default_ulimit_append(command_option_t *option, const char *arg);
 
 #else
 #define SUP_GROUPS_OPT(cmdargs)
-#endif
-
-#if (defined GRPC_CONNECTOR) && (defined ENABLE_METRICS)
-#define METRICS_PORT_OPT(cmdargs)                                                                                 \
-    { CMD_OPT_TYPE_CALLBACK,                                                                                      \
-        false, "metrics-port", 0, &(cmdargs)->json_confs->metrics_port,                                           \
-        "The metric service listening port (default 9090)",                                                       \
-        command_convert_uint                                                                                      \
-    },                                                                                                            \
-
-#else
-#define METRICS_PORT_OPT(cmdargs)
 #endif
 
 #ifdef ENABLE_USERNS_REMAP
@@ -117,6 +104,8 @@ int command_default_ulimit_append(command_option_t *option, const char *arg);
       &(cmdargs)->json_confs->start_timeout,                                                                      \
       "timeout duration for waiting on a container to start before it is killed",                                 \
       NULL },                                                                                                     \
+    { CMD_OPT_TYPE_STRING_DUP, false, "engine", 'e', &(cmdargs)->json_confs->engine,                              \
+      "Select backend engine (default lcr)", NULL },                                                              \
     { CMD_OPT_TYPE_STRING_DUP,                                                                                    \
       false,                                                                                                      \
       "log-level",                                                                                                \
@@ -302,11 +291,10 @@ int command_default_ulimit_append(command_option_t *option, const char *arg);
       &(cmdargs)->json_confs->websocket_server_listening_port,                                                    \
       "CRI websocket streaming service listening port (default 10350)",                                           \
       command_convert_uint },                                                                                     \
-    METRICS_PORT_OPT(cmdargs)                                                                                     \
     USERNS_REMAP_OPT(cmdargs)                                                                                     \
     { CMD_OPT_TYPE_BOOL,                                                                                          \
-        false, "selinux-enabled", 0, &(cmdargs)->json_confs->selinux_enabled,                                     \
-        "Enable selinux support", NULL                                                                            \
+      false, "selinux-enabled", 0, &(cmdargs)->json_confs->selinux_enabled,                                       \
+      "Enable selinux support", NULL                                                                              \
     },                                                                                                            \
     { CMD_OPT_TYPE_STRING_DUP,                                                                                    \
       false, "default-runtime", 0, &(cmdargs)->json_confs->default_runtime,                                       \

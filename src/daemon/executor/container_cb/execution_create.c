@@ -23,6 +23,8 @@
 #include <isula_libutils/container_config_v2.h>
 #include <isula_libutils/defs.h>
 #include <isula_libutils/host_config.h>
+#include <isula_libutils/imagetool_image.h>
+#include <isula_libutils/imagetool_image_status.h>
 #include <isula_libutils/isulad_daemon_configs.h>
 #include <isula_libutils/json_common.h>
 #include <isula_libutils/oci_runtime_spec.h>
@@ -44,6 +46,7 @@
 #include "utils.h"
 #include "error.h"
 #include "constants.h"
+#include "namespace.h"
 #include "events_sender_api.h"
 #include "sysinfo.h"
 #include "service_container_api.h"
@@ -56,10 +59,61 @@
 #include "utils_verify.h"
 #include "selinux_label.h"
 #include "opt_log.h"
-#include "runtime_api.h"
+#include "network_namespace_api.h"
 
 static int do_init_cpurt_cgroups_path(const char *path, int recursive_depth, const char *mnt_root,
                                       int64_t cpu_rt_period, int64_t cpu_rt_runtime);
+
+static int runtime_check(const char *name, bool *runtime_res)
+{
+    int ret = 0;
+    struct service_arguments *args = NULL;
+    defs_map_string_object_runtimes *runtimes = NULL;
+
+    if (isulad_server_conf_rdlock()) {
+        ret = -1;
+        goto out;
+    }
+
+    args = conf_get_server_conf();
+    if (args == NULL) {
+        ERROR("Failed to get isulad server config");
+        ret = -1;
+        goto unlock_out;
+    }
+
+    if (args->json_confs != NULL) {
+        runtimes = args->json_confs->runtimes;
+    }
+    if (runtimes == NULL) {
+        goto unlock_out;
+    }
+
+    size_t runtime_nums = runtimes->len;
+    size_t i;
+    for (i = 0; i < runtime_nums; i++) {
+        if (strcmp(name, runtimes->keys[i]) == 0) {
+            *runtime_res = true;
+            goto unlock_out;
+        }
+    }
+unlock_out:
+    if (isulad_server_conf_unlock()) {
+        ERROR("Failed to unlock isulad server config");
+        ret = -1;
+    }
+out:
+    if (strcmp(name, "runc") == 0 || strcmp(name, "lcr") == 0 || strcmp(name, "kata-runtime") == 0) {
+        *runtime_res = true;
+        return ret;
+    }
+
+    if (convert_v2_runtime(name, NULL) == 0) {
+        *runtime_res = true;
+    }
+
+    return ret;
+}
 
 static int create_request_check(const container_create_request *request)
 {
@@ -646,8 +700,7 @@ out:
 }
 
 static int register_new_container(const char *id, const char *image_id, const char *runtime, host_config *host_spec,
-                                  container_config_v2_common_config *v2_spec,
-                                  container_network_settings *network_settings)
+                                  container_config_v2_common_config *v2_spec)
 {
     int ret = -1;
     bool registered = false;
@@ -665,41 +718,9 @@ static int register_new_container(const char *id, const char *image_id, const ch
         goto out;
     }
 
-    cont = container_new(runtime, runtime_root, runtime_stat, image_id);
+    cont = container_new(runtime, runtime_root, runtime_stat, image_id, host_spec, v2_spec, NULL);
     if (cont == NULL) {
         ERROR("Failed to create container '%s'", id);
-        goto out;
-    }
-
-    if (container_fill_v2_config(cont, v2_spec) != 0) {
-        ERROR("Failed to fill v2 config");
-        goto out;
-    }
-
-    if (container_fill_host_config(cont, host_spec) != 0) {
-        ERROR("Failed to fill host config");
-        goto out;
-    }
-
-    if (container_fill_state(cont, NULL) != 0) {
-        ERROR("Failed to fill container state");
-        goto out;
-    }
-
-    if (container_fill_restart_manager(cont) != 0) {
-        ERROR("Failed to fill restart manager");
-        goto out;
-    }
-
-#ifdef ENABLE_NETWORK
-    if (container_fill_network_settings(cont, network_settings) != 0) {
-        ERROR("Failed to fill network settings");
-        goto out;
-    }
-#endif
-
-    if (container_fill_log_configs(cont) != 0) {
-        ERROR("Failed to fill container log configs");
         goto out;
     }
 
@@ -720,11 +741,10 @@ out:
     free(runtime_root);
     free(runtime_stat);
     if (ret != 0) {
-        /* fail, do not use the input v2 spec, host spec and network settings, the memeory will be free by caller*/
+        /* fail, do not use the input v2 spec and host spec, the memeory will be free by caller*/
         if (cont != NULL) {
             cont->common_config = NULL;
             cont->hostconfig = NULL;
-            cont->network_settings = NULL;
             container_unref(cont);
         }
     }
@@ -1013,58 +1033,6 @@ static int get_request_image_info(const container_create_request *request, char 
     }
 
     return 0;
-}
-
-static bool is_customized_runtime(const char* name)
-{
-    bool ret = true;
-    struct service_arguments *args = NULL;
-    defs_map_string_object_runtimes *runtimes = NULL;
-
-    if (isulad_server_conf_rdlock()) {
-        return false;
-    }
-
-    args = conf_get_server_conf();
-    if (args == NULL) {
-        ERROR("Failed to get isulad server config");
-        ret = false;
-        goto unlock_out;
-    }
-
-    if (args->json_confs != NULL) {
-        runtimes = args->json_confs->runtimes;
-    }
-    if (runtimes == NULL) {
-        ret = false;
-        goto unlock_out;
-    }
-
-    size_t runtime_nums = runtimes->len;
-    size_t i;
-    for (i = 0; i < runtime_nums; i++) {
-        if (strcmp(name, runtimes->keys[i]) == 0) {
-            ret = true;
-            goto unlock_out;
-        }
-    }
-unlock_out:
-    if (isulad_server_conf_unlock()) {
-        ERROR("Failed to unlock isulad server config");
-        ret = false;
-    }
-
-    return ret;
-}
-
-static int runtime_check(const char *name, bool *runtime_res)
-{
-    if (is_customized_runtime(name) || is_default_runtime(name)) {
-        *runtime_res = true;
-        return 0;
-    }
-
-    return -1;
 }
 
 static int preparate_runtime_environment(const container_create_request *request, const char *id, char **runtime,
@@ -1465,6 +1433,68 @@ out:
     return res;
 }
 
+static char *new_pod_sandbox_key(void)
+{
+    int nret = 0;
+    char random[NETNS_LEN + 1] = { 0x00 };
+    char netns[PATH_MAX] = { 0x00 };
+    const char *netns_fmt = RUNPATH"/netns/isulacni-%s";
+
+    nret = util_generate_random_str(random, NETNS_LEN);
+    if (nret != 0) {
+        ERROR("Failed to generate random netns");
+        return NULL;
+    }
+
+    nret = snprintf(netns, sizeof(netns), netns_fmt, random);
+    if (nret < 0 || (size_t)nret >= sizeof(netns)) {
+        ERROR("snprintf netns failed");
+        return NULL;
+    }
+
+    return util_strdup_s(netns);
+}
+
+static int generate_network_settings(const host_config *host_config, container_config_v2_common_config *v2_spec)
+{
+    if (host_config == NULL || v2_spec == NULL) {
+        ERROR("Invalid input");
+        return -1;
+    }
+
+    container_config_v2_common_config_network_settings *settings = NULL;
+
+    if (!namespace_is_file(host_config->network_mode)) {
+        return 0;
+    }
+
+    settings = (container_config_v2_common_config_network_settings *)util_common_calloc_s(sizeof(
+                                                                                              container_config_v2_common_config_network_settings));
+    if (settings == NULL) {
+        ERROR("Out of memory");
+        return -1;
+    }
+
+    settings->sandbox_key = new_pod_sandbox_key();
+    if (settings->sandbox_key == NULL) {
+        ERROR("Failed to generate sandbox key");
+        goto err_out;
+    }
+
+    if (prepare_network_namespace(settings->sandbox_key) != 0) {
+        ERROR("Failed to create network namespace");
+        goto err_out;
+    }
+
+    v2_spec->network_settings = settings;
+
+    return 0;
+
+err_out:
+    free_container_config_v2_common_config_network_settings(settings);
+    return -1;
+}
+
 static int cpurt_controller_init(const char *cgroups_path)
 {
     int ret = 0;
@@ -1544,7 +1574,6 @@ int container_create_cb(const container_create_request *request, container_creat
     container_config *container_spec = NULL;
     container_config_v2_common_config *v2_spec = NULL;
     host_config_host_channel *host_channel = NULL;
-    container_network_settings *network_settings = NULL;
     int ret = 0;
 
     DAEMON_CLEAR_ERRMSG();
@@ -1639,8 +1668,7 @@ int container_create_cb(const container_create_request *request, container_creat
         goto umount_shm;
     }
 
-    network_settings = generate_network_settings(host_spec);
-    if (network_settings == NULL) {
+    if (generate_network_settings(host_spec, v2_spec) != 0) {
         ERROR("Failed to generate network settings");
         cc = ISULAD_ERR_EXEC;
         goto umount_shm;
@@ -1652,7 +1680,6 @@ int container_create_cb(const container_create_request *request, container_creat
         goto umount_shm;
     }
 
-    // merge hostname, resolv.conf, hosts, required for all container
     if (merge_network(host_spec, request->rootfs, runtime_root, id, container_spec->hostname) != 0) {
         ERROR("Failed to merge network config");
         cc = ISULAD_ERR_EXEC;
@@ -1699,14 +1726,13 @@ int container_create_cb(const container_create_request *request, container_creat
         goto umount_channel;
     }
 
-    if (register_new_container(id, image_id, runtime, host_spec, v2_spec, network_settings)) {
+    if (register_new_container(id, image_id, runtime, host_spec, v2_spec)) {
         ERROR("Failed to register new container");
         cc = ISULAD_ERR_EXEC;
         goto umount_channel;
     }
     host_spec = NULL;
     v2_spec = NULL;
-    network_settings = NULL;
 
     EVENT("Event: {Object: %s, Type: Created %s}", id, name);
     (void)isulad_monitor_send_container_event(id, CREATE, -1, 0, NULL, NULL);
@@ -1743,7 +1769,6 @@ pack_response:
     free_host_config(host_spec);
     free_container_config_v2_common_config(v2_spec);
     free_host_config_host_channel(host_channel);
-    free_container_network_settings(network_settings);
     isula_libutils_free_log_prefix();
     malloc_trim(0);
     return (cc == ISULAD_SUCCESS) ? 0 : -1;

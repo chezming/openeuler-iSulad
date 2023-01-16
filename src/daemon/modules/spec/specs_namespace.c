@@ -23,11 +23,10 @@
 #include <isula_libutils/container_config_v2.h>
 
 #include "utils.h"
-#include "utils_network.h"
 #include "namespace.h"
 #include "container_api.h"
 #include "err_msg.h"
-#include "network_namespace.h"
+#include "network_namespace_api.h"
 
 static char *parse_share_namespace_with_prefix(const char *type, const char *path)
 {
@@ -137,7 +136,7 @@ out:
 }
 
 typedef int (*namespace_mode_check)(const host_config *host_spec,
-                                    const container_network_settings *network_settings,
+                                    const container_config_v2_common_config_network_settings *network_settings,
                                     const char *type, char **dest_path);
 
 struct get_netns_path_handler {
@@ -146,7 +145,7 @@ struct get_netns_path_handler {
 };
 
 static int handle_get_path_from_none(const host_config *host_spec,
-                                     const container_network_settings *network_settings,
+                                     const container_config_v2_common_config_network_settings *network_settings,
                                      const char *type, char **dest_path)
 {
     *dest_path = NULL;
@@ -154,7 +153,7 @@ static int handle_get_path_from_none(const host_config *host_spec,
 }
 
 static int handle_get_path_from_host(const host_config *host_spec,
-                                     const container_network_settings *network_settings,
+                                     const container_config_v2_common_config_network_settings *network_settings,
                                      const char *type, char **dest_path)
 {
     *dest_path = namespace_get_host_namespace_path(type);
@@ -165,7 +164,7 @@ static int handle_get_path_from_host(const host_config *host_spec,
 }
 
 static int handle_get_path_from_container(const host_config *host_spec,
-                                          const container_network_settings *network_settings, const char *type,
+                                          const container_config_v2_common_config_network_settings *network_settings, const char *type,
                                           char **dest_path)
 {
     *dest_path = parse_share_namespace_with_prefix(type, host_spec->network_mode);
@@ -175,64 +174,36 @@ static int handle_get_path_from_container(const host_config *host_spec,
     return 0;
 }
 
-static int handle_get_path_from_cni(const host_config *host_spec,
-                                    const container_network_settings *network_settings,
-                                    const char *type, char **dest_path)
+static int handle_get_path_from_file(const host_config *host_spec,
+                                     const container_config_v2_common_config_network_settings *network_settings,
+                                     const char *type, char **dest_path)
 {
     if (network_settings == NULL || network_settings->sandbox_key == NULL) {
-        ERROR("Invalid sandbox key for cni mode network");
+        ERROR("Invalid sandbox key for file mode network");
         return -1;
     }
 
     *dest_path = util_strdup_s(network_settings->sandbox_key);
     return 0;
 }
-
-#ifdef ENABLE_NATIVE_NETWORK
-static int handle_get_path_from_bridge(const host_config *host_spec,
-                                       const container_network_settings *network_settings,
-                                       const char *type, char **dest_path)
-{
-    if (util_post_setup_network(host_spec->user_remap)) {
-        *dest_path = NULL;
-        return 0;
-    }
-
-    if (network_settings == NULL || network_settings->sandbox_key == NULL) {
-        ERROR("Invalid sandbox key for bridge network");
-        return -1;
-    }
-
-    *dest_path = util_strdup_s(network_settings->sandbox_key);
-    return 0;
-}
-#endif
 
 int get_network_namespace_path(const host_config *host_spec,
-                               const container_network_settings *network_settings,
+                               const container_config_v2_common_config_network_settings *network_settings,
                                const char *type, char **dest_path)
 {
-    if (host_spec == NULL || dest_path == NULL) {
-        ERROR("Invalid input");
-        return -1;
-    }
-
     size_t index = 0;
     int ret = -1;
     struct get_netns_path_handler handler_jump_table[] = {
         { SHARE_NAMESPACE_NONE, handle_get_path_from_none },
         { SHARE_NAMESPACE_HOST, handle_get_path_from_host },
         { SHARE_NAMESPACE_PREFIX, handle_get_path_from_container },
-        { SHARE_NAMESPACE_CNI, handle_get_path_from_cni },
-#ifdef ENABLE_NATIVE_NETWORK
-        { SHARE_NAMESPACE_BRIDGE, handle_get_path_from_bridge },
-#endif
+        { SHARE_NAMESPACE_FILE, handle_get_path_from_file },
     };
     size_t jump_table_size = sizeof(handler_jump_table) / sizeof(handler_jump_table[0]);
     const char *network_mode = host_spec->network_mode;
 
-    if (network_mode == NULL) {
-        ERROR("network mode does not exist");
+    if (network_mode == NULL || dest_path == NULL) {
+        ERROR("Invalid input");
         return -1;
     }
 

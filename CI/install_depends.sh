@@ -26,8 +26,7 @@ buildstatus=${builddir}/build.fail
 declare -a buildlogs
 build_log_crictl=${builddir}/build.crictl.log
 build_log_cni_plugins=${builddir}/build.cni_plugins.log
-build_log_cni_dnsname=${builddir}/build.cni_dnsname.log
-buildlogs+=(${build_log_crictl} ${build_log_cni_plugins} ${build_log_cni_dnsname})
+buildlogs+=(${build_log_crictl} ${build_log_cni_plugins})
 
 mkdir -p ${builddir}/bin
 mkdir -p ${builddir}/include
@@ -44,12 +43,10 @@ function make_crictl()
     git clone https://gitee.com/duguhaotian/cri-tools.git
     go version
     cd cri-tools
-    # crictl v1.18 cannot recognise the SecurityProfile seccomp of LinuxSandboxSecurityContext
-    # and the LinuxContainerSecurityContext.has_seccomp() always false
-    git checkout v1.24.2
+    git checkout v1.18.0
     make -j $nproc
     echo "make cri-tools: $?"
-    cp ./build/bin/crictl ${builddir}/bin/
+    cp ./_output/crictl ${builddir}/bin/
 }
 
 #install cni plugins
@@ -66,19 +63,8 @@ function make_cni_plugins()
     cd ~
     git clone https://gitee.com/duguhaotian/plugins.git
     cd plugins
-    ./build_linux.sh
-    mkdir -p ${builddir}/cni/bin/
-    cp bin/* ${builddir}/cni/bin/
-}
-
-#install cni dnsname
-function make_cni_dnsname()
-{
-    cd ~
-    git clone https://gitee.com/zh_xiaoyu/dnsname.git
-    cd dnsname
-    git checkout v1.1.1
-    make
+    git checkout -q "$CNI_PLUGINS_COMMIT"
+    ./build.sh
     mkdir -p ${builddir}/cni/bin/
     cp bin/* ${builddir}/cni/bin/
 }
@@ -100,7 +86,6 @@ function check_make_status()
 rm -rf ${buildstatus}
 check_make_status make_crictl ${build_log_crictl} &
 check_make_status make_cni_plugins ${build_log_cni_plugins} &
-check_make_status make_cni_dnsname ${build_log_cni_dnsname} &
 
 # install lxc
 cd ~
@@ -124,6 +109,7 @@ ldconfig
 cd ~
 git clone https://gitee.com/openeuler/lcr.git
 cd lcr
+git checkout origin/stable-v2.0.x
 sed -i 's/fd == STDIN_FILENO || fd == STDOUT_FILENO || fd == STDERR_FILENO/fd == 0 || fd == 1 || fd == 2 || fd >= 1000/g' ./src/utils.c
 mkdir -p build
 cd build
@@ -141,13 +127,10 @@ fi
 go env -w GO111MODULE="off"
 git clone https://gitee.com/src-openeuler/runc.git
 cd runc
-tfname=$(cat runc.spec | grep Source0 | awk -F '/' '{print $NF}')
-tar -zxf ${tfname}
-runc_dir=$(tar -tf ${tfname} | head -1)
-cd ${runc_dir}
-export GO111MODULE=off
-export GOPATH=`pwd`/.gopath
+git checkout -q origin/openEuler-20.03-LTS
+./apply-patch
 mkdir -p .gopath/src/github.com/opencontainers
+export GOPATH=`pwd`/.gopath
 if [ -L .gopath/src/github.com/opencontainers/runc ];then
     echo "Link exist"
 else
@@ -155,8 +138,8 @@ else
 fi
 
 cd .gopath/src/github.com/opencontainers/runc
-make BUILDTAGS='seccomp selinux'
-cp -f ./runc ${builddir}/bin
+make -j $(nproc)
+\cp -f ./runc ${builddir}/bin
 cd -
 
 # install lib-shim-v2
@@ -180,6 +163,19 @@ make install
 cd -
 ldconfig
 
+# install clibcni
+cd ~
+git clone https://gitee.com/openeuler/clibcni.git
+cd clibcni
+git checkout origin/stable-v2.0.x
+mkdir -p build
+cd build
+cmake  -DLIB_INSTALL_DIR=${builddir}/lib -DCMAKE_INSTALL_PREFIX=${builddir} ../
+make -j $(nproc)
+make install
+cd -
+ldconfig
+
 # install cricli
 cd ~
 git clone https://gitee.com/jingwoo/cricli.git
@@ -192,7 +188,7 @@ wait
 if [ -e ${buildstatus} ];then
     for i in ${buildlogs[@]}
     do
-        if [ -e ${i} ];then
+        if [ -e ${$i} ];then
             cat $i
         fi
     done

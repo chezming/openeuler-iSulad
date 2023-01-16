@@ -146,7 +146,18 @@ if (GRPC_CONNECTOR)
     _CHECK(WEBSOCKET_LIBRARY "WEBSOCKET_LIBRARY-NOTFOUND" "libwebsockets.so")
 endif()
 
-if ((NOT GRPC_CONNECTOR) OR (GRPC_CONNECTOR AND ENABLE_METRICS))
+if (GRPC_CONNECTOR)
+    # check clibcni
+    pkg_check_modules(PC_CLIBCNI REQUIRED "clibcni")
+    find_path(CLIBCNI_INCLUDE_DIR clibcni/api.h
+        HINTS ${PC_CLIBCNI_INCLUDEDIR} ${PC_CLIBCNI_INCLUDE_DIRS})
+    _CHECK(CLIBCNI_INCLUDE_DIR "CLIBCNI_INCLUDE_DIR-NOTFOUND" "clibcni/api.h")
+    find_library(CLIBCNI_LIBRARY clibcni
+        HINTS ${PC_CLIBCNI_LIBDIR} ${PC_CLIBCNI_LIBRARY_DIRS})
+    _CHECK(CLIBCNI_LIBRARY "CLIBCNI_LIBRARY-NOTFOUND" "libclibcni.so")
+endif()
+
+if (NOT GRPC_CONNECTOR)
     pkg_check_modules(PC_EVENT "event>=2.1.8")
     find_path(EVENT_INCLUDE_DIR event.h
         HINTS ${PC_EVENT_INCLUDEDIR} ${PC_EVENT_INCLUDE_DIRS})

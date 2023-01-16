@@ -43,6 +43,7 @@ char *conf_get_routine_statedir(const char *runtime);
 char *conf_get_isulad_rootdir();
 char *conf_get_isulad_statedir();
 char *conf_get_isulad_mount_rootfs();
+char *conf_get_isulad_engine();
 char *conf_get_isulad_loglevel();
 char *conf_get_isulad_logdriver();
 int conf_get_daemon_log_config(char **loglevel, char **logdriver, char **engine_log_path);
@@ -58,8 +59,6 @@ char *conf_get_enable_plugins();
 #ifdef ENABLE_USERNS_REMAP
 char *conf_get_isulad_userns_remap();
 #endif
-char *conf_get_cni_conf_dir();
-int conf_get_cni_bin_dir(char ***dst);
 int32_t conf_get_websocket_server_listening_port();
 
 int save_args_to_conf(struct service_arguments *args);

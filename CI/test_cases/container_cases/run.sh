@@ -25,17 +25,17 @@ source ../helpers.sh
 
 function do_test_t()
 {
-    tid=`isula run -tid --name hostname busybox`
-    chostname=`isula exec -it $tid hostname`
-    fn_check_eq "$chostname" "${tid:0:12}" "default hostname is id of container"
-    isula exec -it hostname env | grep HOSTNAME
+    containername=test_basic_run
+
+    tid=$(isula run --name $containername  -td busybox)
+    hostname=$(isula exec -it $containername hostname)
+    fn_check_eq "${hostname}" "${tid:0:12}" "default hostname is not id of container"
+    isula exec -it $containername env | grep HOSTNAME
     fn_check_eq "$?" "0" "check HOSTNAME env failed"
     isula stop -t 0 $tid
     fn_check_eq "$?" "0" "stop failed"
     isula rm $tid
-
-    containername=test_basic_run
-    containername2=container_to_join
+    fn_check_eq "$?" "0" "rm failed"
 
     isula run --name $containername  -td busybox
     fn_check_eq "$?" "0" "run failed"
@@ -81,50 +81,6 @@ function do_test_t()
     testcontainer $containername exited
 
     isula rm $containername
-    fn_check_eq "$?" "0" "rm failed"
-
-    isula run --name $containername -itd --net=host --pid=host --ipc=host --uts=host busybox
-    fn_check_eq "$?" "0" "run failed"
-    testcontainer $containername running
-
-    isula stop -t 0 $containername
-    fn_check_eq "$?" "0" "stop failed"
-    testcontainer $containername exited
-
-    isula rm $containername
-    fn_check_eq "$?" "0" "rm failed"
-
-    isula run --name $containername -itd --net=none --pid=none --ipc=none --uts=none busybox
-    fn_check_eq "$?" "0" "run failed"
-    testcontainer $containername running
-
-    isula stop -t 0 $containername
-    fn_check_eq "$?" "0" "stop failed"
-    testcontainer $containername exited
-
-    isula rm $containername
-    fn_check_eq "$?" "0" "rm failed"
-
-    isula run --name $containername2 -itd busybox
-    fn_check_eq "$?" "0" "run failed"
-    testcontainer $containername2 running
-
-    isula run --name $containername -itd --net=container:$containername2 --pid=container:$containername2 --ipc=container:$containername2 --uts=container:$containername2 busybox
-    fn_check_eq "$?" "0" "run failed"
-    testcontainer $containername running
-
-    isula stop -t 0 $containername
-    fn_check_eq "$?" "0" "stop failed"
-    testcontainer $containername exited
-
-    isula rm $containername
-    fn_check_eq "$?" "0" "rm failed"
-
-    isula stop -t 0 $containername2
-    fn_check_eq "$?" "0" "stop failed"
-    testcontainer $containername2 exited
-
-    isula rm $containername2
     fn_check_eq "$?" "0" "rm failed"
 
     return $TC_RET_T

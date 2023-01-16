@@ -37,8 +37,7 @@
 #include "err_msg.h"
 #include "utils_file.h"
 #include "utils_string.h"
-#include "network_namespace.h"
-#include "utils_network.h"
+#include "network_namespace_api.h"
 
 static int write_hostname_to_file(const char *rootfs, const char *hostname)
 {
@@ -917,15 +916,14 @@ static int create_default_hostname(const char *id, const char *rootpath, bool sh
     int ret = 0;
     int nret = 0;
     char file_path[PATH_MAX] = { 0x0 };
-    // 2 is '\0' + '\n'
     char hostname_content[MAX_HOST_NAME_LEN + 2] = { 0 };
 
     if (v2_spec->config->hostname == NULL) {
-        char hostname[MAX_HOST_NAME_LEN] = { 0x00 };
+        char hostname[MAX_HOST_NAME_LEN] = { 0 };
         if (share_host) {
             ret = gethostname(hostname, sizeof(hostname));
         } else {
-            // hostname max length is 12 + '\0'
+            // max length of hostname from ID is 12 + '\0'
             nret = snprintf(hostname, 13, "%s", id);
             ret = nret < 0 ? 1 : 0;
         }
@@ -943,7 +941,6 @@ static int create_default_hostname(const char *id, const char *rootpath, bool sh
         goto out;
     }
 
-    // 2 is '\0' + '\n'
     nret = snprintf(hostname_content, MAX_HOST_NAME_LEN + 2, "%s\n", v2_spec->config->hostname);
     if (nret < 0 || (size_t)nret >= sizeof(hostname_content)) {
         ERROR("Failed to print string");
@@ -1107,156 +1104,4 @@ int init_container_network_confs(const char *id, const char *rootpath, const hos
 
 out:
     return ret;
-}
-
-#ifdef ENABLE_NATIVE_NETWORK
-static bool verify_bridge_config(const char **bridges, const size_t len)
-{
-    size_t i = 0;
-
-    if (bridges == NULL || len == 0) {
-        ERROR("network is null for bridge network mode");
-        return false;
-    }
-
-    if (len > MAX_NETWORK_CONFIG_FILE_COUNT) {
-        ERROR("config too many bridge");
-        isulad_set_error_message("config too many bridge");
-        return false;
-    }
-
-    for (i = 0; i < len; i++) {
-        if (!util_validate_network_name(bridges[i])) {
-            ERROR("Invalid network name %s", bridges[i]);
-            isulad_set_error_message("Invalid network name %s", bridges[i]);
-            return false;
-        }
-    }
-
-    return true;
-}
-
-static int generate_network_element(const char **bridges, const size_t len, defs_map_string_object_networks *networks)
-{
-#define INTERFACE_NAME_LEN 50
-    int i = 0;
-    int nret = 0;
-    char interface[INTERFACE_NAME_LEN] = { 0 };
-    const char *fmt = "eth%d";
-
-    networks->keys = (char **)util_smart_calloc_s(sizeof(char *), len);
-    if (networks->keys == NULL) {
-        ERROR("Out of memory ");
-        return -1;
-    }
-
-    networks->values = (defs_map_string_object_networks_element **)util_smart_calloc_s(sizeof(
-                                                                                           defs_map_string_object_networks_element *), len);
-    if (networks->values == NULL) {
-        ERROR("Out of memory ");
-        return -1;
-    }
-
-    for (i = 0; i < len; i++) {
-        nret = snprintf(interface, sizeof(interface), fmt, i);
-        if ((size_t)nret >= sizeof(interface) || nret < 0) {
-            ERROR("snprintf interface failed");
-            return -1;
-        }
-
-        networks->values[i] = (defs_map_string_object_networks_element *)util_common_calloc_s(sizeof(
-                                                                                                  defs_map_string_object_networks_element));
-        if (networks->values[i] == NULL) {
-            ERROR("Out of memory");
-            return -1;
-        }
-
-        networks->keys[i] = util_strdup_s(bridges[i]);
-        networks->values[i]->if_name = util_strdup_s(interface);
-        networks->len++;
-    }
-
-    return 0;
-}
-#endif
-
-static char *new_sandbox_key(void)
-{
-    int nret = 0;
-    char random[NETNS_LEN + 1] = { 0x00 };
-    char netns[PATH_MAX] = { 0x00 };
-    const char *netns_fmt = RUNPATH"/netns/isulacni-%s";
-
-    nret = util_generate_random_str(random, NETNS_LEN);
-    if (nret != 0) {
-        ERROR("Failed to generate random netns");
-        return NULL;
-    }
-
-    nret = snprintf(netns, sizeof(netns), netns_fmt, random);
-    if (nret < 0 || (size_t)nret >= sizeof(netns)) {
-        ERROR("snprintf netns failed");
-        return NULL;
-    }
-
-    return util_strdup_s(netns);
-}
-
-container_network_settings *generate_network_settings(const host_config *host_config)
-{
-    container_network_settings *settings = NULL;
-
-    if (host_config == NULL) {
-        ERROR("Invalid input");
-        return NULL;
-    }
-
-    settings = (container_network_settings *)util_common_calloc_s(sizeof(container_network_settings));
-    if (settings == NULL) {
-        ERROR("Out of memory");
-        return NULL;
-    }
-
-#ifdef ENABLE_NATIVE_NETWORK
-    if (util_native_network_checker(host_config->network_mode)) {
-        if (!verify_bridge_config((const char **)host_config->bridge_network, host_config->bridge_network_len)) {
-            ERROR("Invalid bridge config");
-            goto err_out;
-        }
-
-        settings->activation = false;
-        settings->networks = (defs_map_string_object_networks *)util_common_calloc_s(sizeof(defs_map_string_object_networks));
-        if (settings->networks == NULL) {
-            ERROR("Out of memory");
-            goto err_out;
-        }
-
-        if (generate_network_element((const char **)host_config->bridge_network, host_config->bridge_network_len,
-                                     settings->networks) != 0) {
-            ERROR("Failed to prepare bridge network element");
-            goto err_out;
-        }
-    } else
-#endif
-
-    if (!namespace_is_cni(host_config->network_mode)) {
-        return settings;
-    }
-
-    settings->sandbox_key = new_sandbox_key();
-    if (settings->sandbox_key == NULL) {
-        ERROR("Failed to generate sandbox key");
-        goto err_out;
-    }
-
-    if (create_network_namespace_file(settings->sandbox_key) != 0) {
-        ERROR("Failed to create network namespace");
-        goto err_out;
-    }
-
-    return settings;
-
-err_out:
-    free_container_network_settings(settings);
-    return NULL;
 }

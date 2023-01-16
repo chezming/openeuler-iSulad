@@ -9,25 +9,27 @@
  * PURPOSE.
  * See the Mulan PSL v2 for more details.
  * Author: chengzeruizhi
- * Create: 2021-11-17
- * Description: provide common network functions
- ********************************************************************************/
+ * Create: 2021-10-19
+ * Description: set up CRI network namespace
+ *********************************************************************************/
 
-#ifndef UTILS_CUTILS_UTILS_NETWORK_H
-#define UTILS_CUTILS_UTILS_NETWORK_H
+#ifndef DAEMON_MODULES_API_NETWORK_NAMESPACE_API
+#define DAEMON_MODULES_API_NETWORK_NAMESPACE_API
+
+#include <stdbool.h>
+
+#include "container_api.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int util_create_netns_file(const char *netns_path);
-
-int util_mount_namespace(const char *netns_path);
-
-int util_umount_namespace(const char *netns_path);
+int prepare_network_namespace(const char *netns_path);
+int remove_network_namespace(const char *netns);
+char *get_sandbox_key(const container_inspect *inspect_data);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif // UTILS_CUTILS_UTILS_NETWORK_H
+#endif // DAEMON_MODULES_API_NETWORK_NAMESPACE_API

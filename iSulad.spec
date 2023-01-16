@@ -1,7 +1,7 @@
-%global _version 2.1.0
+%global _version 2.0.17
 %global _release 1
 %global is_systemd 1
-%global enable_shimv2 0
+%global enable_shimv2 1
 %global enable_embedded 1
 
 Name:      iSulad
@@ -10,7 +10,7 @@ Release:   %{_release}
 Summary:   Lightweight Container Runtime Daemon
 License:   Mulan PSL v2
 URL:       isulad
-Source:    iSulad-2.1.tar.gz
+Source:    iSulad-2.0.tar.gz
 BuildRoot: {_tmppath}/iSulad-%{version}
 ExclusiveArch:  x86_64 aarch64
 
@@ -42,14 +42,14 @@ BuildRequires: lib-shim-v2-devel
 Requires:      lib-shim-v2
 %endif
 
-BuildRequires: cmake gcc-c++ lxc-devel lcr-devel yajl-devel
+BuildRequires: cmake gcc-c++ lxc-devel lcr-devel yajl-devel clibcni-devel
 BuildRequires: grpc-plugins grpc-devel protobuf-devel
 BuildRequires: libcurl-devel libarchive-devel device-mapper-devel
 BuildRequires: http-parser-devel
 BuildRequires: libselinux-devel libwebsockets-devel
 BuildRequires: systemd-devel git
 
-Requires:      lcr lxc
+Requires:      lcr lxc clibcni
 Requires:      grpc libcurl http-parser
 Requires:      libselinux libwebsockets libarchive device-mapper
 Requires:      systemd
@@ -80,9 +80,7 @@ cd build
 install -d $RPM_BUILD_ROOT/%{_libdir}
 install -m 0644 ./src/libisula.so             %{buildroot}/%{_libdir}/libisula.so
 install -m 0644 ./src/utils/http/libhttpclient.so  %{buildroot}/%{_libdir}/libhttpclient.so
-chrpath -d ./src/libisulad_tools.so
 install -m 0644 ./src/libisulad_tools.so  %{buildroot}/%{_libdir}/libisulad_tools.so
-chrpath -d ./src/daemon/modules/image/libisulad_img.so
 install -m 0644 ./src/daemon/modules/image/libisulad_img.so   %{buildroot}/%{_libdir}/libisulad_img.so
 chmod +x %{buildroot}/%{_libdir}/libisula.so
 chmod +x %{buildroot}/%{_libdir}/libhttpclient.so
@@ -240,6 +238,18 @@ fi
 /usr/share/bash-completion/completions/isula
 
 %changelog
+* Tue Oct 12 2020 wujing <wujing50@huawei.com> - 2.0.9-2
+- Type:sync
+- ID:NA
+- SUG:NA
+- DESC: pack daemon_constants.json
+
+* Mon Oct 11 2020 wujing <wujing50@huawei.com> - 2.0.9-1
+- Type:sync
+- ID:NA
+- SUG:NA
+- DESC: upgrade version to 2.0.9-1
+
 * Tue Sep 10 2020 openEuler Buildteam <buildteam@openeuler.org> - 2.0.5-20200910.140350.git72990229
 - Type:enhancement
 - ID:NA

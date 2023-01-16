@@ -26,7 +26,6 @@
 #include "isula_connect.h"
 #include "connect.h"
 #include "constants.h"
-#include "client_show_format.h"
 
 #include "utils_array.h"
 #include "utils_string.h"
@@ -41,8 +40,6 @@ const char g_cmd_list_usage[] = "ps [OPTIONS]";
 struct client_arguments g_cmd_list_args = {
     .dispname = false,
     .list_all = false,
-    .list_latest = false,
-    .list_last_n = 0,
     .no_trunc = false,
 };
 
@@ -69,9 +66,71 @@ struct lengths {
 const char * const g_containerstatusstr[] = { "unknown", "inited", "starting",  "running",
                                               "exited",  "paused", "restarting"
                                             };
-#define DEFAULT_CONTAINER_TABLE_FORMAT          \
-    "table {{.ID}}\t{{.Image}}\t{{.Command}}\t" \
-    "{{.Created}}\t{{.Status}}\t{{.Ports}}\t{{.Names}}"
+
+struct filter_field {
+    char *name;
+    bool is_field;
+};
+
+struct filters {
+    struct filter_field **fields;
+    size_t field_len;
+};
+
+static void free_filter_field(struct filter_field *field)
+{
+    if (field == NULL) {
+        return;
+    }
+    free(field->name);
+    field->name = NULL;
+
+    free(field);
+}
+
+static void free_filters(struct filters *f)
+{
+    size_t i;
+    if (f == NULL) {
+        return;
+    }
+    for (i = 0; i < f->field_len; i++) {
+        free_filter_field(f->fields[i]);
+        f->fields[i] = NULL;
+    }
+    free(f->fields);
+    f->fields = NULL;
+    free(f);
+}
+
+static int append_field(struct filters *ff, struct filter_field *field)
+{
+    struct filter_field **tmp_fields = NULL;
+    size_t old_size, new_size;
+
+    if (field == NULL) {
+        return 0;
+    }
+
+    if (ff->field_len > SIZE_MAX / sizeof(struct filters) - 1) {
+        ERROR("Too many filter conditions");
+        return -1;
+    }
+
+    old_size = ff->field_len * sizeof(struct filters);
+    new_size = old_size + sizeof(struct filters);
+
+    if (util_mem_realloc((void **)(&tmp_fields), new_size, ff->fields, old_size) != 0) {
+        ERROR("Out of memory");
+        return -1;
+    }
+    ff->fields = tmp_fields;
+
+    ff->fields[ff->field_len] = field;
+    ff->field_len++;
+
+    return 0;
+}
 
 static const char *isula_lcrsta2str(Container_Status sta)
 {
@@ -213,7 +272,7 @@ static void printf_enable_interpretation_of_backslash_escapes(const char *str)
     }
 }
 
-static bool should_print_table_header(const struct format_filters *ff)
+static bool should_print_table_header(const struct filters *ff)
 {
     return ff != NULL && ff->field_len != 0 && ff->fields[0]->name != NULL &&
            strcmp(ff->fields[0]->name, "table") == 0 && ff->fields[0]->is_field;
@@ -257,7 +316,7 @@ static void print_table_header_item(const char *name, struct lengths *length)
     }
 }
 
-static void ps_print_header(struct lengths *length, const struct format_filters *ff)
+static void ps_print_header(struct lengths *length, const struct filters *ff)
 {
     size_t i;
 
@@ -367,7 +426,7 @@ static void print_container_info_item(const struct isula_container_summary_info 
 }
 
 static void ps_print_container_info(const struct isula_container_summary_info *in, const char *state,
-                                    const char *status, const struct lengths *length, const struct format_filters *ff)
+                                    const char *status, const struct lengths *length, const struct filters *ff)
 {
     size_t i = should_print_table_header(ff) ? 1 : 0;
 
@@ -382,7 +441,7 @@ static void ps_print_container_info(const struct isula_container_summary_info *i
 }
 
 static void list_print_table(struct isula_container_summary_info **info, const size_t size, struct lengths *length,
-                             const struct format_filters *ff)
+                             const struct filters *ff)
 {
 #define MAX_STATE_LEN 32
 #define MAX_STATUS_LEN 100
@@ -550,7 +609,7 @@ static inline int isula_container_cmp(struct isula_container_summary_info **firs
 /*
 * Create a list request message and call RPC
 */
-static int client_list(const struct client_arguments *args, const struct format_filters *ff)
+static int client_list(const struct client_arguments *args, const struct filters *ff)
 {
     isula_connect_ops *ops = NULL;
     struct isula_list_request request = { 0 };
@@ -599,32 +658,15 @@ static int client_list(const struct client_arguments *args, const struct format_
     }
     request.all = args->list_all;
 
-    if (args->list_last_n > 0 || args->list_latest) {
-        size_t lastest_n = args->list_last_n;
-        if (args->list_latest) {
-            lastest_n = 1;
-        }
-
-        isula_filters_last_parse_args(lastest_n, &request.filters);
-        if (request.filters == NULL) {
-            ERROR("Failed to parse lastest n containers filters args");
-            ret = -1;
-            goto out;
-        }
-    }
-
     config = get_connect_config(args);
     ret = ops->container.list(&request, response, &config);
     if (ret) {
         client_print_error(response->cc, response->server_errono, response->errmsg);
         goto out;
     }
-
-    /* ps -a need sort again, ps -l/-n is already sorted */
-    if (response->container_num != 0 && args->list_all) {
+    if (response->container_num != 0)
         qsort(response->container_summary, (size_t)(response->container_num),
               sizeof(struct isula_container_summary_info *), (int (*)(const void *, const void *))isula_container_cmp);
-    }
 
     if (args->dispname) {
         list_print_quiet(response->container_summary, response->container_num, &max_len);
@@ -639,16 +681,299 @@ out:
     return ret;
 }
 
-int cmd_list_main(int argc, const char **argv)
+static int append_header_field(const char **index, struct filters *ff)
 {
-    struct isula_libutils_log_config lconf = { 0 };
-    command_t cmd;
-    struct format_filters *ff = NULL;
-    char *format_str = NULL;
+    int ret = 0;
+    struct filter_field *tmp = NULL;
+
+    if (strncmp(*index, "table", strlen("table")) != 0) {
+        return 0;
+    }
+
+    tmp = (struct filter_field *)util_common_calloc_s(sizeof(struct filter_field));
+    if (tmp == NULL) {
+        ERROR("Out of memory");
+        return -1;
+    }
+    tmp->name = util_strdup_s("table");
+    tmp->is_field = true;
+    if (append_field(ff, tmp) != 0) {
+        ret = -1;
+        goto out;
+    }
+    *index += strlen("table");
+    tmp = NULL;
+
+out:
+    free_filter_field(tmp);
+    return ret;
+}
+
+static int append_first_non_header_field(const char *index, struct filters *ff)
+{
+    int ret = 0;
+    char *prefix = strstr(index, "{{");
+    struct filter_field *tmp = NULL;
+    char *first_non_field = NULL;
+
+    if (prefix == NULL) {
+        return 0;
+    }
+
+    first_non_field = util_sub_string(index, 0, prefix - index);
+    if (util_is_space_string(first_non_field)) {
+        goto out;
+    }
+    tmp = (struct filter_field *)util_common_calloc_s(sizeof(struct filter_field));
+    if (tmp == NULL) {
+        ERROR("Out of memory");
+        ret = -1;
+        goto out;
+    }
+    tmp->name = first_non_field;
+    first_non_field = NULL;
+    tmp->is_field = false;
+    if (append_field(ff, tmp) != 0) {
+        ERROR("Failed to append field");
+        ret = -1;
+        goto out;
+    }
+    tmp = NULL;
+
+out:
+    free_filter_field(tmp);
+    free(first_non_field);
+    return ret;
+}
+
+static int get_header_field(const char *patten, struct filters *ff)
+{
+    const char *index = patten;
+
+    if (append_header_field(&index, ff) != 0) {
+        ERROR("Failed to append header field");
+        return -1;
+    }
+
+    if (append_first_non_header_field(index, ff) != 0) {
+        ERROR("Failed to append first non header field");
+        return -1;
+    }
+
+    return 0;
+}
+
+static int format_field_check(const char *source, const char *patten)
+{
+#define CHECK_FAILED (-1)
+    int status = 0;
+
+    if (source == NULL) {
+        ERROR("Filter string is NULL.");
+        return CHECK_FAILED;
+    }
+
+    status = util_reg_match(patten, source);
+
+    if (status != 0) {
+        return CHECK_FAILED;
+    }
+
+    return 0;
+}
+
+/* arg string format: "{{json .State.Running}}"
+ * ret_string should be free outside by free().
+ */
+static char *get_filter_string(const char *arg)
+{
+    char *input_str = NULL;
+    char *p = NULL;
+    char *ret_string = NULL;
+    char *next_context = NULL;
+
+    input_str = util_strdup_s(arg);
+
+    p = strtok_r(input_str, ".", &next_context);
+    if (p == NULL) {
+        goto out;
+    }
+
+    p = next_context;
+    if (p == NULL) {
+        goto out;
+    }
+
+    p = strtok_r(p, " }", &next_context);
+    if (p == NULL) {
+        goto out;
+    }
+
+    ret_string = util_strdup_s(p);
+
+out:
+    free(input_str);
+    return ret_string;
+}
+
+static bool valid_format_field(const char *field)
+{
+    size_t i;
     const char *support_field[] = {
         "ID",  "Image",    "Command",      "Created", "Status",   "Ports",   "Names", // basic info
         "Pid", "ExitCode", "RestartCount", "StartAt", "FinishAt", "Runtime", "State" // external info
     };
+
+    for (i = 0; i < sizeof(support_field) / sizeof(char *); i++) {
+        if (strcmp(field, support_field[i]) == 0) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+static int append_header_item_field(const char *index, const char *prefix, const char *suffix, struct filters *ff)
+{
+#ifdef __ANDROID__
+#define SINGLE_PATTEN "{{[ \t\r\n\v\f]*\\.[0-9A-Za-z_]+[ \t\r\n\v\f]*}}"
+#else
+#define SINGLE_PATTEN "\\{\\{\\s*\\.\\w+\\s*\\}\\}"
+#endif
+    int ret = 0;
+    char *filter_string = NULL;
+    struct filter_field *field = NULL;
+    char *sub_patten = util_sub_string(index, prefix - index, suffix - prefix + 2);
+
+    if (format_field_check(sub_patten, SINGLE_PATTEN) != 0) {
+        COMMAND_ERROR("invalid format field: %s", sub_patten);
+        ret = -1;
+        goto out;
+    }
+
+    filter_string = get_filter_string(sub_patten);
+    if (filter_string == NULL) {
+        ERROR("Invalid filter: %s", sub_patten);
+        ret = -1;
+        goto out;
+    }
+
+    field = (struct filter_field *)util_common_calloc_s(sizeof(struct filter_field));
+    if (field == NULL) {
+        ERROR("Out of memory");
+        ret = -1;
+        goto out;
+    }
+    if (!valid_format_field(filter_string)) {
+        COMMAND_ERROR("--format not support the field: %s", filter_string);
+        ret = -1;
+        goto out;
+    }
+    field->name = filter_string;
+    filter_string = NULL;
+    field->is_field = true;
+    if (append_field(ff, field) != 0) {
+        ERROR("Failed to append field");
+        ret = -1;
+        goto out;
+    }
+    field = NULL;
+
+out:
+    free(sub_patten);
+    free(filter_string);
+    free_filter_field(field);
+    return ret;
+}
+
+static int append_non_header_item_field(const char *prefix, const char *non_field, struct filters *ff)
+{
+    int ret = 0;
+    char *non_field_string = NULL;
+    struct filter_field *field = NULL;
+
+    if (prefix == NULL) {
+        non_field_string = util_strdup_s(non_field);
+    } else {
+        non_field_string = util_sub_string(non_field, 0, prefix - non_field);
+    }
+    field = (struct filter_field *)util_common_calloc_s(sizeof(struct filter_field));
+    if (field == NULL) {
+        ERROR("Out of memory");
+        ret = -1;
+        goto out;
+    }
+
+    field->name = non_field_string;
+    non_field_string = NULL;
+    field->is_field = false;
+
+    if (append_field(ff, field) != 0) {
+        ERROR("Failed to append field");
+        ret = -1;
+        goto out;
+    }
+    field = NULL;
+
+out:
+    free_filter_field(field);
+    free(non_field_string);
+    return ret;
+}
+
+static int get_filter_field(const char *patten, struct filters *ff)
+{
+#define DEFAULT_CONTAINER_TABLE_FORMAT          \
+    "table {{.ID}}\t{{.Image}}\t{{.Command}}\t" \
+    "{{.Created}}\t{{.Status}}\t{{.Ports}}\t{{.Names}}"
+    const char *prefix = NULL;
+    const char *suffix = NULL;
+    const char *index = patten;
+
+    if (patten == NULL || strcmp(index, "table") == 0) {
+        index = DEFAULT_CONTAINER_TABLE_FORMAT;
+    }
+
+    if (get_header_field(index, ff) != 0) {
+        ERROR("failed to get header field");
+        return -1;
+    }
+    prefix = strstr(index, "{{");
+    if (prefix == NULL) {
+        return 0;
+    }
+
+    suffix = strstr(index, "}}");
+    while (prefix != NULL && suffix != NULL) {
+        if (append_header_item_field(index, prefix, suffix, ff) != 0) {
+            ERROR("failed to append header item field");
+            return -1;
+        }
+        if (strlen(suffix + 2) == 0) {
+            return 0;
+        }
+        prefix = strstr(suffix + 2, "{{");
+        if (append_non_header_item_field(prefix, suffix + 2, ff) != 0) {
+            ERROR("failed to append non-header item field");
+            return -1;
+        }
+
+        index = prefix;
+        if (index != NULL) {
+            suffix = strstr(index, "}}");
+        } else {
+            suffix = NULL;
+        }
+    }
+
+    return 0;
+}
+
+int cmd_list_main(int argc, const char **argv)
+{
+    struct isula_libutils_log_config lconf = { 0 };
+    command_t cmd;
+    struct filters *ff = NULL;
 
     if (client_arguments_init(&g_cmd_list_args)) {
         COMMAND_ERROR("client arguments init failed");
@@ -675,29 +1000,24 @@ int cmd_list_main(int argc, const char **argv)
         exit(ECOMMON);
     }
 
-    ff = (struct format_filters *)util_common_calloc_s(sizeof(struct format_filters));
+    ff = (struct filters *)util_common_calloc_s(sizeof(struct filters));
     if (ff == NULL) {
         ERROR("Out of memory");
         exit(EXIT_FAILURE);
     }
 
-    format_str = g_cmd_list_args.format;
-    if (format_str == NULL || strcmp(format_str, "table") == 0) {
-        format_str = DEFAULT_CONTAINER_TABLE_FORMAT;
-    }
-
-    if (get_format_filters_field(format_str, ff, support_field, sizeof(support_field) / sizeof(char *), true) != 0) {
-        free_format_filters(ff);
+    if (get_filter_field(g_cmd_list_args.format, ff) != 0) {
+        free_filters(ff);
         COMMAND_ERROR("Failed to get filter field");
         exit(EXIT_FAILURE);
     }
 
     if (client_list(&g_cmd_list_args, ff)) {
-        free_format_filters(ff);
+        free_filters(ff);
         ERROR("Can not ps any containers");
         exit(ECOMMON);
     }
 
-    free_format_filters(ff);
+    free_filters(ff);
     exit(EXIT_SUCCESS);
 }

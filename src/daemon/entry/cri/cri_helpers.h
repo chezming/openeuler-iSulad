@@ -66,8 +66,6 @@ public:
     static const std::string CNI_MUTL_NET_EXTENSION_KEY;
     static const std::string CNI_MUTL_NET_EXTENSION_ARGS_KEY;
     static const std::string CNI_ARGS_EXTENSION_PREFIX_KEY;
-    static const std::string CNI_CAPABILITIES_BANDWIDTH_INGRESS_KEY;
-    static const std::string CNI_CAPABILITIES_BANDWIDTH_ENGRESS_KEY;
 
     static const std::string IMAGE_NAME_ANNOTATION_KEY;
 };
@@ -103,8 +101,8 @@ auto IsContainerNotFoundError(const std::string &err) -> bool;
 
 auto IsImageNotFoundError(const std::string &err) -> bool;
 
-auto GetNetworkPlaneFromPodAnno(const std::map<std::string, std::string> &annotations,
-                                Errors &error) -> cri_pod_network_container *;
+auto GetNetworkPlaneFromPodAnno(const std::map<std::string, std::string> &annotations, size_t *len, Errors &error)
+-> cri_pod_network_element **;
 
 auto CheckpointToSandbox(const std::string &id, const CRI::PodSandboxCheckpoint &checkpoint)
 -> std::unique_ptr<runtime::v1alpha2::PodSandbox>;
@@ -125,8 +123,7 @@ auto ValidateCheckpointKey(const std::string &key, Errors &error) -> bool;
 
 auto ToIsuladContainerStatus(const runtime::v1alpha2::ContainerStateValue &state) -> std::string;
 
-auto GetSecurityOpts(const bool hasSeccomp, const ::runtime::v1alpha2::SecurityProfile &seccomp,
-                     const std::string &seccompProfile, const char &separator, Errors &error)
+auto GetSecurityOpts(const std::string &seccompProfile, const char &separator, Errors &error)
 -> std::vector<std::string>;
 
 auto CreateCheckpoint(CRI::PodSandboxCheckpoint &checkpoint, Errors &error) -> std::string;
@@ -154,8 +151,6 @@ void StopContainer(service_executor_t *cb, const std::string &containerID, int64
 char *GenerateExecSuffix();
 
 char *cri_runtime_convert(const char *runtime);
-
-int64_t ParseQuantity(const std::string &str, Errors &error);
 }; // namespace CRIHelpers
 
 #endif // DAEMON_ENTRY_CRI_CRI_HELPERS_H

@@ -22,7 +22,6 @@
 #include <atomic>
 #include <memory>
 #include <list>
-#include <array>
 #include <thread>
 #include <array>
 #include <libwebsockets.h>
@@ -35,7 +34,7 @@ namespace {
 const int MAX_ECHO_PAYLOAD = 4096;
 const int MAX_ARRAY_LEN = 2;
 const int MAX_PROTOCOL_NUM = 2;
-} // namespace
+}; // namespace
 
 struct SessionData {
     std::array<int, MAX_ARRAY_LEN> pipes;

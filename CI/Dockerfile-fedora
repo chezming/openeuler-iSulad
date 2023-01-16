@@ -20,7 +20,7 @@
 #		--build-arg https_proxy=YOUR_HTTPS_PROXY_IF_NEEDED \
 #		-t YOUR_IMAGE_NAME -f ./Dockerfile .
 
-FROM fedora:35
+FROM fedora:34
 MAINTAINER haozi007 <liuhao27@huawei.com>
 
 # if set proxy, need add no_proxy
@@ -34,7 +34,8 @@ RUN echo "nameserver 8.8.8.8" > /etc/resolv.conf && \
     echo "search localdomain" >> /etc/resolv.conf
 
 # Install dependency package
-RUN dnf update -y && dnf install -y systemd && dnf clean all
+RUN dnf clean all && dnf makecache && dnf swap -y fakesystemd systemd && \
+        dnf update -y
 
 RUN dnf install -y  automake \
 			autoconf \

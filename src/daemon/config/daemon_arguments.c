@@ -108,6 +108,7 @@ int service_arguments_init(struct service_arguments *args)
     if (args->json_confs == NULL) {
         goto free_out;
     }
+    args->json_confs->engine = util_strdup_s("lcr");
     args->json_confs->group = util_strdup_s("isula");
     args->json_confs->graph = util_strdup_s(ISULAD_ROOT_PATH);
     args->json_confs->state = util_strdup_s(ISULAD_STATE_PATH);
@@ -203,54 +204,6 @@ void service_arguments_free(struct service_arguments *args)
     free_default_ulimit(args->default_ulimit);
     args->default_ulimit = NULL;
     args->default_ulimit_len = 0;
-}
-
-static int key_value_opt_parser(const char *option, char **key, char **value)
-{
-    int ret = -1;
-    char *tmp_key = NULL;
-    char *tmp_value = NULL;
-    char *tmp_option = NULL;
-    size_t len = 0;
-    size_t total_len = 0;
-
-    // option format: key=value
-    total_len = strlen(option);
-    if (total_len <= 2) {
-        return -1;
-    }
-
-    tmp_option = util_strdup_s(option);
-    tmp_key = tmp_option;
-    tmp_value = strchr(tmp_option, '=');
-    // option do not contain '='
-    if (tmp_value == NULL) {
-        goto out;
-    }
-
-    len = (size_t)(tmp_value - tmp_key);
-    // if option is '=key'
-    if (len == 0) {
-        goto out;
-    }
-
-    // if option is 'key='
-    if (total_len == len + 1) {
-        goto out;
-    }
-
-    tmp_option[len] = '\0';
-    *key = util_strdup_s(tmp_key);
-    tmp_option[len] = '=';
-
-    tmp_value += 1;
-    *value = util_strdup_s(tmp_value);
-
-    ret = 0;
-
-out:
-    free(tmp_option);
-    return ret;
 }
 
 static int key_value_opt_parser(const char *option, char **key, char **value)

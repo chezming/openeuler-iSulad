@@ -17,7 +17,6 @@
 #include <unistd.h>
 #include <sys/mount.h>
 #include <sys/eventfd.h>
-#include <sys/epoll.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <isula_libutils/container_config.h>
@@ -61,13 +60,9 @@
 #include "utils_fs.h"
 #include "utils_string.h"
 #include "utils_verify.h"
-#include "utils_network.h"
 #include "volume_api.h"
 #include "utils_network.h"
-#include "network_namespace.h"
-#ifdef ENABLE_NATIVE_NETWORK
-#include "service_network_api.h"
-#endif
+#include "network_namespace_api.h"
 
 #define KATA_RUNTIME "kata-runtime"
 
@@ -236,7 +231,7 @@ static int renew_oci_config(const container_t *cont, oci_runtime_spec *oci_spec)
         goto out;
     }
 
-    ret = merge_share_namespace(oci_spec, cont->hostconfig, cont->network_settings);
+    ret = merge_share_namespace(oci_spec, cont->hostconfig, cont->common_config->network_settings);
     if (ret != 0) {
         ERROR("Failed to merge share ns");
         goto out;
@@ -869,8 +864,6 @@ out:
     return ret;
 }
 
-static int force_kill(container_t *cont);
-
 int start_container(container_t *cont, const char *console_fifos[], bool reset_rm)
 {
     int ret = 0;
@@ -912,66 +905,23 @@ int start_container(container_t *cont, const char *console_fifos[], bool reset_r
         goto out;
     }
 
-#ifdef ENABLE_NATIVE_NETWORK
-    if (util_native_network_checker(cont->hostconfig->network_mode)) {
-        if (!validate_native_network(cont->hostconfig, cont->network_settings)) {
-            ERROR("Invalid native network");
-            ret = -1;
-            goto out;
-        }
-
-        if (!util_post_setup_network(cont->hostconfig->user_remap) && prepare_native_network(cont) != 0) {
-            isulad_set_error_message("Failed to prepare container network.");
-            ERROR("Failed to prepare container network");
-            ret = -1;
-            goto out;
-        }
-    }
-#endif
-
     ret = do_start_container(cont, console_fifos, reset_rm, &pid_info);
     if (ret != 0) {
         ERROR("Runtime start container failed");
         ret = -1;
         goto set_stopped;
+    } else {
+        container_state_set_running(cont->state, &pid_info, true);
+        container_state_reset_has_been_manual_stopped(cont->state);
+        container_init_health_monitor(cont->common_config->id);
+        goto save_container;
     }
-    container_state_set_running(cont->state, &pid_info, true);
 
-#ifdef ENABLE_NATIVE_NETWORK
-    if (util_native_network_checker(cont->hostconfig->network_mode)) {
-        // if isolate container with a user namespace, setup network after container running
-        // otherwise the network namespace is owned by a wrong user namespace
-        if (util_post_setup_network(cont->hostconfig->user_remap) && prepare_native_network(cont) != 0) {
-            isulad_append_error_message("Failed to prepare container network. ");
-            ERROR("Failed to prepare container network");
-            ret = -1;
-            goto stop_container;
-        }
-    }
-#endif
-
-    container_state_reset_has_been_manual_stopped(cont->state);
-    container_init_health_monitor(cont->common_config->id);
-    goto save_container;
-
-#ifdef ENABLE_NATIVE_NETWORK
-stop_container:
-    // set AutoRemove flag to false before kill so the container won't be removed
-    cont->hostconfig->auto_remove = false;
-    if (force_kill(cont) != 0) {
-        ERROR("Failed to force kill container %s", cont->common_config->id);
-    }
-    cont->hostconfig->auto_remove = cont->hostconfig->auto_remove_bak;
-#endif
 set_stopped:
-#ifdef ENABLE_NATIVE_NETWORK
-    if (util_native_network_checker(cont->hostconfig->network_mode)) {
-        if (!util_post_setup_network(cont->hostconfig->user_remap) && remove_native_network(cont) != 0) {
-            ERROR("Failed to remove cont network");
-        }
+    if (namespace_is_file(cont->hostconfig->network_mode) &&
+        util_umount_namespace(cont->common_config->network_settings->sandbox_key) != 0) {
+        ERROR("Failed to clean up network namespace");
     }
-#endif
-
     container_state_set_error(cont->state, (const char *)g_isulad_errmsg);
     util_contain_errmsg(g_isulad_errmsg, &exit_code);
     container_state_set_stopped(cont->state, exit_code);
@@ -1063,17 +1013,6 @@ int clean_container_resource(const char *id, const char *runtime, pid_t pid)
         goto unlock;
     }
 
-#ifdef ENABLE_NATIVE_NETWORK
-    if (util_native_network_checker(cont->hostconfig->network_mode)) {
-        if (cont->skip_remove_network) {
-            WARN("skip remove container %s network when restarting", cont->common_config->id);
-        } else if (remove_native_network(cont) != 0) {
-            // ignore remove network error
-            ERROR("Failed to remove container %s network", cont->common_config->id);
-        }
-    }
-#endif
-
 unlock:
     container_unlock(cont);
 
@@ -1135,39 +1074,6 @@ int release_volumes(container_config_v2_common_config_mount_points *mount_points
     return ret;
 }
 
-static void do_delete_network(container_t *cont)
-{
-    if (cont->network_settings == NULL || cont->network_settings->sandbox_key == NULL) {
-        return;
-    }
-
-#ifdef ENABLE_NATIVE_NETWORK
-    if (util_native_network_checker(cont->hostconfig->network_mode)) {
-        if (remove_native_network(cont) != 0) {
-            WARN("Failed to remove network when delete container %s, maybe it has been cleaned up",
-                 cont->common_config->id);
-        }
-        if (remove_network_namespace_file(cont->network_settings->sandbox_key) != 0) {
-            ERROR("Failed to remove network ns file when deleting container %s", cont->common_config->id);
-        }
-
-        return;
-    }
-#endif
-
-    if (!namespace_is_cni(cont->hostconfig->network_mode)) {
-        return;
-    }
-
-    if (remove_network_namespace(cont->network_settings->sandbox_key) != 0) {
-        WARN("Failed to remove network ns when deleting container %s, maybe it has been cleaned up",
-             cont->common_config->id);
-    }
-    if (remove_network_namespace_file(cont->network_settings->sandbox_key) != 0) {
-        ERROR("Failed to remove network ns file when deleting container %s", cont->common_config->id);
-    }
-}
-
 static int do_delete_container(container_t *cont)
 {
     int ret = 0;
@@ -1206,7 +1112,12 @@ static int do_delete_container(container_t *cont)
         goto out;
     }
 
-    do_delete_network(cont);
+    // clean up mounted network namespace
+    if (cont->common_config->network_settings != NULL &&
+        util_file_exists(cont->common_config->network_settings->sandbox_key)
+        && remove_network_namespace(cont->common_config->network_settings->sandbox_key) != 0) {
+        ERROR("Failed to remove network when deleting container %s", cont->common_config->id);
+    }
 
     ret = snprintf(container_state, sizeof(container_state), "%s/%s", statepath, id);
     if (ret < 0 || (size_t)ret >= sizeof(container_state)) {
@@ -1298,7 +1209,6 @@ int delete_container(container_t *cont, bool force)
             ret = -1;
             goto reset_removal_progress;
         }
-
         ret = stop_container(cont, 3, force, false);
         if (ret != 0) {
             isulad_append_error_message("Could not stop running container %s, cannot remove. ", id);

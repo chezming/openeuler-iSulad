@@ -321,7 +321,8 @@ function test_stream_with_kill_lxc_monitor()
     sleep 3
     pid=$(ps aux | grep "lxc monitor" | grep $CID  | awk '{print $2}')
     kill -9 $pid
-    sleep 3
+    wait_container "$CID" "exited"
+    [[ $? -ne 0 ]] && msg_err "${FUNCNAME[0]}:${LINENO} - failed to wait container: $CID exited" && ((ret++))
 
     isula start $CID
     [[ $? -ne 0 ]] && msg_err "${FUNCNAME[0]}:${LINENO} - failed to start container: $CID" && ((ret++))

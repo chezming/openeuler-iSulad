@@ -623,6 +623,28 @@ out:
     return cgroup_parent;
 }
 
+/* conf get isulad engine */
+char *conf_get_isulad_engine()
+{
+    char *engine = NULL;
+    struct service_arguments *conf = NULL;
+
+    if (isulad_server_conf_rdlock() != 0) {
+        return NULL;
+    }
+
+    conf = conf_get_server_conf();
+    if (conf == NULL || conf->json_confs->engine == NULL) {
+        goto out;
+    }
+
+    engine = util_strdup_s(conf->json_confs->engine);
+
+out:
+    (void)isulad_server_conf_unlock();
+    return engine;
+}
+
 /* conf get isulad loglevel */
 char *conf_get_isulad_loglevel()
 {
@@ -1185,7 +1207,6 @@ char *conf_get_isulad_userns_remap()
     }
 
     conf = conf_get_server_conf();
-
     if (conf == NULL || conf->json_confs == NULL || conf->json_confs->userns_remap == NULL) {
         goto out;
     }
@@ -1197,67 +1218,6 @@ out:
     return userns_remap;
 }
 #endif
-
-/* conf get cni config dir */
-char *conf_get_cni_conf_dir()
-{
-    char *dir = NULL;
-    const char *default_conf_dir = "/etc/cni/net.d";
-    struct service_arguments *conf = NULL;
-
-    if (isulad_server_conf_rdlock() != 0) {
-        ERROR("BUG conf_rdlock failed");
-        return NULL;
-    }
-
-    conf = conf_get_server_conf();
-    if (conf == NULL || conf->json_confs == NULL || conf->json_confs->cni_conf_dir == NULL) {
-        dir = util_strdup_s(default_conf_dir);
-    } else {
-        dir = util_strdup_s(conf->json_confs->cni_conf_dir);
-    }
-
-    (void)isulad_server_conf_unlock();
-    return dir;
-}
-
-/* conf get cni binary dir */
-int conf_get_cni_bin_dir(char ***dst)
-{
-    int ret = 0;
-    char **dir = NULL;
-    const char *default_bin_dir = "/opt/cni/bin";
-    struct service_arguments *conf = NULL;
-
-    if (isulad_server_conf_rdlock() != 0) {
-        ERROR("BUG conf_rdlock failed");
-        return -1;
-    }
-
-    conf = conf_get_server_conf();
-    if (conf == NULL || conf->json_confs == NULL || conf->json_confs->cni_bin_dir == NULL) {
-        (void)util_array_append(&dir, default_bin_dir);
-    } else {
-        dir = util_string_split(conf->json_confs->cni_bin_dir, ';');
-        if (dir == NULL) {
-            ERROR("String split failed");
-            ret = -1;
-        }
-    }
-
-    if (isulad_server_conf_unlock() != 0) {
-        ERROR("BUG conf_unlock failed");
-        util_free_array(dir);
-        ret = -1;
-    }
-
-    if (ret != 0) {
-        return ret;
-    }
-
-    *dst = dir;
-    return util_array_len((const char **)dir);
-}
 
 /* conf get websocket server listening port */
 int32_t conf_get_websocket_server_listening_port()
@@ -1628,6 +1588,7 @@ int merge_json_confs_into_global(struct service_arguments *args)
 
     override_string_value(&args->json_confs->pidfile, &tmp_json_confs->pidfile);
     // iSulad runtime execution options
+    override_string_value(&args->json_confs->engine, &tmp_json_confs->engine);
     override_string_value(&args->json_confs->hook_spec, &tmp_json_confs->hook_spec);
     override_string_value(&args->json_confs->enable_plugins, &tmp_json_confs->enable_plugins);
 #ifdef ENABLE_USERNS_REMAP
@@ -1648,13 +1609,6 @@ int merge_json_confs_into_global(struct service_arguments *args)
         ret = -1;
         goto out;
     }
-
-#ifdef ENABLE_SUP_GROUPS
-    args->json_confs->sup_groups = tmp_json_confs->sup_groups;
-    tmp_json_confs->sup_groups = NULL;
-    args->json_confs->sup_groups_len = tmp_json_confs->sup_groups_len;
-    tmp_json_confs->sup_groups_len = 0;
-#endif
 
 #ifdef ENABLE_SUP_GROUPS
     args->json_confs->sup_groups = tmp_json_confs->sup_groups;
@@ -1708,10 +1662,6 @@ int merge_json_confs_into_global(struct service_arguments *args)
 
 #ifdef ENABLE_SELINUX
     args->json_confs->selinux_enabled = tmp_json_confs->selinux_enabled;
-#endif
-
-#ifdef ENABLE_METRICS
-    args->json_confs->metrics_port = tmp_json_confs->metrics_port;
 #endif
 
 out:
