@@ -13,7 +13,7 @@
 ##- @Author: haozi007
 ##- @Create: 2021-12-06
 #######################################################################
-tbranch="master"
+tbranch="stable-v2.0.x"
 if [ $# -eq 1 ]; then
     tbranch=$1
 fi
@@ -45,6 +45,20 @@ rm -rf build
 mkdir build
 pushd build
 cmake -DDEBUG=ON -DCMAKE_SKIP_RPATH=TRUE ../ || exit 1
+make -j $(nproc) || exit 1
+make install
+popd
+popd
+
+ldconfig
+rm -rf clibcni
+git clone https://gitee.com/openeuler/clibcni.git
+pushd clibcni
+git checkout ${tbranch}
+rm -rf build
+mkdir build
+pushd build
+cmake -DDEBUG=ON ../ || exit 1
 make -j $(nproc) || exit 1
 make install
 popd

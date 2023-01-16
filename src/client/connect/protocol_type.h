@@ -157,6 +157,7 @@ struct isula_container_info {
     uint64_t pids_current;
     // CPU usage
     uint64_t cpu_use_nanos;
+    uint64_t usage_nano_cores;
     uint64_t cpu_system_use;
     uint32_t online_cpus;
     // BlkIO usage

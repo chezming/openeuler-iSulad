@@ -9,7 +9,7 @@ include(cmake/set_build_flags.cmake)
 
 #set(CMAKE_C_COMPILER "gcc" CACHE PATH "c compiler")
 
-set(GIT_COMMIT_HASH "aa3fd267f3ee21314b683822e8b2b91646d8dcb9")
+set(GIT_COMMIT_HASH "5e254f8182526b5fde84eb170c52663697bab3f4")
 message("--  commit id: " ${GIT_COMMIT_HASH})
 add_definitions(-DISULAD_GIT_COMMIT="${GIT_COMMIT_HASH}")
 
@@ -119,14 +119,3 @@ install(FILES src/contrib/sysmonitor/isulad-check.sh
     DESTINATION ${conf_prefix}/default/isulad PERMISSIONS OWNER_READ OWNER_EXECUTE GROUP_READ GROUP_EXECUTE)
 install(FILES src/contrib/sysmonitor/isulad-monit
     DESTINATION ${conf_prefix}/sysmonitor/process PERMISSIONS OWNER_READ OWNER_WRITE)
-
-# uninstall
-if(NOT TARGET uninstall)
-  configure_file(
-    "${CMAKE_CURRENT_SOURCE_DIR}/cmake_uninstall.cmake.in"
-    "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake"
-    IMMEDIATE @ONLY)
-
-  add_custom_target(uninstall
-    COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
-endif()

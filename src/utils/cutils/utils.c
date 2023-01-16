@@ -39,9 +39,11 @@
 #include <time.h>
 
 #include "isula_libutils/log.h"
+#include "isula_libutils/json_common.h"
 #include "utils_array.h"
 #include "utils_convert.h"
 #include "utils_file.h"
+#include "utils_regex.h"
 #include "utils_string.h"
 #include "utils_verify.h"
 
@@ -717,7 +719,7 @@ static void close_pipes_fd(int *pipes, size_t pipe_size)
     }
 }
 
-bool util_raw_exec_cmd(exec_func_t cb_func, void *cb_args, exitcode_deal_func_t exitcode_cb, exec_cmd_args *cmd_args)
+bool util_exec_cmd(exec_func_t cb_func, void *args, const char *stdin_msg, char **stdout_msg, char **stderr_msg)
 {
     bool ret = false;
     char *stdout_buffer = NULL;
@@ -733,11 +735,6 @@ bool util_raw_exec_cmd(exec_func_t cb_func, void *cb_args, exitcode_deal_func_t 
     int in_fd[2] = { -1, -1 };
     pid_t pid = 0;
     int status = 0;
-
-    if (cmd_args == NULL) {
-        ERROR("empty cmd args");
-        return false;
-    }
 
     if (pipe2(in_fd, O_CLOEXEC | O_NONBLOCK) != 0) {
         ERROR("Failed to create stdin pipe");
@@ -801,7 +798,7 @@ bool util_raw_exec_cmd(exec_func_t cb_func, void *cb_args, exitcode_deal_func_t 
             COMMAND_ERROR("Failed to set process %d as group leader", getpid());
         }
 
-        cb_func(cb_args);
+        cb_func(args);
     }
 
     /* parent */
@@ -812,16 +809,16 @@ bool util_raw_exec_cmd(exec_func_t cb_func, void *cb_args, exitcode_deal_func_t 
 
     close(in_fd[0]);
     in_fd[0] = -1;
-    if (cmd_args->stdin_msg != NULL) {
-        size_t len = strlen(cmd_args->stdin_msg);
-        if (util_write_nointr_in_total(in_fd[1], cmd_args->stdin_msg, len) != len) {
-            WARN("Write instr: %s failed", cmd_args->stdin_msg);
+    if (stdin_msg != NULL) {
+        size_t len = strlen(stdin_msg);
+        if (util_write_nointr(in_fd[1], stdin_msg, len) != len) {
+            WARN("Write instr: %s failed", stdin_msg);
         }
     }
     close(in_fd[1]);
     in_fd[1] = -1;
 
-    if (cmd_args->stdout_msg == NULL) {
+    if (stdout_msg == NULL) {
         stdout_close_flag = 1;
     }
     for (;;) {
@@ -841,31 +838,20 @@ bool util_raw_exec_cmd(exec_func_t cb_func, void *cb_args, exitcode_deal_func_t 
 
     status = util_wait_for_pid_status(pid);
 
-    ret = exitcode_cb(status, &stderr_buffer, stderr_real_size);
+    ret = deal_with_result_of_waitpid(status, &stderr_buffer, stderr_real_size);
 
     close(err_fd[0]);
     close(out_fd[0]);
 out:
-    if (cmd_args->stdout_msg != NULL) {
-        *(cmd_args->stdout_msg) = stdout_buffer;
+    if (stdout_msg != NULL) {
+        *stdout_msg = stdout_buffer;
     }
-    if (cmd_args->stderr_msg != NULL) {
-        *(cmd_args->stderr_msg) = stderr_buffer;
+    if (stderr_msg != NULL) {
+        *stderr_msg = stderr_buffer;
     } else {
         free(stderr_buffer);
     }
     return ret;
-}
-
-bool util_exec_cmd(exec_func_t cb_func, void *args, const char *stdin_msg, char **stdout_msg, char **stderr_msg)
-{
-    exec_cmd_args c_args = { 0 };
-
-    c_args.stdin_msg = stdin_msg;
-    c_args.stdout_msg = stdout_msg;
-    c_args.stderr_msg = stderr_msg;
-
-    return util_raw_exec_cmd(cb_func, args, deal_with_result_of_waitpid, &c_args);
 }
 
 char **util_get_backtrace(void)
@@ -1360,8 +1346,24 @@ static char *get_cpu_variant()
     return variant;
 }
 
-static void normalized_host_arch(char **host_arch, struct utsname uts)
+int util_normalized_host_os_arch(char **host_os, char **host_arch, char **host_variant)
 {
+    int ret = 0;
+    int i = 0;
+    struct utsname uts;
+    char *tmp_variant = NULL;
+
+    if (host_os == NULL || host_arch == NULL || host_variant == NULL) {
+        ERROR("Invalid NULL pointer");
+        return -1;
+    }
+
+    if (uname(&uts) < 0) {
+        ERROR("Failed to read host arch and os: %s", strerror(errno));
+        ret = -1;
+        goto out;
+    }
+
     const char *arch_map[][2] = { { "i386", "386" },
         { "x86_64", "amd64" },
         { "x86-64", "amd64" },
@@ -1371,8 +1373,14 @@ static void normalized_host_arch(char **host_arch, struct utsname uts)
         { "mips64le", "mips64le" },
         { "mips64el", "mips64le" }
     };
-    int i = 0;
 
+    const char *variant_map[][2] = { { "5", "v5" },
+        { "6", "v6" },
+        { "7", "v7" },
+        { "8", "v8" }
+    };
+
+    *host_os = util_strings_to_lower(uts.sysname);
     *host_arch = util_strdup_s(uts.machine);
 
     for (i = 0; i < sizeof(arch_map) / sizeof(arch_map[0]); ++i) {
@@ -1382,69 +1390,42 @@ static void normalized_host_arch(char **host_arch, struct utsname uts)
             break;
         }
     }
-}
 
-static void normalized_host_variant(const char *host_arch, char **host_variant)
-{
-    int i = 0;
-    char *tmp_variant = NULL;
-    const char *variant_map[][2] = { { "5", "v5" },
-        { "6", "v6" },
-        { "7", "v7" },
-        { "8", "v8" },
-        { "9", "v9" }
-    };
-
-    if (strcmp(host_arch, "arm") && strcmp(host_arch, "arm64")) {
-        return;
+    if (!strcmp(*host_arch, "arm") || !strcmp(*host_arch, "arm64")) {
+        *host_variant = get_cpu_variant();
+        if (!strcmp(*host_arch, "arm64") && *host_variant != NULL &&
+            (!strcmp(*host_variant, "8") || !strcmp(*host_variant, "v8"))) {
+            free(*host_variant);
+            *host_variant = NULL;
+        }
+        if (!strcmp(*host_arch, "arm") && *host_variant == NULL) {
+            *host_variant = util_strdup_s("v7");
+        } else if (!strcmp(*host_arch, "arm") && *host_variant != NULL) {
+            tmp_variant = *host_variant;
+            *host_variant = util_strdup_s(tmp_variant);
+            for (i = 0; i < sizeof(variant_map) / sizeof(variant_map[0]); ++i) {
+                if (!strcmp(tmp_variant, variant_map[i][0])) {
+                    free(*host_variant);
+                    *host_variant = util_strdup_s(variant_map[i][1]);
+                    break;
+                }
+            }
+            free(tmp_variant);
+            tmp_variant = NULL;
+        }
     }
 
-    *host_variant = get_cpu_variant();
-    if (!strcmp(host_arch, "arm64") && *host_variant != NULL &&
-        (!strcmp(*host_variant, "8") || !strcmp(*host_variant, "v8"))) {
+out:
+    if (ret != 0) {
+        free(*host_os);
+        *host_os = NULL;
+        free(*host_arch);
+        *host_arch = NULL;
         free(*host_variant);
         *host_variant = NULL;
     }
 
-    if (!strcmp(host_arch, "arm") && *host_variant == NULL) {
-        *host_variant = util_strdup_s("v7");
-        return;
-    }
-
-    if (!strcmp(host_arch, "arm") && *host_variant != NULL) {
-        tmp_variant = *host_variant;
-        *host_variant = util_strdup_s(tmp_variant);
-        for (i = 0; i < sizeof(variant_map) / sizeof(variant_map[0]); ++i) {
-            if (!strcmp(tmp_variant, variant_map[i][0])) {
-                free(*host_variant);
-                *host_variant = util_strdup_s(variant_map[i][1]);
-                break;
-            }
-        }
-        free(tmp_variant);
-        tmp_variant = NULL;
-    }
-}
-
-int util_normalized_host_os_arch(char **host_os, char **host_arch, char **host_variant)
-{
-    struct utsname uts;
-
-    if (host_os == NULL || host_arch == NULL || host_variant == NULL) {
-        ERROR("Invalid NULL pointer");
-        return -1;
-    }
-
-    if (uname(&uts) < 0) {
-        ERROR("Failed to read host arch and os: %s", strerror(errno));
-        return -1;
-    }
-
-    *host_os = util_strings_to_lower(uts.sysname);
-    normalized_host_arch(host_arch, uts);
-    normalized_host_variant(*host_arch, host_variant);
-
-    return 0;
+    return ret;
 }
 
 int util_read_pid_ppid_info(uint32_t pid, pid_ppid_info_t *pid_info)
@@ -1556,4 +1537,45 @@ out:
     }
 
     return dst;
+}
+
+// convert_v2_runtime validate is the param_runtime in runtime-v2 format (io.containerd.<runtime>.<version>).
+// If param_runtime is legal and param_binary is not NULL, convert runtime binary name into it.
+// io.containerd.<runtime>.<version> --> containerd-shim-<runtime>-<version>
+int convert_v2_runtime(const char *runtime, char *binary)
+{
+    char **parts = NULL;
+    size_t parts_len = 0;
+    char buf[PATH_MAX]  = {0};
+    int ret = 0;
+    int nret;
+
+    if (binary == NULL) {
+        return -1;
+    }
+
+    parts = util_string_split_multi(runtime, '.');
+    if (parts == NULL) {
+        ERROR("split failed: %s", runtime);
+        return -1;
+    }
+
+    parts_len = util_array_len((const char **)parts);
+    if (!(parts_len == 4 && strcmp(parts[0], "io") == 0 && strcmp(parts[1], "containerd") == 0)) {
+        ERROR("ShimV2 runtime format is wrong");
+        ret = -1;
+        goto out;
+    }
+
+    nret = snprintf(buf, sizeof(buf), "%s-%s-%s-%s", "containerd", "shim", parts[2], parts[3]);
+    if (nret < 0 || (size_t)nret >= sizeof(buf)) {
+        ERROR("Failed to snprintf string");
+        ret = -1;
+        goto out;
+    }
+    (void)strcpy(binary, buf);
+
+out:
+    util_free_array(parts);
+    return ret;
 }

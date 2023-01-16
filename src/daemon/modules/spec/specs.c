@@ -1027,11 +1027,7 @@ static int merge_memory_swappiness(oci_runtime_spec *oci_spec, uint64_t *memory_
     }
 
     if (memory_swappiness == NULL) {
-#ifndef ENABLE_GVISOR
         oci_spec->linux->resources->memory->swappiness = (uint64_t)(-1);
-#else
-        oci_spec->linux->resources->memory->swappiness = 0;
-#endif
     } else {
         oci_spec->linux->resources->memory->swappiness = *memory_swappiness;
     }
@@ -1458,8 +1454,8 @@ static int merge_share_single_namespace(const oci_runtime_spec *oci_spec, const 
     return ret;
 }
 
-static int merge_share_network_namespace(const oci_runtime_spec *oci_spec, const host_config *host_spec,
-                                         const container_network_settings *network_settings, const char *type)
+static int merge_share_network_namespace(oci_runtime_spec *oci_spec, const host_config *host_spec,
+                                         const container_config_v2_common_config_network_settings *network_settings, const char *type)
 {
     int ret = 0;
     char *ns_path = NULL;
@@ -1494,7 +1490,7 @@ static bool userns_remap_is_enabled(const oci_runtime_spec *oci_spec)
 #endif
 
 int merge_share_namespace(oci_runtime_spec *oci_spec, const host_config *host_spec,
-                          const container_network_settings *network_settings)
+                          const container_config_v2_common_config_network_settings *network_settings)
 {
     int ret = -1;
 
@@ -1545,12 +1541,6 @@ int merge_share_namespace(oci_runtime_spec *oci_spec, const host_config *host_sp
 
     // uts
     if (merge_share_single_namespace(oci_spec, host_spec->uts_mode, TYPE_NAMESPACE_UTS) != 0) {
-        ret = -1;
-        goto out;
-    }
-
-    // cgroup
-    if (merge_share_single_namespace(oci_spec, host_spec->cgroupns_mode, TYPE_NAMESPACE_CGROUP) != 0) {
         ret = -1;
         goto out;
     }

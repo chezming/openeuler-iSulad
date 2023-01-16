@@ -1266,7 +1266,8 @@ static int cgroup2_enable_all()
     char enable_controllers[PATH_MAX] = { 0 };
 
     controllers_str = util_read_content_from_file(CGROUP2_CONTROLLERS_PATH);
-    if (controllers_str == NULL || strlen(controllers_str) == 0 || strcmp(controllers_str, "\n") == 0) {
+    if (controllers_str == NULL || strlen(controllers_str) == 0 ||
+        strcmp(controllers_str, "\n") == 0) {
         WARN("no cgroup controller found");
         goto out;
     }

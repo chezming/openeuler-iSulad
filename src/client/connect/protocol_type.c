@@ -1,5 +1,5 @@
 /******************************************************************************
- * Copyright (c) Huawei Technologies Co., Ltd. 2018-2022. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2018-2019. All rights reserved.
  * iSulad licensed under the Mulan PSL v2.
  * You can use this software according to the terms and conditions of the Mulan PSL v2.
  * You may obtain a copy of Mulan PSL v2 at:
@@ -23,8 +23,6 @@
 #include "utils_array.h"
 #include "utils_string.h"
 
-#define VALUE_SIZE 36
-
 /* isula filters free */
 void isula_filters_free(struct isula_filters *filters)
 {
@@ -43,53 +41,6 @@ void isula_filters_free(struct isula_filters *filters)
     free(filters->values);
     filters->values = NULL;
     free(filters);
-}
-
-int isula_filters_last_parse_args(size_t last_n, struct isula_filters **flt)
-{
-    int ret = -1;
-    char value[VALUE_SIZE] = { 0 };
-    struct isula_filters *filters = NULL;
-
-    if (last_n == 0) {
-        return ret;
-    }
-
-    filters = util_common_calloc_s(sizeof(*filters));
-    if (filters == NULL) {
-        ERROR("Out of memory");
-        return ret;
-    }
-
-    filters->keys = util_common_calloc_s(sizeof(char *));
-    if (filters->keys == NULL) {
-        ERROR("Out of memory");
-        goto cleanup;
-    }
-    filters->values = util_common_calloc_s(sizeof(char *));
-    if (filters->values == NULL) {
-        ERROR("Out of memory");
-        goto cleanup;
-    }
-
-    ret = snprintf(value, VALUE_SIZE, "%ld", last_n);
-    if (ret < 0 || ret >= VALUE_SIZE) {
-        ret = -1;
-        ERROR("Sprintf lastest n containers args failed");
-        goto cleanup;
-    }
-
-    filters->values[0] = util_strdup_s(value);
-    filters->keys[0] = util_strdup_s("last_n");
-    filters->len = 1;
-
-    *flt = filters;
-    ret = 0;
-    return ret;
-
-cleanup:
-    isula_filters_free(filters);
-    return ret;
 }
 
 struct isula_filters *isula_filters_parse_args(const char **array, size_t len)
@@ -1211,70 +1162,6 @@ void isula_logout_response_free(struct isula_logout_response *response)
     free(response);
 }
 
-#ifdef ENABLE_IMAGE_SEARCH
-
-void search_image_info_free(struct search_image_info *info)
-{
-    if (info == NULL) {
-        return;
-    }
-
-    free(info->name);
-    info->name = NULL;
-
-    free(info->description);
-    info->description = NULL;
-
-    info->star_count = 0;
-
-    free(info);
-}
-
-void isula_search_request_free(struct isula_search_request *request)
-{
-    if (request == NULL) {
-        return;
-    }
-
-    free(request->search_name);
-    request->search_name = NULL;
-
-    request->limit = 0;
-
-    isula_filters_free(request->filters);
-
-    free(request);
-}
-
-void isula_search_response_free(struct isula_search_response *response)
-{
-    int i;
-
-    if (response == NULL) {
-        return;
-    }
-
-    for (i = 0; i < (int)response->result_num; i++) {
-        free(response->search_result[i].name);
-        response->search_result[i].name = NULL;
-
-        free(response->search_result[i].description);
-        response->search_result[i].description = NULL;
-    }
-
-    response->result_num = 0;
-
-    free(response->search_result);
-    response->search_result = NULL;
-
-    free(response->errmsg);
-    response->errmsg = NULL;
-
-    free(response);
-}
-
-#endif
-
 /* isula export request free */
 void isula_export_request_free(struct isula_export_request *request)
 {
@@ -1486,148 +1373,3 @@ void isula_prune_volume_response_free(struct isula_prune_volume_response *respon
     free(response);
 }
 
-#ifdef ENABLE_NATIVE_NETWORK
-/* isula network create request free */
-void isula_network_create_request_free(struct isula_network_create_request *request)
-{
-    if (request == NULL) {
-        return;
-    }
-
-    free(request->name);
-    request->name = NULL;
-    free(request->driver);
-    request->driver = NULL;
-    free(request->gateway);
-    request->gateway = NULL;
-    free(request->subnet);
-    request->subnet = NULL;
-
-    free(request);
-}
-
-/* isula network create response free */
-void isula_network_create_response_free(struct isula_network_create_response *response)
-{
-    if (response == NULL) {
-        return;
-    }
-
-    free(response->name);
-    response->name = NULL;
-    free(response->errmsg);
-    response->errmsg = NULL;
-
-    free(response);
-}
-
-/* isula network inspect request free */
-void isula_network_inspect_request_free(struct isula_network_inspect_request *request)
-{
-    if (request == NULL) {
-        return;
-    }
-
-    free(request->name);
-    request->name = NULL;
-
-    free(request);
-}
-
-/* isula network inspect response free */
-void isula_network_inspect_response_free(struct isula_network_inspect_response *response)
-{
-    if (response == NULL) {
-        return;
-    }
-
-    free(response->json);
-    response->json = NULL;
-    free(response->errmsg);
-    response->errmsg = NULL;
-
-    free(response);
-}
-
-/* isula network list request free */
-void isula_network_list_request_free(struct isula_network_list_request *request)
-{
-    if (request == NULL) {
-        return;
-    }
-
-    isula_filters_free(request->filters);
-    request->filters = NULL;
-
-    free(request);
-}
-
-/* isula network info free */
-void isula_network_info_free(struct isula_network_info *info)
-{
-    if (info == NULL) {
-        return;
-    }
-
-    free(info->name);
-    info->name = NULL;
-    free(info->version);
-    info->version = NULL;
-    util_free_array_by_len(info->plugins, info->plugin_num);
-    info->plugins = NULL;
-
-    free(info);
-}
-
-/* isula network list response free */
-void isula_network_list_response_free(struct isula_network_list_response *response)
-{
-    if (response == NULL) {
-        return;
-    }
-
-    if (response->network_info != NULL) {
-        size_t i;
-
-        for (i = 0; i < response->network_num; i++) {
-            isula_network_info_free(response->network_info[i]);
-            response->network_info[i] = NULL;
-        }
-        free(response->network_info);
-        response->network_info = NULL;
-    }
-
-    free(response->errmsg);
-    response->errmsg = NULL;
-
-    free(response);
-}
-
-/* isula network remove request free */
-void isula_network_remove_request_free(struct isula_network_remove_request *request)
-{
-    if (request == NULL) {
-        return;
-    }
-
-    free(request->name);
-    request->name = NULL;
-
-    free(request);
-}
-
-/* isula network remove response free */
-void isula_network_remove_response_free(struct isula_network_remove_response *response)
-{
-    if (response == NULL) {
-        return;
-    }
-
-    free(response->name);
-    response->name = NULL;
-    free(response->errmsg);
-    response->errmsg = NULL;
-
-    free(response);
-}
-#endif

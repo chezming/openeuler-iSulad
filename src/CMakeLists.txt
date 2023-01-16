@@ -19,6 +19,7 @@ endif()
 if (GRPC_CONNECTOR)
     list(APPEND CHECKED_INCLUDE_DIRS
         ${GRPC_INCLUDE_DIR}
+        ${CLIBCNI_INCLUDE_DIR}
         ${WEBSOCKET_INCLUDE_DIR}
         )
 else()
@@ -30,8 +31,8 @@ else()
 endif()
 list(REMOVE_DUPLICATES CHECKED_INCLUDE_DIRS)
 
-add_subdirectory(common)
 add_subdirectory(utils)
+add_subdirectory(common)
 
 set(SHARED_INCS
     ${CMAKE_CURRENT_SOURCE_DIR}
@@ -41,12 +42,11 @@ set(SHARED_INCS
     ${CHECKED_INCLUDE_DIRS}
     )
 
-add_library(libisulad_tools ${LIBTYPE} ${UTILS_SRCS})
+add_library(libisulad_tools ${LIBTYPE} ${UTILS_SRCS} )
 target_include_directories(libisulad_tools
     PUBLIC ${SHARED_INCS}
     PUBLIC ${ISULA_LIBUTILS_INCLUDE_DIR}
-    )
-
+)
 set_target_properties(libisulad_tools PROPERTIES PREFIX "")
 target_link_libraries(libisulad_tools ${ZLIB_LIBRARY} ${ISULA_LIBUTILS_LIBRARY} ${CRYPTO_LIBRARY})
 
@@ -133,7 +133,6 @@ add_executable(isulad
     ${DAEMON_SRCS}
     ${ISULAD_SRCS}
     ${HTTP_SRCS}
-    ${DAEMON_NETWORK_SRCS}
     )
 
 target_include_directories(isulad PUBLIC
@@ -141,7 +140,6 @@ target_include_directories(isulad PUBLIC
     ${SHARED_INCS}
     ${CONNECT_SOCKET_INCS}
     ${ISULAD_INCS}
-    ${DAEMON_NETWORK_INCS}
     ${CMAKE_CURRENT_SOURCE_DIR}/utils/http
     )
 
@@ -172,12 +170,10 @@ if (GRPC_CONNECTOR)
     target_link_libraries(isulad -Wl,--as-needed -lstdc++)
     target_link_libraries(isulad -Wl,--as-needed ${WEBSOCKET_LIBRARY} ${PROTOBUF_LIBRARY})
     target_link_libraries(isulad -Wl,--no-as-needed ${GRPC_PP_REFLECTION_LIBRARY} ${GRPC_PP_LIBRARY} ${GRPC_LIBRARY} ${GPR_LIBRARY})
-    if (ENABLE_METRICS)
-        target_link_libraries(isulad ${EVHTP_LIBRARY} ${EVENT_LIBRARY})
-    endif()
     if(ABSL_SYNC_LIB)
         target_link_libraries(isulad -Wl,--no-as-needed ${ABSL_SYNC_LIB})
     endif()
+    target_link_libraries(isulad ${CLIBCNI_LIBRARY})
 else()
     message("Restful iSulad")
     target_link_libraries(isulad ${EVHTP_LIBRARY} ${EVENT_LIBRARY})

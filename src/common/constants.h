@@ -126,14 +126,6 @@ extern "C" {
 #define ISULAD_ENABLE_PLUGINS_SEPERATOR ","
 #define ISULAD_ENABLE_PLUGINS_SEPERATOR_CHAR ','
 
-#ifdef ENABLE_NETWORK
-#define ISULAD_CNI_NETWORK_CONF_FILE_PRE "isulacni-"
-#endif
-
-#ifdef ENABLE_SHIM_V2
-#define SHIM_V2_LOG "/log"
-#endif
-
 #define MAX_HOSTS 10
 
 #define OPT_MAX_LEN 255
@@ -148,25 +140,14 @@ extern "C" {
 
 #define CONTAINER_EXEC_ID_MAX_LEN 64
 
-#define SCMP_ARCH_X86_64 "SCMP_ARCH_X86_64"
-#define SCMP_ARCH_AARCH64 "SCMP_ARCH_AARCH64"
-
-#ifdef ENABLE_NETWORK
-#define MAX_NETWORK_CONFIG_FILE_COUNT 1024
-#endif
-
 /* RUNPATH is defined by -DRUNPATH=$value when execute cmake, default is "/var/run" */
 #define CLIENT_RUNDIR RUNPATH"/isula"
+#define SCMP_ARCH_X86_64 "SCMP_ARCH_X86_64"
+#define SCMP_ARCH_AARCH64 "SCMP_ARCH_AARCH64"
 
 #ifdef ENABLE_SUP_GROUPS
 #define GROUPS_NUM_MAX 32
 #define GROUPS_STR_LEN_MAX 5
-#endif
-
-#ifdef ENABLE_IMAGE_SEARCH
-#define MIN_LIMIT 1
-#define MAX_LIMIT 100
-#define DEFAULT_LIMIT 25
 #endif
 
 typedef enum {

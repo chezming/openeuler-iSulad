@@ -2187,6 +2187,7 @@ static int unpack_container_info_for_stats_response(const container_stats_respon
         infos[i].pids_current = con_info->pids_current;
         // cpu usage
         infos[i].cpu_use_nanos = con_info->cpu_use_nanos;
+        infos[i].usage_nano_cores = con_info->usage_nano_cores;
         infos[i].cpu_system_use = con_info->cpu_system_use;
         infos[i].online_cpus = con_info->online_cpus;
         // blk I/O usage

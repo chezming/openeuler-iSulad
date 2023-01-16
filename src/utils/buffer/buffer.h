@@ -16,6 +16,8 @@
 #define UTILS_BUFFER_H
 
 #include <stdlib.h>
+#include <strings.h>
+#include <stdarg.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -38,5 +40,4 @@ void buffer_empty(Buffer *buf);
 #ifdef __cplusplus
 }
 #endif
-
 #endif

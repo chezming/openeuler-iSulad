@@ -45,6 +45,13 @@ TEST(utils_namespace, test_namespace_is_bridge)
     ASSERT_EQ(namespace_is_bridge(nullptr), false);
 }
 
+TEST(utils_namespace, test_namespace_is_file)
+{
+    ASSERT_EQ(namespace_is_file(SHARE_NAMESPACE_HOST), false);
+    ASSERT_EQ(namespace_is_file(SHARE_NAMESPACE_FILE), true);
+    ASSERT_EQ(namespace_is_file(nullptr), false);
+}
+
 TEST(utils_namespace, test_namespace_is_shareable)
 {
     ASSERT_EQ(namespace_is_shareable(SHARE_NAMESPACE_HOST), false);

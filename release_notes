@@ -1,85 +1,237 @@
-2021-12-31 root release 2.1.0
-    - !1268 modify readme Merge pull request !1268 from zhangxiaoyu/master
-    - !1266 enable NATIVE_NETWORK and add documentation Merge pull request !1266 from zhangxiaoyu/master
-    - !1264 fix compile error when building embedded image Merge pull request !1264 from wangfengtu/compile
-    - !1263 add design docs for seccomp optimization and cni-cri refactor Merge pull request !1263 from czrz/master
-    - !1261 fix multithreading exec bug Merge pull request !1261 from zhangxiaoyu/master
-    - !1257 Seccomp optimization Merge pull request !1257 from czrz/seccomp
-    - !1262 fix network ut error Merge pull request !1262 from zhangxiaoyu/dev
-    - !1256 native and cri network code improvement Merge pull request !1256 from zhangxiaoyu/master
-    - !1259 fix codex error Merge pull request !1259 from wangfengtu/fix_codex
-    - !1228 Added new CI test for CNI bridge Merge pull request !1228 from czrz/master
-    - !1251 Add cmake uninstall rule. Merge pull request !1251 from Tiamo0/master
-    - !1253 merge network branch into master Merge pull request !1253 from haozi007/dev-network
-    - !1250 revert scripts format Merge pull request !1250 from JingWoo/CRI2021
-    - !1248 support script format Merge pull request !1248 from JingWoo/CRI2021
-    - !1247 Modified run.sh to test different namespace modes From: @chengzrz Reviewed-by: @duguhaotian Signed-off-by: @duguhaotian
-    - !1245 Fixed a bug that occurs when starting a container in host mode From: @chengzrz Reviewed-by: @duguhaotian Signed-off-by: @duguhaotian
-    - !1239 Optimize websocket streaming service code From: @jingwoo Reviewed-by: Signed-off-by:
-    - !1242 add pull request gateway checker for build and ut From: @duguhaotian Reviewed-by: @jingxiaolu Signed-off-by: @jingxiaolu
-    - !1240 isula pull does not support format name@digest From: @wangfengtu Reviewed-by: @duguhaotian Signed-off-by: @duguhaotian
-    - !1233  fix dangerous memory operation From: @chengzrz Reviewed-by: @duguhaotian Signed-off-by:
-    - !1225 add docker file for build isulad base on openeuler 21:03 docker image From: @duguhaotian Reviewed-by: Signed-off-by:
-    - !1237 fix mem leak From: @gaohuatao Reviewed-by: @duguhaotian Signed-off-by: @duguhaotian
-    - !1235 fix undefined reference to `service_arguments_free' in libisulad_img.so From: @wangfengtu Reviewed-by: @duguhaotian Signed-off-by: @duguhaotian
-    - !1231 fix undefined reference in libisulad_img.so From: @wangfengtu Reviewed-by: @duguhaotian Signed-off-by: @duguhaotian
-    - !1229 fix cri version memory leak From: @zh_xiaoyu Reviewed-by: @duguhaotian Signed-off-by: @duguhaotian
-    - !1226 print valgrind log From: @zh_xiaoyu Reviewed-by: @duguhaotian Signed-off-by: @duguhaotian
-    - !1222 add fuzz build in CI From: @zh_xiaoyu Reviewed-by: @duguhaotian Signed-off-by: @duguhaotian
-    - !1218 Modified cmakelist of storage_layer and added a new mock function in isulad_config_mock to fix errors that happen when compiling with UT option turned on From: @chengzrz Reviewed-by: @duguhaotian Signed-off-by: @duguhaotian
-    - !1219 fix cpu variant get error From: @wangfengtu Reviewed-by: @jingwoo,@duguhaotian Signed-off-by: @duguhaotian
-    - !1193 add string array From: @duguhaotian Reviewed-by: @jingxiaolu Signed-off-by: @jingxiaolu
-    - !1140 iSulad: Add the function of isolating the user namespaces From: @HumbleHunger Reviewed-by: Signed-off-by:
-    - !1215 Fix memory leak in ClearCniNetwork when calling get_sandbox_key From: @chengzrz Reviewed-by: @duguhaotian Signed-off-by: @duguhaotian
-    - !1213 delete isulad h flag From: @gaohuatao Reviewed-by: @duguhaotian Signed-off-by: @duguhaotian
-    - !1210 fix cri libwebsockets sync_close_sem memory leak From: @zh_xiaoyu Reviewed-by: @duguhaotian Signed-off-by: @duguhaotian
-    - !1212 add new function mock for ut From: @duguhaotian Reviewed-by: @jingxiaolu Signed-off-by: @jingxiaolu
-    - !1199 修改runpodsandbox以优化cri的cni网络流程 From: @chengzrz Reviewed-by: Signed-off-by:
-    - !1207 fix memleak when use multiple --volumes-from From: @wangfengtu Reviewed-by: @duguhaotian Signed-off-by: @duguhaotian
-    - !1205 add self def runtime for shimv2 From: @gaohuatao Reviewed-by: Signed-off-by:
-    - !1197 too many cri websocket will connect failed From: @zh_xiaoyu Reviewed-by: @jingwoo,@duguhaotian Signed-off-by: @duguhaotian
-    - !1198 delete unused head file From: @gaohuatao Reviewed-by: @jingwoo,@duguhaotian Signed-off-by: @duguhaotian
-    - !1194 disable lxc_keep wiht oci image From: @gaohuatao Reviewed-by: @duguhaotian Signed-off-by: @duguhaotian
-    - !1196 add branch coverage From: @wangfengtu Reviewed-by: @jingwoo,@duguhaotian Signed-off-by: @duguhaotian
-    - !1195 fix memory leak cause by same default network From: @duguhaotian Reviewed-by: @jingwoo,@jingxiaolu Signed-off-by: @jingxiaolu
-    - !1191 fix layer remain if pull quay.io/coreos/etcd:v3.3.17-arm64 twice From: @wangfengtu Reviewed-by: @gaohuatao,@duguhaotian Signed-off-by: @duguhaotian
-    - !1189 add error message for invalid log driver From: @duguhaotian Reviewed-by: @jingwoo,@jingxiaolu Signed-off-by: @jingxiaolu
-    - !1187 pack daemon_constants.json From: @jingwoo Reviewed-by: @duguhaotian Signed-off-by: @duguhaotian
-    - !1170 cri: add session gc thread From: @zh_xiaoyu Reviewed-by: @jingwoo,@duguhaotian Signed-off-by: @duguhaotian
-    - !1182 cancel shimv2 runtime check error of log From: @gaohuatao Reviewed-by: @duguhaotian Signed-off-by: @duguhaotian
-    - !1181 doc: fix lxc compilation failure in docs/install_iSulad_on_Ubuntu_20_04_LTS.sh From: @jingwoo Reviewed-by: @duguhaotian Signed-off-by: @duguhaotian
-    - !1179 fix copy to container log processing From: @jingwoo Reviewed-by: @duguhaotian Signed-off-by: @duguhaotian
-    - !1178 use LIBARCHIVE_LIBRARY to link libarchive From: @wangfengtu Reviewed-by: @jingwoo,@duguhaotian Signed-off-by: @duguhaotian
-    - !1160 CRI: Fix parse metadata of container, container name supports underscores From: @jingwoo Reviewed-by: @duguhaotian Signed-off-by: @duguhaotian
-    - !1177 CI: fix devmapper deploy failed From: @gaohuatao Reviewed-by: @duguhaotian Signed-off-by: @duguhaotian
-    - !1159 【轻量级 PR】：update docs/integration.md. From: @addozhang Reviewed-by: @duguhaotian Signed-off-by: @duguhaotian
-    - !1173 seccomp: add clone3 to whitelist of x86 From: @gaohuatao Reviewed-by: @duguhaotian,@jingwoo Signed-off-by: @duguhaotian
-    - !1176 fix compile error From: @wangfengtu Reviewed-by: @duguhaotian Signed-off-by: @duguhaotian
-    - !1168 add errno msg for apply diff From: @gaohuatao Reviewed-by: @duguhaotian Signed-off-by: @duguhaotian
-    - !1164 iSulad:Code optimization From: @tiamo0 Reviewed-by: @wangyueliang,@jingwoo,@duguhaotian Signed-off-by: @duguhaotian
-    - !1167 post sem sync_close_sem in closeWsConnect only From: @zh_xiaoyu Reviewed-by: @gaohuatao,@jingwoo,@duguhaotian Signed-off-by: @duguhaotian
-    - !1166 update docs of build guide From: @gaohuatao Reviewed-by: @duguhaotian Signed-off-by: @duguhaotian
-    - !1162 cri: modify protobuf map contains method to count method From: @zh_xiaoyu Reviewed-by: @jingwoo,@duguhaotian Signed-off-by: @duguhaotian
-    - !1161 cri: set session data as lwsContext From: @zh_xiaoyu Reviewed-by: @duguhaotian,@jingwoo Signed-off-by: @duguhaotian
-    - !1158 CRI: Fix parse metadata of sandbox, sandbox name supports underscores From: @jingwoo Reviewed-by: @duguhaotian Signed-off-by: @duguhaotian
-    - !1157 CI: fix metrics related testcases From: @jingwoo Reviewed-by: @duguhaotian Signed-off-by: @duguhaotian
-    - !1155 Fix iSulad cannot killed by SIGTERM and SIGINT when restful used. From: @tiamo0 Reviewed-by: @duguhaotian,@jingwoo Signed-off-by: @duguhaotian
-    - !1156 metrics: unbind socket when metrics server shutdown From: @jingwoo Reviewed-by: @duguhaotian Signed-off-by: @duguhaotian
-    - !1153 CRI: fixed session buffer message not output From: @zh_xiaoyu Reviewed-by: @jingwoo,@duguhaotian,@duguhaotian,@jingwoo,@duguhaotian Signed-off-by: @duguhaotian,@duguhaotian
-    - !1150 remove read lock in websocket write to client From: @zh_xiaoyu Reviewed-by: @jingwoo,@duguhaotian,@duguhaotian Signed-off-by: @duguhaotian
-    - !1124 Support export isulad's metrics. From: @tiamo0 Reviewed-by: Signed-off-by:
-    - !1151 The container command completion function is completed From: @lauk001 Reviewed-by: @jingwoo,@duguhaotian,@duguhaotian Signed-off-by: @duguhaotian,@duguhaotian
-    - !1148 fix unit test compile error From: @wangfengtu Reviewed-by: @gaohuatao,@caihaomin Signed-off-by: @caihaomin
-    - !1146 modify msg From: @gaohuatao Reviewed-by: @duguhaotian Signed-off-by: @duguhaotian,@duguhaotian
-    - !1145 make domain name configurable From: @wangfengtu Reviewed-by: @gaohuatao,@jingwoo,@caihaomin Signed-off-by: @caihaomin
-    - !1144 add default registry transformation in CI From: @wangfengtu Reviewed-by: @duguhaotian Signed-off-by: @duguhaotian
-    - !1142 delete unused macro definition From: @wangfengtu Reviewed-by: @duguhaotian Signed-off-by: @duguhaotian
-    - !1139 make registry transformation configable From: @wangfengtu Reviewed-by: @duguhaotian,@duguhaotian Signed-off-by: @duguhaotian,@duguhaotian
-    - !1114 iSulad: add ws session close mutex From: @zh_xiaoyu Reviewed-by: @jingwoo,@duguhaotian Signed-off-by: @duguhaotian
-    - !1133 CRI: intercept the resize information string when exec resize From: @jingwoo Reviewed-by: @duguhaotian Signed-off-by: @duguhaotian
-    - !1132 do not use CURL_AT_LEAST_VERSION From: @wangfengtu Reviewed-by: @duguhaotian,@gaohuatao Signed-off-by: @duguhaotian
-    - !1130 fix pull failed if some proxy respone headers From: @wangfengtu Reviewed-by: @duguhaotian Signed-off-by: @duguhaotian
-    - !1127 CRI: add some necessary annotations for Sandbox and container From: @jingwoo Reviewed-by: @duguhaotian Signed-off-by: @duguhaotian
+2022-10-08 ubuntu release 2.0.17
+    - !1650 add static for udev_wait_pth_t function
+    - !1644 fix maybe uwait use after free
+    - !1625 add timezone CI test
+    - !1622 add hostname env for container
+    - !1618 calculate timezone by tm_gmtoff
+    - !1616 invalid free default-runtime and cri-runtime after free json-confs
+    - !1613 add isulad args Merge pull request !1613 from zhangxiaoyu/stable-v2.0.x
+    - !1611 Remove redundant header files
+    - !1609 adapt to openssl 3.0
+    - !1605 cleancode about rest register container
+    - !1601 fix memleak
+
+    dev stats:
+      - 21 files changed, 585 insertions(+), 218 deletions(-)
+      - contributors: zhangxiaoyu, haozi007, wujing, WangFengTu, zhongtao
+
+2022-08-23 root release 2.0.16
+    - !1590 [codecheck] cleancode about big function and magic number
+    - !1591 【codecheck】handle some warnings
+    - !1593 [codecheck]the right brace should take a single line
+    - !1589 【codecheck】improve code
+    - !1586 use existing micro OPENSSL_IS_BORINGSSL
+    - !1581 check snprintf return value
+    - !1579 [clang-analyzer] fix memory leak and use after free
+    - !1578 do clean path and check if file exist
+    - !1577 [clang-anaylzer] ensure derenference of non-null pointer
+    - !1575 [clang-analyzer] remove dead assignment
+    - !1573 change default umask to 0022
+    - !1571 [clang-analyzer] ensure agrument with nonnull attirbute passed nonnull
+    - !1569 add fuzz dict Merge pull request !1569 from wangfengtu/add_dict_stable
+    - !1568 fix exec_request_to_rest forgot to handle suffix Merge pull request !1568 from haozi007/stable
+    - !1566 Add read and execute permissions for libhttpclient.so and libisulad_tools.so for other users
+    - !1562 add lose override flag
+    - !1560 remove unused include files
+    - !1558 ensure read string must have space store null char
+    - !1553 set dup_option null after free
+    - !1551 stop health check monitor before stopping container
+    - !1550 fix cpu-quota out of range when update to -1
+    - !1546 fix cri attach when stdout and stderr are false
+    - !1543 cherry pick tolerate arch unspecified seccomp profiles to stable branch
+    - !1538 don't mount shareable dirs if user set mount for dev shm
+    - !1530 use only TLS v1.2 or later
+    - !1528 do not use tmpfile()
+
+    dev stats:
+      - 90 files changed, 589 insertions(+), 415 deletions(-)
+      - contributors: haozi007, WangFengTu, zhangxiaoyu, Neil.wrz, chengzrz, songbuhuang, zhongtao
+
+2022-07-13 ubuntu release 2.0.15
+    - !1523 Add rest api for stats
+    - !1520 stop health check monitor before stopping container Merge pull request !1520 from JingWoo/stable-v2.0.x
+    - !1518 sync patches from master
+    - !1512 refactor fuzz
+    - !1499 wait exit fifo if runtime start failed From: @zh_xiaoyu Reviewed-by: @jingwoo, @duguhaotian Signed-off-by: @duguhaotian
+    - !1498 cherry pick recent commits from master to stable branch From: @chengzrz Reviewed-by: @wangfengtu, @jingwoo Signed-off-by: @jingwoo
+    - !1490 [v2.0.14]可能的double free （src/cmd/isula/information/ps.c:856) From: @songbuhuang Reviewed-by: @jingwoo Signed-off-by: @jingwoo
+    - !1485 gc considers stored monitor pid From: @vegbir Reviewed-by: @duguhaotian Signed-off-by: @duguhaotian
+    - !1483 fix misuse of BUFSIZ From: @wangfengtu Reviewed-by: @duguhaotian Signed-off-by: @duguhaotian
+    - !1478 use util_smart_calloc_t to prevent overflow From: @jingwoo Reviewed-by: @zh_xiaoyu, @duguhaotian Signed-off-by: @duguhaotian
+    - !1481 increase websocket lws_lookup size From: @zh_xiaoyu Reviewed-by: @duguhaotian Signed-off-by: @duguhaotian
+    - !1476 refactor parse_volume function Merge pull request !1476 from JingWoo/My2022-stable
+    - !1475 refactor devmapper_parse_options function Merge pull request !1475 from JingWoo/My2022-stable
+    - !1473 fix inspect -f error when bionic Merge pull request !1473 from wangfengtu/inspect_stable
+    - !1471 set the name of each container and image operation thread for restful version Merge pull request !1471 from JingWoo/My2022-stable
+    - !1470 set the name of each container and image operation thread Merge pull request !1470 from JingWoo/My2022-stable
+    - !1464 fix shm size set invalid when reboot Merge pull request !1464 from zhangxiaoyu/stable-v2.0.x
+    - !1463 sync from master branch From: @duguhaotian Reviewed-by: @jingwoo Signed-off-by: @jingwoo
+    - !1459 fix isulad-shim coredump when remove ioc fd node Merge pull request !1459 from zhangxiaoyu/stable-v2.0.x
+    - !1455 bugfix for double free and use after free From: @zh_xiaoyu Reviewed-by: @duguhaotian Signed-off-by: @duguhaotian
+    - !1454 fix get_network_namespace_path check From: @zh_xiaoyu Reviewed-by: @duguhaotian Signed-off-by: @duguhaotian
+    - !1453 fix invalid convert and format From: @duguhaotian Reviewed-by: @jingwoo Signed-off-by: @jingwoo
+    - !1451 update seccomp to Linux 5.10 syscall list From: @zh_xiaoyu Reviewed-by: @jingwoo Signed-off-by: @jingwoo
+    - !1448 remove check parameter label_opts in init_label From: @zh_xiaoyu Reviewed-by: @duguhaotian Signed-off-by: @duguhaotian
+    - !1446 remove static of strlncat Merge pull request !1446 from zhangxiaoyu/stable-v2.0.x
+    - !1445 sync from master branch From: @duguhaotian Reviewed-by: @jingwoo Signed-off-by: @jingwoo
+    - !1441 sync from master branch seccomp optimiazation Merge pull request !1441 from czrz/stable-v2.0.x
+    - !1440 improve fuzz for pw gr parser Merge pull request !1440 from haozi007/stable-v2.0.x
+    - !1437 fix install error when android From: @wangfengtu Reviewed-by: @duguhaotian Signed-off-by: @duguhaotian
+    - !1435 do not mkdir of isulad if no controller found From: @wangfengtu Reviewed-by: @duguhaotian Signed-off-by: @duguhaotian
+
+    dev stats:
+      - 214 files changed, 3075 insertions(+), 2058 deletions(-)
+      - contributors: zhangxiaoyu, WangFengTu, haozi007, wujing, Neil.wrz, William Dean, ger202, vegbir, chegJH, chengzrz
+
+2022-05-23 root release 2.0.14
+    - !1432 sync from master branch From: @duguhaotian Reviewed-by: @wangfengtu, @jingwoo Signed-off-by: @jingwoo
+    - !1422 sync two patches from master Merge pull request !1422 from wangfengtu/sync
+    - !1419 add check result argument ut From: @duguhaotian Reviewed-by: @jingwoo Signed-off-by: @jingwoo
+    - !1413 fix ut bug and arguments check From: @duguhaotian Reviewed-by: @jingwoo Signed-off-by: @jingwoo
+    - !1411 fix coding irregularities Merge pull request !1411 from JingWoo/My2022-stable
+    - !1410 remove redundant code Merge pull request !1410 from JingWoo/My2022-stable
+    - !1409 clean the gRPC client module code Merge pull request !1409 from JingWoo/My2022-stable
+    - !1408 fix utils module encoding problem Merge pull request !1408 from JingWoo/My2022-stable
+    - !1407 fix cmd/isulad-shim module encoding problem Merge pull request !1407 from JingWoo/My2022-stable
+    - !1405 Adapt to bionic libc, improve lcov coverage Merge pull request !1405 from chegJH/stable-v2.0.x
+    - !1403 adapt to the enabled selinux host environment Merge pull request !1403 from JingWoo/My2022-stable
+    - !1402 Adopt bionic libc, parser for passwd and group ojbect Merge pull request !1402 from chegJH/stable-v2.0.x
+    - !1400 add isula import restful mode to stable branch Merge pull request !1400 from czrz/stable-v2.0.x
+    - !1398 support isula wait even if it's not oci image From: @wangfengtu Reviewed-by: @duguhaotian Signed-off-by: @duguhaotian
+    - !1396 refactor mount parse in spec module Merge pull request !1396 from JingWoo/My2022-stable
+    - !1395 cleancode: http request Merge pull request !1395 from zhangxiaoyu/stable-v2.0.x
+
+    dev stats:
+      - 60 files changed, 1223 insertions(+), 358 deletions(-)
+      - contributors: wujing, haozi007, WangFengTu, chegJH, chengzrz, liyanshui, zhangxiaoyu
+
+2022-04-18 root release 2.0.13
+    - !1389 sync from master branch From: @duguhaotian Reviewed-by: @jingwoo Signed-off-by: @jingwoo
+    - !1386 sync from master branch Merge pull request !1386 from haozi007/stable-v2.0.x
+    - !1385 add isula tag restful mode Merge pull request !1385 from zhangxiaoyu/stable-v2.0.x
+    - !1384 add errno infomation when archive failed Merge pull request !1384 from wangfengtu/archive_msg_stable
+    - !1381 fix no status of health check when restfull Merge pull request !1381 from wangfengtu/health_state_stable
+    - !1379 fix wrong use of DST(Daylight Saving Time) and timezone Merge pull request !1379 from wangfengtu/fix_dst_stable
+    - !1376 fix cricli command not found and run cri stream test without valgrind Merge pull request !1376 from zhangxiaoyu/stable-v2.0.x
+    - !1371 fix cricli command not found in CI test Merge pull request !1371 from zhangxiaoyu/stable-v2.0.x
+    - !1368 Add restful interface isula pull/login/logout Merge pull request !1368 from zhangxiaoyu/stable-v2.0.x
+    - !1367 fix cri attach coredump Merge pull request !1367 from zhangxiaoyu/stable-v2.0.x
+    - !1361 support isula attach when restfull Merge pull request !1361 from wangfengtu/attach_stable
+    - !1360 fix user take no effect when restfull Merge pull request !1360 from wangfengtu/user_stable
+    - !1358 support rename subcommand in restful mode Merge pull request !1358 from haozi007/stable-v2.0.x
+
+    dev stats:
+      - 21 files changed, 1446 insertions(+), 119 deletions(-)
+      - contributors: WangFengTu, haozi007, zhangxiaoyu, yanshui.li
+
+2022-03-24 root release 2.0.12
+    - update v2.0.12 release notes
+    - fix openssl-verify invalid disable metadata
+    - !1353 update version of iSulad to v2.0.12 Merge pull request !1353 from haozi007/stable-v2.0.x
+    - !1350 remove temporary file only when write file failed From: @wangfengtu Reviewed-by: @duguhaotian Signed-off-by: @duguhaotian
+    - !1348 remove temporary file if write atomic file failed Merge pull request !1348 from wangfengtu/tmp_file_stable
+    - !1346 Modify error message thrown when User defined network is default network for disambiguation Merge pull request !1346 from czrz/stable-v2.0.x
+    - !1344 fix bugs of userns-remap and add -DENABLE_USERNS_REMAP From: @wangfengtu Reviewed-by: @duguhaotian Signed-off-by: @duguhaotian
+    - !1342 remove unnecessary wrong message Merge pull request !1342 from haozi007/stable-v2.0.x
+    - !1340 fix uid/gid error when load image Merge pull request !1340 from wangfengtu/uidgid-stable
+    - !1338 enlarge rest buffer limit to support --security-opt Merge pull request !1338 from wangfengtu/security-opt-stable
+    - !1336 fixbug restful interface isula pause/unpause Merge pull request !1336 from wangfengtu/pause_stable
+    - !1334 sync from master branch Merge pull request !1334 from haozi007/stable-v2.0.x
+    - !1330 add restful interface isula export From: @xiaochaowang Reviewed-by: @duguhaotian Signed-off-by: @duguhaotian
+    - !1328 add -DSYSCONFDIR_PREFIX as prefix when read config Merge pull request !1328 from wangfengtu/etc_stable
+    - !1326 fix exec --workdir take no effect when restfull Merge pull request !1326 from wangfengtu/workdir_stable
+    - !1321 do not fail even if no cgroup controller found when cgroupv2 Merge pull request !1321 from wangfengtu/no_controller_stable
+    - !1314 iSulad: Add the function of isolating the user namespaces Merge pull request !1314 from wangfengtu/userns-remap
+    - !1312 add restful interface isula info Merge pull request !1312 from xiaochaowang/stable-v2.0.x
+
+    dev stats:
+      - 37 files changed, 1566 insertions(+), 72 deletions(-)
+      - contributors: WangFengTu, haozi007, root, wangxiaochao, HumbleHunger, chengzrz
+
+2022-02-24 root release 2.0.11
+    - !1309 improve ci of stable branch Merge pull request !1309 from haozi007/stable-v2.0.x
+    - !1308 continue pulling even if no Docker-Distribution-Api-Version found Merge pull request !1308 from wangfengtu/pull_fail_stable
+    - !1305 Give a default network namespace mode when linux field is not configured Merge pull request !1305 from czrz/stable-v2.0.x
+    - !1304 disable image related command if disable oci and disable embedded Merge pull request !1304 from wangfengtu/disable_commands_stable
+    - !1302 support change RUNPATH when compile Merge pull request !1302 from wangfengtu/rundir
+    - !1299 fix lose regexec for android From: @duguhaotian Reviewed-by: @jingxiaolu Signed-off-by: @jingxiaolu
+    - !1298 sync from master branch Merge pull request !1298 from haozi007/stable-v2.0.x
+    - !1295 adapt android compile From: @wangfengtu Reviewed-by: @duguhaotian Signed-off-by: @duguhaotian
+    - !1293 sync from master branch From: @duguhaotian Reviewed-by: @jingxiaolu Signed-off-by: @jingxiaolu
+    - !1290 print error when dlsym failed Merge pull request !1290 from wangfengtu/dlsym_error_stable
+    - !1288 do not timeout when use restfull to connect to daemon Merge pull request !1288 from wangfengtu/timeout_stable
+    - !1273 refactor build system of iSulad Merge pull request !1273 from haozi007/stable-v2.0.x
+    - !1278 fix multithreading exec bug Merge pull request !1278 from zhangxiaoyu/stable-v2.0.x
+    - !1276 fix compile error of isula-transform Merge pull request !1276 from wangfengtu/transform-stable
+    - !1272 fix compile error with grpc 1.41.x Merge pull request !1272 from zhangxiaoyu/stable-v2.0.x
+    - !1267 【stable】fix compile error when building embedded image Merge pull request !1267 from wangfengtu/compile_stable
+    - !1260 fix codex error Merge pull request !1260 from wangfengtu/fix_codex_stable
+    - !1255 fix memory leak in CniNetworkPlugin Merge pull request !1255 from zhangxiaoyu/stable-v2.0.x
+    - !1246 Fixed a bug that occurs when starting a container in host mode Merge pull request !1246 from czrz/stable-v2.0.x
+    - !1244 Optimize websocket streaming service code Merge pull request !1244 from JingWoo/stable-v2.0.x
+    - !1243 add pull request gateway checker for build and ut From: @duguhaotian Reviewed-by: @jingxiaolu Signed-off-by: @jingxiaolu
+    - !1234 fix dangerous memory operation and memory leak Merge pull request !1234 from czrz/stable-v2.0.x
+    - !1241 isula pull does not support format name@digest Merge pull request !1241 from wangfengtu/remove_digest_stable
+    - !1238 fix mem leak Merge pull request !1238 from gaohuatao/sta_ght
+    - !1236 fix undefined reference to `service_arguments_free' in libisulad_img.so From: @wangfengtu Reviewed-by: @duguhaotian Signed-off-by: @duguhaotian
+    - !1232 fix undefined reference in libisulad_img.so Merge pull request !1232 from wangfengtu/undefine_stable
+    - !1230 fix cri version memory leak From: @zh_xiaoyu Reviewed-by: @duguhaotian Signed-off-by: @duguhaotian
+    - !1227 print valgrind log Merge pull request !1227 from zhangxiaoyu/stable-v2.0.x
+    - !1224 add fuzz build in CI From: @zh_xiaoyu Reviewed-by: @duguhaotian Signed-off-by: @duguhaotian
+    - !1221 Modified cmakelist of storage_layer and added a new mock function in isulad_config_mock to fix errors that happen when compiling with UT option turned on From: @chengzrz Reviewed-by: @duguhaotian Signed-off-by: @duguhaotian
+    - !1220 fix cpu variant get error From: @wangfengtu Reviewed-by: @duguhaotian Signed-off-by: @duguhaotian
+    - !1217 fix cri libwebsockets sync_close_sem memory leak From: @zh_xiaoyu Reviewed-by: @duguhaotian Signed-off-by: @duguhaotian
+    - !1216 Fix memory leak in ClearCniNetwork when calling get_sandbox_key From: @chengzrz Reviewed-by: @duguhaotian Signed-off-by: @duguhaotian
+    - !1214 delete isulad h flag Merge pull request !1214 from gaohuatao/sta_ght
+    - !1211 add new function mock for ut From: @duguhaotian Reviewed-by: @jingwoo,@jingxiaolu Signed-off-by: @jingxiaolu
+    - !1209 Modified the procedure of running a pod to adapt to kata 2.0 From: @chengzrz Reviewed-by: @duguhaotian Signed-off-by: @duguhaotian
+    - !1208 fix memleak when use multiple --volumes-from Merge pull request !1208 from wangfengtu/memleak_stable
+    - !1206 add self def runtime for shimv2 From: @gaohuatao Reviewed-by: @duguhaotian Signed-off-by: @duguhaotian
+
+    dev stats:
+      - 198 files changed, 2717 insertions(+), 1232 deletions(-)
+      - contributors: WangFengTu, haozi007, zhangxiaoyu, chengzrz, SmartsYoung, gaohuatao, wujing
+
+2021-11-09 gaohuatao release 2.0.10
+    - !1203 too many cri websocket will connect failed Merge pull request !1203 from zhangxiaoyu/stable-v2.0.x
+    - !1202 delete unused head file Merge pull request !1202 from gaohuatao/sta_ght
+    - !1201 disable lxc_keep wiht oci image Merge pull request !1201 from gaohuatao/sta_ght
+    - !1200 fix memory leak cause by same default network Merge pull request !1200 from haozi007/v2.0.x
+    - !1192 fix layer remain if pull quay.io/coreos/etcd:v3.3.17-arm64 twice Merge pull request !1192 from wangfengtu/remain_stable
+    - !1190 add error message for invalid log driver From: @duguhaotian Reviewed-by: @jingxiaolu Signed-off-by: @jingxiaolu
+    - !1188 pack daemon_constants.json From: @jingwoo Reviewed-by: @duguhaotian Signed-off-by: @duguhaotian
+
+    dev stats:
+      - 14 files changed, 25 insertions(+), 12 deletions(-)
+      - contributors: gaohuatao, haozi007, WangFengTu, wujing, zhangxiaoyu
+
+2021-10-11 root release 2.0.9
+    - cri: add session gc thread
+    - doc: fix lxc compilation failure in docs/install_iSulad_on_Ubuntu_20_04_LTS.sh
+    - fix copy to container log processing
+    - use LIBARCHIVE_LIBRARY to link libarchive
+    - CI: fix devmapper deploy failed
+    - fix compile error
+    - Code optimization
+    - cri: modify protobuf map contains method to count method
+    - CRI: Fix parse metadata of container, container name supports underscores
+    - CRI: Fix parse metadata of sandbox, sandbox name supports underscores
+    - !1183 cancel shimv2 runtime check error of log Merge pull request !1183 from gaohuatao/sta_ght
+    - !1174 seccomp: add clone3 to whitelist of x86 From: @gaohuatao Reviewed-by: @duguhaotian Signed-off-by: @duguhaotian
+    - !1171 post sem sync_close_sem in closeWsConnect only Merge pull request !1171 from zhangxiaoyu/stable-v2.0.x
+    - !1169 add errno msg for apply diff Merge pull request !1169 from gaohuatao/sta_ght
+    - !1163 cri: set session data as lwsContext Merge pull request !1163 from zhangxiaoyu/stable-v2.0.x
+    - !1154 CRI: fixed session buffer message not output Merge pull request !1154 from zhangxiaoyu/stable-v2.0.x
+    - !1152 iSulad: add ws session close mutex Merge pull request !1152 from zhangxiaoyu/stable-v2.0.x
+    - !1135 iSulad: add ws session close mutex Merge pull request !1135 from zhangxiaoyu/stable-v2.0.x
+    - !1149 make domain name configurable Merge pull request !1149 from wangfengtu/configurable_stable
+    - !1147 modify msg Merge pull request !1147 from gaohuatao/sta_warn
+    - !1141 make registry transformation configable Merge pull request !1141 from wangfengtu/registry_transformation_stable
+    - !1138 revert mask tcpm Merge pull request !1138 from haozi007/revert-merge-1137-stable-v2.0.x
+    - !1137 mask tcpm Merge pull request !1137 from gaohuatao/stable
+    - !1134 CRI: intercept the resize information when exec resize Merge pull request !1134 from JingWoo/stable-v2.0.x
+    - !1131 fix pull failed if some proxy response headers Merge pull request !1131 from wangfengtu/proxy_stalbe-v2.0.x
+    - !1129 CRI: add some necessary annotations for Sandbox and container Merge pull request !1129 from JingWoo/stable-v2.0.x
     - !1126 CRI: support exec resize From: @jingwoo Reviewed-by: @duguhaotian Signed-off-by: @duguhaotian
     - !1125 CI: test default shared namespace in pod From: @jingwoo Reviewed-by: @gaohuatao,@duguhaotian Signed-off-by: @duguhaotian
     - !1123 CRI: share uts namespace by default in pod From: @jingwoo Reviewed-by: @duguhaotian,@gaohuatao,@duguhaotian Signed-off-by: @duguhaotian,@duguhaotian
@@ -187,8 +339,8 @@
     - !930 make thread detach to avoid resource leak From: @wangfengtu Reviewed-by: @lifeng2221dd1 Signed-off-by: @lifeng2221dd1
 
     dev stats:
-      - 414 files changed, 34805 insertions(+), 4089 deletions(-)
-      - contributors: zhangxiaoyu, haozi007, gaohuatao, WangFengTu, wujing, Li Feng, HumbleHunger, chengzrz, lifeng68, Tiamo0, jikui, AddoZhang, Annlix, NiGo, XiyouNiGo, holyfei, lauk001, tiamo0, wangyueliang, xiapin, xingweizheng, yin-xiujiang, yinxiujiang, zhangsong234, 尹秀江, 许振涛
+      - 213 files changed, 8427 insertions(+), 1995 deletions(-)
+      - contributors: WangFengTu, gaohuatao, wujing, Li Feng, zhangxiaoyu, haozi007, lifeng68, Tiamo0, jikui, Annlix, NiGo, XiyouNiGo, holyfei, wangyueliang, xingweizheng, yin-xiujiang, yinxiujiang, zhangsong234, 尹秀江, 许振涛
 
 2020-12-30 lifeng release 2.0.8
     - !920 implent inspect of  multy formats From: @jackey_1024 Reviewed-by: Signed-off-by:

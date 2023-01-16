@@ -2939,6 +2939,32 @@ static int deduplicate_names(storage_image *im)
     return 0;
 }
 
+static int deduplicate_names(storage_image *im)
+{
+    char **unique_names = NULL;
+    size_t unique_names_len = 0;
+
+    if (im == NULL) {
+        ERROR("invalid NULL param");
+        return -1;
+    }
+
+    if (im->names_len == 0) {
+        return 0;
+    }
+
+    if (util_string_array_unique((const char **)im->names, im->names_len, &unique_names, &unique_names_len) != 0) {
+        ERROR("Failed to unique names");
+        return -1;
+    }
+
+    util_free_array_by_len(im->names, im->names_len);
+    im->names = unique_names;
+    im->names_len = unique_names_len;
+
+    return 0;
+}
+
 static int strip_default_hostname(storage_image *im)
 {
     int ret = 0;

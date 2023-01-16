@@ -14,16 +14,10 @@
  *********************************************************************************/
 #include "cri_image_manager_service_impl.h"
 
-#include <iostream>
 #include <memory>
-#include <string>
 #include <utility>
 #include <vector>
-
-#include <grpc++/grpc++.h>
 #include <unistd.h>
-
-#include "cri_helpers.h"
 #include "err_msg.h"
 #include "events_sender_api.h"
 #include "isula_libutils/log.h"
@@ -150,7 +144,7 @@ void ImageManagerServiceImpl::list_images_to_grpc(im_list_response *response,
 
         imagetool_image_summary *element = list_images->images[i];
         conv_image_to_grpc(element, image);
-        images->push_back(move(image));
+        images->push_back(std::move(image));
     }
 }
 

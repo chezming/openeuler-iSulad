@@ -44,9 +44,9 @@ IF(ENABLE_UT)
     add_subdirectory(runtime)
     add_subdirectory(specs)
     add_subdirectory(services)
-    add_subdirectory(network)
-    add_subdirectory(volume)
-
+    add_subdirectory(sha256)
+    add_subdirectory(buffer)
+    add_subdirectory(console)
 ENDIF(ENABLE_UT)
 
 IF(ENABLE_FUZZ)
@@ -55,16 +55,16 @@ ENDIF(ENABLE_FUZZ)
 
 IF(ENABLE_COVERAGE)
     add_custom_target(coverage
-        COMMAND lcov --directory . --zerocounters --rc lcov_branch_coverage=1
-        COMMAND lcov -c -i -d . -o coverage.base --rc lcov_branch_coverage=1
+        COMMAND lcov --directory . --zerocounters
+        COMMAND lcov -c -i -d . -o coverage.base
 
         COMMAND ctest
 
-        COMMAND lcov --directory . --capture --output-file coverage.info --rc lcov_branch_coverage=1
-        COMMAND lcov -a coverage.base -a coverage.info --output-file coverage.total --rc lcov_branch_coverage=1
-        COMMAND lcov --remove coverage.total '/usr/include/*' --output-file coverage.total --rc lcov_branch_coverage=1
-        COMMAND lcov --remove coverage.total ${COVERAGE_EXCLUDES} --output-file ${PROJECT_BINARY_DIR}/coverage.info.cleaned --rc lcov_branch_coverage=1
-        COMMAND genhtml -o coverage ${PROJECT_BINARY_DIR}/coverage.info.cleaned --branch-coverage --rc lcov_branch_coverage=1
+        COMMAND lcov --directory . --capture --output-file coverage.info
+        COMMAND lcov -a coverage.base -a coverage.info --output-file coverage.total
+        COMMAND lcov --remove coverage.total '/usr/include/*' --output-file coverage.total
+        COMMAND lcov --remove coverage.total ${COVERAGE_EXCLUDES} --output-file ${PROJECT_BINARY_DIR}/coverage.info.cleaned
+        COMMAND genhtml -o coverage ${PROJECT_BINARY_DIR}/coverage.info.cleaned
         COMMAND ${CMAKE_COMMAND} -E remove coverage.base coverage.total ${PROJECT_BINARY_DIR}/coverage.info.cleaned
 
         WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
