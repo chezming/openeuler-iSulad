@@ -835,6 +835,26 @@ void ContainerManagerServiceImpl::ContainerStatsToGRPC(
             container->mutable_memory()->set_timestamp(timestamp);
         }
 
+        if (response->container_stats[i]->avaliable_bytes != 0){
+            uint64_t workingset = response->container_stats[i]->avaliable_bytes;
+            container->mutable_memory()->mutable_available_bytes()->set_value(workingset);
+        }
+        if (response->container_stats[i]->usage_bytes != 0){
+            uint64_t workingset = response->container_stats[i]->usage_bytes;
+            container->mutable_memory()->mutable_usage_bytes()->set_value(workingset);
+        }
+        if (response->container_stats[i]->rss_bytes != 0){
+            uint64_t workingset = response->container_stats[i]->rss_bytes;
+            container->mutable_memory()->mutable_rss_bytes()->set_value(workingset);
+        }
+        if (response->container_stats[i]->page_faults != 0){
+            uint64_t workingset = response->container_stats[i]->page_faults;
+            container->mutable_memory()->mutable_page_faults()->set_value(workingset);
+        }
+        if (response->container_stats[i]->major_page_faults != 0){
+            uint64_t workingset = response->container_stats[i]->major_page_faults;
+            container->mutable_memory()->mutable_major_page_faults()->set_value(workingset);
+        }
         if (response->container_stats[i]->cpu_use_nanos != 0u) {
             container->mutable_cpu()->mutable_usage_core_nano_seconds()->set_value(
                 response->container_stats[i]->cpu_use_nanos);

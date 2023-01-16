@@ -1302,6 +1302,16 @@ message MemoryUsage {
     int64 timestamp = 1;
     // The amount of working set memory in bytes.
     UInt64Value working_set_bytes = 2;
+    // Available memory for use. This is defined as the memory limit - workingSetBytes.
+    UInt64Value available_bytes = 3;
+    // Total memory in use. This includes all memory regardless of when it was accessed.
+    UInt64Value usage_bytes = 4;
+    // The amount of anonymous and swap cache memory (includes transparent hugepages).
+    UInt64Value rss_bytes = 5;
+    // Cumulative number of minor page faults.
+    UInt64Value page_faults = 6;
+    // Cumulative number of major page faults.
+    UInt64Value major_page_faults = 7;
 }
 
 message ReopenContainerLogRequest {
