@@ -1074,6 +1074,63 @@ int release_volumes(container_config_v2_common_config_mount_points *mount_points
     return ret;
 }
 
+static void do_delete_network(container_t *cont)
+{
+    if (cont->network_settings == NULL || cont->network_settings->sandbox_key == NULL) {
+        return;
+    }
+
+#ifdef ENABLE_NATIVE_NETWORK
+    if (util_native_network_checker(cont->hostconfig->network_mode)) {
+        if (remove_native_network(cont) != 0) {
+            WARN("Failed to remove network when delete container %s, maybe it has been cleaned up",
+                 cont->common_config->id);
+        }
+        if (remove_network_namespace_file(cont->network_settings->sandbox_key) != 0) {
+            ERROR("Failed to remove network ns file when deleting container %s", cont->common_config->id);
+        }
+
+        return;
+    }
+#endif
+
+    if (!namespace_is_cni(cont->hostconfig->network_mode)) {
+        return;
+    }
+
+    if (remove_network_namespace(cont->network_settings->sandbox_key) != 0) {
+        WARN("Failed to remove network ns when deleting container %s, maybe it has been cleaned up",
+             cont->common_config->id);
+    }
+    if (remove_network_namespace_file(cont->network_settings->sandbox_key) != 0) {
+        ERROR("Failed to remove network ns file when deleting container %s", cont->common_config->id);
+    }
+}
+
+static int delete_client_fifo_home_dir(const char *name)
+{
+    char *client_fifo_home_dir = NULL;
+
+    client_fifo_home_dir = util_path_join(CLIENT_RUNDIR, name);
+    if (client_fifo_home_dir == NULL) {
+        ERROR("Fail to get fifo home dir");
+        return -1;
+    }
+
+    // Do not delete if the directory does not exist.
+    if (!util_file_exists(client_fifo_home_dir)) {
+        free(client_fifo_home_dir);
+        return 0;
+    }
+
+    if (util_recursive_rmdir(client_fifo_home_dir, 0)) {
+        WARN("Failed to delete client fifo home path:%s", client_fifo_home_dir);
+    }
+    
+    free(client_fifo_home_dir);
+    return 0;
+}
+
 static int do_delete_container(container_t *cont)
 {
     int ret = 0;
@@ -1171,6 +1228,14 @@ static int do_delete_container(container_t *cont)
     }
 
 out:
+    // when container is auto-remove, it will be deleted when stopped.
+    // isula has no suitable time to delete fifo dir, so isulad delete it here.
+    // Whether the delete container operation fails or not, delete the client's fifo dir to avoid it residual.
+    // When isula and isulad use tcp to connect, fifo files will not be created. 
+    // Because restart will set auto_remove to false, using auto_remove_bak to ensure delete Policy.
+    if (cont->hostconfig != NULL && cont->hostconfig->auto_remove_bak && delete_client_fifo_home_dir(id) != 0) {
+        WARN("Failed to delete client fifo home dir");
+    }
     container_unlock(cont);
     return ret;
 }
