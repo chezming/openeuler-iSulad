@@ -79,14 +79,19 @@ message Container_info {
 	uint64 blkio_read = 9;
 	uint64 blkio_write = 10;
 	uint64 mem_used = 11;
-	uint64 mem_limit = 12;
-	uint64 kmem_used = 13;
-	uint64 kmem_limit = 14;
-	string name = 15;
-	string status = 16;
-	uint64 cache = 17;
-	uint64 cache_total = 18;
-	uint64 inactive_file_total = 19;
+	uint64 avaliable_bytes = 12;
+	uint64 usage_bytes = 13;
+	uint64 rss_bytes = 14;
+	uint64 page_faults = 15;
+	uint64 major_page_faults = 16;
+	uint64 mem_limit = 17;
+	uint64 kmem_used = 18;
+	uint64 kmem_limit = 19;
+	string name = 20;
+	string status = 21;
+	uint64 cache = 22;
+	uint64 cache_total = 23;
+	uint64 inactive_file_total = 24;
 }
 
 message Event {
