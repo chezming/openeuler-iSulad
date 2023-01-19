@@ -284,6 +284,7 @@ message LinuxSandboxSecurityContext {
     bool privileged = 6;
     // Seccomp profile for the sandbox.
     SecurityProfile seccomp = 9;
+    SecurityProfile apparmor = 10;
     // Seccomp profile for the sandbox, candidate values are:
     // * runtime/default: the default profile for the container runtime
     // * unconfined: unconfined profile, ie, no seccomp sandboxing
@@ -292,6 +293,7 @@ message LinuxSandboxSecurityContext {
     // Default: "", which is identical with unconfined.
     // note: deprecated=true
     string seccomp_profile_path = 7;
+    // [deprecated=true];
 }
 
 // A security profile which can be used for sandboxes and containers.
@@ -589,6 +591,12 @@ message LinuxContainerResources {
     string cpuset_mems = 7;
     // List of HugepageLimits to limit the HugeTLB usage of container per page size. Default: nil (not specified).
     repeated HugepageLimit hugepage_limits = 8;
+    // Unified resources for cgroup v2. Default: nil (not specified).
+    // Each key/value in the map refers to the cgroup v2.
+    // e.g. "memory.max": "6937202688" or "io.weight": "default 100".
+    map<string, string> unified = 9;
+    // Memory swap limit in bytes. Default 0 (not specified).
+    int64 memory_swap_limit_in_bytes = 10;
 }
 
 // HugepageLimit corresponds to the file`hugetlb.<hugepagesize>.limit_in_byte` in container level cgroup.
@@ -616,6 +624,8 @@ message Capability {
     repeated string add_capabilities = 1;
     // List of capabilities to drop.
     repeated string drop_capabilities = 2;
+    // List of ambient capabilities to add.
+    repeated string add_ambient_capabilities = 3;
 }
 
 // LinuxContainerSecurityContext holds linux security configuration that will be applied to a container.
@@ -670,6 +680,7 @@ message LinuxContainerSecurityContext {
     //    (localhost) by name. The possible profile names are detailed at
     //    http://wiki.apparmor.net/index.php/AppArmor_Core_Policy_Reference
     string apparmor_profile = 9;
+    // [deprecated=true];
     // Seccomp profile for the container, candidate values are:
     // * runtime/default: the default profile for the container runtime
     // * unconfined: unconfined profile, ie, no seccomp sandboxing
@@ -678,6 +689,7 @@ message LinuxContainerSecurityContext {
     // Default: "", which is identical with unconfined.
     // note: deprecated=true
     string seccomp_profile_path = 10;
+    // [deprecated=true];
     // no_new_privs defines if the flag for no_new_privs should be set on the
     // container.
     bool no_new_privs = 11;
@@ -969,7 +981,7 @@ message ContainerStatus {
     repeated Mount mounts = 14;
     // Log path of container.
     string log_path = 15;
-}
+ }
 
 message ContainerStatusResponse {
     // Status of the container.

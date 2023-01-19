@@ -63,6 +63,17 @@ static void ModifyHostConfigCapabilities(const runtime::v1alpha2::LinuxContainer
             hostConfig->cap_drop_len++;
         }
     }
+    const google::protobuf::RepeatedPtrField<std::string> &ambientCapAdd = sc.capabilities().add_ambient_capabilities();
+    if (!ambientCapAdd.empty()) {
+        hostConfig->ambient_cap_add = (char **)util_smart_calloc_s(sizeof(char *), ambientCapAdd.size());
+        if (hostConfig->ambient_cap_add == nullptr) {
+            error.SetError("Out of memory");
+        }
+        for (int i=0; i < ambientCapAdd.size(); i++) {
+            hostConfig->ambient_cap_add[i] = util_strdup_s(ambientCapAdd[i].c_str());
+            hostConfig->ambient_cap_add_len++;
+        }
+    }
 }
 
 static void ModifyHostConfigNoNewPrivs(const runtime::v1alpha2::LinuxContainerSecurityContext &sc,
