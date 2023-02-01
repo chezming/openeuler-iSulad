@@ -1,41 +1,3 @@
-<<<<<<< HEAD
-# Problem defenition
-
-Right now **Kubernetes** we are mostly talking about kubectl supports only [SPDY](https://www.chromium.org/spdy/) protocol for command execution and for  [CRI](https://kubernetes.io/docs/setup/production-environment/container-runtimes/#cri-o) interraction.  SPDY was deprecated a few years ago and now should be switched to something else, for example [websockets](https://www.rfc-editor.org/rfc/rfc6455.html).
-
-## Some brief history
-
-This section should help you to understand why  websockets approach still wasn't implemented in current k8s implementation.
-
-### 2015
-
-[SPDY is deprecated. Switch to HTTP/2.](https://github.com/kubernetes/kubernetes/issues/7452), despite "open" PR this better be closed, because firsty the were blocked by GOlang developers [1](https://github.com/golang/go/issues/13444). Nevertheless looks like all faced problems until now have has been resolved, but now they dont have any sort of consesus about HTTP/2 or other possible ways of SPDY deprecation.
-
-### 2020
-
-[kubectl exec/attach using websockets](https://github.com/kubernetes/kubernetes/issues/89163)
-
-In this issue Kubernetes team discussing faced issues with SPDY.
-as for now Websockets are highly used in API server and kubelet, for example for version release-1.19, look [here](https://github.com/kubernetes/kubernetes/blob/release-1.19/pkg/kubelet/cri/streaming/remotecommand/websocket.go#L26) for details.
-
-
-## Current situation
-
-Right now some big parts of k8s are alrerady using websockets; if  you look closely to the source code you will find that main websocket library is a part of standart [golang networking](https://pkg.go.dev/golang.org/x/net) package [websocket](https://pkg.go.dev/golang.org/x/net/websocket), also you can find gorilla/websockets package. In other words k8s community is actively trying to remove SPDY.
-
-# KubeCTL
-
-This package is using SPDY for container control and communication, for example [here](https://github.com/kubernetes/kubernetes/blob/master/staging/src/k8s.io/client-go/tools/remotecommand/remotecommand.go#L31).
-
-
-There are several tryouts about untroducing websockets into kubetcl, for example: 
-
-[Latest](https://github.com/kubernetes/kubernetes/pull/110142) 
-
-[Previous (less lucky)](https://github.com/kubernetes/kubernetes/pull/107125)
-
-We will discuss only latest PR because this was closest to merge PR.
-=======
 
 | Author | Ilya Kuksenok                                        |
 | ------ | ---------------------------------------------------- |
@@ -102,7 +64,6 @@ There were several tryouts about untroducing websockets into kubetcl, for exampl
 [Latest](https://github.com/kubernetes/kubernetes/pull/110142)
 
 [Previous](https://github.com/kubernetes/kubernetes/pull/107125)
->>>>>>> upstream/master
 
 ## Currently faced problems
 
