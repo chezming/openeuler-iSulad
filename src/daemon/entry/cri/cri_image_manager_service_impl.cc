@@ -67,6 +67,17 @@ static void conv_image_to_grpc(const imagetool_image_summary *element, std::uniq
     if (element->username != nullptr) {
         image->set_username(element->username);
     }
+	 //add image_spec,pinned
+    if (element->spec != nullptr && element->spec->image!=nullptr){
+        runtime::v1alpha2::ImageSpec *is = new (std::nothrow) runtime::v1alpha2::ImageSpec;
+        if (is == nullptr) {
+            return;
+        }
+        is->set_image(element->spec->image);
+        image->set_allocated_spec(is);
+    }
+    image->set_pinned(element->pinned);
+	
 }
 
 auto ImageManagerServiceImpl::pull_request_from_grpc(const runtime::v1alpha2::ImageSpec *image,
