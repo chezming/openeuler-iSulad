@@ -15,12 +15,20 @@
 #ifndef DAEMON_ENTRY_CRI_CRI_RUNTIME_SERVICE_IMPL_H
 #define DAEMON_ENTRY_CRI_CRI_RUNTIME_SERVICE_IMPL_H
 
+#include "cri_runpodsandbox_service.h"
+#include "cri_stoppodsandbox_service.h"
+#include "cri_removepodsandbox_service.h"
+#include "cri_statuspodsandbox_service.h"
+#include "cri_listpodsandbox_service.h"
+
+
+#include "cri_container_manager_service.h"
 #include "cri_runtime_service.h"
 #include "cri_runtime_versioner_service.h"
-#include "cri_container_manager_service.h"
-#include "cri_pod_sandbox_manager_service.h"
 #include "cri_runtime_manager_service.h"
 #include "callback.h"
+
+
 
 namespace CRI {
 class CRIRuntimeServiceImpl : public CRIRuntimeService {
@@ -84,13 +92,19 @@ public:
 
 protected:
     std::unique_ptr<RuntimeVersionerService> m_runtimeVersioner;
-    std::unique_ptr<ContainerManagerService> m_containerManager;
-    std::unique_ptr<PodSandboxManagerService> m_podSandboxManager;
     std::unique_ptr<RuntimeManagerService> m_runtimeManager;
-
+    std::unique_ptr<RunPodSandboxService> m_runPodSandbox;
+    std::unique_ptr<StopPodSandboxService> m_stopPodSandbox;
+    std::unique_ptr<StatusPodSandboxService> m_statusPodSandbox;
+    std::unique_ptr<RemovePodSandboxService> m_removePodSandbox;
+    std::unique_ptr<ListPodSandboxService> m_listPodSandbox;
+    std::unique_ptr<ContainerManagerService> m_containerManager;
 private:
     std::string m_podSandboxImage;
+    std::mutex networkReadyLock;
+    std::map<std::string, bool> networkReady;
     std::shared_ptr<Network::PluginManager> m_pluginManager { nullptr };
 };
 } // namespace CRI
 #endif // DAEMON_ENTRY_CRI_CRI_RUNTIME_SERVICE_IMPL_H
+
