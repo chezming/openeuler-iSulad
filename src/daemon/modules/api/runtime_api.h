@@ -49,6 +49,7 @@ struct runtime_container_resources_stats_info {
     /* CPU usage */
     uint64_t cpu_use_nanos;
     uint64_t cpu_system_use;
+    uint64_t usage_nano_cores;
     /* BlkIO usage */
     uint64_t blkio_read;
     uint64_t blkio_write;
