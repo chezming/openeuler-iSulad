@@ -1057,6 +1057,39 @@ ContainerManagerService::ContainerStatus(const std::string &containerID, Errors 
     return contStatus;
 }
 
+auto ContainerManagerService::PackUpdateResourcesHostConfigHugetlbs(
+        const runtime::v1alpha2::LinuxContainerResources &resources, host_config *hostconfig, Errors &error) -> int
+{
+    int ret { 0 };
+    if (resources.hugepage_limits_size() == 0) {
+        return 0;
+    }
+    if (static_cast<size_t>(resources.hugepage_limits_size()) > SIZE_MAX / sizeof(host_config_hugetlbs_element *)) {
+        error.Errorf("Invalid hugepage_limits size");
+        return -1;
+    }
+    hostconfig->hugetlbs = (host_config_hugetlbs_element **)util_common_calloc_s(
+            resources.hugepage_limits_size() * sizeof(host_config_hugetlbs_element *));
+    if (hostconfig->hugetlbs == nullptr) {
+        error.Errorf("Out of memory");
+        ret = -1;
+        goto out;
+    }
+    for (int i = 0; i < resources.hugepage_limits_size(); i++) {
+        hostconfig->hugetlbs[i] =
+                (host_config_hugetlbs_element *)util_common_calloc_s(sizeof(host_config_hugetlbs_element));
+        if (hostconfig->hugetlbs[i] == nullptr) {
+            ret = -1;
+            goto out;
+        }
+        hostconfig->hugetlbs[i]->page_size = util_strdup_s(resources.hugepage_limits(i).page_size().c_str());
+        hostconfig->hugetlbs[i]->limit = resources.hugepage_limits(i).limit();
+        hostconfig->hugetlbs_len++;
+    }
+out:
+    return ret;
+}
+
 void ContainerManagerService::UpdateContainerResources(const std::string &containerID,
                                                        const runtime::v1alpha2::LinuxContainerResources &resources,
                                                        Errors &error)
@@ -1101,13 +1134,17 @@ void ContainerManagerService::UpdateContainerResources(const std::string &contai
     hostconfig->cpu_quota = resources.cpu_quota();
     hostconfig->cpu_shares = resources.cpu_shares();
     hostconfig->memory = resources.memory_limit_in_bytes();
+    hostconfig->memory_swap = resources.memory_swap_limit_in_bytes();
     if (!resources.cpuset_cpus().empty()) {
         hostconfig->cpuset_cpus = util_strdup_s(resources.cpuset_cpus().c_str());
     }
     if (!resources.cpuset_mems().empty()) {
         hostconfig->cpuset_mems = util_strdup_s(resources.cpuset_mems().c_str());
     }
-
+    if (PackUpdateResourcesHostConfigHugetlbs(resources, hostconfig, error) != 0) {
+        error.SetError("Failed to pack hugepage_limits to host config");
+        goto cleanup;
+    }
     request->host_config = host_config_generate_json(hostconfig, &ctx, &perror);
     if (request->host_config == nullptr) {
         error.Errorf("Failed to generate host config json: %s", perror);
