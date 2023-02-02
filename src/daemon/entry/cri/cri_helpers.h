@@ -60,7 +60,7 @@ public:
     static const std::string SANDBOX_NAME_ANNOTATION_KEY;
     static const std::string SANDBOX_UID_ANNOTATION_KEY;
     static const std::string SANDBOX_ATTEMPT_ANNOTATION_KEY;
-
+    static const std::string SANDBOX_LOG_DIRECTORY_ANNOTATION_KEY;
     static const std::string NET_PLUGIN_EVENT_POD_CIDR_CHANGE;
     static const std::string NET_PLUGIN_EVENT_POD_CIDR_CHANGE_DETAIL_CIDR;
     static const std::string CNI_MUTL_NET_EXTENSION_KEY;
