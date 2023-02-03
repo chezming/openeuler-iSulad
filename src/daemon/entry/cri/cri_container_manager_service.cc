@@ -1060,7 +1060,7 @@ ContainerManagerService::ContainerStatus(const std::string &containerID, Errors 
 auto ContainerManagerService::PackUpdateResourcesHostConfigHugetlbs(
         const runtime::v1alpha2::LinuxContainerResources &resources, host_config *hostconfig, Errors &error) -> int
 {
-    int ret { 0 };
+  
     if (resources.hugepage_limits_size() == 0) {
         return 0;
     }
@@ -1068,26 +1068,24 @@ auto ContainerManagerService::PackUpdateResourcesHostConfigHugetlbs(
         error.Errorf("Invalid hugepage_limits size");
         return -1;
     }
-    hostconfig->hugetlbs = (host_config_hugetlbs_element **)util_common_calloc_s(
-            resources.hugepage_limits_size() * sizeof(host_config_hugetlbs_element *));
+    hostconfig->hugetlbs = (host_config_hugetlbs_element **)util_smart_calloc_s(sizeof(host_config_hugetlbs_element *),
+                                                                                resources.hugepage_limits_size());
     if (hostconfig->hugetlbs == nullptr) {
         error.Errorf("Out of memory");
-        ret = -1;
-        goto out;
+        return -1;
     }
     for (int i = 0; i < resources.hugepage_limits_size(); i++) {
         hostconfig->hugetlbs[i] =
                 (host_config_hugetlbs_element *)util_common_calloc_s(sizeof(host_config_hugetlbs_element));
         if (hostconfig->hugetlbs[i] == nullptr) {
-            ret = -1;
-            goto out;
+             error.Errorf("Out of memory");
+            return -1;
         }
         hostconfig->hugetlbs[i]->page_size = util_strdup_s(resources.hugepage_limits(i).page_size().c_str());
         hostconfig->hugetlbs[i]->limit = resources.hugepage_limits(i).limit();
         hostconfig->hugetlbs_len++;
     }
-out:
-    return ret;
+    return 0;
 }
 
 void ContainerManagerService::UpdateContainerResources(const std::string &containerID,
