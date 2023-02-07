@@ -1059,8 +1059,7 @@ ContainerManagerService::ContainerStatus(const std::string &containerID, Errors 
 
 auto ContainerManagerService::PackUpdateResourcesHostConfigHugetlbs(
         const runtime::v1alpha2::LinuxContainerResources &resources, host_config *hostconfig, Errors &error) -> int
-{
-  
+{ 
     if (resources.hugepage_limits_size() == 0) {
         return 0;
     }
@@ -1070,10 +1069,6 @@ auto ContainerManagerService::PackUpdateResourcesHostConfigHugetlbs(
     }
     hostconfig->hugetlbs = (host_config_hugetlbs_element **)util_smart_calloc_s(sizeof(host_config_hugetlbs_element *),
                                                                                 resources.hugepage_limits_size());
-    if (hostconfig->hugetlbs == nullptr) {
-        error.Errorf("Out of memory");
-        return -1;
-    }
     for (int i = 0; i < resources.hugepage_limits_size(); i++) {
         hostconfig->hugetlbs[i] =
                 (host_config_hugetlbs_element *)util_common_calloc_s(sizeof(host_config_hugetlbs_element));
