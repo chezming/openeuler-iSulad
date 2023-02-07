@@ -1685,12 +1685,17 @@ public:
                 }
                 response->container_stats[i].pids_current = gresponse->containers(i).pids_current();
                 response->container_stats[i].cpu_use_nanos = gresponse->containers(i).cpu_use_nanos();
+                response->container_stats[i].usage_nano_cores = gresponse->containers(i).usage_nano_cores();
                 response->container_stats[i].cpu_system_use = gresponse->containers(i).cpu_system_use();
                 response->container_stats[i].online_cpus = gresponse->containers(i).online_cpus();
                 response->container_stats[i].blkio_read = gresponse->containers(i).blkio_read();
                 response->container_stats[i].blkio_write = gresponse->containers(i).blkio_write();
                 response->container_stats[i].mem_used = gresponse->containers(i).mem_used();
-                response->container_stats[i].mem_limit = gresponse->containers(i).mem_limit();
+                response->container_stats[i].avaliable_bytes = gresponse->containers(i).avaliable_bytes();
+                response->container_stats[i].usage_bytes = gresponse->containers(i).usage_bytes();
+                response->container_stats[i].rss_bytes = gresponse->containers(i).rss_bytes();
+                response->container_stats[i].page_faults = gresponse->containers(i).page_faults();
+                response->container_stats[i].major_page_faults = gresponse->containers(i).major_page_faults();
                 response->container_stats[i].kmem_used = gresponse->containers(i).kmem_used();
                 response->container_stats[i].kmem_limit = gresponse->containers(i).kmem_limit();
                 if (!gresponse->containers(i).name().empty()) {

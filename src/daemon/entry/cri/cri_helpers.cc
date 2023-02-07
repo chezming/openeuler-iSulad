@@ -445,8 +445,22 @@ void UpdateCreateConfig(container_config *createConfig, host_config *hc,
             hc->cpuset_mems = util_strdup_s(rOpts.cpuset_mems().c_str());
         }
         hc->oom_score_adj = rOpts.oom_score_adj();
+        hc->memory_swap_limit_in_bytes = rOpts.memory_swap_limit_in_bytes();
+        json_map_string_string *unified =
+                (json_map_string_string *)util_common_calloc_s(sizeof(json_map_string_string));
+        if (unified == nullptr) {
+            ERROR("Out of memory");
+            return;
+        }
+        if (!rOpts.unified().empty()) {
+            for (auto &iter : rOpts.unified()) {
+                if (append_json_map_string_string(unified, iter.first.c_str(), iter.second.c_str()) != 0) {
+                    ERROR("Failed to append string");
+                    return;                }
+            }
+        }
+        hc->unified = unified;
     }
-
     createConfig->open_stdin = config.stdin();
     createConfig->tty = config.tty();
 }

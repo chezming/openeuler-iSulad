@@ -239,8 +239,14 @@ static container_info *get_container_stats(const container_t *cont,
     info->id = util_strdup_s(cont->common_config->id);
     info->pids_current = einfo->pids_current;
     info->cpu_use_nanos = einfo->cpu_use_nanos;
+    info->usage_nano_cores = einfo->usage_nano_cores;
     info->blkio_read = einfo->blkio_read;
     info->blkio_write = einfo->blkio_write;
+    info->avaliable_bytes = einfo->avaliable_bytes;
+    info->usage_bytes = einfo->usage_bytes;
+    info->rss_bytes = einfo->rss_bytes;
+    info->page_faults = einfo->page_faults;
+    info->major_page_faults = einfo->major_page_faults;
     info->mem_used = einfo->mem_used;
     info->mem_limit = einfo->mem_limit;
     info->kmem_used = einfo->kmem_used;

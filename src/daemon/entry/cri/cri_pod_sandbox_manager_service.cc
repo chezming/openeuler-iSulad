@@ -59,7 +59,6 @@ void PodSandboxManagerService::ApplySandboxLinuxOptions(const runtime::v1alpha2:
     if (error.NotEmpty()) {
         return;
     }
-
     if (!lc.cgroup_parent().empty()) {
         hc->cgroup_parent = util_strdup_s(lc.cgroup_parent().c_str());
     }
@@ -67,7 +66,12 @@ void PodSandboxManagerService::ApplySandboxLinuxOptions(const runtime::v1alpha2:
     if (len <= 0) {
         return;
     }
-
+    if (!lc.has_overhead()){
+        return;
+    }
+    if (!lc.has_resources()){
+        return;
+    }
     if (len > LIST_SIZE_MAX) {
         error.Errorf("Too many sysctls, the limit is %d", LIST_SIZE_MAX);
         return;
