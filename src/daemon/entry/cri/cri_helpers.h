@@ -111,6 +111,9 @@ auto CheckpointToSandbox(const std::string &id, const CRI::PodSandboxCheckpoint 
 
 auto StringsJoin(const std::vector<std::string> &vec, const std::string &sep) -> std::string;
 
+auto PackLinuxResourcesHostConfigHugetlbs(const runtime::v1alpha2::LinuxContainerResources &resources,
+                                          host_config *hostconfig, Errors &error) -> int;
+
 void UpdateCreateConfig(container_config *createConfig, host_config *hc,
                         const runtime::v1alpha2::ContainerConfig &config, const std::string &podSandboxID,
                         Errors &error);

@@ -417,6 +417,37 @@ auto CheckpointToSandbox(const std::string &id, const CRI::PodSandboxCheckpoint 
     return result;
 }
 
+auto PackLinuxResourcesHostConfigHugetlbs(const runtime::v1alpha2::LinuxContainerResources &resources,
+                                          host_config *hostconfig, Errors &error) -> int
+{
+    if (resources.hugepage_limits_size() == 0) {
+        return 0;
+    }
+    if (static_cast<size_t>(resources.hugepage_limits_size()) > SIZE_MAX / sizeof(host_config_hugetlbs_element *)) {
+        error.Errorf("Invalid hugepage_limits size");
+        return -1;
+    }
+    hostconfig->hugetlbs = (host_config_hugetlbs_element **)util_smart_calloc_s(sizeof(host_config_hugetlbs_element *),
+                                                                                resources.hugepage_limits_size());
+
+    if (hostconfig->hugetlbs == NULL) {
+        error.Errorf("Out of memory");
+        return -1;
+    }
+    for (int i = 0; i < resources.hugepage_limits_size(); i++) {
+        hostconfig->hugetlbs[i] =
+                (host_config_hugetlbs_element *)util_common_calloc_s(sizeof(host_config_hugetlbs_element));
+        if (hostconfig->hugetlbs[i] == nullptr) {
+            error.Errorf("Out of memory");
+            return -1;
+        }
+        hostconfig->hugetlbs[i]->page_size = util_strdup_s(resources.hugepage_limits(i).page_size().c_str());
+        hostconfig->hugetlbs[i]->limit = resources.hugepage_limits(i).limit();
+        hostconfig->hugetlbs_len++;
+    }
+    return 0;
+}
+
 void UpdateCreateConfig(container_config *createConfig, host_config *hc,
                         const runtime::v1alpha2::ContainerConfig &config, const std::string &podSandboxID,
                         Errors &error)
