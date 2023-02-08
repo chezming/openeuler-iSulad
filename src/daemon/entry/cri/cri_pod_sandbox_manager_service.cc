@@ -158,7 +158,15 @@ void PodSandboxManagerService::MakeSandboxIsuladConfig(const runtime::v1alpha2::
             return;
         }
     }
-
+    //add log_directory
+    if (!c.log_directory().empty()) {
+        if (append_json_map_string_string(custom_config->annotations,
+                                          CRIHelpers::Constants::SANDBOX_LOG_DIRECTORY_ANNOTATION_KEY.c_str(),
+                                          c.log_directory().c_str()) != 0) {
+            error.SetError("Append log_directory into annotation failed");
+            return;
+        }
+    }
     if (!c.hostname().empty()) {
         custom_config->hostname = util_strdup_s(c.hostname().c_str());
     }
