@@ -10,6 +10,8 @@ GTAGS
 iSula-libutils
 compile_commands.json
 tags
+.idea
 .clangd
+cmake-build-debug
 iSula-libutils
 isulad_ci_test_data
