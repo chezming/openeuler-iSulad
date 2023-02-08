@@ -103,6 +103,8 @@ private:
                     std::unique_ptr<runtime::v1alpha2::ContainerStats> &container);
     void ContainerStatusToGRPC(container_inspect *inspect,
                                std::unique_ptr<runtime::v1alpha2::ContainerStatus> &contStatus, Errors &error);
+    auto PackUpdateResourcesHostConfigHugetlbs(const runtime::v1alpha2::LinuxContainerResources &resources,
+                                               host_config *hostconfig, Errors &error) -> int;
     void PackContainerImageToStatus(container_inspect *inspect,
                                     std::unique_ptr<runtime::v1alpha2::ContainerStatus> &contStatus, Errors &error);
     void UpdateBaseStatusFromInspect(container_inspect *inspect, int64_t &createdAt, int64_t &startedAt,
