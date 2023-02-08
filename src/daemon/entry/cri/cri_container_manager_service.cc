@@ -1125,7 +1125,10 @@ void ContainerManagerService::UpdateContainerResources(const std::string &contai
     if (!resources.cpuset_mems().empty()) {
         hostconfig->cpuset_mems = util_strdup_s(resources.cpuset_mems().c_str());
     }
-
+    if (CRIHelpers::PackLinuxResourcesHostConfigHugetlbs(resources, hostconfig, error) != 0) {
+        error.SetError("Failed to pack hugepage_limits to host config");
+        goto cleanup;
+    }
     request->host_config = host_config_generate_json(hostconfig, &ctx, &perror);
     if (request->host_config == nullptr) {
         error.Errorf("Failed to generate host config json: %s", perror);
