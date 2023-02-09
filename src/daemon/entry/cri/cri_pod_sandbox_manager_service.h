@@ -112,6 +112,7 @@ private:
     auto SharesHostNetwork(const container_inspect *inspect) -> runtime::v1alpha2::NamespaceMode;
     auto SharesHostPid(const container_inspect *inspect) -> runtime::v1alpha2::NamespaceMode;
     auto SharesHostIpc(const container_inspect *inspect) -> runtime::v1alpha2::NamespaceMode;
+    void ShareHostUserNamespace(const container_inspect *inspect, runtime::v1alpha2::UserNamespace &userns);
     void SetSandboxStatusNetwork(const container_inspect *inspect, const std::string &podSandboxID,
                                  std::unique_ptr<runtime::v1alpha2::PodSandboxStatus> &podStatus, Errors &error);
     void GetIPs(const std::string &podSandboxID, const container_inspect *inspect, const std::string &networkInterface,
