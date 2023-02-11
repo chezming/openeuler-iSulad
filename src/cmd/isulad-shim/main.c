@@ -129,6 +129,10 @@ int main(int argc, char **argv)
         exit(EXIT_FAILURE);
     }
 
+    if (p->state->update) {
+        goto real_exec;
+    }
+
     /*
      * Open exit pipe
      * The exit pipe exists only when the container is started,
@@ -157,12 +161,17 @@ int main(int argc, char **argv)
         exit(EXIT_FAILURE);
     }
 
+real_exec:
     ret = create_process(p);
     if (ret != SHIM_OK) {
         if (p->console_sock_path != NULL) {
             (void)unlink(p->console_sock_path);
         }
         exit(EXIT_FAILURE);
+    }
+
+    if (p->state->update) {
+        exit(EXIT_SUCCESS);
     }
 
     released_timeout_exit();
