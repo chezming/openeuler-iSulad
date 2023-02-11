@@ -39,6 +39,7 @@
 #include "constants.h"
 #include "isula_libutils/shim_client_process_state.h"
 #include "isula_libutils/shim_client_runtime_stats.h"
+#include "isula_libutils/shim_client_cgroup_resources.h"
 #include "isula_libutils/oci_runtime_state.h"
 #include "isulad_config.h"
 #include "utils_string.h"
@@ -687,7 +688,7 @@ static int status_to_exit_code(int status)
 }
 
 static int shim_create(bool fg, const char *id, const char *workdir, const char *bundle, const char *runtime_cmd,
-                       int *exit_code)
+                       int *exit_code, bool wait_exit)
 {
     pid_t pid = 0;
     int exec_fd[2] = { -1, -1 };
@@ -708,18 +709,18 @@ static int shim_create(bool fg, const char *id, const char *workdir, const char 
     runtime_exec_param_dump(params);
 
     if (snprintf(fpid, sizeof(fpid), "%s/shim-pid", workdir) < 0) {
-        ERROR("failed make shim-pid full path");
+        ERROR("Failed make shim-pid full path");
         return -1;
     }
 
     if (pipe2(exec_fd, O_CLOEXEC) != 0) {
-        ERROR("failed to create pipe for shim create");
+        ERROR("Failed to create pipe for shim create");
         return -1;
     }
 
     pid = fork();
     if (pid < 0) {
-        ERROR("failed fork for shim parent %s", strerror(errno));
+        ERROR("Failed fork for shim parent %s", strerror(errno));
         close(exec_fd[0]);
         close(exec_fd[1]);
         return -1;
@@ -749,6 +750,18 @@ static int shim_create(bool fg, const char *id, const char *workdir, const char 
         if (pid != 0) {
             if (file_write_int(fpid, pid) != 0) {
                 (void)dprintf(exec_fd[1], "%s: write %s with %d failed", id, fpid, pid);
+            }
+            if (wait_exit) {
+                status = util_wait_for_pid_status(pid);
+                if (status < 0) {
+                    (void)dprintf(exec_fd[1], "Failed wait isulad-shim %d exit %s", pid, strerror(errno));
+                    _exit(EXIT_FAILURE);
+                }
+                int code = status_to_exit_code(status);
+                if (code == EXIT_FAILURE) {
+                    (void)dprintf(exec_fd[1], "isulad-shim %d exit with code %d", pid, code);
+                    _exit(EXIT_FAILURE);
+                }
             }
             _exit(EXIT_SUCCESS);
         }
@@ -797,6 +810,7 @@ out:
 
     return ret;
 }
+
 
 static int get_container_process_pid(const char *workdir)
 {
@@ -901,7 +915,7 @@ int rt_isula_create(const char *id, const char *runtime, const rt_create_params_
     }
 
     get_runtime_cmd(runtime, &cmd);
-    ret = shim_create(false, id, workdir, params->bundle, cmd, NULL);
+    ret = shim_create(false, id, workdir, params->bundle, cmd, NULL, false);
     if (ret != 0) {
         runtime_call_delete_force(workdir, runtime, id);
         ERROR("%s: failed create shim process", id);
@@ -1173,7 +1187,7 @@ int rt_isula_exec(const char *id, const char *runtime, const rt_exec_params_t *p
     }
 
     get_runtime_cmd(runtime, &cmd);
-    ret = shim_create(fg_exec(params), id, workdir, bundle, cmd, exit_code);
+    ret = shim_create(fg_exec(params), id, workdir, bundle, cmd, exit_code, false);
     if (ret != 0) {
         ERROR("%s: failed create shim process for exec %s", id, exec_id);
         goto errlog_out;
@@ -1237,11 +1251,172 @@ int rt_isula_attach(const char *id, const char *runtime, const rt_attach_params_
     return -1;
 }
 
+static int to_engine_resources(const host_config *hostconfig, shim_client_cgroup_resources *cr)
+{
+    uint64_t period = 0;
+    int64_t quota = 0;
+
+    if (hostconfig == NULL || cr == NULL) {
+        return -1;
+    }
+
+    cr->block_io = util_common_calloc_s(sizeof(shim_client_cgroup_resources_block_io));
+    if (cr->block_io == NULL) {
+        ERROR("Out of memory");
+        return -1;
+    }
+
+    cr->cpu = util_common_calloc_s(sizeof(shim_client_cgroup_resources_cpu));
+    if (cr->cpu == NULL) {
+        ERROR("Out of memory");
+        return -1;
+    }
+
+    cr->memory = util_common_calloc_s(sizeof(shim_client_cgroup_resources_memory));
+    if (cr->memory == NULL) {
+        ERROR("Out of memory");
+        return -1;
+    }
+
+    cr->block_io->weight = hostconfig->blkio_weight;
+    cr->cpu->shares = (uint64_t)hostconfig->cpu_shares;
+    cr->cpu->period = (uint64_t)hostconfig->cpu_period;
+    cr->cpu->quota = hostconfig->cpu_quota;
+    cr->cpu->cpus = hostconfig->cpuset_cpus;
+    cr->cpu->mems = hostconfig->cpuset_mems;
+    cr->memory->limit = (uint64_t)hostconfig->memory;
+    cr->memory->swap = (uint64_t)hostconfig->memory_swap;
+    cr->memory->reservation = (uint64_t)hostconfig->memory_reservation;
+    cr->memory->kernel = (uint64_t)hostconfig->kernel_memory;
+    cr->cpu->realtime_period = hostconfig->cpu_realtime_period;
+    cr->cpu->realtime_runtime = hostconfig->cpu_realtime_runtime;
+
+    if (hostconfig->nano_cpus > 0) {
+        period = (uint64_t)(100 * Time_Milli / Time_Micro);
+        quota = hostconfig->nano_cpus * (int64_t)period / 1e9;
+        cr->cpu->period = period;
+        cr->cpu->quota = quota;
+    }
+
+    return 0;
+}
+
+static int create_resources_json_file(const char *workdir, const shim_client_cgroup_resources *cr)
+{
+    struct parser_context ctx = { OPT_GEN_SIMPLIFY, 0 };
+    parser_error perr = NULL;
+    char *data = NULL;
+    char fname[PATH_MAX] = { 0 };
+    int retcode = 0;
+
+    if (snprintf(fname, sizeof(fname), "%s/resources.json", workdir) < 0) {
+        ERROR("Failed make process.json full path");
+        return -1;
+    }
+
+    data = shim_client_cgroup_resources_generate_json(cr, &ctx, &perr);
+    if (data == NULL) {
+        retcode = -1;
+        ERROR("Failed generate json for resources.json error=%s", perr);
+        goto out;
+    }
+
+    if (util_write_file(fname, data, strlen(data), DEFAULT_SECURE_FILE_MODE) != 0) {
+        retcode = -1;
+        ERROR("Failed write resources.json");
+        goto out;
+    }
+
+out:
+    UTIL_FREE_AND_SET_NULL(perr);
+    UTIL_FREE_AND_SET_NULL(data);
+
+    return retcode;
+}
+
 int rt_isula_update(const char *id, const char *runtime, const rt_update_params_t *params)
 {
-    ERROR("isula update not support on isulad-shim");
-    isulad_set_error_message("isula update not support on isulad-shim");
-    return -1;
+    int ret = 0;
+    int exit_code = 0;
+    char workdir[PATH_MAX] = { 0 };
+    char bundle[PATH_MAX] = { 0 };
+    const char *cmd = NULL;
+    shim_client_cgroup_resources *cr = NULL;
+    shim_client_process_state p = { 0 };
+
+    if (id == NULL || runtime == NULL || params == NULL) {
+        ERROR("Nullptr arguments not allowed");
+        return -1;
+    }
+
+    cr = util_common_calloc_s(sizeof(shim_client_cgroup_resources));
+    if (cr == NULL) {
+        ERROR("Out of memory");
+        return -1;
+    }
+
+    ret = to_engine_resources(params->hostconfig, cr);
+    if (ret < 0) {
+        ERROR("Failed to get resources for update");
+        return -1;
+    }
+
+    ret = snprintf(bundle, sizeof(bundle), "%s/%s", params->rootpath, id);
+    if (ret < 0) {
+        ERROR("Failed join bundle path for exec");
+        return -1;
+    }
+
+    ret = snprintf(workdir, sizeof(workdir), "%s/%s/update", params->state, id);
+    if (ret < 0) {
+        ERROR("Failed join update full path");
+        goto out;
+    }
+
+    ret = util_mkdir_p(workdir, DEFAULT_SECURE_DIRECTORY_MODE);
+    if (ret < 0) {
+        ERROR("Failed mkdir update workdir %s", workdir);
+        goto out;
+    }
+
+    p.update = true;
+    ret = create_process_json_file(workdir, &p);
+    if (ret != 0) {
+        ERROR("%s: failed create update process.json file", id);
+        goto del_out;
+    }
+
+    ret = create_resources_json_file(workdir, cr);
+    if (ret != 0) {
+        ERROR("%s: failed create update json file", id);
+        goto del_out;
+    }
+
+    get_runtime_cmd(runtime, &cmd);
+    ret = shim_create(false, id, workdir, bundle, cmd, &exit_code, true);
+    if (ret != 0) {
+        ERROR("Failed to create shim process for update %s", id);
+        goto errlog_out;
+    }
+
+    if (exit_code == EXIT_FAILURE) {
+        ret = -1;
+        ERROR("isulad-shim exit fail");
+    }
+
+errlog_out:
+    if (ret != 0) {
+        show_shim_runtime_errlog(workdir);
+    }
+
+del_out:
+    if (util_recursive_rmdir(workdir, 0)) {
+        ERROR("Rmdir %s failed", workdir);
+    }
+    free_shim_client_cgroup_resources(cr);
+
+out:
+    return ret;
 }
 
 int rt_isula_pause(const char *id, const char *runtime, const rt_pause_params_t *params)

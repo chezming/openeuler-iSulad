@@ -943,7 +943,7 @@ int process_io_init(process_t *p)
     return SHIM_OK;
 }
 
-static void get_runtime_cmd(process_t *p, const char *log_path, const char *pid_path, const char *process_desc,
+static void get_runtime_cmd(process_t *p, const char *log_path, const char *pid_path, const char *path,
                             const char *params[])
 {
     int i = 0;
@@ -957,7 +957,14 @@ static void get_runtime_cmd(process_t *p, const char *log_path, const char *pid_
     params[i++] = log_path;
     params[i++] = "--log-format";
     params[i++] = "json";
-    if (p->state->exec && process_desc != NULL) {
+    if (p->state->update && path != NULL) {
+        params[i++] = "update";
+        params[i++] = "--resources";
+        params[i++] = path;
+        params[i++] = p->id;
+        return;
+    }
+    if (p->state->exec && path != NULL) {
         params[i++] = "exec";
 #ifdef ENABLE_GVISOR
         /* gvisor runtime runsc do not support -d option */
@@ -966,7 +973,7 @@ static void get_runtime_cmd(process_t *p, const char *log_path, const char *pid_
         params[i++] = "-d";
 #endif
         params[i++] = "--process";
-        params[i++] = process_desc;
+        params[i++] = path;
     } else {
         params[i++] = "create";
         params[i++] = "--bundle";
@@ -1115,21 +1122,33 @@ static void exec_runtime_process(process_t *p, int exec_fd)
         _exit(EXIT_FAILURE);
     }
 
-    char *process_desc = NULL;
+    char *path = NULL;
     if (p->state->exec) {
-        process_desc = (char *)calloc(1, PATH_MAX);
-        if (process_desc == NULL) {
+        path = (char *)calloc(1, PATH_MAX);
+        if (path == NULL) {
             (void)dprintf(exec_fd, "memory error: %s", strerror(errno));
             _exit(EXIT_FAILURE);
         }
-        nret = snprintf(process_desc, PATH_MAX, "%s/process.json", cwd);
+        nret = snprintf(path, PATH_MAX, "%s/process.json", cwd);
+        if (nret < 0 || nret >= PATH_MAX) {
+            _exit(EXIT_FAILURE);
+        }
+    }
+
+    if (p->state->update) {
+        path = (char *)calloc(1, PATH_MAX);
+        if (path == NULL) {
+            (void)dprintf(exec_fd, "memory error: %s", strerror(errno));
+            _exit(EXIT_FAILURE);
+        }
+        nret = snprintf(path, PATH_MAX, "%s/resources.json", cwd);
         if (nret < 0 || nret >= PATH_MAX) {
             _exit(EXIT_FAILURE);
         }
     }
 
     const char *params[MAX_RUNTIME_ARGS] = { 0 };
-    get_runtime_cmd(p, log_path, pid_path, process_desc, params);
+    get_runtime_cmd(p, log_path, pid_path, path, params);
     execvp(p->runtime, (char * const *)params);
     (void)dprintf(exec_fd, "fork/exec error: %s", strerror(errno));
     _exit(EXIT_FAILURE);
@@ -1180,6 +1199,16 @@ int create_process(process_t *p)
     if (ret != pid) {
         write_message(g_log_fd, ERR_MSG, "wait runtime failed:%d", SHIM_SYS_ERR(errno));
         ret = SHIM_ERR;
+        goto out;
+    }
+
+    if (p->state->update) {
+        data = read_text_file("log.json");
+        if (strlen(data) != 0) {
+            ret = SHIM_ERR;
+            goto out;
+        }
+        ret = SHIM_OK;
         goto out;
     }
 
