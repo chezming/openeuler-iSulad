@@ -20,7 +20,8 @@
 #include <memory>
 
 namespace CRISecurity {
-static void ModifyContainerConfig(const runtime::v1alpha2::LinuxContainerSecurityContext &sc, container_config *config)
+static void ModifyContainerConfig(const runtime::v1alpha2::LinuxContainerSecurityContext &sc, container_config *config,
+                                  Errors &error)
 {
     if (sc.has_run_as_user()) {
         free(config->user);
@@ -237,7 +238,7 @@ void ApplySandboxSecurityContext(const runtime::v1alpha2::LinuxPodSandboxConfig 
         *sc->mutable_supplemental_groups() = old.supplemental_groups();
         sc->set_readonly_rootfs(old.readonly_rootfs());
     }
-    ModifyContainerConfig(*sc, config);
+    ModifyContainerConfig(*sc, config, error);
     ModifyHostConfig(*sc, hc, error);
     if (error.NotEmpty()) {
         return;
