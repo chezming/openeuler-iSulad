@@ -40,6 +40,12 @@ function test_cpurt_isulad_abnormal()
 
 function test_isula_update_normal()
 {
+    local ret=0
+    local image="busybox"
+    local test="isulad update cpu realtime normal test => (${FUNCNAME[@]})"
+
+    msg_info "${test} starting..."
+
     #start isulad with cpu_rt
     isulad --cpu-rt-period 1000000 --cpu-rt-runtime 950000 -l DEBUG > /dev/null 2>&1 &
     wait_isulad_running
@@ -70,6 +76,10 @@ function test_isula_update_normal()
 
 function test_isula_update_abnormal()
 {
+    local ret=0
+    local image="busybox"
+    local test="isulad update cpu realtime abnormal test => (${FUNCNAME[@]})"
+
     #start isulad with cpu_rt
     isulad --cpu-rt-period 1000000 --cpu-rt-runtime 950000 -l DEBUG > /dev/null 2>&1 &
     wait_isulad_running
@@ -77,10 +87,10 @@ function test_isula_update_abnormal()
     c_id=`isula run -itd --cpu-rt-period 1000000 --cpu-rt-runtime 1000  ${image} sh`
     [[ $? -ne 0 ]] && msg_err "${FUNCNAME[0]}:${LINENO} - failed to run container with image: ${image}" && ((ret++))
 
-    isula update --cpu-rt-period 800000 --cpu-rt-runtime 900000 $c_id | grep "Invalid --cpu-rt-runtime: rt runtime cannot be higher than rt period"
+    isula update --cpu-rt-period 800000 --cpu-rt-runtime 900000 $c_id 2>&1 | grep "Invalid --cpu-rt-runtime: rt runtime cannot be higher than rt period"
     [[ $? -ne 0 ]] && msg_err "${FUNCNAME[0]}:${LINENO} - failed to update container cpu-rt-runtime" && ((ret++))
 
-    isula update --cpu-rt-runtime 1000000 $c_id | grep "updating cgroup cpu.rt_runtime_us to 1000000: Invalid argument"
+    isula update --cpu-rt-runtime 1000000 $c_id 2>&1 | grep "updating cgroup cpu.rt_runtime_us to 1000000: Invalid argument"
     [[ $? -ne 0 ]] && msg_err "${FUNCNAME[0]}:${LINENO} - failed to update container cpu-rt-runtime" && ((ret++))
 
     isula rm -f $c_id
@@ -158,17 +168,23 @@ function test_isula_run_abnormal()
     isula run -itd --cpu-rt-period 1000000 --cpu-rt-runtime 960000 $image /bin/sh 2>&1 | grep "failed to write 960000" | grep "cpu.rt_runtime_us: Invalid argument"
     [[ $? -ne 0 ]] && msg_err "${FUNCNAME[0]}:${LINENO} - Invalid argument for cpu-rt-runtime" && ((ret++))
 
-    stop_isulad_without_valgrind
+    msg_info "${test} finished with return ${ret}..."
+    return ${ret}
 }
 
 function test_isula_run_normal()
 {
+    local ret=0
+    local image="busybox"
+
     isula run -itd -n box --cpu-rt-period 1000000 --cpu-rt-runtime 900000 $image /bin/sh 2>&1
     [[ $? -ne 0 ]] && msg_err "${FUNCNAME[0]}:${LINENO} - failed to run container" && ((ret++))
 
     isula rm -f box
     [[ $? -ne 0 ]] && msg_err "${FUNCNAME[0]}:${LINENO} - failed to rm container ${c_id}" && ((ret++))
-
+    
+    msg_info "${test} finished with return ${ret}..."
+    return ${ret}
 }
 
 function test_isula_run_normal()
