@@ -33,8 +33,12 @@ function test_cpurt_isulad_abnormal()
     isulad --cpu-rt-period xx --cpu-rt-runtime 950000  2>&1 | grep 'Invalid value "xx" for flag --cpu-rt-period: Invalid argument'
     [[ $? -ne 0 ]] && msg_err "${FUNCNAME[0]}:${LINENO} - Invalid argument for cpu-rt-period" && ((ret++))
 
+<<<<<<< HEAD
     isulad --cpu-rt-period 1000000 --cpu-rt-runtime xx  2>&1 | grep 'Invalid value "xx" for flag --cpu-rt-runtime: Invalid argument'
     isulad --cpu-rt-period 1000000 --cpu-rt-runtime xx  2>&1 | grep 'Invalid value "xx" for flag --cpu-rt-runtime: Invalid argument'
+=======
+    isulad --cpu-rt-period 1000000 --cpu-rt-runtime xx /bin/sh 2>&1 | grep 'Invalid value "xx" for flag --cpu-rt-runtime: Invalid argument'
+>>>>>>> 8721059f (fix cpu-rt CI)
     [[ $? -ne 0 ]] && msg_err "${FUNCNAME[0]}:${LINENO} - Invalid argument for cpu-rt-runtime" && ((ret++))
 
     msg_info "${test} finished with return ${ret}..."
@@ -180,7 +184,11 @@ function test_isula_run_normal()
     local ret=0
     local image="busybox"
 
+<<<<<<< HEAD
     isula run -itd -n box --cpu-rt-period 1000000 --cpu-rt-runtime 1000 $image /bin/sh 2>&1
+=======
+    isula run -itd -n box --cpu-rt-period 1000000 --cpu-rt-runtime 900000 $image /bin/sh 2>&1
+>>>>>>> 8721059f (fix cpu-rt CI)
     [[ $? -ne 0 ]] && msg_err "${FUNCNAME[0]}:${LINENO} - failed to run container" && ((ret++))
 
     isula rm -f box
