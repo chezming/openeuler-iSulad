@@ -1329,6 +1329,7 @@ static int save_container_config_before_create(const char *id, const char *runti
     return 0;
 }
 
+>>>>>>> 257054b2 (fix cpu rt review comments)
 /*
  * request -> host_spec + container_spec
  * container_spec + image config
