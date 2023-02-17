@@ -6,37 +6,38 @@
 
 ## Introduction
 
-`iSulad` , written in C/C++, is a lightweight container engine that has the advantage of being light, fast and applicable to multiple hardware specifications and architecture. `iSulad` has a wide application prospect. 
+`iSulad` is a lightweight and fast container engine written in C/C++ with multiarchitecture and portability in mind. 
 
 ## Architecture
 
-You can see `iSulad`  architecture in [architecture](./docs/design/architecture.md).
+All requied info can be found in synthesis document [architecture](./docs/design/architecture.md).
 
 ## Function
 
 ### Runtime
 
-`iSulad` support multiple container runtimes, including lxc、runc and kata.
+`iSulad` supports several container runtimes, including [LXC](https://linuxcontainers.org/lxc/introduction/), [runc](https://github.com/opencontainers/runc#readme) and [kata](https://katacontainers.io/learn/).
 
-#### lxc
+#### LXC
 
-lxc is an open-source container  runtime written in C , which occupies less resources and is suitable for scenarios with high restrictions on noise floor resources. It is the default runtime of iSulad.
+LXC is an open-source container runtime written in C.
+LXC takes very small amount of system resorces and perfectly fits into the scenario presupposing high restrictions on noise floor resources usage.
+LXC is the default runtime of iSulad.
 
 #### runc
 
-runc is an OCI-compliant runtime written in GO. When users use runc, the OCI runtime-spec version is required to be at least 1.0.0.
+runc is an OCI-compliant container runtime written in GO. runc version should be at least 1.0.0.
 
 #### kata-runtime
 
-kata-runtime start secure containers with lightweight virtual machines.
-
+kata-runtime allowes to create secure containers with lightweight virtual machines under the hood.
 ### Image
 
 `iSulad` supports multiple image formats, including OCI, external rootfs and embedded image.
 
 #### OCI
 
-OCI is a docker-compatible image format that supports pulling images and running containers from remote image repositories.
+OCI is a docker-compatible image format that supports pulling images and running containers from remote image registries.
 
 #### external rootfs
 
@@ -52,15 +53,19 @@ Embedded image is a unique embedded image format of `iSulad`, which occupies low
 
 #### CLI
 
-CLI uses the command line to manage images and containers. It is a standard C/S architecture model. iSula performs as an independent command line client that talks to the iSulad daemon.
+CLI can be used to manage images and containers. 
 
-The commands provided by iSula cover most of the common application scenarios, including the operation interface of the container, such as run, stop, rm, pause, etc, as well as the related operations of the image, such as pull, import, rmi, etc.
+iSulad uses standart client-server interaction model. Where iSula is a client, and iSulad is a server.
+
+iSula performs as an independent command line client that talks to the iSulad daemon.
+The commands provided by iSula cover most of the common application scenarios.
+Is case of `container` this will be: run, stop, rm, pause, and other.
+For `images` iSulad provides pretty standart set of avaliable operations such as pull, import, rmi, etc.
 
 #### CRI
 
-CRI (Container Runtime Interface) implementer can work seamlessly with K8s.
-
-CRI interface is implemented based on gRPC. iSulad implemented CRI gRPC Server following CRI interface standards. CRI gRPC Server includes runtime service and image service, which are used to provide container runtime interface and image operation interface respectively. CRI gRPC Server listen on a local unix socket, and the K8s component kubelet runs as a gRPC Client.
+CRI implementation for iSulad complies with the standard k8s gRPC prptocol implementation. 
+iSulad CRI gRPC Server includes runtime service and image service, which are used to provide container runtime interface and image operation interface respectively.
 
 ## Getting Started
 
@@ -168,7 +173,7 @@ $ sudo isula ps -a
   $ sudo isula create -t -n test busybox
   ```
 
-  - You also can create container `testrunc` with **runc runtime**:
+  - You can also create container `testrunc` with **runc runtime**:
 
   ```sh
   $ sudo isula create -t --runtime runc -n testrunc busybox
