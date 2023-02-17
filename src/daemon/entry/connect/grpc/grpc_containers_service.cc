@@ -294,6 +294,8 @@ Status ContainerServiceImpl::RemoteStart(ServerContext *context,
             const std::string &command = request.stdin();
             int nret = util_write_nointr_in_total(read_pipe_fd[1], command.c_str(), command.length());
             if (nret < 0 || (size_t)nret != command.length()) {
+            int nret = util_write_nointr_in_total(read_pipe_fd[1], command.c_str(), command.length());
+            if (nret < 0 || (size_t)nret != command.length()) {
                 ERROR("sub write over!");
                 break;
             }
@@ -409,7 +411,7 @@ public:
             for (int i = 0; i < request.cmd_size(); i++) {
                 std::string command = request.cmd(i);
                 int nret = util_write_nointr_in_total(m_read_pipe_fd, command.c_str(), command.length());
-                if (nret < 0 || (size_t)nret != command.length()) {
+                if (nret < 0 || (size_t)nret !=  command.length()) {
                     ERROR("sub write over!");
                     return;
                 }
