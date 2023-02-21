@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "imageName":"test:v1",
+  "mediaType": "application/embedded.manifest+json",
+  "created": "2018-03-01T15:15:44.322987811Z",
+  "config": {
+    "ENV": [
+    "a=b",
+    "c=d e"
+    ],
+    "ENTRYPOINT": [
+    ],
+    "WORKDIR": "/"
+  },
+  "layers": [
+    {
+      "mediaType": "application/squashfs.image.rootfs.diff.img",
+      "size": 0,
+      "digest": "",
+      "pathInHost": "/dev/ram0",
+      "pathInContainer": ""
+    },
+    {
+      "mediaType": "application/squashfs.image.rootfs.diff.img",
+      "size": 823,
+      "digest": "sha256:4613a9d1e9016293f53833b0ac61ea072882d468fe2fce7701ecea6f201eebbe",
+      "pathInHost": "platform.img",
+      "pathInContainer": "/home"
+    },
+    {
+      "mediaType": "application/squashfs.image.rootfs.diff.img",
+      "size": 823,
+      "digest": "sha256:b11fce9e4d32e5eecd7f90c34c036314214f4972aeb3cad13f77626c52296fd7",
+      "pathInHost": "app.img",
+      "pathInContainer": "/home/home"
+    }
+  ]
+}

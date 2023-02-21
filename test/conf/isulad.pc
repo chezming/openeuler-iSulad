@@ -1,0 +1,12 @@
+prefix=/usr/local
+libdir=/usr/local/lib
+localstatedir=/usr/local/var
+includedir=/usr/local/include
+
+Name: libisula_client
+Description: light-weighted container client library
+Version: 2.1.1
+URL: iSulad
+Libs: -L/usr/local/lib -lisula_client
+Cflags: -I/usr/local/include
+
