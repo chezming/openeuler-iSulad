@@ -27,8 +27,7 @@ static void ModifyContainerConfig(const runtime::v1alpha2::LinuxContainerSecurit
         config->user = util_strdup_s(std::to_string(sc.run_as_user().value()).c_str());
     }
     if (!sc.run_as_username().empty()) {
-        free(config->user);
-        config->user = util_strdup_s(sc.run_as_username().c_str());
+        config->user = util_strdup_s(sc.run_as_username());
     }
 }
 
