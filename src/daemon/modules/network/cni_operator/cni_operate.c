@@ -324,7 +324,7 @@ static int update_conflist_from_files(struct cni_network_list_conf **conflists, 
             continue;
         }
 
-        if (n_list->list == NULL || n_list->list->plugins_len == 0) {
+        if (n_list->list == NULL || n_list->list->name == NULL || n_list->list->plugins_len == 0) {
             WARN("CNI config list %s has no networks, skipping", files[i]);
             free_cni_network_list_conf(n_list);
             continue;
