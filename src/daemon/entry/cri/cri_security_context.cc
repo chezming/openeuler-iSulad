@@ -28,7 +28,6 @@ static void ModifyContainerConfig(const runtime::v1alpha2::LinuxContainerSecurit
         config->user = util_strdup_s(std::to_string(sc.run_as_user().value()).c_str());
     }
     if (!sc.run_as_username().empty()) {
-        free(config->user);
         config->user = util_strdup_s(sc.run_as_username().c_str());
     }
     std::string user = config->user != nullptr ? config->user : "";
@@ -251,7 +250,7 @@ void ApplyContainerSecurityContext(const runtime::v1alpha2::LinuxContainerConfig
 {
     if (lc.has_security_context()) {
         const runtime::v1alpha2::LinuxContainerSecurityContext &sc = lc.security_context();
-        ModifyContainerConfig(sc, config);
+        ModifyContainerConfig(sc, config, error);
         ModifyHostConfig(sc, hc, error);
         if (error.NotEmpty()) {
             return;
