@@ -836,7 +836,11 @@ void ContainerManagerService::ContainerStatsToGRPC(
             container->mutable_memory()->mutable_working_set_bytes()->set_value(workingset);
             container->mutable_memory()->set_timestamp(timestamp);
         }
-
+        if (response->container_stats[i]->usage_nano_cores != 0u) {
+            container->mutable_cpu()->mutable_usage_nano_cores()->set_value(
+                    response->container_stats[i]->usage_nano_cores);
+            container->mutable_cpu()->set_timestamp(timestamp);
+        }
         if (response->container_stats[i]->cpu_use_nanos != 0u) {
             container->mutable_cpu()->mutable_usage_core_nano_seconds()->set_value(
                 response->container_stats[i]->cpu_use_nanos);
