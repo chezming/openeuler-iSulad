@@ -27,22 +27,6 @@
 
 #include <isula_libutils/log.h>
 #include <isula_libutils/auto_cleanup.h>
-#include <limits.h>
-#include <stdbool.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
-
-#include <isula_libutils/log.h>
-#include <isula_libutils/auto_cleanup.h>
-#include <limits.h>
-#include <stdbool.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
-
-#include <isula_libutils/log.h>
-#include <isula_libutils/auto_cleanup.h>
 #include <isula_libutils/container_config.h>
 #include <isula_libutils/container_config_v2.h>
 #include <isula_libutils/defs.h>
@@ -1497,7 +1481,7 @@ int container_create_cb(const container_create_request *request, container_creat
         goto umount_channel;
     }
 
-    if (container_v2_spec_merge_contaner_spec(v2_spec) != 0) {
+    if (container_v2_spec_merge_container_spec(v2_spec) != 0) {
         ERROR("Failed to merge container settings");
         cc = ISULAD_ERR_EXEC;
         goto umount_channel;

@@ -24,12 +24,6 @@
 #include <string.h>
 #include <libgen.h>
 
-#include <stdbool.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
-#include <libgen.h>
-
 #include <isula_libutils/container_config.h>
 #include <isula_libutils/container_config_v2.h>
 #include <isula_libutils/container_delete_request.h>
