@@ -29,6 +29,9 @@
 #include "storage.h"
 #include "image_api.h"
 #include "isula_libutils/container_inspect.h"
+#ifdef ENABLE_REMOTE_LAYER_STORE
+#include "ro_symlink_maintain.h"
+#endif
 
 struct graphdriver_status;
 struct io_read_wrapper;
@@ -90,6 +93,9 @@ struct graphdriver {
     bool support_dtype;
 
     bool support_quota;
+#ifdef ENABLE_REMOTE_LAYER_STORE
+    bool enable_remote_layer;
+#endif
     struct pquota_control *quota_ctrl;
 
     // options for overlay2

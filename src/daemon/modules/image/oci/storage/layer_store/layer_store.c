@@ -48,6 +48,15 @@
 #include "http.h"
 #include "utils_base64.h"
 #include "constants.h"
+#include "path.h"
+#ifdef ENABLE_REMOTE_LAYER_STORE
+#include "remote_support.h"
+#include "ro_symlink_maintain.h"
+#endif
+
+#ifdef ENABLE_REMOTE_LAYER_STORE
+#define REMOTE_RO_LAYER_DIR "RO"
+#endif
 
 #define PAYLOAD_CRC_LEN 12
 
@@ -74,6 +83,9 @@ typedef struct {
 static layer_store_metadata g_metadata;
 static char *g_root_dir;
 static char *g_run_dir;
+#ifdef ENABLE_REMOTE_LAYER_STORE
+static bool g_enable_remote_layer;
+#endif
 
 static inline char *tar_split_path(const char *id);
 static inline char *mountpoint_json_path(const char *id);
@@ -271,6 +283,10 @@ static bool init_from_conf(const struct storage_module_init_options *conf)
     }
     g_root_dir = tmp_path;
     tmp_path = NULL;
+
+#ifdef ENABLE_REMOTE_LAYER_STORE
+    g_enable_remote_layer = conf->enable_remote_layer;
+#endif
 
     return true;
 free_out:
@@ -1115,10 +1131,25 @@ static int new_layer_by_opts(const char *id, const struct layer_opts *opts)
         ret = -1;
         goto out;
     }
+
+#ifdef ENABLE_REMOTE_LAYER_STORE
+    if (g_enable_remote_layer && !opts->writable) {
+        if (remote_layer_build_ro_dir(id) != 0) {
+            ret = -1;
+            goto out;
+        }
+    } else {
+        if (!build_layer_dir(id)) {
+            ret = -1;
+            goto out;
+        }
+    }
+#else
     if (!build_layer_dir(id)) {
         ret = -1;
         goto out;
     }
+#endif
 
     ret = update_layer_datas(id, opts, l);
     if (ret != 0) {
@@ -1300,7 +1331,15 @@ clear_memory:
 driver_remove:
     if (ret != 0) {
         (void)graphdriver_rm_layer(lid);
+#ifdef ENABLE_REMOTE_LAYER_STORE
+        if (g_enable_remote_layer) {
+            (void)remote_layer_remove_ro_dir(lid);
+        } else {
+            (void)layer_store_remove_layer(lid);
+        }
+#else
         (void)layer_store_remove_layer(lid);
+#endif
     }
 free_out:
     layer_store_unlock();
@@ -1375,7 +1414,15 @@ static int do_delete_layer(const char *id)
         goto free_out;
     }
 
+#ifdef ENABLE_REMOTE_LAYER_STORE
+    if (l->slayer->writable) {
+        ret = layer_store_remove_layer(l->slayer->id);
+    } else {
+        ret = remote_layer_remove_ro_dir(l->slayer->id);
+    }
+#else
     ret = layer_store_remove_layer(l->slayer->id);
+#endif
 
 free_out:
     free(tspath);
@@ -1744,6 +1791,114 @@ out:
     return ret;
 }
 
+static layer_t *load_one_layer_from_json(const char *id)
+{
+    int nret = 0;
+    char *mount_point_path = NULL;
+    char tmpdir[PATH_MAX] = { 0 };
+    char *rpath = NULL;
+    layer_t *l = NULL;
+    bool layer_valid = false;
+
+    nret = snprintf(tmpdir, PATH_MAX, "%s/%s", g_root_dir, id);
+    if (nret < 0 || nret >= PATH_MAX) {
+        ERROR("Sprintf: %s failed", id);
+        goto free_out;
+    }
+
+    mount_point_path = mountpoint_json_path(id);
+    if (mount_point_path == NULL) {
+        ERROR("Out of Memory");
+        goto free_out;
+    }
+
+    rpath = layer_json_path(id);
+    if (rpath == NULL) {
+        ERROR("%s is invalid layer", id);
+        goto free_out;
+    }
+
+    l = load_layer(rpath, mount_point_path);
+    if (l == NULL) {
+        ERROR("load layer: %s failed, remove it", id);
+        goto free_out;
+    }
+
+    if (do_validate_image_layer(tmpdir, l) != 0) {
+        ERROR("%s is invalid image layer", id);
+        goto free_out;
+    }
+
+    if (do_validate_rootfs_layer(l) != 0) {
+        ERROR("%s is invalid rootfs layer", id);
+        goto free_out;
+    }
+
+    layer_valid = true;
+
+free_out:
+    free(rpath);
+    free(mount_point_path);
+    if (!layer_valid) {
+        free_layer_t(l);
+        l = NULL;
+    }
+    // always return true;
+    // if load layer failed, just remove it
+    return l;
+}
+
+int load_one_layer(const char *id)
+{
+    int ret = 0;
+    layer_t *tl = NULL;
+    int i = 0;
+
+    if (!layer_store_lock(true)) {
+        return -1;
+    }
+
+    tl = load_one_layer_from_json(id);
+    if (tl == NULL) {
+        ret = -1;
+        goto unlock_out;
+    }
+
+    if (!map_insert(g_metadata.by_id, (void *)tl->slayer->id, (void *)tl)) {
+        ERROR("Insert id: %s for layer failed", tl->slayer->id);
+        ret = -1;
+        goto unlock_out;
+    }
+
+    for (; i < tl->slayer->names_len; i++) {
+        // this should be done by master isulad
+        // if (remove_name(tl->slayer->names[i])) {
+        //     should_save = true;
+        // }
+        if (!map_insert(g_metadata.by_name, (void *)tl->slayer->names[i], (void *)tl)) {
+            ret = -1;
+            ERROR("Insert name: %s for layer failed", tl->slayer->names[i]);
+            goto unlock_out;
+        }
+    }
+    ret = insert_digest_into_map(g_metadata.by_compress_digest, tl->slayer->compressed_diff_digest, tl->slayer->id);
+    if (ret != 0) {
+        ERROR("update layer: %s compress failed", tl->slayer->id);
+        goto unlock_out;
+    }
+
+    ret = insert_digest_into_map(g_metadata.by_uncompress_digest, tl->slayer->diff_digest, tl->slayer->id);
+    if (ret != 0) {
+        ERROR("update layer: %s uncompress failed", tl->slayer->id);
+        goto unlock_out;
+    }
+
+    ret = 0;
+unlock_out:
+    layer_store_unlock();
+    return ret;
+}
+
 static bool load_layer_json_cb(const char *path_name, const struct dirent *sub_dir, void *context)
 {
 #define LAYER_NAME_LEN 64
@@ -1759,6 +1914,14 @@ static bool load_layer_json_cb(const char *path_name, const struct dirent *sub_d
         ERROR("Sprintf: %s failed", sub_dir->d_name);
         goto free_out;
     }
+
+#ifdef ENABLE_REMOTE_LAYER_STORE
+    // skip RO dir
+    // otherwise, RO dir will be treat as invalid layer dir
+    if (strcmp(sub_dir->d_name, REMOTE_RO_LAYER_DIR) == 0) {
+        goto free_out;
+    }
+#endif
 
     if (!util_dir_exists(tmpdir)) {
         // ignore non-dir
@@ -1953,6 +2116,17 @@ int layer_store_init(const struct storage_module_init_options *conf)
         goto free_out;
     }
 
+#ifdef ENABLE_REMOTE_LAYER_STORE
+    if (g_enable_remote_layer) {
+        if (remote_layer_init(g_root_dir) != 0) {
+            ERROR("Failed to init layer remote");
+            goto free_out;
+        }
+
+        start_refresh_thread();
+    }
+#endif
+
     if (load_layers_from_json_files() != 0) {
         goto free_out;
     }
@@ -2125,7 +2299,7 @@ static tar_split *new_tar_split(layer_t *l, const char *tspath)
     int ret = 0;
     int nret = 0;
     tar_split *ts = NULL;
-    char path[PATH_MAX] = {0};
+    char path[PATH_MAX] = { 0 };
 
     ts = util_common_calloc_s(sizeof(tar_split));
     if (ts == NULL) {
@@ -2308,3 +2482,178 @@ container_inspect_graph_driver *layer_store_get_metadata_by_layer_id(const char 
 {
     return graphdriver_get_metadata(id);
 }
+
+#ifdef ENABLE_REMOTE_LAYER_STORE
+struct remote_layer_data {
+    const char *layer_home;
+    const char *layer_ro;
+    struct linked_list new_layers_list;
+};
+
+static void *remote_support_create(const char *layer_home, const char *layer_ro)
+{
+    struct remote_layer_data *data = util_common_calloc_s(sizeof(struct remote_layer_data));
+    if (data == NULL) {
+        ERROR("Out of memory");
+        return NULL;
+    }
+    data->layer_home = layer_home;
+    data->layer_ro = layer_ro;
+    linked_list_init(&(data->new_layers_list));
+
+    return data;
+};
+
+static void remote_support_destroy(void *data)
+{
+    struct linked_list *it = NULL;
+    struct linked_list *next = NULL;
+    struct remote_layer_data *remote_data = data;
+    char *layer_id = NULL;
+
+    if (data == NULL) {
+        return;
+    }
+
+    linked_list_for_each_safe(it, &(remote_data->new_layers_list), next) {
+        layer_id = (char *)it->elem;
+        linked_list_del(it);
+        free(layer_id);
+        free(it);
+        it = NULL;
+    }
+
+    free(data);
+}
+
+static bool layer_walk_dir_cb(const char *path_name, const struct dirent *sub_dir, void *context)
+{
+    struct remote_layer_data *remote_data = context;
+    char *ro_symlink = NULL;
+    const char *root_dir = remote_data->layer_home;
+    bool ret = true;
+    struct linked_list *new_node = NULL;
+    char *new_layer_id = NULL;
+
+    ro_symlink = util_path_join(root_dir, sub_dir->d_name);
+
+    if (ro_symlink == NULL) {
+        ERROR("Failed to join ro symlink path: %s", sub_dir->d_name);
+        ret = false;
+        goto free_out;
+    }
+
+    if (!util_fileself_exists(ro_symlink)) {
+        new_node = util_common_calloc_s(sizeof(struct linked_list));
+        if (new_node == NULL) {
+            ERROR("Out of memory, new found RO layer %s not added", sub_dir->d_name);
+            ret = false;
+            goto free_out;
+        }
+        new_layer_id = util_strdup_s(sub_dir->d_name);
+        linked_list_add_elem(new_node, new_layer_id);
+        linked_list_add_tail(&remote_data->new_layers_list, new_node);
+        ret = true;
+    }
+
+free_out:
+    free(ro_symlink);
+
+    return ret;
+}
+
+static int remote_support_scan(void *data)
+{
+    struct remote_layer_data *remote_data = data;
+    return util_scan_subdirs(remote_data->layer_ro, layer_walk_dir_cb, data);
+}
+
+static int add_one_remote_layer(struct remote_layer_data *data, char *layer_id)
+{
+    char *ro_symlink = NULL;
+    char *layer_dir = NULL;
+    int ret = 0;
+
+    ro_symlink = util_path_join(data->layer_home, layer_id);
+    layer_dir = util_path_join(data->layer_ro, layer_id);
+
+    if (ro_symlink == NULL) {
+        ERROR("Failed to join ro symlink path: %s", layer_id);
+        ret = -1;
+        goto free_out;
+    }
+
+    if (layer_dir == NULL) {
+        ERROR("Failed to join ro layer dir: %s", layer_id);
+        ret = -1;
+        goto free_out;
+    }
+    // add symbol link first
+    if (!util_fileself_exists(ro_symlink) && symlink(layer_dir, ro_symlink) != 0) {
+        SYSERROR("Unable to create symbol link to layer directory: %s", layer_dir);
+        ret = -1;
+        goto free_out;
+    }
+    // insert layer into memory
+    if (load_one_layer(layer_id) != 0) {
+        ERROR("Failed to load new layer: %s into memory", layer_id);
+        ret = -1;
+    }
+
+free_out:
+    free(ro_symlink);
+    free(layer_dir);
+
+    return ret;
+}
+
+static int remote_support_add(void *data)
+{
+    int ret = 0;
+
+    if (data == NULL) {
+        return -1;
+    }
+
+    struct remote_layer_data *remote_data = data;
+    struct linked_list *it = NULL;
+    struct linked_list *next = NULL;
+    char *new_layer_id = NULL;
+
+
+    linked_list_for_each_safe(it, &(remote_data->new_layers_list), next) {
+        new_layer_id = (char *)it->elem;
+        if (add_one_remote_layer(remote_data, new_layer_id) != 0) {
+            ret = -1;
+        }
+        linked_list_del(it);
+        free(new_layer_id);
+        free(it);
+        it = NULL;
+    }
+
+    return ret;
+}
+
+
+static int remote_support_delete(void *data)
+{
+    return 0;
+}
+
+RemoteSupport *layer_store_impl_remote_support()
+{
+    RemoteSupport *rs = util_common_calloc_s(sizeof(RemoteSupport));
+    if (rs == NULL) {
+        return NULL;
+    }
+
+    rs->create = remote_support_create;
+    rs->destroy = remote_support_destroy;
+    rs->scan_remote_dir = remote_support_scan;
+    rs->load_item = remote_support_add;
+    rs->delete_item = remote_support_delete;
+
+    return rs;
+}
+#endif

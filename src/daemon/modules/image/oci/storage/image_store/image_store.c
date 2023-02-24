@@ -3470,6 +3470,63 @@ out:
     return ret;
 }
 
+int remote_load_new_images_from_json()
+{
+    int ret = 0;
+    int nret;
+    char **image_dirs = NULL;
+    size_t image_dirs_num = 0;
+    size_t i;
+    char *id_patten = "^[a-f0-9]{64}$";
+    char image_path[PATH_MAX] = { 0x00 };
+
+    ret = util_list_all_subdir(g_image_store->dir, &image_dirs);
+    if (ret != 0) {
+        ERROR("Failed to get images directory");
+        goto out;
+    }
+    image_dirs_num = util_array_len((const char **)image_dirs);
+
+    for (i = 0; i < image_dirs_num; i++) {
+        bool valid_v1_image = false;
+
+        if (map_search(g_image_store->byid, (void *)image_dirs[i]) != NULL) {
+            // printf("image: %s already exsits\n", image_dirs[i]);
+            continue;
+        }
+
+        if (util_reg_match(id_patten, image_dirs[i]) != 0) {
+            DEBUG("Image's json is placed inside image's data directory, so skip any other file or directory: %s",
+                  image_dirs[i]);
+            continue;
+        }
+
+        DEBUG("Restore the images:%s", image_dirs[i]);
+        nret = snprintf(image_path, sizeof(image_path), "%s/%s", g_image_store->dir, image_dirs[i]);
+        if (nret < 0 || (size_t)nret >= sizeof(image_path)) {
+            ERROR("Failed to get image path");
+            continue;
+        }
+
+        if (validate_manifest_schema_version_1(image_path, &valid_v1_image) != 0) {
+            ERROR("Failed to validate manifest schema version 1 format");
+            continue;
+        }
+
+        if (!valid_v1_image) {
+            if (append_image_by_directory(image_path) != 0) {
+                ERROR("Found image path but load json failed: %s", image_dirs[i]);
+                continue;
+            }
+        }
+        // if is valid_v1_image, do not handle.
+    }
+
+out:
+    util_free_array(image_dirs);
+    return ret;
+}
+
 static int get_images_from_json()
 {
     int ret = 0;
@@ -3648,3 +3705,169 @@ out:
     free(root_dir);
     return ret;
 }
+
+#ifdef ENABLE_REMOTE_LAYER_STORE
+struct remote_image_data {
+    struct linked_list new_images_list;
+    struct linked_list pending_loading_layers;
+};
+
+static void *remote_support_create(const char *remote_home, const char *remote_ro)
+{
+    struct remote_image_data *data = util_common_calloc_s(sizeof(struct remote_image_data));
+    if (data == NULL) {
+        ERROR("Out of memory");
+        return NULL;
+    }
+    linked_list_init(&(data->new_images_list));
+    linked_list_init(&(data->pending_loading_layers));
+    return data;
+}
+
+static void remote_support_destroy(void *data)
+{
+    struct linked_list *it = NULL;
+    struct linked_list *next = NULL;
+    struct remote_image_data *remote_data = data;
+    char *image_id = NULL;
+    char *layer_id = NULL;
+
+    if (data == NULL) {
+        return;
+    }
+
+    linked_list_for_each_safe(it, &(remote_data->new_images_list), next) {
+        image_id = (char *)it->elem;
+        linked_list_del(it);
+        free(image_id);
+        free(it);
+        it = NULL;
+    }
+
+    it = NULL;
+    next = NULL;
+
+    linked_list_for_each_safe(it, &(remote_data->pending_loading_layers), next) {
+        layer_id = (char *)it->elem;
+        linked_list_del(it);
+        free(layer_id);
+        free(it);
+        it = NULL;
+    }
+
+    free(data);
+    return;
+}
+
+static int remote_support_scan(void *data)
+{
+    int ret = 0;
+    int nret;
+    char **image_dirs = NULL;
+    size_t image_dirs_num = 0;
+    size_t i;
+    char *id_patten = "^[a-f0-9]{64}$";
+    char image_path[PATH_MAX] = { 0x00 };
+    struct linked_list *new_node = NULL;
+    char *new_image_id = NULL;
+    struct remote_image_data *remote_data = data;
+
+    ret = util_list_all_subdir(g_image_store->dir, &image_dirs);
+    if (ret != 0) {
+        ERROR("Failed to get images directory");
+        goto out;
+    }
+    image_dirs_num = util_array_len((const char **)image_dirs);
+
+    for (i = 0; i < image_dirs_num; i++) {
+        bool valid_v1_image = false;
+
+        if (map_search(g_image_store->byid, (void *)image_dirs[i]) != NULL) {
+            // printf("image: %s already exsits\n", image_dirs[i]);
+            continue;
+        }
+
+        if (util_reg_match(id_patten, image_dirs[i]) != 0) {
+            DEBUG("Image's json is placed inside image's data directory, so skip any other file or directory: %s",
+                  image_dirs[i]);
+            continue;
+        }
+
+        DEBUG("Restore the images:%s", image_dirs[i]);
+        printf("Restore the images:%s", image_dirs[i]);
+        nret = snprintf(image_path, sizeof(image_path), "%s/%s", g_image_store->dir, image_dirs[i]);
+        if (nret < 0 || (size_t)nret >= sizeof(image_path)) {
+            ERROR("Failed to get image path");
+            continue;
+        }
+
+        if (validate_manifest_schema_version_1(image_path, &valid_v1_image) != 0) {
+            ERROR("Failed to validate manifest schema version 1 format");
+            continue;
+        }
+
+        if (!valid_v1_image) {
+            // found new image
+            new_node = util_common_calloc_s(sizeof(struct linked_list));
+            if (new_node == NULL) {
+                ERROR("Out of memory, new found image %s not added", image_dirs[i]);
+                new_image_id = util_strdup_s(image_path);
+                linked_list_add_elem(new_node, new_image_id);
+                linked_list_add_tail(&remote_data->new_images_list, new_node);
+            }
+        }
+        // if is valid_v1_image, do not handle.
+    }
+
+out:
+    util_free_array(image_dirs);
+    return ret;
+    return 0;
+}
+
+static int remote_support_add(void *data)
+{
+    if (data == NULL) {
+        return -1;
+    }
+
+    struct remote_image_data *remote_data = data;
+    struct linked_list *it = NULL;
+    struct linked_list *next = NULL;
+    char *new_image_id = NULL;
+
+    linked_list_for_each_safe(it, &(remote_data->new_images_list), next) {
+        new_image_id = (char *)it->elem;
+        if (append_image_by_directory(new_image_id) != 0) {
+            ERROR("load image into memory failed");
+        }
+        linked_list_del(it);
+        free(new_image_id);
+        free(it);
+        it = NULL;
+    }
+
+    return 0;
+}
+
+static int remote_support_delete(void *data)
+{
+    return 0;
+}
+
+RemoteSupport *image_store_impl_remote_support()
+{
+    RemoteSupport *rs = util_common_calloc_s(sizeof(RemoteSupport));
+    if (rs == NULL) {
+        return NULL;
+    }
+
+    rs->create = remote_support_create;
+    rs->destroy = remote_support_destroy;
+    rs->scan_remote_dir = remote_support_scan;
+    rs->load_item = remote_support_add;
+    rs->delete_item = remote_support_delete;
+
+    return rs;
+}
+#endif
