@@ -400,6 +400,7 @@ typedef struct {
     const char *id;
     char **params;
     size_t params_num;
+    bool unset;
 } runtime_exec_info;
 
 static void runtime_exec_param_dump(const char **params)
@@ -455,6 +456,10 @@ static void runtime_exec_info_init(runtime_exec_info *rei, const char *workdir, 
     rei->params = params;
     rei->params_num = params_num;
 
+    if (strcmp(subcmd, "start") == 0) {
+        rei->unset = true;
+    }
+
     runtime_exec_param_init(rei);
     runtime_exec_param_dump((const char **)rei->params);
 }
@@ -471,6 +476,13 @@ static void runtime_exec_func(void *arg)
     if (chdir(rei->workdir) < 0) {
         dprintf(STDERR_FILENO, "chdir %s failed", rei->workdir);
         _exit(EXIT_FAILURE);
+    }
+
+    if (rei->unset) {
+        if (unsetenv("NOTIFY_SOCKET") != 0) {
+            dprintf(STDERR_FILENO, "unset env NOTIFY_SOCKET failed %s", strerror(errno));
+            _exit(EXIT_FAILURE);
+        }
     }
 
     execvp(rei->cmd, rei->params);
