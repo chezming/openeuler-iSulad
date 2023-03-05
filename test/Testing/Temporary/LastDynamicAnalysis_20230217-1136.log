@@ -1,0 +1,618 @@
+Start testing: Feb 17 19:36 CST
+----------------------------------------------------------
+1/41 Testing: mainloop_ut
+1/41 Test: mainloop_ut
+Command: "/usr/bin/valgrind" "--log-file=/root/iSulad/test/Testing/Temporary/MemoryChecker.1.log" "-q" "--tool=memcheck" "--leak-check=yes" "--show-reachable=yes" "--num-callers=50" "/root/iSulad/test/test/cutils/mainloop/mainloop_ut" "--gtest_output=xml:mainloop_ut-Results.xml"
+Directory: /root/iSulad/test/test/cutils/mainloop
+"mainloop_ut" start time: Feb 17 19:36 CST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.34 sec
+----------------------------------------------------------
+Test Failed.
+"mainloop_ut" end time: Feb 17 19:36 CST
+"mainloop_ut" time elapsed: 00:00:00
+----------------------------------------------------------
+
+2/41 Testing: utils_string_ut
+2/41 Test: utils_string_ut
+Command: "/usr/bin/valgrind" "--log-file=/root/iSulad/test/Testing/Temporary/MemoryChecker.2.log" "-q" "--tool=memcheck" "--leak-check=yes" "--show-reachable=yes" "--num-callers=50" "/root/iSulad/test/test/cutils/utils_string/utils_string_ut" "--gtest_output=xml:utils_string_ut-Results.xml"
+Directory: /root/iSulad/test/test/cutils/utils_string
+"utils_string_ut" start time: Feb 17 19:36 CST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.18 sec
+----------------------------------------------------------
+Test Failed.
+"utils_string_ut" end time: Feb 17 19:36 CST
+"utils_string_ut" time elapsed: 00:00:00
+----------------------------------------------------------
+
+3/41 Testing: utils_convert_ut
+3/41 Test: utils_convert_ut
+Command: "/usr/bin/valgrind" "--log-file=/root/iSulad/test/Testing/Temporary/MemoryChecker.3.log" "-q" "--tool=memcheck" "--leak-check=yes" "--show-reachable=yes" "--num-callers=50" "/root/iSulad/test/test/cutils/utils_convert/utils_convert_ut" "--gtest_output=xml:utils_convert_ut-Results.xml"
+Directory: /root/iSulad/test/test/cutils/utils_convert
+"utils_convert_ut" start time: Feb 17 19:36 CST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.17 sec
+----------------------------------------------------------
+Test Failed.
+"utils_convert_ut" end time: Feb 17 19:36 CST
+"utils_convert_ut" time elapsed: 00:00:00
+----------------------------------------------------------
+
+4/41 Testing: utils_array_ut
+4/41 Test: utils_array_ut
+Command: "/usr/bin/valgrind" "--log-file=/root/iSulad/test/Testing/Temporary/MemoryChecker.4.log" "-q" "--tool=memcheck" "--leak-check=yes" "--show-reachable=yes" "--num-callers=50" "/root/iSulad/test/test/cutils/utils_array/utils_array_ut" "--gtest_output=xml:utils_array_ut-Results.xml"
+Directory: /root/iSulad/test/test/cutils/utils_array
+"utils_array_ut" start time: Feb 17 19:36 CST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.09 sec
+----------------------------------------------------------
+Test Failed.
+"utils_array_ut" end time: Feb 17 19:36 CST
+"utils_array_ut" time elapsed: 00:00:00
+----------------------------------------------------------
+
+5/41 Testing: utils_base64_ut
+5/41 Test: utils_base64_ut
+Command: "/usr/bin/valgrind" "--log-file=/root/iSulad/test/Testing/Temporary/MemoryChecker.5.log" "-q" "--tool=memcheck" "--leak-check=yes" "--show-reachable=yes" "--num-callers=50" "/root/iSulad/test/test/cutils/utils_base64/utils_base64_ut" "--gtest_output=xml:utils_base64_ut-Results.xml"
+Directory: /root/iSulad/test/test/cutils/utils_base64
+"utils_base64_ut" start time: Feb 17 19:36 CST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.07 sec
+----------------------------------------------------------
+Test Failed.
+"utils_base64_ut" end time: Feb 17 19:36 CST
+"utils_base64_ut" time elapsed: 00:00:00
+----------------------------------------------------------
+
+6/41 Testing: utils_pwgr_ut
+6/41 Test: utils_pwgr_ut
+Command: "/usr/bin/valgrind" "--log-file=/root/iSulad/test/Testing/Temporary/MemoryChecker.6.log" "-q" "--tool=memcheck" "--leak-check=yes" "--show-reachable=yes" "--num-callers=50" "/root/iSulad/test/test/cutils/utils_pwgr/utils_pwgr_ut" "--gtest_output=xml:utils_pwgr_ut-Results.xml"
+Directory: /root/iSulad/test/test/cutils/utils_pwgr
+"utils_pwgr_ut" start time: Feb 17 19:36 CST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.11 sec
+----------------------------------------------------------
+Test Failed.
+"utils_pwgr_ut" end time: Feb 17 19:36 CST
+"utils_pwgr_ut" time elapsed: 00:00:00
+----------------------------------------------------------
+
+7/41 Testing: utils_namespace_ut
+7/41 Test: utils_namespace_ut
+Command: "/usr/bin/valgrind" "--log-file=/root/iSulad/test/Testing/Temporary/MemoryChecker.7.log" "-q" "--tool=memcheck" "--leak-check=yes" "--show-reachable=yes" "--num-callers=50" "/root/iSulad/test/test/cutils/utils_namespace/utils_namespace_ut" "--gtest_output=xml:utils_namespace_ut-Results.xml"
+Directory: /root/iSulad/test/test/cutils/utils_namespace
+"utils_namespace_ut" start time: Feb 17 19:36 CST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.12 sec
+----------------------------------------------------------
+Test Failed.
+"utils_namespace_ut" end time: Feb 17 19:36 CST
+"utils_namespace_ut" time elapsed: 00:00:00
+----------------------------------------------------------
+
+8/41 Testing: utils_aes_ut
+8/41 Test: utils_aes_ut
+Command: "/usr/bin/valgrind" "--log-file=/root/iSulad/test/Testing/Temporary/MemoryChecker.8.log" "-q" "--tool=memcheck" "--leak-check=yes" "--show-reachable=yes" "--num-callers=50" "/root/iSulad/test/test/cutils/utils_aes/utils_aes_ut" "--gtest_output=xml:utils_aes_ut-Results.xml"
+Directory: /root/iSulad/test/test/cutils/utils_aes
+"utils_aes_ut" start time: Feb 17 19:36 CST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.09 sec
+----------------------------------------------------------
+Test Failed.
+"utils_aes_ut" end time: Feb 17 19:36 CST
+"utils_aes_ut" time elapsed: 00:00:00
+----------------------------------------------------------
+
+9/41 Testing: utils_error_ut
+9/41 Test: utils_error_ut
+Command: "/usr/bin/valgrind" "--log-file=/root/iSulad/test/Testing/Temporary/MemoryChecker.9.log" "-q" "--tool=memcheck" "--leak-check=yes" "--show-reachable=yes" "--num-callers=50" "/root/iSulad/test/test/cutils/utils_error/utils_error_ut" "--gtest_output=xml:utils_error_ut-Results.xml"
+Directory: /root/iSulad/test/test/cutils/utils_error
+"utils_error_ut" start time: Feb 17 19:36 CST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.06 sec
+----------------------------------------------------------
+Test Failed.
+"utils_error_ut" end time: Feb 17 19:36 CST
+"utils_error_ut" time elapsed: 00:00:00
+----------------------------------------------------------
+
+10/41 Testing: utils_fs_ut
+10/41 Test: utils_fs_ut
+Command: "/usr/bin/valgrind" "--log-file=/root/iSulad/test/Testing/Temporary/MemoryChecker.10.log" "-q" "--tool=memcheck" "--leak-check=yes" "--show-reachable=yes" "--num-callers=50" "/root/iSulad/test/test/cutils/utils_fs/utils_fs_ut" "--gtest_output=xml:utils_fs_ut-Results.xml"
+Directory: /root/iSulad/test/test/cutils/utils_fs
+"utils_fs_ut" start time: Feb 17 19:36 CST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.07 sec
+----------------------------------------------------------
+Test Failed.
+"utils_fs_ut" end time: Feb 17 19:36 CST
+"utils_fs_ut" time elapsed: 00:00:00
+----------------------------------------------------------
+
+11/41 Testing: utils_file_ut
+11/41 Test: utils_file_ut
+Command: "/usr/bin/valgrind" "--log-file=/root/iSulad/test/Testing/Temporary/MemoryChecker.11.log" "-q" "--tool=memcheck" "--leak-check=yes" "--show-reachable=yes" "--num-callers=50" "/root/iSulad/test/test/cutils/utils_file/utils_file_ut" "--gtest_output=xml:utils_file_ut-Results.xml"
+Directory: /root/iSulad/test/test/cutils/utils_file
+"utils_file_ut" start time: Feb 17 19:36 CST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.11 sec
+----------------------------------------------------------
+Test Failed.
+"utils_file_ut" end time: Feb 17 19:36 CST
+"utils_file_ut" time elapsed: 00:00:00
+----------------------------------------------------------
+
+12/41 Testing: utils_filters_ut
+12/41 Test: utils_filters_ut
+Command: "/usr/bin/valgrind" "--log-file=/root/iSulad/test/Testing/Temporary/MemoryChecker.12.log" "-q" "--tool=memcheck" "--leak-check=yes" "--show-reachable=yes" "--num-callers=50" "/root/iSulad/test/test/cutils/utils_filters/utils_filters_ut" "--gtest_output=xml:utils_filters_ut-Results.xml"
+Directory: /root/iSulad/test/test/cutils/utils_filters
+"utils_filters_ut" start time: Feb 17 19:36 CST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.10 sec
+----------------------------------------------------------
+Test Failed.
+"utils_filters_ut" end time: Feb 17 19:36 CST
+"utils_filters_ut" time elapsed: 00:00:00
+----------------------------------------------------------
+
+13/41 Testing: utils_timestamp_ut
+13/41 Test: utils_timestamp_ut
+Command: "/usr/bin/valgrind" "--log-file=/root/iSulad/test/Testing/Temporary/MemoryChecker.13.log" "-q" "--tool=memcheck" "--leak-check=yes" "--show-reachable=yes" "--num-callers=50" "/root/iSulad/test/test/cutils/utils_timestamp/utils_timestamp_ut" "--gtest_output=xml:utils_timestamp_ut-Results.xml"
+Directory: /root/iSulad/test/test/cutils/utils_timestamp
+"utils_timestamp_ut" start time: Feb 17 19:36 CST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.13 sec
+----------------------------------------------------------
+Test Failed.
+"utils_timestamp_ut" end time: Feb 17 19:36 CST
+"utils_timestamp_ut" time elapsed: 00:00:00
+----------------------------------------------------------
+
+14/41 Testing: utils_mount_spec_ut
+14/41 Test: utils_mount_spec_ut
+Command: "/usr/bin/valgrind" "--log-file=/root/iSulad/test/Testing/Temporary/MemoryChecker.14.log" "-q" "--tool=memcheck" "--leak-check=yes" "--show-reachable=yes" "--num-callers=50" "/root/iSulad/test/test/cutils/utils_mount_spec/utils_mount_spec_ut" "--gtest_output=xml:utils_mount_spec_ut-Results.xml"
+Directory: /root/iSulad/test/test/cutils/utils_mount_spec
+"utils_mount_spec_ut" start time: Feb 17 19:36 CST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.09 sec
+----------------------------------------------------------
+Test Failed.
+"utils_mount_spec_ut" end time: Feb 17 19:36 CST
+"utils_mount_spec_ut" time elapsed: 00:00:00
+----------------------------------------------------------
+
+15/41 Testing: utils_regex_ut
+15/41 Test: utils_regex_ut
+Command: "/usr/bin/valgrind" "--log-file=/root/iSulad/test/Testing/Temporary/MemoryChecker.15.log" "-q" "--tool=memcheck" "--leak-check=yes" "--show-reachable=yes" "--num-callers=50" "/root/iSulad/test/test/cutils/utils_regex/utils_regex_ut" "--gtest_output=xml:utils_regex_ut-Results.xml"
+Directory: /root/iSulad/test/test/cutils/utils_regex
+"utils_regex_ut" start time: Feb 17 19:36 CST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.06 sec
+----------------------------------------------------------
+Test Failed.
+"utils_regex_ut" end time: Feb 17 19:36 CST
+"utils_regex_ut" time elapsed: 00:00:00
+----------------------------------------------------------
+
+16/41 Testing: utils_utils_ut
+16/41 Test: utils_utils_ut
+Command: "/usr/bin/valgrind" "--log-file=/root/iSulad/test/Testing/Temporary/MemoryChecker.16.log" "-q" "--tool=memcheck" "--leak-check=yes" "--show-reachable=yes" "--num-callers=50" "/root/iSulad/test/test/cutils/utils_utils/utils_utils_ut" "--gtest_output=xml:utils_utils_ut-Results.xml"
+Directory: /root/iSulad/test/test/cutils/utils_utils
+"utils_utils_ut" start time: Feb 17 19:36 CST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.12 sec
+----------------------------------------------------------
+Test Failed.
+"utils_utils_ut" end time: Feb 17 19:36 CST
+"utils_utils_ut" time elapsed: 00:00:00
+----------------------------------------------------------
+
+17/41 Testing: utils_verify_ut
+17/41 Test: utils_verify_ut
+Command: "/usr/bin/valgrind" "--log-file=/root/iSulad/test/Testing/Temporary/MemoryChecker.17.log" "-q" "--tool=memcheck" "--leak-check=yes" "--show-reachable=yes" "--num-callers=50" "/root/iSulad/test/test/cutils/utils_verify/utils_verify_ut" "--gtest_output=xml:utils_verify_ut-Results.xml"
+Directory: /root/iSulad/test/test/cutils/utils_verify
+"utils_verify_ut" start time: Feb 17 19:36 CST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.08 sec
+----------------------------------------------------------
+Test Failed.
+"utils_verify_ut" end time: Feb 17 19:36 CST
+"utils_verify_ut" time elapsed: 00:00:00
+----------------------------------------------------------
+
+18/41 Testing: utils_network_ut
+18/41 Test: utils_network_ut
+Command: "/usr/bin/valgrind" "--log-file=/root/iSulad/test/Testing/Temporary/MemoryChecker.18.log" "-q" "--tool=memcheck" "--leak-check=yes" "--show-reachable=yes" "--num-callers=50" "/root/iSulad/test/test/cutils/utils_network/utils_network_ut" "--gtest_output=xml:utils_network_ut-Results.xml"
+Directory: /root/iSulad/test/test/cutils/utils_network
+"utils_network_ut" start time: Feb 17 19:36 CST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.05 sec
+----------------------------------------------------------
+Test Failed.
+"utils_network_ut" end time: Feb 17 19:36 CST
+"utils_network_ut" time elapsed: 00:00:00
+----------------------------------------------------------
+
+19/41 Testing: oci_config_merge_ut
+19/41 Test: oci_config_merge_ut
+Command: "/usr/bin/valgrind" "--log-file=/root/iSulad/test/Testing/Temporary/MemoryChecker.19.log" "-q" "--tool=memcheck" "--leak-check=yes" "--show-reachable=yes" "--num-callers=50" "/root/iSulad/test/test/image/oci/oci_config_merge/oci_config_merge_ut" "--gtest_output=xml:oci_config_merge_ut-Results.xml"
+Directory: /root/iSulad/test/test/image/oci/oci_config_merge
+"oci_config_merge_ut" start time: Feb 17 19:36 CST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.55 sec
+----------------------------------------------------------
+Test Failed.
+"oci_config_merge_ut" end time: Feb 17 19:36 CST
+"oci_config_merge_ut" time elapsed: 00:00:00
+----------------------------------------------------------
+
+20/41 Testing: storage_images_ut
+20/41 Test: storage_images_ut
+Command: "/usr/bin/valgrind" "--log-file=/root/iSulad/test/Testing/Temporary/MemoryChecker.20.log" "-q" "--tool=memcheck" "--leak-check=yes" "--show-reachable=yes" "--num-callers=50" "/root/iSulad/test/test/image/oci/storage/images/storage_images_ut" "--gtest_output=xml:storage_images_ut-Results.xml"
+Directory: /root/iSulad/test/test/image/oci/storage/images
+"storage_images_ut" start time: Feb 17 19:36 CST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.32 sec
+----------------------------------------------------------
+Test Failed.
+"storage_images_ut" end time: Feb 17 19:36 CST
+"storage_images_ut" time elapsed: 00:00:00
+----------------------------------------------------------
+
+21/41 Testing: storage_rootfs_ut
+21/41 Test: storage_rootfs_ut
+Command: "/usr/bin/valgrind" "--log-file=/root/iSulad/test/Testing/Temporary/MemoryChecker.21.log" "-q" "--tool=memcheck" "--leak-check=yes" "--show-reachable=yes" "--num-callers=50" "/root/iSulad/test/test/image/oci/storage/rootfs/storage_rootfs_ut" "--gtest_output=xml:storage_rootfs_ut-Results.xml"
+Directory: /root/iSulad/test/test/image/oci/storage/rootfs
+"storage_rootfs_ut" start time: Feb 17 19:36 CST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.24 sec
+----------------------------------------------------------
+Test Failed.
+"storage_rootfs_ut" end time: Feb 17 19:36 CST
+"storage_rootfs_ut" time elapsed: 00:00:00
+----------------------------------------------------------
+
+22/41 Testing: storage_driver_ut
+22/41 Test: storage_driver_ut
+Command: "/usr/bin/valgrind" "--log-file=/root/iSulad/test/Testing/Temporary/MemoryChecker.22.log" "-q" "--tool=memcheck" "--leak-check=yes" "--show-reachable=yes" "--num-callers=50" "/root/iSulad/test/test/image/oci/storage/layers/storage_driver_ut" "--gtest_output=xml:storage_driver_ut-Results.xml"
+Directory: /root/iSulad/test/test/image/oci/storage/layers
+"storage_driver_ut" start time: Feb 17 19:36 CST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.15 sec
+----------------------------------------------------------
+Test Failed.
+"storage_driver_ut" end time: Feb 17 19:36 CST
+"storage_driver_ut" time elapsed: 00:00:00
+----------------------------------------------------------
+
+23/41 Testing: storage_layers_ut
+23/41 Test: storage_layers_ut
+Command: "/usr/bin/valgrind" "--log-file=/root/iSulad/test/Testing/Temporary/MemoryChecker.23.log" "-q" "--tool=memcheck" "--leak-check=yes" "--show-reachable=yes" "--num-callers=50" "/root/iSulad/test/test/image/oci/storage/layers/storage_layers_ut" "--gtest_output=xml:storage_layers_ut-Results.xml"
+Directory: /root/iSulad/test/test/image/oci/storage/layers
+"storage_layers_ut" start time: Feb 17 19:36 CST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.20 sec
+----------------------------------------------------------
+Test Failed.
+"storage_layers_ut" end time: Feb 17 19:36 CST
+"storage_layers_ut" time elapsed: 00:00:00
+----------------------------------------------------------
+
+24/41 Testing: registry_images_ut
+24/41 Test: registry_images_ut
+Command: "/usr/bin/valgrind" "--log-file=/root/iSulad/test/Testing/Temporary/MemoryChecker.24.log" "-q" "--tool=memcheck" "--leak-check=yes" "--show-reachable=yes" "--num-callers=50" "/root/iSulad/test/test/image/oci/registry/registry_images_ut" "--gtest_output=xml:registry_images_ut-Results.xml"
+Directory: /root/iSulad/test/test/image/oci/registry
+"registry_images_ut" start time: Feb 17 19:36 CST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.40 sec
+----------------------------------------------------------
+Test Failed.
+"registry_images_ut" end time: Feb 17 19:36 CST
+"registry_images_ut" time elapsed: 00:00:00
+----------------------------------------------------------
+
+25/41 Testing: ps_ut
+25/41 Test: ps_ut
+Command: "/usr/bin/valgrind" "--log-file=/root/iSulad/test/Testing/Temporary/MemoryChecker.25.log" "-q" "--tool=memcheck" "--leak-check=yes" "--show-reachable=yes" "--num-callers=50" "/root/iSulad/test/test/cmd/isula/information/ps/ps_ut" "--gtest_output=xml:ps_ut-Results.xml"
+Directory: /root/iSulad/test/test/cmd/isula/information/ps
+"ps_ut" start time: Feb 17 19:36 CST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.12 sec
+----------------------------------------------------------
+Test Failed.
+"ps_ut" end time: Feb 17 19:36 CST
+"ps_ut" time elapsed: 00:00:00
+----------------------------------------------------------
+
+26/41 Testing: info_ut
+26/41 Test: info_ut
+Command: "/usr/bin/valgrind" "--log-file=/root/iSulad/test/Testing/Temporary/MemoryChecker.26.log" "-q" "--tool=memcheck" "--leak-check=yes" "--show-reachable=yes" "--num-callers=50" "/root/iSulad/test/test/cmd/isula/information/info/info_ut" "--gtest_output=xml:info_ut-Results.xml"
+Directory: /root/iSulad/test/test/cmd/isula/information/info
+"info_ut" start time: Feb 17 19:36 CST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.10 sec
+----------------------------------------------------------
+Test Failed.
+"info_ut" end time: Feb 17 19:36 CST
+"info_ut" time elapsed: 00:00:00
+----------------------------------------------------------
+
+27/41 Testing: pause_ut
+27/41 Test: pause_ut
+Command: "/usr/bin/valgrind" "--log-file=/root/iSulad/test/Testing/Temporary/MemoryChecker.27.log" "-q" "--tool=memcheck" "--leak-check=yes" "--show-reachable=yes" "--num-callers=50" "/root/iSulad/test/test/cmd/isula/extend/pause/pause_ut" "--gtest_output=xml:pause_ut-Results.xml"
+Directory: /root/iSulad/test/test/cmd/isula/extend/pause
+"pause_ut" start time: Feb 17 19:36 CST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.10 sec
+----------------------------------------------------------
+Test Failed.
+"pause_ut" end time: Feb 17 19:36 CST
+"pause_ut" time elapsed: 00:00:00
+----------------------------------------------------------
+
+28/41 Testing: resume_ut
+28/41 Test: resume_ut
+Command: "/usr/bin/valgrind" "--log-file=/root/iSulad/test/Testing/Temporary/MemoryChecker.28.log" "-q" "--tool=memcheck" "--leak-check=yes" "--show-reachable=yes" "--num-callers=50" "/root/iSulad/test/test/cmd/isula/extend/resume/resume_ut" "--gtest_output=xml:resume_ut-Results.xml"
+Directory: /root/iSulad/test/test/cmd/isula/extend/resume
+"resume_ut" start time: Feb 17 19:36 CST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.13 sec
+----------------------------------------------------------
+Test Failed.
+"resume_ut" end time: Feb 17 19:36 CST
+"resume_ut" time elapsed: 00:00:00
+----------------------------------------------------------
+
+29/41 Testing: client_show_format_ut
+29/41 Test: client_show_format_ut
+Command: "/usr/bin/valgrind" "--log-file=/root/iSulad/test/Testing/Temporary/MemoryChecker.29.log" "-q" "--tool=memcheck" "--leak-check=yes" "--show-reachable=yes" "--num-callers=50" "/root/iSulad/test/test/cmd/isula/utils/client_show_format/client_show_format_ut" "--gtest_output=xml:client_show_format_ut-Results.xml"
+Directory: /root/iSulad/test/test/cmd/isula/utils/client_show_format
+"client_show_format_ut" start time: Feb 17 19:36 CST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.12 sec
+----------------------------------------------------------
+Test Failed.
+"client_show_format_ut" end time: Feb 17 19:36 CST
+"client_show_format_ut" time elapsed: 00:00:00
+----------------------------------------------------------
+
+30/41 Testing: template_string_parse_ut
+30/41 Test: template_string_parse_ut
+Command: "/usr/bin/valgrind" "--log-file=/root/iSulad/test/Testing/Temporary/MemoryChecker.30.log" "-q" "--tool=memcheck" "--leak-check=yes" "--show-reachable=yes" "--num-callers=50" "/root/iSulad/test/test/cmd/isula/utils/template_string_parse/template_string_parse_ut" "--gtest_output=xml:template_string_parse_ut-Results.xml"
+Directory: /root/iSulad/test/test/cmd/isula/utils/template_string_parse
+"template_string_parse_ut" start time: Feb 17 19:36 CST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.07 sec
+----------------------------------------------------------
+Test Failed.
+"template_string_parse_ut" end time: Feb 17 19:36 CST
+"template_string_parse_ut" time elapsed: 00:00:00
+----------------------------------------------------------
+
+31/41 Testing: isulad-shim_ut
+31/41 Test: isulad-shim_ut
+Command: "/usr/bin/valgrind" "--log-file=/root/iSulad/test/Testing/Temporary/MemoryChecker.31.log" "-q" "--tool=memcheck" "--leak-check=yes" "--show-reachable=yes" "--num-callers=50" "/root/iSulad/test/test/cmd/isulad-shim/isulad-shim_ut" "--gtest_output=xml:isulad-shim_ut-Results.xml"
+Directory: /root/iSulad/test/test/cmd/isulad-shim
+"isulad-shim_ut" start time: Feb 17 19:36 CST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.10 sec
+----------------------------------------------------------
+Test Failed.
+"isulad-shim_ut" end time: Feb 17 19:36 CST
+"isulad-shim_ut" time elapsed: 00:00:00
+----------------------------------------------------------
+
+32/41 Testing: lcr_rt_ops_ut
+32/41 Test: lcr_rt_ops_ut
+Command: "/usr/bin/valgrind" "--log-file=/root/iSulad/test/Testing/Temporary/MemoryChecker.32.log" "-q" "--tool=memcheck" "--leak-check=yes" "--show-reachable=yes" "--num-callers=50" "/root/iSulad/test/test/runtime/lcr/lcr_rt_ops_ut" "--gtest_output=xml:lcr_rt_ops_ut-Results.xml"
+Directory: /root/iSulad/test/test/runtime/lcr
+"lcr_rt_ops_ut" start time: Feb 17 19:36 CST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.33 sec
+----------------------------------------------------------
+Test Failed.
+"lcr_rt_ops_ut" end time: Feb 17 19:36 CST
+"lcr_rt_ops_ut" time elapsed: 00:00:00
+----------------------------------------------------------
+
+33/41 Testing: isula_rt_ops_ut
+33/41 Test: isula_rt_ops_ut
+Command: "/usr/bin/valgrind" "--log-file=/root/iSulad/test/Testing/Temporary/MemoryChecker.33.log" "-q" "--tool=memcheck" "--leak-check=yes" "--show-reachable=yes" "--num-callers=50" "/root/iSulad/test/test/runtime/isula/isula_rt_ops_ut" "--gtest_output=xml:isula_rt_ops_ut-Results.xml"
+Directory: /root/iSulad/test/test/runtime/isula
+"isula_rt_ops_ut" start time: Feb 17 19:36 CST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.16 sec
+----------------------------------------------------------
+Test Failed.
+"isula_rt_ops_ut" end time: Feb 17 19:36 CST
+"isula_rt_ops_ut" time elapsed: 00:00:00
+----------------------------------------------------------
+
+34/41 Testing: specs_ut
+34/41 Test: specs_ut
+Command: "/usr/bin/valgrind" "--log-file=/root/iSulad/test/Testing/Temporary/MemoryChecker.34.log" "-q" "--tool=memcheck" "--leak-check=yes" "--show-reachable=yes" "--num-callers=50" "/root/iSulad/test/test/specs/specs/specs_ut" "--gtest_output=xml:specs_ut-Results.xml"
+Directory: /root/iSulad/test/test/specs/specs
+"specs_ut" start time: Feb 17 19:36 CST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.46 sec
+----------------------------------------------------------
+Test Failed.
+"specs_ut" end time: Feb 17 19:36 CST
+"specs_ut" time elapsed: 00:00:00
+----------------------------------------------------------
+
+35/41 Testing: specs_extend_ut
+35/41 Test: specs_extend_ut
+Command: "/usr/bin/valgrind" "--log-file=/root/iSulad/test/Testing/Temporary/MemoryChecker.35.log" "-q" "--tool=memcheck" "--leak-check=yes" "--show-reachable=yes" "--num-callers=50" "/root/iSulad/test/test/specs/specs_extend/specs_extend_ut" "--gtest_output=xml:specs_extend_ut-Results.xml"
+Directory: /root/iSulad/test/test/specs/specs_extend
+"specs_extend_ut" start time: Feb 17 19:36 CST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.43 sec
+----------------------------------------------------------
+Test Failed.
+"specs_extend_ut" end time: Feb 17 19:36 CST
+"specs_extend_ut" time elapsed: 00:00:00
+----------------------------------------------------------
+
+36/41 Testing: selinux_label_ut
+36/41 Test: selinux_label_ut
+Command: "/usr/bin/valgrind" "--log-file=/root/iSulad/test/Testing/Temporary/MemoryChecker.36.log" "-q" "--tool=memcheck" "--leak-check=yes" "--show-reachable=yes" "--num-callers=50" "/root/iSulad/test/test/services/execution/spec/selinux_label_ut" "--gtest_output=xml:selinux_label_ut-Results.xml"
+Directory: /root/iSulad/test/test/services/execution/spec
+"selinux_label_ut" start time: Feb 17 19:36 CST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.11 sec
+----------------------------------------------------------
+Test Failed.
+"selinux_label_ut" end time: Feb 17 19:36 CST
+"selinux_label_ut" time elapsed: 00:00:00
+----------------------------------------------------------
+
+37/41 Testing: selinux_label_mock_ut
+37/41 Test: selinux_label_mock_ut
+Command: "/usr/bin/valgrind" "--log-file=/root/iSulad/test/Testing/Temporary/MemoryChecker.37.log" "-q" "--tool=memcheck" "--leak-check=yes" "--show-reachable=yes" "--num-callers=50" "/root/iSulad/test/test/services/execution/spec/selinux_label_mock_ut" "--gtest_output=xml:selinux_label_mock_ut-Results.xml"
+Directory: /root/iSulad/test/test/services/execution/spec
+"selinux_label_mock_ut" start time: Feb 17 19:36 CST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.19 sec
+----------------------------------------------------------
+Test Failed.
+"selinux_label_mock_ut" end time: Feb 17 19:36 CST
+"selinux_label_mock_ut" time elapsed: 00:00:00
+----------------------------------------------------------
+
+38/41 Testing: execution_extend_ut
+38/41 Test: execution_extend_ut
+Command: "/usr/bin/valgrind" "--log-file=/root/iSulad/test/Testing/Temporary/MemoryChecker.38.log" "-q" "--tool=memcheck" "--leak-check=yes" "--show-reachable=yes" "--num-callers=50" "/root/iSulad/test/test/services/execution/execute/execution_extend/execution_extend_ut" "--gtest_output=xml:execution_extend_ut-Results.xml"
+Directory: /root/iSulad/test/test/services/execution/execute/execution_extend
+"execution_extend_ut" start time: Feb 17 19:36 CST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.43 sec
+----------------------------------------------------------
+Test Failed.
+"execution_extend_ut" end time: Feb 17 19:36 CST
+"execution_extend_ut" time elapsed: 00:00:00
+----------------------------------------------------------
+
+39/41 Testing: network_ns_ut
+39/41 Test: network_ns_ut
+Command: "/usr/bin/valgrind" "--log-file=/root/iSulad/test/Testing/Temporary/MemoryChecker.39.log" "-q" "--tool=memcheck" "--leak-check=yes" "--show-reachable=yes" "--num-callers=50" "/root/iSulad/test/test/network/network_ns_ut" "--gtest_output=xml:network_ns_ut-Results.xml"
+Directory: /root/iSulad/test/test/network
+"network_ns_ut" start time: Feb 17 19:36 CST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   3.68 sec
+----------------------------------------------------------
+Test Failed.
+"network_ns_ut" end time: Feb 17 19:36 CST
+"network_ns_ut" time elapsed: 00:00:03
+----------------------------------------------------------
+
+40/41 Testing: volume_ut
+40/41 Test: volume_ut
+Command: "/usr/bin/valgrind" "--log-file=/root/iSulad/test/Testing/Temporary/MemoryChecker.40.log" "-q" "--tool=memcheck" "--leak-check=yes" "--show-reachable=yes" "--num-callers=50" "/root/iSulad/test/test/volume/volume_ut" "--gtest_output=xml:volume_ut-Results.xml"
+Directory: /root/iSulad/test/test/volume
+"volume_ut" start time: Feb 17 19:36 CST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.14 sec
+----------------------------------------------------------
+Test Failed.
+"volume_ut" end time: Feb 17 19:36 CST
+"volume_ut" time elapsed: 00:00:00
+----------------------------------------------------------
+
+41/41 Testing: cgroup_cpu_ut
+41/41 Test: cgroup_cpu_ut
+Command: "/usr/bin/valgrind" "--log-file=/root/iSulad/test/Testing/Temporary/MemoryChecker.41.log" "-q" "--tool=memcheck" "--leak-check=yes" "--show-reachable=yes" "--num-callers=50" "/root/iSulad/test/test/cgroup/cpu/cgroup_cpu_ut" "--gtest_output=xml:cgroup_cpu_ut-Results.xml"
+Directory: /root/iSulad/test/test/cgroup/cpu
+"cgroup_cpu_ut" start time: Feb 17 19:36 CST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.13 sec
+----------------------------------------------------------
+Test Failed.
+"cgroup_cpu_ut" end time: Feb 17 19:36 CST
+"cgroup_cpu_ut" time elapsed: 00:00:00
+----------------------------------------------------------
+
+End testing: Feb 17 19:36 CST

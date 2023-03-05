@@ -1062,6 +1062,35 @@ auto PodSandboxManagerService::SharesHostIpc(const container_inspect *inspect) -
     return runtime::v1alpha2::NamespaceMode::POD;
 }
 
+void PodSandboxManagerService::ShareHostUserNamespace(const container_inspect *inspect,
+                                                      runtime::v1alpha2::UserNamespace &userns)
+{
+    if (inspect != nullptr && inspect->host_config != nullptr && (inspect->host_config->userns_mode != nullptr) &&
+        std::string(inspect->host_config->userns_mode) == CRI::Constants::namespaceModeHost) {
+        userns.set_mode(runtime::v1alpha2::NamespaceMode::NODE);
+    }
+    userns.set_mode(runtime::v1alpha2::NamespaceMode::POD);
+    if (inspect->host_config->user_remap != nullptr) {
+        int ret = 0;
+        unsigned int host_uid = 0;
+        unsigned int host_gid = 0;
+        unsigned int size = 0;       
+        ret = util_parse_user_remap(inspect->host_config->user_remap, &host_uid, &host_gid, &size);
+        if (ret) {
+            ERROR("User remap '%s' format error", inspect->host_config->user_remap);
+            return;
+        }
+        runtime::v1alpha2::IDMapping *uidmapping = userns.add_uids();
+        runtime::v1alpha2::IDMapping *gidmapping = userns.add_gids();
+        uidmapping->set_host_id(host_uid);
+        uidmapping->set_container_id(0);
+        uidmapping->set_length(size);
+        gidmapping->set_host_id(host_gid);
+        gidmapping->set_container_id(0);
+        gidmapping->set_length(size);
+    }
+}
+
 void PodSandboxManagerService::GetIPs(const std::string &podSandboxID, const container_inspect *inspect,
                                       const std::string &networkInterface, std::vector<std::string> &ips, Errors &error)
 {
@@ -1154,7 +1183,10 @@ void PodSandboxManagerService::PodSandboxStatusToGRPC(const container_inspect *i
     options->set_network(SharesHostNetwork(inspect));
     options->set_pid(SharesHostPid(inspect));
     options->set_ipc(SharesHostIpc(inspect));
-
+    ShareHostUserNamespace(inspect, *options->mutable_userns_options());
+    if (inspect->host_config->runtime != nullptr) {
+        podStatus->set_runtime_handler(inspect->host_config->runtime);
+    }
     // add networks
     // get default network status
     SetSandboxStatusNetwork(inspect, podSandboxID, podStatus, error);
