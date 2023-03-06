@@ -1,5 +1,6 @@
 # get current directory sources files
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR} local_layer_store_srcs)
+list(REMOVE_ITEM local_layer_store_srcs "${CMAKE_CURRENT_SOURCE_DIR}/layer_remote_impl.c")
 add_subdirectory(graphdriver)
 
 set(LAYER_STORE_SRCS
@@ -7,6 +8,7 @@ set(LAYER_STORE_SRCS
     ${GRAPHDRIVER_SRCS}
     PARENT_SCOPE
     )
+
 set(LAYER_STORE_INCS
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${GRAPHDRIVER_INCS}
