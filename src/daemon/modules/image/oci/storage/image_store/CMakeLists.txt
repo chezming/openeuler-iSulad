@@ -1,5 +1,6 @@
 # get current directory sources files
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR} local_image_store_srcs)
+list(REMOVE_ITEM local_image_store_srcs "${CMAKE_CURRENT_SOURCE_DIR}/image_remote_impl.c")
 
 set(IMAGE_STORE_SRCS
     ${local_image_store_srcs}
