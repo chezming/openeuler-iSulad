@@ -1012,12 +1012,8 @@ out:
         shim_kill_force(workdir);
     }
 
-    if (proc != NULL) {
-        free(proc);
-    }
-    if (p_proc != NULL) {
-        free(p_proc);
-    }
+    free(proc);
+    free(p_proc);
 
     return ret;
 }
