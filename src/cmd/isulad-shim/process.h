@@ -50,7 +50,7 @@ typedef struct {
     int fd_from;
     fd_node_t *fd_to;
     int id;// 0,1,2,3
-    pthread_mutex_t mutex;
+    pthread_mutex_t mutex; // used for locking fd_to
 } io_copy_t;
 
 typedef struct {
