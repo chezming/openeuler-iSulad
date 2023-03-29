@@ -32,7 +32,9 @@
 
 - 查看 registry 模块的设计文档： [registry_degisn](./detailed/Image/registry_degisn_zh.md) 。
 
-- 查看 isula search 的设计文档：[image_search_design](./detailed/Image/image_search_design_zh.md)
+- 查看 isula search 的设计文档：[image_search_design](./detailed/Image/image_search_design_zh.md) 。
+
+- 查看 ro目录分离的设计文档： [remote_ro_design](./detailed/Image/remote_ro_design.md) 。
 
 ## Network
 
@@ -47,6 +49,7 @@
 ## Runtime
 
 - 查看 runtime 模块的设计文档： [runtime_design](./detailed/Runtime/runtime_design_zh.md) 。
+- 查看 isulad 支持runc 的设计文档：[runc_design](./detailed/Runtime/runc_design_zh.md)。
 
 ## Security
 
