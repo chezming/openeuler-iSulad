@@ -409,7 +409,7 @@ static bool validate_image_name(char *image_name)
 static bool validate_image_layers_number(size_t layers_len)
 {
     if (layers_len > LAYER_NUM_MAX || layers_len < 1) {
-        ERROR("invalid layers number %zu maxium is %d", layers_len, LAYER_NUM_MAX);
+        ERROR("invalid layers number %zu maximum is %d", layers_len, LAYER_NUM_MAX);
         isulad_try_set_error_message("Invalid content in manifest: layer empty or max depth exceeded");
         return false;
     }

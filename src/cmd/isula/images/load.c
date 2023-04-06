@@ -72,7 +72,7 @@ out:
     return ret;
 }
 
-/* Waring: This function may modify image type */
+/* Warning: This function may modify image type */
 static bool valid_param()
 {
     if (g_cmd_load_args.argc > 0) {

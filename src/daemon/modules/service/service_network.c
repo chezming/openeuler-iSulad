@@ -1403,7 +1403,7 @@ int prepare_native_network(container_t *cont)
 
 err_out:
     if (remove_network_namespace(cont->network_settings->sandbox_key) != 0) {
-        ERROR("Faield to remove net ns for container %s", cont->common_config->id);
+        ERROR("Failed to remove net ns for container %s", cont->common_config->id);
     }
     DEBUG("remove net namespace when rollback");
 
@@ -1592,7 +1592,7 @@ int remove_native_network(container_t *cont)
     }
 
     if (remove_network_namespace(cont->network_settings->sandbox_key) != 0) {
-        ERROR("Faield to remove net ns for container %s", cont->common_config->id);
+        ERROR("Failed to remove net ns for container %s", cont->common_config->id);
         failure = true;
     }
 

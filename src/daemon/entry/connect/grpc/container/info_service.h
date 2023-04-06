@@ -10,7 +10,7 @@
  * See the Mulan PSL v2 for more details.
  * Author: wujing
  * Start: 2022-09-29
- * Description: define grpc query infomation service functions
+ * Description: define grpc query information service functions
  ******************************************************************************/
 #ifndef DAEMON_ENTRY_CONNECT_GRPC_QUERY_INFO_SERVICE_H
 #define DAEMON_ENTRY_CONNECT_GRPC_QUERY_INFO_SERVICE_H

@@ -283,7 +283,7 @@ static char **health_check_cmds(const container_config *config)
     shell_len = util_array_len((const char **)shell);
 
     if (config->healthcheck->test_len > SIZE_MAX - shell_len) {
-        ERROR("Invalid test comand length");
+        ERROR("Invalid test command length");
         goto out;
     }
 

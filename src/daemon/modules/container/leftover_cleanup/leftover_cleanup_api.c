@@ -59,7 +59,7 @@ void clean_module_do_clean()
     if (g_clns->count == g_clns->done_clean) {
         DEBUG("all clean up success");
     } else {
-        ERROR("Aim to do %d clean, %d clean sucess\n", g_clns->count, g_clns->done_clean);
+        ERROR("Aim to do %d clean, %d clean success\n", g_clns->count, g_clns->done_clean);
     }
 
     destroy_cleaners(g_clns);

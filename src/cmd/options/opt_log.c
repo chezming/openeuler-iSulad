@@ -152,7 +152,7 @@ bool parse_container_log_opt(const char *key, const char *val, json_map_string_s
                 return true;
             }
 
-            // check whether seted option, if setted, ust replace
+            // check whether seted option, if set, ust replace
             for (j = 0; j < opts->len; j++) {
                 if (strcmp(opts->keys[j], support_parsers[i].real_key) == 0) {
                     free(opts->values[j]);
@@ -225,7 +225,7 @@ bool check_opt_container_log_opt(const char *driver, const char *opt_key)
         }
     }
     if (idx == DRIVER_MAX) {
-        ERROR("Unsupport driver: %s", driver);
+        ERROR("Unsupported driver: %s", driver);
         return false;
     }
 
@@ -238,7 +238,7 @@ bool check_opt_container_log_opt(const char *driver, const char *opt_key)
         }
     }
 
-    ERROR("driver: %s, unsupport opts: %s", driver, opt_key);
+    ERROR("driver: %s, unsupported opts: %s", driver, opt_key);
     return false;
 }
 

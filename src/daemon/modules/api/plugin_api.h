@@ -28,7 +28,7 @@
  *     -1       failed
  * if not or has other values, please add comment to the function prototype.
  *
- * when check return value, if want to ingore err, please reset err=0 and add
+ * when check return value, if want to ignore err, please reset err=0 and add
  * comment.
  */
 

@@ -243,7 +243,7 @@ static int start_request_check(const container_start_request *h)
     int ret = 0;
 
     if (h == NULL || h->id == NULL) {
-        ERROR("recive NULL Request id");
+        ERROR("receive NULL Request id");
         ret = -1;
         goto out;
     }

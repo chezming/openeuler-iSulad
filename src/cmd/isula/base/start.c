@@ -317,7 +317,7 @@ static int local_attach_start()
     struct termios oldtios;
     struct command_fifo_config *console_fifos = NULL;
 
-    // Seting the FIFO dir as complete ID of the container to ensure that the FIFO directory is deleted correctly.
+    // Setting the FIFO dir as complete ID of the container to ensure that the FIFO directory is deleted correctly.
     ret = update_container_id();
     if (ret != 0) {
         COMMAND_ERROR("Update container %s failed, please check container name.", g_cmd_start_args.name);

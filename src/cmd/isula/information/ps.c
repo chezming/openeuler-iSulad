@@ -607,7 +607,7 @@ static int client_list(const struct client_arguments *args, const struct format_
 
         isula_filters_last_parse_args(lastest_n, &request.filters);
         if (request.filters == NULL) {
-            ERROR("Failed to parse lastest n containers filters args");
+            ERROR("Failed to parse latest n containers filters args");
             ret = -1;
             goto out;
         }

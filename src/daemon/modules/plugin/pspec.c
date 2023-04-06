@@ -140,7 +140,7 @@ char *get_pspec(oci_runtime_spec *oci)
 
     data = oci_runtime_pspec_generate_json(pspec, &ctx, &err);
     if (data == NULL) {
-        ERROR("failed gernerate json for pspec error=%s", err);
+        ERROR("failed to generate json for pspec error=%s", err);
     }
     UTIL_FREE_AND_SET_NULL(err);
 
@@ -246,7 +246,7 @@ char *merge_pspec(const char *base, const char *data)
     dst = oci_runtime_pspec_generate_json(old, &ctx, &err);
     UTIL_FREE_AND_SET_NULL(err);
     if (dst == NULL) {
-        ERROR("failed gernerate json for runtime_info");
+        ERROR("failed to generate json for runtime_info");
     }
 
     free_oci_runtime_pspec(new);

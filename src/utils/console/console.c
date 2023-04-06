@@ -406,12 +406,12 @@ int console_loop_with_std_fd(int stdinfd, int stdoutfd, int stderrfd, int fifoin
         if (tty) {
             ret = epoll_loop_add_handler(&descr, ts.stdin_reader, console_cb_tty_stdin_with_escape, &ts);
             if (ret) {
-                INFO("Add handler for stdinfd faied. with error %s", strerror(errno));
+                INFO("Add handler for stdinfd failed. with error %s", strerror(errno));
             }
         } else {
             ret = epoll_loop_add_handler(&descr, ts.stdin_reader, console_cb_stdio_copy, &ts);
             if (ret) {
-                INFO("Add handler for stdinfd faied. with error %s", strerror(errno));
+                INFO("Add handler for stdinfd failed. with error %s", strerror(errno));
             }
         }
     }

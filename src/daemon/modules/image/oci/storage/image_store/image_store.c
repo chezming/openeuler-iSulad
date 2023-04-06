@@ -3170,7 +3170,7 @@ static int get_layers_from_manifest(const registry_manifest_schema1 *manifest, l
     size_t j = 0;
 
     if (manifest->fs_layers_len > MAX_LAYER_NUM || manifest->fs_layers_len == 0) {
-        ERROR("Invalid layer number %ld, maxium is %d and it can't be 0", manifest->fs_layers_len, MAX_LAYER_NUM);
+        ERROR("Invalid layer number %ld, maximum is %d and it can't be 0", manifest->fs_layers_len, MAX_LAYER_NUM);
         ret = -1;
         goto out;
     }
@@ -3707,7 +3707,7 @@ int remote_remove_image_from_memory_with_lock(const char *id)
     }
 
     if (map_search(g_image_store->byid, (void *)id) == NULL) {
-        DEBUG("remote image already remvoed, don't delete twice: %s", id);
+        DEBUG("remote image already removed, don't delete twice: %s", id);
         goto out;
     }
 

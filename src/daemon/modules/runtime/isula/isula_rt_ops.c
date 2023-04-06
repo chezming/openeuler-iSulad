@@ -1498,7 +1498,7 @@ int rt_isula_exec_resize(const char *id, const char *runtime, const rt_exec_resi
         return -1;
     }
 
-    /* crictl not suport exec auto resize */
+    /* crictl not support exec auto resize */
     if (params->suffix == NULL) {
         WARN("exec resize not support when isula not being used");
         return 0;

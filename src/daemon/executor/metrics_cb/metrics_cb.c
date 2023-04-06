@@ -65,7 +65,7 @@ static const char g_mem_stat_desc[] = "is containers's memory occupied stats";
 static const char g_cpu_stat_desc[] = "is containers's cpu stats";
 static const char g_req_count_desc[] = "is metrics server accepted request count";
 static const char g_cont_pids_desc[] = "is containers's pid count";
-static const char g_daemon_calloc_desc[] = "is isula deamon calloced total";
+static const char g_daemon_calloc_desc[] = "is isula daemon calloced total";
 
 static unsigned long long g_mem_alloced_total;
 

@@ -215,7 +215,7 @@ int command_default_ulimit_append(command_option_t *option, const char *arg);
       "network-plugin",                                                                                           \
       0,                                                                                                          \
       &(cmdargs)->json_confs->network_plugin,                                                                     \
-      "Set network plugin, suppport null and cni (default null)",                                                 \
+      "Set network plugin, support null and cni (default null)",                                                 \
       NULL },                                                                                                     \
     { CMD_OPT_TYPE_STRING_DUP,                                                                                    \
       false,                                                                                                      \

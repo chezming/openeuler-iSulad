@@ -371,7 +371,7 @@ static char **as_env(const struct cni_args *cniargs)
     char **envir = environ;
 
     if (cniargs == NULL) {
-        ERROR("Invlaid cni args");
+        ERROR("Invalid cni args");
         return NULL;
     }
 

@@ -143,7 +143,7 @@ static container_events_type_t lcrsta2Evetype(int value)
 static const char * const g_isulad_event_strtype[] = {
     "exit",     "die",     "starting", "running", "stopping", "aborting",     "freezing",       "frozen",
     "thawed",   "oom",     "create",   "start",   "restart",  "stop",         "exec_create",    "exec_start",
-    "exec_die", "attach",  "kill",     "top",     "reanme",   "archive-path", "extract-to-dir", "update",
+    "exec_die", "attach",  "kill",     "top",     "rename",   "archive-path", "extract-to-dir", "update",
     "pause",    "unpause", "export",   "resize",  "paused1",
 };
 

@@ -75,7 +75,7 @@ static int bandwidth_inject(const char *value, struct runtime_conf *rt)
 
     bwith = cni_bandwidth_entry_parse_data(value, &ctx, &err);
     if (bwith == NULL) {
-        ERROR("Failed to parse bandwidth datas from value:%s, err:%s", value, err);
+        ERROR("Failed to parse bandwidth data from value:%s, err:%s", value, err);
         ret = -1;
         goto out;
     }

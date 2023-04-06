@@ -60,7 +60,7 @@ void metrics_get_by_type_cb(evhtp_request_t *req, void *arg)
     }
 
     evhtp_headers_add_header(req->headers_out,
-                             evhtp_header_new("Content-Type", "text/plain; verion:0.0.4; charset=utf-8", 0, 0));
+                             evhtp_header_new("Content-Type", "text/plain; version:0.0.4; charset=utf-8", 0, 0));
     evbuffer_add(req->buffer_out, metrics, len);
     free(metrics);
     metrics = NULL;

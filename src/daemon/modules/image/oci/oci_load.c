@@ -1076,7 +1076,7 @@ int oci_do_load(const im_load_request *request)
 
     dstdir = oci_load_path_create();
     if (dstdir == NULL) {
-        ERROR("create temporary direcory failed");
+        ERROR("create temporary directory failed");
         ret = -1;
         goto out;
     }

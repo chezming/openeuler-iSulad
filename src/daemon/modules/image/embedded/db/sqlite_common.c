@@ -76,7 +76,7 @@ int db_sqlite_request(const char *stmt)
 
     ret = sqlite3_busy_timeout(g_db, ISULA_SQLITE_BUSY_TIMEOUT);
     if (ret != SQLITE_OK) {
-        ERROR("Falied to set sqlite busy timeout");
+        ERROR("Failed to set sqlite busy timeout");
         return ret;
     }
     ret = sqlite3_exec(g_db, stmt, NULL, NULL, &errmsg);
@@ -96,7 +96,7 @@ int db_sqlite_request_callback(const char *stmt,
 
     ret = sqlite3_busy_timeout(g_db, ISULA_SQLITE_BUSY_TIMEOUT);
     if (ret != SQLITE_OK) {
-        ERROR("Falied to set sqlite busy timeout");
+        ERROR("Failed to set sqlite busy timeout");
         return ret;
     }
     ret = sqlite3_exec(g_db, stmt, callback, data, &errmsg);
@@ -111,7 +111,7 @@ int db_sqlite_request_callback(const char *stmt,
 static int callback_integrity_check_result(void *data, int argc, char **argv, char **colname)
 {
     if (argc != 1) {
-        ERROR("Invalid colums num:%d, it should be 1", argc);
+        ERROR("Invalid columns num:%d, it should be 1", argc);
         return DB_FAIL;
     }
 

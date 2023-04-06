@@ -507,7 +507,7 @@ static int connect_to_isulad(process_t *p, int std_id, const char *isulad_stdio,
         return add_io_dispatch(p->io_loop_fd, p->io_threads[std_id], *fd_from, *fd_to);
     }
 
-    /* if no I/O source is available, the I/O thread nead to be destroyed */
+    /* if no I/O source is available, the I/O thread need to be destroyed */
     destroy_io_thread(p, std_id);
 
     return SHIM_OK;

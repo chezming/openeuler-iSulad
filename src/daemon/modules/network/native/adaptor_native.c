@@ -957,7 +957,7 @@ static char *find_subnet()
 
     free(subnet);
     subnet = NULL;
-    isulad_set_error_message("Cannot find avaliable subnet by default");
+    isulad_set_error_message("Cannot find available subnet by default");
 
 out:
     util_free_string_array(config_subnet);
@@ -986,7 +986,7 @@ static char *find_gateway(const char *subnet)
     }
 
     if (ipnet->ip_mask[ipnet->ip_mask_len - 1] == 0xff) {
-        isulad_set_error_message("No avaliable gateway in %s", subnet);
+        isulad_set_error_message("No available gateway in %s", subnet);
         goto out;
     }
 
@@ -1115,7 +1115,7 @@ static cni_net_conf *conf_bridge_plugin(const network_create_request *request)
     plugin->type = util_strdup_s(NETWOKR_DRIVER_BRIDGE);
     plugin->bridge = find_bridge_name();
     if (plugin->bridge == NULL) {
-        ERROR("Failed to find avaliable bridge name");
+        ERROR("Failed to find available bridge name");
         goto err_out;
     }
 
@@ -1422,7 +1422,7 @@ int native_config_create(const network_create_request *request, char **name, uin
     }
 
     if (pnet->ops->check == NULL || pnet->ops->conf == NULL) {
-        ERROR("net type: %s unsupport ops", pnet->driver);
+        ERROR("net type: %s unsupported ops", pnet->driver);
         return -1;
     }
 
@@ -1931,8 +1931,8 @@ int native_config_remove(const char *name, char **res_name)
     pnet = get_ops_by_conflist(network->conflist->list);
     if (pnet != NULL) {
         if (pnet->ops->remove == NULL) {
-            WARN("net type: %s unsupport remove", pnet->driver);
-            isulad_append_error_message("net type: %s unsupport remove. ", pnet->driver);
+            WARN("net type: %s unsupported remove", pnet->driver);
+            isulad_append_error_message("net type: %s unsupported remove. ", pnet->driver);
         } else if (pnet->ops->remove(network->conflist->list) != 0) {
             WARN("Failed to remove %s interface", pnet->driver);
             isulad_append_error_message("Failed to remove %s interface. ", pnet->driver);

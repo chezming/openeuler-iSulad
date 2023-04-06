@@ -75,7 +75,7 @@ int isula_filters_last_parse_args(size_t last_n, struct isula_filters **flt)
     ret = snprintf(value, VALUE_SIZE, "%ld", last_n);
     if (ret < 0 || ret >= VALUE_SIZE) {
         ret = -1;
-        ERROR("Sprintf lastest n containers args failed");
+        ERROR("Sprintf latest n containers args failed");
         goto cleanup;
     }
 

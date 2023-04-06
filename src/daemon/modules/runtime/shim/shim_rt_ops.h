@@ -10,7 +10,7 @@
  * See the Mulan PSL v2 for more details.
  * Author: gaohuatao
  * Create: 2021-05-20
- * Description: shim v2 runtime interface defination
+ * Description: shim v2 runtime interface definition
  ******************************************************************************/
 
 #ifndef DAEMON_MODULES_RUNTIME_SHIM_SHIM_RT_OPS_H

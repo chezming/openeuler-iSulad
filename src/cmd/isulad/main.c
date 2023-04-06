@@ -507,7 +507,7 @@ int check_and_set_default_isulad_log_file(struct service_arguments *args)
         }
     }
     if (args != NULL && util_validate_absolute_path(args->logpath)) {
-        ERROR("Daemon log path \"%s\" must be abosulte path.", args->logpath);
+        ERROR("Daemon log path \"%s\" must be absolute path.", args->logpath);
         return -1;
     }
     return 0;
@@ -1406,7 +1406,7 @@ static void set_mallopt()
         SYSERROR("Failed to change M_ARENA_TEST to 8");
     }
     if (mallopt(M_TOP_PAD, 32 * 1024) == 0) {
-        SYSERROR("Failed to chagne M_TOP_PAD to 32KB");
+        SYSERROR("Failed to change M_TOP_PAD to 32KB");
     }
     if (mallopt(M_TRIM_THRESHOLD, 64 * 1024) == 0) {
         SYSERROR("Failed to change M_TRIM_THRESHOLD to 64KB");

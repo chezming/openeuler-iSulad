@@ -295,7 +295,7 @@ static char *cal_gzip_digest(const char *filename)
     }
 
     if (!gzip) {
-        ERROR("File %s is not gziped", filename);
+        ERROR("File %s is not gzipped", filename);
         return NULL;
     }
 

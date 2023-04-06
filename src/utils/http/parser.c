@@ -82,7 +82,7 @@ static int parser_cb_header_field(http_parser *parser, const char *buf,
 
     if (m->last_header_element != FIELD) {
         if (m->num_headers + 1 >= MAX_HEADERS) {
-            ERROR("too many headers exceeded maxium number %d", MAX_HEADERS);
+            ERROR("too many headers exceeded maximum number %d", MAX_HEADERS);
             return -1;
         }
         m->num_headers++;
@@ -303,7 +303,7 @@ int parse_http(const char *buf, size_t len, struct parsed_http_message *m,
 
     nparsed = parse(buf, len, parser);
     if (nparsed != len) {
-        ERROR("Failed to parse it, parsed :%zu, intput:%zu \n", nparsed, len);
+        ERROR("Failed to parse it, parsed :%zu, input:%zu \n", nparsed, len);
         ret = -1;
         goto free_out;
     }

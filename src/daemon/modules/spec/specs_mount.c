@@ -745,7 +745,7 @@ static defs_mount *parse_mount(const mount_spec *spec)
 
     ret = parse_basic_mount_spec_fileds(spec, m);
     if (ret != 0) {
-        ERROR("Failed to parse basic mount fileds in v2_spec");
+        ERROR("Failed to parse basic mount fields in v2_spec");
         goto out;
     }
 
@@ -1431,7 +1431,7 @@ static int copy_data_to_volume(char *base_fs, defs_mount *mnt)
         goto out;
     }
     if (!S_ISDIR(st.st_mode)) {
-        ERROR("mount point %s in container is not direcotry", mnt->destination);
+        ERROR("mount point %s in container is not a directory", mnt->destination);
         ret = -1;
         goto out;
     }

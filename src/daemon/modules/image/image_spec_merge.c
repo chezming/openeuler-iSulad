@@ -34,8 +34,8 @@ int image_spec_merge_env(const char **env, size_t env_len, container_config *con
     }
 
     if (env_len > LIST_ENV_SIZE_MAX - container_spec->env_len) {
-        ERROR("The length of envionment variables is too long, the limit is %lld", LIST_ENV_SIZE_MAX);
-        isulad_set_error_message("The length of envionment variables is too long, the limit is %lld",
+        ERROR("The length of environment variables is too long, the limit is %lld", LIST_ENV_SIZE_MAX);
+        isulad_set_error_message("The length of environment variables is too long, the limit is %lld",
                                  LIST_ENV_SIZE_MAX);
         ret = -1;
         goto out;
@@ -44,7 +44,7 @@ int image_spec_merge_env(const char **env, size_t env_len, container_config *con
     old_size = container_spec->env_len * sizeof(char *);
     ret = util_mem_realloc((void **)&temp, new_size, container_spec->env, old_size);
     if (ret != 0) {
-        ERROR("Failed to realloc memory for envionment variables");
+        ERROR("Failed to realloc memory for environment variables");
         ret = -1;
         goto out;
     }
