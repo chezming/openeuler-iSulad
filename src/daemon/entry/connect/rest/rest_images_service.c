@@ -26,7 +26,7 @@
 static int image_load_request_check(image_load_image_request *req)
 {
     if (req->type == NULL) {
-        DEBUG("recive NULL Request runtime");
+        DEBUG("receive NULL Request runtime");
         return -1;
     }
 
@@ -424,7 +424,7 @@ static int image_pull_request_check(image_pull_image_request *req)
     int ret = 0;
 
     if (req->image_name == NULL) {
-        DEBUG("recive NULL Request image name");
+        DEBUG("receive NULL Request image name");
         return -1;
     }
 
@@ -906,12 +906,12 @@ static int image_search_request_check(const image_search_images_request *req)
     int ret = 0;
 
     if (req->search_name == NULL) {
-        ERROR("Recive NULL Request search name");
+        ERROR("Receive NULL Request search name");
         return -1;
     }
 
     if (req->limit < MIN_LIMIT || req->limit > MAX_LIMIT) {
-        ERROR("Recive invalid Request search limit");
+        ERROR("Receive invalid Request search limit");
         return -1;
     }
 

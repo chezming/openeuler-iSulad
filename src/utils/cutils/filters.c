@@ -343,7 +343,7 @@ int do_add_filters(const char *filter_key, const json_map_string_bool *filter_va
 
     for (j = 0; j < filter_value->len; j++) {
         if (valid_ops != NULL && !valid_ops(filter_value->keys[j]) != 0) {
-            ERROR("Unvalid filter value for %s: %s", filter_key, filter_value->keys[j]);
+            ERROR("Invalid filter value for %s: %s", filter_key, filter_value->keys[j]);
             return -1;
         }
 

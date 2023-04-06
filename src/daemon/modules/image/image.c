@@ -559,7 +559,7 @@ int im_remove_container_rootfs(const char *image_type, const char *container_id)
     }
     request->name_id = util_strdup_s(container_id);
 
-    EVENT("Event: {Object: %s, Type: removeing rootfs}", container_id);
+    EVENT("Event: {Object: %s, Type: removing rootfs}", container_id);
     ret = bim->ops->delete_rf(request);
     if (ret != 0) {
         ERROR("Failed to delete rootfs for container %s", container_id);
@@ -861,7 +861,7 @@ static int append_images_to_response(im_list_response *response, imagetool_image
     if (response->images == NULL) {
         response->images = util_common_calloc_s(sizeof(imagetool_images_list));
         if (response->images == NULL) {
-            ERROR("Memeory out");
+            ERROR("Memory out");
             ret = -1;
             goto out;
         }
@@ -2258,7 +2258,7 @@ static int append_result_to_response(struct filters_args *filters, imagetool_sea
     if (response->result == NULL) {
         response->result = util_common_calloc_s(sizeof(imagetool_search_result));
         if (response->result == NULL) {
-            ERROR("Out of memeory");
+            ERROR("Out of memory");
             return -1;
         }
     }

@@ -450,7 +450,7 @@ grpc::Status RuntimeRuntimeServiceImpl::Attach(grpc::ServerContext *context,
         return grpc::Status(grpc::StatusCode::UNKNOWN, error.GetMessage());
     }
 
-    EVENT("Event: {Object: CRI, Type: attched Container: %s}", request->container_id().c_str());
+    EVENT("Event: {Object: CRI, Type: attached Container: %s}", request->container_id().c_str());
 
     return grpc::Status::OK;
 }

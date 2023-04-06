@@ -560,8 +560,8 @@ void WebsocketServer::Receive(int socketID, void *in, size_t len, bool complete)
     }
 
     if (!it->second->IsStdinComplete()) {
-        DEBUG("Receive remaning stdin data with length %zu", len);
-        // Too much data may cause error 'resource temporarily unavaliable' by using 'write'
+        DEBUG("Receive remaining stdin data with length %zu", len);
+        // Too much data may cause error 'resource temporarily unavailable' by using 'write'
         if (util_write_nointr_in_total(m_wsis[socketID]->pipes.at(1), (char *)in, len) < 0) {
             ERROR("Sub write over! err msg: %s", strerror(errno));
         }

@@ -1047,7 +1047,7 @@ static int process_pending_transaction(struct device_set *devset)
     int ret = 0;
 
     if (devset == NULL || devset->metadata_trans == NULL) {
-        ERROR("devmapper: device set or tansaction is NULL");
+        ERROR("devmapper: device set or transaction is NULL");
         return -1;
     }
 
@@ -1700,7 +1700,7 @@ static int take_snapshot(struct device_set *devset, const char *hash, image_devm
             }
             dinfo.exists = 0;
         } else {
-            DEBUG("Start to deactive dev with hash:%s", base_info->hash);
+            DEBUG("Start to deactivate dev with hash:%s", base_info->hash);
             deactive_dev = true;
         }
     }
@@ -3015,7 +3015,7 @@ int add_device(const char *hash, const char *base_hash, struct device_set *devse
     }
 
     if (grow_device_fs(devset, hash, size, base_device_info->info->size) != 0) {
-        ERROR("Grow new deivce fs failed");
+        ERROR("Grow new device fs failed");
         // Here, we need to delete device directly instead of deferred deleting, so that we can retry to add device with the same hash successfully.
         if (do_delete_device(devset, hash, true) != 0) {
             ERROR("devmapper: remove new snapshot device failed");

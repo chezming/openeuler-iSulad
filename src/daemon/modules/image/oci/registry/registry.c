@@ -126,7 +126,7 @@ static int parse_manifest_schema1(pull_descriptor *desc)
     }
 
     if (manifest->fs_layers_len > MAX_LAYER_NUM || manifest->fs_layers_len == 0) {
-        ERROR("Invalid layer number %zu, maxium is %d and it can't be 0", manifest->fs_layers_len, MAX_LAYER_NUM);
+        ERROR("Invalid layer number %zu, maximum is %d and it can't be 0", manifest->fs_layers_len, MAX_LAYER_NUM);
         ret = -1;
         goto out;
     }
@@ -198,7 +198,7 @@ static int parse_manifest_schema2(pull_descriptor *desc)
     desc->config.size = manifest->config->size;
 
     if (manifest->layers_len > MAX_LAYER_NUM) {
-        ERROR("Invalid layer number %zu, maxium is %d", manifest->layers_len, MAX_LAYER_NUM);
+        ERROR("Invalid layer number %zu, maximum is %d", manifest->layers_len, MAX_LAYER_NUM);
         ret = -1;
         goto out;
     }
@@ -251,7 +251,7 @@ static int parse_manifest_ociv1(pull_descriptor *desc)
     desc->config.size = manifest->config->size;
 
     if (manifest->layers_len > MAX_LAYER_NUM) {
-        ERROR("Invalid layer number %zu, maxium is %d", manifest->layers_len, MAX_LAYER_NUM);
+        ERROR("Invalid layer number %zu, maximum is %d", manifest->layers_len, MAX_LAYER_NUM);
         ret = -1;
         goto out;
     }
@@ -1670,7 +1670,7 @@ static int create_config_from_v1config(pull_descriptor *desc)
 
     if (manifest->fs_layers_len != desc->layers_len || manifest->fs_layers_len != manifest->history_len ||
         manifest->history_len == 0) {
-        ERROR("Invalid length manifest, fs layers length %zu, histroy length %zu, layers length %zu",
+        ERROR("Invalid length manifest, fs layers length %zu, history length %zu, layers length %zu",
               manifest->fs_layers_len, manifest->history_len, desc->layers_len);
         ret = -1;
         goto out;
@@ -1909,7 +1909,7 @@ static int prepare_pull_desc(pull_descriptor *desc, registry_pull_options *optio
     }
 
     if (mkdtemp(blobpath) == NULL) {
-        ERROR("make temporary direcory failed: %s", strerror(errno));
+        ERROR("make temporary directory failed: %s", strerror(errno));
         ret = -1;
         goto out;
     }

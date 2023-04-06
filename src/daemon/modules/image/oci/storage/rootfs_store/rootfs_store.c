@@ -1021,7 +1021,7 @@ char *rootfs_store_lookup(const char *id)
     }
 
     if (!rootfs_store_lock(SHARED)) {
-        ERROR("Failed to lock rootfs store, not allowed to lookup rootfs id assginments");
+        ERROR("Failed to lock rootfs store, not allowed to lookup rootfs id assignments");
         return NULL;
     }
 

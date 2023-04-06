@@ -118,7 +118,7 @@ static int get_status(const container_t *cont)
 }
 
 /*
- * join , seperated string into one.
+ * join , separated string into one.
  */
 static char *join_enable_plugins(const char *plugins)
 {
@@ -558,7 +558,7 @@ static int handle_plugin_event(const char *event_name, const char *plugin_dir, i
             pm_unregister_plugin(name, addr);
             break;
         default:
-            INFO("Unsupport action, skip...");
+            INFO("Unsupported action, skip...");
     }
     return 0;
 }
@@ -674,7 +674,7 @@ static void *plugin_manager_routine(void *arg)
         ERROR("Failed to scan existing plugins");
         return NULL;
     }
-    // initilize inotify instance
+    // initialize inotify instance
     inotify_fd = inotify_init();
     if (inotify_fd < 0) {
         ERROR("Failed to initialize inotify instance");
@@ -686,7 +686,7 @@ static void *plugin_manager_routine(void *arg)
         ERROR("Failed to watch plugin dir");
         return NULL;
     }
-    DEBUG("Watching %s for plugin disovery", plugin_dir);
+    DEBUG("Watching %s for plugin discovery", plugin_dir);
     for (;;) {
         if (wait_events(inotify_fd) < 0) {
             ERROR("Failed to wait events");

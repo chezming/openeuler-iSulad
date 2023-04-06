@@ -1011,13 +1011,13 @@ int util_env_insert(char ***penv, size_t *penv_len, const char *key, size_t key_
     env_len = *penv_len;
 
     if (env_len > (MAX_MEMORY_SIZE / sizeof(char *)) - 1) {
-        ERROR("Too large envionment variables");
+        ERROR("Too large environment variables");
         return -1;
     }
 
     ret = util_mem_realloc((void **)(&temp), (env_len + 1) * sizeof(char *), env, env_len * sizeof(char *));
     if (ret != 0) {
-        ERROR("Failed to realloc memory for envionment variables");
+        ERROR("Failed to realloc memory for environment variables");
         return -1;
     }
 

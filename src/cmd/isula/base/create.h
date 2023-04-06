@@ -229,7 +229,7 @@ extern "C" {
       &(cmdargs),                                                                                                                                         \
       "Container log driver, support syslog and json-file",                                                                                               \
       callback_log_driver },                                                                                                                              \
-    { CMD_OPT_TYPE_CALLBACK, false, "log-opt", 0, &(cmdargs), "Container log options, value formate: key=value",                                          \
+    { CMD_OPT_TYPE_CALLBACK, false, "log-opt", 0, &(cmdargs), "Container log options, value format: key=value",                                           \
       callback_log_opt },                                                                                                                                 \
     { CMD_OPT_TYPE_CALLBACK,   false, "memory", 'm', &(cmdargs).cr.memory_limit, "Memory limit",                                                          \
       command_convert_membytes },                                                                                                                         \

@@ -536,7 +536,7 @@ static int get_mask(const struct ipnet *value, uint8_t **mask, size_t *mask_len)
     }
 
     if (value->ip_len != value->ip_mask_len) {
-        ERROR("IP length %zu is diffrent from mask length %zu", value->ip_len, value->ip_mask_len);
+        ERROR("IP length %zu is different from mask length %zu", value->ip_len, value->ip_mask_len);
         return -1;
     }
 

@@ -377,15 +377,15 @@ static int do_parse_container_log_config_opts(const struct logger_info *p_info, 
         }
         DEBUG("check log opt key: %s for driver: %s", tmp_key, spec->log_driver);
         if (!check_opt_container_log_opt(spec->log_driver, tmp_key)) {
-            isulad_set_error_message("container log driver: %s, unsupport: %s", spec->log_driver, tmp_key);
-            ERROR("container log driver: %s, unsupport: %s", spec->log_driver, tmp_key);
+            isulad_set_error_message("container log driver: %s, unsupported: %s", spec->log_driver, tmp_key);
+            ERROR("container log driver: %s, unsupported: %s", spec->log_driver, tmp_key);
             ret = -1;
             goto out;
         }
 
         if (do_update_container_log_config_syslog_tag(tag_maps, spec->log_driver, i, spec->annotations) != 0) {
-            isulad_set_error_message("container syslog tag: unsupport: %s", spec->annotations->values[i]);
-            ERROR("container syslog tag: unsupport: %s", spec->annotations->values[i]);
+            isulad_set_error_message("container syslog tag: unsupported: %s", spec->annotations->values[i]);
+            ERROR("container syslog tag: unsupported: %s", spec->annotations->values[i]);
             ret = -1;
             goto out;
         }
@@ -718,7 +718,7 @@ out:
     free(runtime_root);
     free(runtime_stat);
     if (ret != 0) {
-        /* fail, do not use the input v2 spec, host spec and network settings, the memeory will be free by caller*/
+        /* fail, do not use the input v2 spec, host spec and network settings, the memory will be free by caller*/
         if (cont != NULL) {
             cont->common_config = NULL;
             cont->hostconfig = NULL;

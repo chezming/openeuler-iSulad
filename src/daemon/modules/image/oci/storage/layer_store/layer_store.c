@@ -935,9 +935,9 @@ static int archive_entry_parse(struct archive_entry *entry, struct archive *ar, 
     sentry.name = util_strdup_s(archive_entry_pathname(entry));
     sentry.size = archive_entry_size(entry);
     sentry.position = position;
-    // caculate playload
+    // Calculate playload
     if (caculate_playload(ar, &sentry.payload) != 0) {
-        ERROR("Caculate playload failed");
+        ERROR("Calculate playload failed");
         goto out;
     }
 

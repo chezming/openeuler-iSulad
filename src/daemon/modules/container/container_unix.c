@@ -1196,7 +1196,7 @@ char *container_get_command(const container_t *cont)
     if (cont->common_config->path != NULL) {
         nret = util_array_append(&args, cont->common_config->path);
         if (nret < 0) {
-            ERROR("Appned string failed");
+            ERROR("Append string failed");
             goto cleanup;
         }
     }
@@ -1211,7 +1211,7 @@ char *container_get_command(const container_t *cont)
         nret = util_array_append(&args, arg);
         free(arg);
         if (nret < 0) {
-            ERROR("Appned string failed");
+            ERROR("Append string failed");
             goto cleanup;
         }
     }

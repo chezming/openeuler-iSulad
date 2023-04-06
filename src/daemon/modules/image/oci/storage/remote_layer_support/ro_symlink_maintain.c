@@ -143,7 +143,7 @@ static int do_build_ro_dir(const char *home, const char *id)
 
     if (util_mkdir_p(ro_layer_dir, IMAGE_STORE_PATH_MODE) != 0) {
         ret = -1;
-        ERROR("Failed to create layer direcotry %s", ro_layer_dir);
+        ERROR("Failed to create layer directory %s", ro_layer_dir);
         goto out;
     }
 

@@ -297,7 +297,7 @@ struct engine_operation *lcr_engine_init()
 
     eop = util_common_calloc_s(sizeof(struct engine_operation));
     if (eop == NULL) {
-        ERROR("Failed to alloc memeory for engine_operation");
+        ERROR("Failed to alloc memory for engine_operation");
         goto badcleanup;
     }
 

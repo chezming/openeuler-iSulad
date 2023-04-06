@@ -38,14 +38,14 @@ static isula_host_config_t *pack_update_request(const struct client_arguments *a
 
     host_config = util_common_calloc_s(sizeof(isula_host_config_t));
     if (host_config == NULL) {
-        COMMAND_ERROR("Memeory out");
+        COMMAND_ERROR("Memory out");
         goto error_out;
     }
     host_config->restart_policy = util_strdup_s(args->restart);
 
     host_config->cr = util_common_calloc_s(sizeof(container_cgroup_resources_t));
     if (host_config->cr == NULL) {
-        COMMAND_ERROR("Memeory out");
+        COMMAND_ERROR("Memory out");
         goto error_out;
     }
 

@@ -1465,7 +1465,7 @@ int client_create(struct client_arguments *args)
 
     request = util_common_calloc_s(sizeof(struct isula_create_request));
     if (request == NULL) {
-        COMMAND_ERROR("Memery out");
+        COMMAND_ERROR("Memory out");
         ret = -1;
         goto out;
     }

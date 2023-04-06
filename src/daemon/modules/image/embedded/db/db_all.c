@@ -123,7 +123,7 @@ static int read_single_image_info(sqlite3_stmt *stmt, void *data)
     struct db_image *image = NULL;
     long long image_rowid = 0;
     if (sqlite3_column_count(stmt) < IMAGE_INFO_TABLE_COLUMS_NUM) {
-        ERROR("Invalid colums num when read image info:%d", sqlite3_column_count(stmt));
+        ERROR("Invalid columns num when read image info:%d", sqlite3_column_count(stmt));
         return DB_FAIL;
     }
 
@@ -392,7 +392,7 @@ static int read_single_image_name(sqlite3_stmt *stmt, void *data)
     struct db_image_name *imagename = NULL;
 
     if (sqlite3_column_count(stmt) < IMAGE_NAME_TABLE_COLUMS_NUM) {
-        ERROR("Invalid colums num for image name:%d", sqlite3_column_count(stmt));
+        ERROR("Invalid columns num for image name:%d", sqlite3_column_count(stmt));
         return DB_FAIL;
     }
 

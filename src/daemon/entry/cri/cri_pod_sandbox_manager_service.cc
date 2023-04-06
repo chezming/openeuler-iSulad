@@ -923,7 +923,7 @@ auto PodSandboxManagerService::RemoveAllContainersInSandbox(const std::string &r
     // Add sandbox label
     if (CRIHelpers::FiltersAddLabel(list_request->filters, CRIHelpers::Constants::SANDBOX_ID_LABEL_KEY,
                                     realSandboxID) != 0) {
-        errors.push_back("Faild to add label");
+        errors.push_back("Failed to add label");
         ret = -1;
         goto cleanup;
     }

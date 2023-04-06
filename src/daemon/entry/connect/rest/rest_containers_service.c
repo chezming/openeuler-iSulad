@@ -194,7 +194,7 @@ static int create_request_check(void *req)
     }
 
     if (req_create->runtime == NULL) {
-        DEBUG("recive NULL Request runtime");
+        DEBUG("receive NULL Request runtime");
         ret = -1;
         goto out;
     }

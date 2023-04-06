@@ -581,7 +581,7 @@ static int get_pids(const char *name, const char *runtime, const char *rootpath,
 
     out = util_common_calloc_s(sizeof(rt_listpids_out_t));
     if (out == NULL) {
-        ERROR("Memeory out");
+        ERROR("Memory out");
         ret = -1;
         goto out;
     }

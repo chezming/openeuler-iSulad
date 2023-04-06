@@ -169,7 +169,7 @@ int server_callback_container_log(command_option_t *option, const char *value)
     }
 
     if (!check_raw_log_opt(split_opts[0])) {
-        COMMAND_ERROR("Unsupport container log key: %s", split_opts[0]);
+        COMMAND_ERROR("Unsupported container log key: %s", split_opts[0]);
         ret = -1;
         goto out;
     }
@@ -554,7 +554,7 @@ static int do_merge_conf_default_ulimit_into_global(struct service_arguments *ar
             }
         }
 
-        // ulimit of name setted, just update values
+        // ulimit of name set, just update values
         if (j < args->default_ulimit_len) {
             args->default_ulimit[j]->soft = ptr->soft;
             args->default_ulimit[j]->hard = ptr->hard;

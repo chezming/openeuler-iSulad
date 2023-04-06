@@ -562,7 +562,7 @@ static int trans_one_image(image_list_images_response *response, size_t image_in
     }
 
     if (out_image->name == NULL && im_image->repo_digests != NULL && im_image->repo_digests_len > 0) {
-        // repo digest must valid, so just get lastest @
+        // repo digest must valid, so just get latest @
         char *pod = strrchr(im_image->repo_digests[0], '@');
         if (pod != NULL) {
             out_image->name = util_sub_string(im_image->repo_digests[0], 0, (size_t)(pod - im_image->repo_digests[0]));

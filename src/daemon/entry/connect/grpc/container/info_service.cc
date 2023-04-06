@@ -10,7 +10,7 @@
  * See the Mulan PSL v2 for more details.
  * Author: wujing
  * Start: 2022-09-29
- * Description: implement query infomation service functions
+ * Description: implement query information service functions
  ******************************************************************************/
 #include "info_service.h"
 

@@ -386,7 +386,7 @@ struct pquota_control *project_quota_control_init(const char *home_dir, const ch
 
     ret = get_project_quota_id(home_dir, &min_project_id);
     if (ret) {
-        ERROR("Failed to get mininal project id %s", home_dir);
+        ERROR("Failed to get minimal project id %s", home_dir);
         goto err_out;
     }
     min_project_id++;

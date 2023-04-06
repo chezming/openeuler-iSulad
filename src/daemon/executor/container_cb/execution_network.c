@@ -637,7 +637,7 @@ static int merge_resolv(const host_config *host_spec, const char *rootfs, const 
         goto error_out;
     }
 
-    // if we handle search aleady in resolve_handle_content, skip append_host_spec_search_to_content
+    // if we handle search already in resolve_handle_content, skip append_host_spec_search_to_content
     if (!handle_search) {
         if (append_host_spec_search_to_content(host_spec, &content) != 0) {
             ret = -1;
@@ -645,7 +645,7 @@ static int merge_resolv(const host_config *host_spec, const char *rootfs, const 
         }
     }
 
-    // if we handle options aleady in resolve_handle_content, skip append_host_spec_options_to_content
+    // if we handle options already in resolve_handle_content, skip append_host_spec_options_to_content
     if (!handle_options) {
         if (append_host_spec_options_to_content(host_spec, &content) != 0) {
             ret = -1;

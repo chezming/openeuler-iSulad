@@ -97,7 +97,7 @@ static bool check_image_in_used(const char *image_ref)
 
         if (strcmp(IMAGE_TYPE_EMBEDDED, img_type) == 0) {
             if (embeded_image_check(image_ref, conts[i])) {
-                isulad_set_error_message("Embeded image used by %s", conts[i]->common_config->id);
+                isulad_set_error_message("Embedded image used by %s", conts[i]->common_config->id);
                 in_used = true;
                 goto unref_continue;
             }

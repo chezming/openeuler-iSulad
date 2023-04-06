@@ -546,7 +546,7 @@ int authz_http_request(const char *username, const char *action, char **resp)
     request_body = util_common_calloc_s(length);
     if (request_body == NULL) {
         ERROR("Out of memory");
-        *resp = util_strdup_s("Inernal server error: Out of memory");
+        *resp = util_strdup_s("Internal server error: Out of memory");
         return -1;
     }
     nret = snprintf(request_body, length, "%s:%s", username, action);
@@ -558,7 +558,7 @@ int authz_http_request(const char *username, const char *action, char **resp)
     options = util_common_calloc_s(sizeof(struct http_get_options));
     if (options == NULL) {
         ERROR("Failed to malloc http_get_options");
-        *resp = util_strdup_s("Inernal server error: Out of memory");
+        *resp = util_strdup_s("Internal server error: Out of memory");
         free(request_body);
         return -1;
     }
@@ -581,7 +581,7 @@ int authz_http_request(const char *username, const char *action, char **resp)
         nret = snprintf(err_msg, sizeof(err_msg), "action '%s' for user '%s': permission denied", action, username);
         if (nret < 0 || (size_t)nret >= sizeof(err_msg)) {
             ERROR("Out of memory");
-            *resp = util_strdup_s("Inernal server error: Out of memory");
+            *resp = util_strdup_s("Internal server error: Out of memory");
             goto out;
         }
         *resp = util_strdup_s(err_msg);
