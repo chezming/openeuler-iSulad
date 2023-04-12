@@ -13,11 +13,7 @@
 
 ![基于容器Runtime API的生命周期管理组件图](../../../images/Sandbox/sandbox_old_design.svg)
 
-不难发现，在原有的设计中，CRI Pod相关的RPC请求都是由容器相关模块进行处理的，最终通过shim v2转发给对应的安全容器Runtime，从而创建沙箱，例如虚拟机，以及占位容器等。这样设计的缺点也是显而易见的。为了让沙箱的管理强行适配普通容器的管理流程，CRI模块做了很多的冗余操作，比如添加了各种标签，以便在后续的模块去识别这个特殊的容器，这种做法破坏了代码高内聚低耦合的设计原则，导致代码可读性低，可维护能力差。除了软件设计上的缺陷外，通过普通容器流程创建的沙箱一定会在沙箱内创建一个占位容器(Pause container)，以适配原有容器运行时标准。在除了系统容器沙箱的大部分沙箱场景下，Pause容器没有任何价值，白白浪费了资源。
-
 在引入了沙箱概念后，iSulad可以通过Sandbox API对沙箱进行标准化管理，从而使安全容器的生命周期管理更为合理和高效。同时通过Sandbox API，iSulad可以利用多种Sandboxer的实现，使用多种沙箱隔离技术。
-
-此外，Sandbox API的实现避免了大量shim进程的启动，减少节点资源的浪费，具体参见 [4.5. shim v2的适配](#45-shim-v2的适配)
 
 下图为基于Sandbox API的容器以及沙箱生命周期管理的组建图：
 
@@ -57,6 +53,8 @@ int (*stop)(const sandbox_stop_request *request, sandbox_stop_response **respons
 int (*remove)(const sandbox_remove_request *request, sandbox_remove_response **response);
 /* 查询Sandbox的动态配置信息 */
 int (*status)(const sandbox_status_request *request, sandbox_status_response **response);
+/* 查询Sandbox的度量统计信息 */
+int (*stats)(const sandbox_stats_request *request, sandbox_stats_response **response);
 /* 根据过滤请求，列出系统中的所有符合条件的Sandbox的基本信息 */
 int (*list)(const sandbox_list_request *request, sandbox_list_response **response);
 /* 根据Sandbox的名字或者ID前缀，获取sandbox完整的ID */

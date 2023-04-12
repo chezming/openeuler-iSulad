@@ -18,6 +18,9 @@ iSulad初始化时，proxy controller会去加载配置文件中的sandboxers配
 
 ![Controller类图](../../../images/Sandbox/sandbox_controller_class.svg)
 
+## 2.2 shim controller
+shim controller的实现是为了兼容原有的基于Runtime API的沙箱生命周期管理模式。shim controller在Controller的回调函数接口实现中需要将沙箱的参数转换为对容器管理的参数。例如，在创建沙箱时，沙箱的config信息需要转换成容器的OCI Runtime Spec，再由shim controller传递给指定的runtime去处理。
+
 # 3. 接口描述
 Sandbox Controller回调函数接口定义
 
@@ -99,6 +102,7 @@ typedef struct _ctrl_client_grpc_t {
 
 # 4. 详细设计
 Sandbox Controller初始化序列图
+
 ![Controller时序图](../../../images/Sandbox/sandbox_controller_sequence.svg)
 
 
