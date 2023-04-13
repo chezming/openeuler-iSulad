@@ -131,6 +131,23 @@ static bool check_fd(int fd)
     return true;
 }
 
+static int set_non_block(int fd) {
+    int flag = -1;
+    int ret = SHIM_ERR;
+
+    flag = fcntl(fd, F_GETFL, 0);
+    if (flag < 0) {
+        return SHIM_ERR;
+    }
+
+    ret = fcntl(fd, F_SETFL, flag | O_NONBLOCK);
+    if (ret != 0) {
+        return SHIM_ERR;
+    }
+
+    return SHIM_OK;
+}
+
 static int add_io_dispatch(int epfd, io_thread_t *io_thd, int from, int to)
 {
     int ret = SHIM_ERR;
@@ -150,6 +167,14 @@ static int add_io_dispatch(int epfd, io_thread_t *io_thd, int from, int to)
         struct epoll_event ev;
         ev.events = EPOLLIN;
         ev.data.ptr = io_thd;
+        
+        // set fd non-block
+        ret = set_non_block(from);
+        if (ret != SHIM_OK) {
+            write_message(g_log_fd, ERR_MSG, "set fd %d non_block failed:%d", from, SHIM_SYS_ERR(errno));
+            pthread_mutex_unlock(&(ioc->mutex));
+            return SHIM_ERR;
+        }
 
         ret = epoll_ctl(epfd, EPOLL_CTL_ADD, from, &ev);
         if (ret != SHIM_OK) {
@@ -285,6 +310,10 @@ static void *do_io_copy(void *data)
 
         int r_count = read(ioc->fd_from, buf, DEFAULT_IO_COPY_BUF);
         if (r_count == -1) {
+            // if io_thd->shutdown is true, stop io copy
+            if (io_thd->shutdown) {
+                break;
+            }
             if (errno == EAGAIN || errno == EINTR) {
                 continue;
             }
@@ -292,7 +321,22 @@ static void *do_io_copy(void *data)
         } else if (r_count == 0) {
             /* End of file. The remote has closed the connection */
             break;
-        } else if (ioc->id != EXEC_RESIZE) {
+        }
+        if (ioc->id == EXEC_RESIZE) {
+            if (pthread_mutex_lock(&(ioc->mutex)) != 0) {
+                continue;
+            }
+
+            int resize_fd = ioc->fd_to->fd;
+            pthread_mutex_unlock(&(ioc->mutex));
+            struct winsize wsize = { 0x00 };
+            if (get_exec_winsize(buf, &wsize) < 0) {
+                break;
+            }
+            if (ioctl(resize_fd, TIOCSWINSZ, &wsize) < 0) {
+                break;
+            }
+        } else {
             if (pthread_mutex_lock(&(ioc->mutex)) != 0) {
                 continue;
             }
@@ -312,28 +356,6 @@ static void *do_io_copy(void *data)
                 }
             }
             pthread_mutex_unlock(&(ioc->mutex));
-        } else {
-            if (pthread_mutex_lock(&(ioc->mutex)) != 0) {
-                continue;
-            }
-
-            int resize_fd = ioc->fd_to->fd;
-            struct winsize wsize = { 0x00 };
-            if (get_exec_winsize(buf, &wsize) < 0) {
-                break;
-            }
-            if (ioctl(resize_fd, TIOCSWINSZ, &wsize) < 0) {
-                break;
-            }
-            pthread_mutex_unlock(&(ioc->mutex));
-        }
-
-        /*
-         In the case of stdout and stderr, maybe numbers of read bytes are not the last msg in pipe.
-         So, when the value of r_count is larger than zero, we need to try reading again to avoid loss msgs.
-        */
-        if (io_thd->shutdown && r_count <= 0) {
-            break;
         }
     }
     struct epoll_event ev;
