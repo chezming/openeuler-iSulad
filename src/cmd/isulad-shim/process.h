@@ -57,10 +57,7 @@ typedef struct {
     int epfd;
     pthread_t tid;
     pthread_attr_t attr;
-    sem_t sem_thd;
     io_copy_t *ioc;
-    bool shutdown;
-    bool is_stdin;
     log_terminal *terminal;// just used by stdout and stderr
 } io_thread_t;
 
@@ -72,6 +69,7 @@ typedef struct process {
     int io_loop_fd;
     int exit_fd;
     int ctr_pid;
+    int sync_fd;
     log_terminal *terminal;
     stdio_t *stdio;// shim to on runtime side, in:r out/err: w
     stdio_t *shim_io; // shim io on isulad side, in: w  out/err: r
@@ -94,10 +92,10 @@ typedef struct {
 
 process_t* new_process(char *id, char *bundle, char *runtime);
 
-int open_io(process_t *p, pthread_t *tid_accept);
-int process_io_init(process_t *p);
+int open_io(process_t *p);
+int process_io_init(process_t *p, pthread_t *tid_epoll);
 int create_process(process_t *p);
-int process_signal_handle_routine(process_t *p, const pthread_t tid_accept, const unsigned int timeout);
+int process_signal_handle_routine(process_t *p, const pthread_t tid_epoll, const unsigned int timeout);
 
 #ifdef __cplusplus
 }
