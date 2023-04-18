@@ -28,6 +28,7 @@
 #include <string.h>
 #include <errno.h>
 #include <sys/ioctl.h>
+#include <sys/eventfd.h>
 #include <termios.h> // IWYU pragma: keep
 #include <sys/resource.h> // IWYU pragma: keep
 #include <isula_libutils/json_common.h>
@@ -264,104 +265,71 @@ out:
     return ret;
 }
 
-static void *do_io_copy(void *data)
+static int do_io_copy(io_thread_t *io_thd, bool block)
 {
-    io_thread_t *io_thd = (io_thread_t *)data;
+    int ret = EPOLL_LOOP_HANDLE_CONTINUE;
+    int r_count = 0;
+
     if (io_thd == NULL || io_thd->ioc == NULL) {
-        return NULL;
+        return EPOLL_LOOP_HANDLE_CLOSE;
     }
     io_copy_t *ioc = io_thd->ioc;
     char *buf = calloc(1, DEFAULT_IO_COPY_BUF + 1);
     if (buf == NULL) {
-        return NULL;
+        return EPOLL_LOOP_HANDLE_CLOSE;
     }
 
-    for (;;) {
-        memset(buf, 0, DEFAULT_IO_COPY_BUF);
-        (void)sem_wait(&(io_thd->sem_thd));
-        if (io_thd->is_stdin && io_thd->shutdown) {
-            break;
+    if (block) {
+        r_count = read_nointr(ioc->fd_from, buf, DEFAULT_IO_COPY_BUF);
+    } else{
+        r_count = read(ioc->fd_from, buf, DEFAULT_IO_COPY_BUF);
+    } 
+    if (r_count <= 0) {
+        ret = EPOLL_LOOP_HANDLE_CLOSE;
+        goto out;
+    }
+
+    if (pthread_mutex_lock(&(ioc->mutex)) != 0) {
+        goto out;
+    }
+    if (ioc->id == EXEC_RESIZE) {
+        int resize_fd = ioc->fd_to->fd;
+        struct winsize wsize = { 0x00 };
+        if (get_exec_winsize(buf, &wsize) < 0) {
+            ret = EPOLL_LOOP_HANDLE_CLOSE;
+            goto unlock_out;
         }
-
-        int r_count = read(ioc->fd_from, buf, DEFAULT_IO_COPY_BUF);
-        if (r_count == -1) {
-            if (errno == EAGAIN || errno == EINTR) {
-                continue;
-            }
-            break;
-        } else if (r_count == 0) {
-            /* End of file. The remote has closed the connection */
-            break;
-        } else if (ioc->id != EXEC_RESIZE) {
-            if (pthread_mutex_lock(&(ioc->mutex)) != 0) {
-                continue;
-            }
-
-            fd_node_t *fn = ioc->fd_to;
-            fd_node_t *next = NULL;
-            for (; fn != NULL; fn = next) {
-                next = fn->next;
-                if (fn->is_log) {
-                    shim_write_container_log_file(io_thd->terminal, ioc->id, buf, r_count);
-                } else {
-                    int w_count = write_nointr_in_total(fn->fd, buf, r_count);
-                    if (w_count < 0) {
-                        /* When any error occurs, remove the write fd */
-                        remove_io_dispatch(io_thd, -1, fn->fd);
-                    }
+        if (ioctl(resize_fd, TIOCSWINSZ, &wsize) < 0) {
+            ret = EPOLL_LOOP_HANDLE_CLOSE;
+            goto unlock_out;
+        }
+    } else {
+        fd_node_t *fn = ioc->fd_to;
+        fd_node_t *next = NULL;
+        for (; fn != NULL; fn = next) {
+            next = fn->next;
+            if (fn->is_log) {
+                shim_write_container_log_file(io_thd->terminal, ioc->id, buf, r_count);
+            } else {
+                int w_count = write_nointr_in_total(fn->fd, buf, r_count);
+                if (w_count < 0) {
+                    /* When any error occurs, remove the write fd */
+                    remove_io_dispatch(io_thd, -1, fn->fd);
                 }
             }
-            pthread_mutex_unlock(&(ioc->mutex));
-        } else {
-            if (pthread_mutex_lock(&(ioc->mutex)) != 0) {
-                continue;
-            }
-
-            int resize_fd = ioc->fd_to->fd;
-            struct winsize wsize = { 0x00 };
-            if (get_exec_winsize(buf, &wsize) < 0) {
-                break;
-            }
-            if (ioctl(resize_fd, TIOCSWINSZ, &wsize) < 0) {
-                break;
-            }
-            pthread_mutex_unlock(&(ioc->mutex));
-        }
-
-        /*
-         In the case of stdout and stderr, maybe numbers of read bytes are not the last msg in pipe.
-         So, when the value of r_count is larger than zero, we need to try reading again to avoid loss msgs.
-        */
-        if (io_thd->shutdown && r_count <= 0) {
-            break;
         }
     }
-    struct epoll_event ev;
-    ev.events = EPOLLIN;
-    ev.data.fd = ioc->fd_from;
-    (void)epoll_ctl(io_thd->epfd, EPOLL_CTL_DEL, ioc->fd_from, &ev);
 
+unlock_out:
+    pthread_mutex_unlock(&(ioc->mutex));
+
+out:
     free(buf);
 
-    return NULL;
+    return ret;
 }
 
-static void sem_post_inotify_io_copy(int fd, uint32_t event, void *data)
-{
-    io_thread_t *thd = (io_thread_t *)data;
-    if (thd->ioc == NULL || fd != thd->ioc->fd_from) {
-        return;
-    }
-
-    if (event & EPOLLIN) {
-        (void)sem_post(&thd->sem_thd);
-    } else if (event & EPOLLHUP) {
-        thd->shutdown = true;
-        (void)sem_post(&thd->sem_thd);
-    }
-}
-
-static int create_io_copy_thread(process_t *p, int std_id)
+static int create_io_copy(process_t *p, int std_id)
 {
     int ret = SHIM_ERR;
     io_thread_t *io_thd = NULL;
@@ -382,23 +350,11 @@ static int create_io_copy_thread(process_t *p, int std_id)
     if (io_thd == NULL) {
         goto failure;
     }
-    if (sem_init(&io_thd->sem_thd, 0, 0) != 0) {
-        write_message(g_log_fd, ERR_MSG, "sem init failed:%d", SHIM_SYS_ERR(errno));
-        goto failure;
-    }
     io_thd->epfd = p->io_loop_fd;
     io_thd->ioc = ioc;
-    io_thd->shutdown = false;
-    io_thd->is_stdin = std_id == STDID_IN ? true : false;
     io_thd->terminal = std_id != STDID_IN ? p->terminal : NULL;
 
     p->io_threads[std_id] = io_thd;
-
-    ret = pthread_create(&(io_thd->tid), NULL, do_io_copy, io_thd);
-    if (ret != SHIM_OK) {
-        write_message(g_log_fd, ERR_MSG, "thread io copy create failed:%d", SHIM_SYS_ERR(errno));
-        goto failure;
-    }
 
     ret = SHIM_OK;
 
@@ -416,12 +372,12 @@ failure:
     return SHIM_ERR;
 }
 
-static int start_io_copy_threads(process_t *p)
+static int start_io_copy(process_t *p)
 {
     int ret = SHIM_ERR;
     int i;
 
-    /* 4 threads for stdin, stdout, stderr and exec resize */
+    /* 4 io copy struct for stdin, stdout, stderr and exec resize */
     for (i = 0; i < 4; i++) {
         /*
         * if the terminal is used, we do not need to active the io copy of stderr pipe,
@@ -431,7 +387,7 @@ static int start_io_copy_threads(process_t *p)
             continue;
         }
 
-        ret = create_io_copy_thread(p, i);
+        ret = create_io_copy(p, i);
         if (ret != SHIM_OK) {
             return SHIM_ERR;
         }
@@ -446,9 +402,6 @@ static void destroy_io_thread(process_t *p, int std_id)
         return;
     }
 
-    io_thd->shutdown = true;
-    (void)sem_post(&io_thd->sem_thd);
-    pthread_join(io_thd->tid, NULL);
     if (io_thd->ioc != NULL) {
         free(io_thd->ioc);
     }
@@ -520,6 +473,11 @@ static void *task_console_accept(void *data)
     int ret = SHIM_ERR;
     console_accept_t *ac = (console_accept_t *)data;
 
+    if ((pthread_detach(pthread_self())) != 0) {
+        write_message(g_log_fd, ERR_MSG, "detach thread failed");
+        return NULL;
+    }
+
     conn_fd = accept(ac->listen_fd, NULL, NULL);
     if (conn_fd < 0) {
         write_message(g_log_fd, ERR_MSG, "accept from fd %d failed:%d", ac->listen_fd, SHIM_SYS_ERR(errno));
@@ -552,6 +510,16 @@ static void *task_console_accept(void *data)
         goto out;
     }
 
+    // sync fd: ev.data.ptr is NULL, so epoll loop will exit when sync fd write.
+    struct epoll_event ev;
+    ev.events = EPOLLIN;
+    ev.data.ptr = NULL;
+    ret = epoll_ctl(ac->p->io_loop_fd, EPOLL_CTL_ADD, ac->p->sync_fd, &ev);
+    if (ret != SHIM_OK) {
+        write_message(g_log_fd, ERR_MSG, "add fd %d to epoll loop failed:%d", ac->p->sync_fd, SHIM_SYS_ERR(errno));
+        goto out;
+    }
+
 out:
     /* release listen socket at the first time */
     close_fd(&ac->listen_fd);
@@ -572,17 +540,54 @@ out:
     return NULL;
 }
 
-static void *io_epoll_loop(void *data)
+static int epoll_loop(process_t *p) 
 {
-    process_t *p = (process_t *)data;
+    int i;
     int wait_fds = 0;
     struct epoll_event evs[MAX_EVENTS];
-    int i;
+    
+    for (;;) {
+        wait_fds = epoll_wait(p->io_loop_fd, evs, MAX_EVENTS, -1);
+        if (wait_fds < 0) {
+            if (errno == EINTR) {
+                continue;
+            }
+            return -1;
+        }
 
-    if ((pthread_detach(pthread_self())) != 0) {
-        write_message(g_log_fd, ERR_MSG, "detach thread failed");
-        return NULL;
+        for (i = 0; i < wait_fds; i++) {
+            io_thread_t *thd_io = (io_thread_t *)evs[i].data.ptr;
+            if (do_io_copy(thd_io, true) != EPOLL_LOOP_HANDLE_CONTINUE) {
+                return 0;
+            }
+        }
     }
+    return 0;
+}
+
+static int set_non_block(int fd) {
+    int flag = -1;
+    int ret = SHIM_ERR;
+
+    flag = fcntl(fd, F_GETFL, 0);
+    if (flag < 0) {
+        return SHIM_ERR;
+    }
+
+    ret = fcntl(fd, F_SETFL, flag | O_NONBLOCK);
+    if (ret != 0) {
+        return SHIM_ERR;
+    }
+
+    return SHIM_OK;
+}
+
+static void *io_epoll_loop(void *data)
+{
+    size_t i;
+    int ret = 0;
+    process_t *p = (process_t *)data;
+    io_thread_t *io_thread = NULL;
 
     p->io_loop_fd = epoll_create1(EPOLL_CLOEXEC);
     if (p->io_loop_fd < 0) {
@@ -591,20 +596,40 @@ static void *io_epoll_loop(void *data)
     }
     (void)sem_post(&p->sem_mainloop);
 
-    for (;;) {
-        wait_fds = epoll_wait(p->io_loop_fd, evs, MAX_EVENTS, -1);
-        if (wait_fds < 0) {
-            if (errno == EINTR) {
-                continue;
-            }
-            _exit(EXIT_FAILURE);
+    ret = epoll_loop(p);
+    if (ret != 0) {
+        write_message(g_log_fd, ERR_MSG, "epoll loop failed");
+        exit(EXIT_FAILURE);
+    }
+
+    // in order to avoid data loss, set fd non-block and read it
+    for(i = STDID_OUT; i <= STDID_ERR; i++){
+        io_thread = p->io_threads[i];
+        if (io_thread == NULL || io_thread->ioc == NULL){
+            continue;
+        }
+        ret = set_non_block(io_thread->ioc->fd_from);
+        if (ret != SHIM_OK) {
+            write_message(g_log_fd, ERR_MSG, "set fd %d non_block failed:%d", io_thread->ioc->fd_from, SHIM_SYS_ERR(errno));
+            exit(EXIT_FAILURE);
         }
 
-        for (i = 0; i < wait_fds; i++) {
-            io_thread_t *thd_io = (io_thread_t *)evs[i].data.ptr;
-            sem_post_inotify_io_copy(thd_io->ioc->fd_from, evs[i].events, thd_io);
+        for(;;) {
+            ret = do_io_copy(io_thread, false);
+            if (ret < 0) {
+                break;
+            }
         }
     }
+
+    for (i = 0; i < 3; i++) {
+        io_thread_t *thd_io = p->io_threads[i];
+        if (thd_io != NULL) {
+            remove_io_dispatch(thd_io, thd_io->ioc->fd_from, -1);
+        }
+        destroy_io_thread(p, i);
+    }
+    return NULL;
 }
 
 static int new_temp_console_path(process_t *p)
@@ -631,12 +656,13 @@ static int new_temp_console_path(process_t *p)
     return SHIM_OK;
 }
 
-static int console_init(process_t *p, pthread_t *tid_accept)
+static int console_init(process_t *p)
 {
     int ret = SHIM_ERR;
     int fd = -1;
     struct sockaddr_un addr;
     console_accept_t *ac = NULL;
+    pthread_t tid_accept;
 
     fd = socket(AF_UNIX, SOCK_STREAM, 0);
     if (fd < 0) {
@@ -667,7 +693,7 @@ static int console_init(process_t *p, pthread_t *tid_accept)
     ac->p = p;
     ac->listen_fd = fd;
 
-    ret = pthread_create(tid_accept, NULL, task_console_accept, ac);
+    ret = pthread_create(&tid_accept, NULL, task_console_accept, ac);
     if (ret != SHIM_OK) {
         goto failure;
     }
@@ -758,7 +784,7 @@ failure:
     return NULL;
 }
 
-static int open_terminal_io(process_t *p, pthread_t *tid_accept)
+static int open_terminal_io(process_t *p)
 {
     int ret = SHIM_ERR;
 
@@ -769,7 +795,7 @@ static int open_terminal_io(process_t *p, pthread_t *tid_accept)
     }
 
     /* begin listen and accept fd from p->console_sock_path */
-    return console_init(p, tid_accept);
+    return console_init(p);
 }
 
 static int open_generic_io(process_t *p)
@@ -904,6 +930,13 @@ process_t *new_process(char *id, char *bundle, char *runtime)
         p->io_threads[i] = NULL;
     }
 
+    p->sync_fd = eventfd(0, EFD_CLOEXEC);
+    if (p->sync_fd < 0) {
+        write_message(g_log_fd, ERR_MSG, "Failed to create eventfd: %s", strerror(errno));
+        ret = -1;
+        goto failure;
+    }
+
     return p;
 
 failure:
@@ -912,28 +945,27 @@ failure:
     return NULL;
 }
 
-int open_io(process_t *p, pthread_t *tid_accept)
+int open_io(process_t *p)
 {
     int ret = SHIM_ERR;
 
-    ret = start_io_copy_threads(p);
+    ret = start_io_copy(p);
     if (ret != SHIM_OK) {
         return SHIM_ERR;
     }
 
     if (p->state->terminal) {
-        return open_terminal_io(p, tid_accept);
+        return open_terminal_io(p);
     }
 
     return open_generic_io(p);
 }
 
-int process_io_init(process_t *p)
+int process_io_init(process_t *p, pthread_t *tid_epoll)
 {
     int ret = SHIM_ERR;
 
-    pthread_t tid_loop;
-    ret = pthread_create(&tid_loop, NULL, io_epoll_loop, p);
+    ret = pthread_create(tid_epoll, NULL, io_epoll_loop, p);
     if (ret != SHIM_OK) {
         return SHIM_SYS_ERR(errno);
     }
@@ -1302,13 +1334,11 @@ static int wait_container_process_with_timeout(process_t *p, const unsigned int 
 
 }
 
-int process_signal_handle_routine(process_t *p, const pthread_t tid_accept, const unsigned int timeout)
+int process_signal_handle_routine(process_t *p, const pthread_t tid_epoll, const unsigned int timeout)
 {
-    int i;
     int nret = 0;
     int ret = 0;
     int status = 0;
-    struct timespec ts;
 
     ret = wait_container_process_with_timeout(p, timeout, &status);
     if (ret == SHIM_ERR_TIMEOUT) {
@@ -1332,26 +1362,19 @@ int process_signal_handle_routine(process_t *p, const pthread_t tid_accept, cons
     if (p->exit_fd > 0) {
         (void)write_nointr(p->exit_fd, &status, sizeof(int));
     }
-    // wait for task_console_accept thread termination. In order to make sure that
-    // the io_copy connection is established and io_thread is not used by multiple threads.
-    if (p->state->terminal) {
-        if (clock_gettime(CLOCK_REALTIME, &ts) == -1) {
-            write_message(g_log_fd, ERR_MSG, "Failed to get realtime");
-            nret = pthread_join(tid_accept, NULL);
-        } else {
-            // Set the maximum waiting time to 60s to prevent stuck.
-            ts.tv_sec += 60;
-            nret = pthread_timedjoin_np(tid_accept, NULL, &ts);
-        }
 
-        if (nret != 0) {
-            write_message(g_log_fd, ERR_MSG, "Failed to join task_console_accept thread");
+    if (p->sync_fd >= 0) {
+        if (eventfd_write(p->sync_fd, 1)) {
+            write_message(g_log_fd, ERR_MSG, "Failed to write sync fd");
         }
     }
 
-    for (i = 0; i < 3; i++) {
-        destroy_io_thread(p, i);
+    nret = pthread_join(tid_epoll, NULL);
+    if (nret != 0) {
+        write_message(g_log_fd, ERR_MSG, "Failed to join epoll loop thread");
     }
+
+    close(p->sync_fd);
 
     if(!p->state->exec) {
         // if log did not contain "/n", print remaind container log when exit isulad-shim

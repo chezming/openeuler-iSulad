@@ -58,6 +58,10 @@ extern "C" {
 #define CONTAINER_ACTION_REBOOT 129
 #define CONTAINER_ACTION_SHUTDOWN 130
 
+// epoll return value
+#define EPOLL_LOOP_HANDLE_CONTINUE 0
+#define EPOLL_LOOP_HANDLE_CLOSE -1
+
 ssize_t read_nointr(int fd, void *buf, size_t count);
 ssize_t write_nointr(int fd, const void *buf, size_t count);
 
