@@ -25,9 +25,7 @@
 class MockRemoteStore {
 public:
     virtual ~MockRemoteStore() = default;
-    // MOCK_METHOD1(OverlayRemoteLayerValid, bool(const char *));
 
-    // MOCK_METHOD1(LayerRemoteLayerValid, bool(const char *));
     MOCK_METHOD1(LayerLoadOneLayer, int(const char *));
     MOCK_METHOD1(LayerRemoveOneLayer, int(const char *));
 

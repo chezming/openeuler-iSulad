@@ -26,6 +26,7 @@
 #include "remote_store_mock.h"
 #include "ro_symlink_maintain.h"
 #include "remote_support.h"
+#include "mock_flags.h"
 
 using ::testing::Invoke;
 using ::testing::NiceMock;
@@ -554,4 +555,125 @@ TEST(ro_symlink_maintain, maintain)
     ASSERT_EQ(strcmp(ctx.overlay_home, overlay_home), 0);
 
     remote_maintain_cleanup();
+    clean_layer_home(layer_home);
+    clean_layer_home(overlay_home);
+}
+
+TEST(remote_layer_branch_test, memory_alloc_failed)
+{
+    struct util_call_flags *flags = get_flags();
+    flags->alloc_flag = true;
+
+    int *ptr = (int *)util_common_calloc_s(sizeof(int));
+    ASSERT_TRUE(ptr == NULL);
+
+    struct remote_overlay_data *overlay = remote_overlay_create("foo", "bar");
+    ASSERT_TRUE(overlay == NULL);
+    flags->alloc_flag = false;
+}
+
+TEST(remote_layer_branch_test, path_join_failed)
+{
+    struct util_call_flags *flags = get_flags();
+    flags->path_join_flag = true;
+
+    char *my_path = util_path_join("foo", "bar");
+    ASSERT_TRUE(my_path == NULL);
+
+    struct remote_overlay_data *overlay = remote_overlay_create("overlay", "overlay/RO");
+    struct remote_layer_data *layer = remote_layer_create("layers", "layers/RO");
+
+    if (prepare_layer_home(layer->layer_home, layer->layer_ro, overlay->overlay_home, overlay->overlay_ro, true) != 0) {
+        return;
+    }
+
+    // path join failed when add layer
+    remote_overlay_refresh(overlay);
+
+    // path join succeeded when add layer
+    flags->path_join_flag = false;
+
+    remote_overlay_refresh(overlay);
+
+    // path join failed when remove layer
+    util_scan_subdirs(overlay->overlay_ro, remove_layer, (void *)overlay->overlay_ro);
+    flags->path_join_flag = true;
+
+    remote_overlay_refresh(overlay);
+
+    // path join succeeded when remove layer
+    flags->path_join_flag = false;
+    remote_overlay_refresh(overlay);
+
+    clean_layer_home(layer->layer_home);
+    clean_layer_home(overlay->overlay_home);
+
+    flags->path_join_flag = false;
+}
+
+TEST(remote_layer_branch_test, clean_path_failed)
+{
+    struct util_call_flags *flags = get_flags();
+
+    struct remote_overlay_data *overlay = remote_overlay_create("overlay", "overlay/RO");
+    struct remote_layer_data *layer = remote_layer_create("layers", "layers/RO");
+
+    if (prepare_layer_home(layer->layer_home, layer->layer_ro, overlay->overlay_home, overlay->overlay_ro, true) != 0) {
+        return;
+    }
+
+    remote_overlay_refresh(overlay);
+    
+    // path clean failed when remove layer
+    util_scan_subdirs(overlay->overlay_ro, remove_layer, (void *)overlay->overlay_ro);
+    flags->clean_path_flag = true;
+    remote_overlay_refresh(overlay);
+
+    // path clean succeeded
+    flags->clean_path_flag = false;
+    remote_overlay_refresh(overlay);
+
+    clean_layer_home(layer->layer_home);
+    clean_layer_home(overlay->overlay_home);
+
+    flags->clean_path_flag = false;
+}
+
+// TEST(remote_layer_branch_test, path_remove_failed)
+// {
+//     struct util_call_flags *flags = get_flags();
+
+//     struct remote_overlay_data *overlay = remote_overlay_create("overlay", "overlay/RO");
+//     struct remote_layer_data *layer = remote_layer_create("layers", "layers/RO");
+
+//     if (prepare_layer_home(layer->layer_home, layer->layer_ro, overlay->overlay_home, overlay->overlay_ro, true) != 0) {
+//         return;
+//     }
+
+//     flags->path_remove_flag = true;
+
+//     remote_overlay_refresh(overlay);
+
+//     flags->path_remove_flag = false;
+// }
+
+TEST(remote_layer_branch_test, map_insert_failed)
+{
+    struct util_call_flags *flags = get_flags();
+
+    struct remote_overlay_data *overlay = remote_overlay_create("overlay", "overlay/RO");
+    struct remote_layer_data *layer = remote_layer_create("layers", "layers/RO");
+
+    if (prepare_layer_home(layer->layer_home, layer->layer_ro, overlay->overlay_home, overlay->overlay_ro, true) != 0) {
+        return;
+    }
+
+    flags->map_insert_flag = true;
+
+    remote_overlay_refresh(overlay);
+
+    clean_layer_home(layer->layer_home);
+    clean_layer_home(overlay->overlay_home);
+
+    flags->map_insert_flag = false;
 }

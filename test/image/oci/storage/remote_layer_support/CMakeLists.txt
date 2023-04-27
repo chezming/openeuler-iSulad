@@ -2,15 +2,25 @@ project(iSulad_UT)
 
 SET(EXE remote_layer_support_ut)
 
+add_library(mock_flags SHARED mock_flags.c)
+
+add_library(utils_mock SHARED utils_mock.c)
+
+target_include_directories(utils_mock PUBLIC 
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/utils/cutils
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../include
+    )
+
+target_link_libraries(utils_mock PUBLIC dl mock_flags)
+
+
 add_executable(${EXE}
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../mocks/remote_store_mock.cc
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/utils/cutils/map/map.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/daemon/modules/image/oci/storage/remote_layer_support/ro_symlink_maintain.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/daemon/modules/image/oci/storage/remote_layer_support/remote_support.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/daemon/modules/image/oci/storage/remote_layer_support/overlay_remote_impl.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/daemon/modules/image/oci/storage/remote_layer_support/image_remote_impl.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/daemon/modules/image/oci/storage/remote_layer_support/layer_remote_impl.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../src/utils/cutils/utils_file.c
     remote_layer_ut.cc
     )
 
@@ -38,7 +48,9 @@ target_link_libraries(${EXE}
     ${GMOCK_MAIN_LIBRARY} 
     ${CMAKE_THREAD_LIBS_INIT} 
     ${ISULA_LIBUTILS_LIBRARY} 
-    -lgtest -lgtest_main libutils_ut -lcrypto -lyajl -lz -ldl)
+    mock_flags
+    -lgtest -lgtest_main libutils_ut_dyl -lcrypto -lyajl -lz -ldl)
 
 add_test(NAME ${EXE} COMMAND ${EXE} --gtest_output=xml:${EXE}-Results.xml)
 set_tests_properties(${EXE} PROPERTIES TIMEOUT 120)
+set_tests_properties(${EXE} PROPERTIES ENVIRONMENT "LD_PRELOAD=libutils_mock.so")
