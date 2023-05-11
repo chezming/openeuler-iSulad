@@ -193,6 +193,8 @@ int storage_rootfs_umount(const char *container_id, bool force);
 
 char *storage_rootfs_get_dir();
 
+int check_image_occupancy_status(const char *img_id, bool *in_using);
+
 container_inspect_graph_driver *storage_get_metadata_by_container_id(const char *id);
 
 #ifdef __cplusplus

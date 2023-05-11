@@ -368,6 +368,16 @@ void free_im_search_response(im_search_response *response);
 int im_search_images(im_search_request *request, im_search_response **response);
 #endif
 
+void list_images_all_types(const im_list_request *ctx, imagetool_images_list **images);
+
+/*
+ * im_if_image_inuse
+ * return: 1 in use
+ *         0 not in use
+ *         -1 unknown
+ */
+int im_if_image_inuse(const char *img_id);
+
 #ifdef __cplusplus
 }
 #endif

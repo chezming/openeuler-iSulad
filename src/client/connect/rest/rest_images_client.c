@@ -1125,6 +1125,176 @@ out:
 }
 #endif
 
+#ifdef ENABLE_SYSTEM_PRUNE
+/* image prune request to rest */
+static int image_prune_request_to_rest(const struct isula_image_prune_request *request, char **body, size_t *body_len)
+{
+    image_prune_request *crequest = NULL;
+    parser_error err = NULL;
+    int ret = 0;
+    int i = 0;
+
+    crequest = util_common_calloc_s(sizeof(image_prune_request));
+    if (crequest == NULL) {
+        ERROR("Out of memory");
+        return -1;
+    }
+    crequest->all = request->all;
+
+    if (request->filters == NULL || request->filters->len == 0) {
+        goto pack_json;
+    }
+
+    crequest->filters = util_common_calloc_s(sizeof(defs_filters));
+    if (crequest->filters == NULL) {
+        ERROR("Out of memory");
+        ret = -1;
+        goto out;
+    }
+
+    crequest->filters->keys = (char **)util_smart_calloc_s(sizeof(char *), request->filters->len);
+    if (crequest->filters->keys == NULL) {
+        ERROR("Out of memory");
+        ret = -1;
+        goto out;
+    }
+    crequest->filters->values = (json_map_string_bool **)util_smart_calloc_s(sizeof(json_map_string_bool *), request->filters->len);
+    if (crequest->filters->values == NULL) {
+        ERROR("Out of memory");
+        free(crequest->filters->keys);
+        crequest->filters->keys = NULL;
+        ret = -1;
+        goto out;
+    }
+
+    for (i = 0; i < request->filters->len; i++) {
+        crequest->filters->values[crequest->filters->len] = util_common_calloc_s(sizeof(json_map_string_bool));
+        if (crequest->filters->values[crequest->filters->len] == NULL) {
+            ERROR("Out of memory");
+            ret = -1;
+            goto out;
+        }
+        if (append_json_map_string_bool(crequest->filters->values[crequest->filters->len],
+                                        request->filters->values[i], true)) {
+            ERROR("Append failed");
+            ret = -1;
+            goto out;
+        }
+        crequest->filters->keys[crequest->filters->len] = util_strdup_s(request->filters->keys[i]);
+        crequest->filters->len++;
+    }
+
+pack_json:
+    *body = image_prune_request_generate_json(crequest, NULL, &err);
+    if (*body == NULL) {
+        ERROR("Failed to generate image prune request json:%s", err);
+        ret = -1;
+        goto out;
+    }
+    *body_len = strlen(*body) + 1;
+
+out:
+    free(err);
+    free_image_prune_request(crequest);
+
+    return ret;
+}
+
+/* unpack image prune response */
+static int unpack_image_prune_response(const struct parsed_http_message *message, void *arg)
+{
+    struct isula_image_prune_response *c_prune_response = (struct isula_image_prune_response *)arg;
+    image_prune_response *prune_response = NULL;
+    parser_error err = NULL;
+    int ret = 0;
+    size_t i;
+    char **images = NULL;
+
+    ret = check_status_code(message->status_code);
+    if (ret != 0) {
+        ERROR("Prune image check status code failed");
+        return -1;
+    }
+
+    prune_response = image_prune_response_parse_data(message->body, NULL, &err);
+    if (prune_response == NULL) {
+        ERROR("Invalid prune image response:%s", err);
+        return -1;
+    }
+
+    c_prune_response->server_errono = prune_response->cc;
+    c_prune_response->errmsg = util_strdup_s(prune_response->errmsg);
+    c_prune_response->space_reclaimed = prune_response->space_reclaimed;
+
+    if (prune_response->images_len == 0) {
+        goto out;
+    }
+
+    images = (char **)(util_smart_calloc_s(sizeof(char *), prune_response->images_len));
+    if (images == NULL) {
+        ret = -1;
+        ERROR("Out of memory");
+        goto out;
+    }
+
+    for (i = 0; i < prune_response->images_len; i++) {
+        images[i] = util_strdup_s(prune_response->images[i]);
+    }
+
+    c_prune_response->images = images;
+    c_prune_response->images_len = prune_response->images_len;
+
+    ret = (prune_response->cc == ISULAD_SUCCESS) ? 0 : -1;
+    if (message->status_code == RESTFUL_RES_SERVERR) {
+        ret = -1;
+    }
+
+out:
+    free(err);
+    free_image_prune_response(prune_response);
+
+    return ret;
+}
+
+/* rest image prune */
+static int rest_image_prune(const struct isula_image_prune_request *request,
+                            struct isula_image_prune_response *response,
+                            void *arg)
+{
+    client_connect_config_t *connect_config = (client_connect_config_t *)arg;
+    const char *socketname = (const char *)(connect_config->socket);
+    char *body = NULL;
+    Buffer *output = NULL;
+    int ret = 0;
+    size_t len = 0;
+
+    ret = image_prune_request_to_rest(request, &body, &len);
+    if (ret != 0) {
+        goto out;
+    }
+
+    ret = rest_send_request(socketname, RestHttpHead ImagesServicePrune, body, len, &output);
+    if (ret != 0) {
+        ERROR("Send prune request failed.");
+        response->errmsg = util_strdup_s(errno_to_error_message(ISULAD_ERR_CONNECT));
+        response->cc = ISULAD_ERR_EXEC;
+        goto out;
+    }
+
+    ret = get_response(output, unpack_image_prune_response, (void *)response);
+    if (ret != 0) {
+        ERROR("Get prune response failed.");
+        goto out;
+    }
+
+out:
+    buffer_free(output);
+    put_body(body);
+
+    return ret;
+}
+#endif
+
 /* rest images client ops init */
 int rest_images_client_ops_init(isula_connect_ops *ops)
 {
@@ -1143,6 +1313,9 @@ int rest_images_client_ops_init(isula_connect_ops *ops)
     ops->image.import = &rest_image_import;
 #ifdef ENABLE_IMAGE_SEARCH
     ops->image.search = &rest_image_search;
+#endif
+#ifdef ENABLE_SYSTEM_PRUNE
+    ops->image.prune = &rest_image_prune;
 #endif
     return 0;
 }

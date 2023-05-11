@@ -192,3 +192,8 @@ int storage_layer_chain_delete(const char *layer_id)
     }
     return -1;
 }
+
+int check_image_occupancy_status(const char *img_id, bool *in_using)
+{
+	return 0;
+}

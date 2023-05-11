@@ -33,6 +33,10 @@
 #include "isula_libutils/image_tag_image_response.h"
 #include "isula_libutils/image_import_request.h"
 #include "isula_libutils/image_import_response.h"
+#ifdef ENABLE_SYSTEM_PRUNE
+#include "isula_libutils/image_prune_request.h"
+#include "isula_libutils/image_prune_response.h"
+#endif
 #ifdef ENABLE_IMAGE_SEARCH
 #include "isula_libutils/image_search_image.h"
 #include "isula_libutils/image_search_images_request.h"
@@ -55,6 +59,8 @@
 #ifdef ENABLE_IMAGE_SEARCH
 #define ImagesServiceSearch "/ImagesService/Search"
 #endif
-
+#ifdef ENABLE_SYSTEM_PRUNE
+#define ImagesServicePrune "/ImagesService/Prune"
 #endif
 
+#endif /* API_SERVICES_IMAGES_REST_IMAGE_REST_H */

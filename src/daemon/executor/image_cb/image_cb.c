@@ -34,6 +34,10 @@
 #include <isula_libutils/image_tag_image_response.h>
 #include <isula_libutils/image_pull_image_request.h>
 #include <isula_libutils/image_pull_image_response.h>
+#ifdef ENABLE_SYSTEM_PRUNE
+#include <isula_libutils/image_prune_request.h>
+#include <isula_libutils/image_prune_response.h>
+#endif
 #ifdef ENABLE_IMAGE_SEARCH
 #include <isula_libutils/image_search_image.h>
 #include <isula_libutils/image_search_images_request.h>
@@ -53,6 +57,7 @@
 #include "err_msg.h"
 #include "isula_libutils/log.h"
 #include "image_api.h"
+#include "image_filter.h"
 #include "filters.h"
 #include "events_sender_api.h"
 #include "service_image_api.h"
@@ -1195,6 +1200,167 @@ out:
 }
 #endif
 
+#ifdef ENABLE_SYSTEM_PRUNE
+static const struct filter_opt prune_filters[] = {
+    {.name = "dangling", .valid = util_valid_bool_string, .pre = NULL},
+    {.name = "until", .valid = util_is_valid_time_format, .pre = NULL},
+};
+
+static int prune_filter(const image_prune_request *request, uint64_t *time_until, bool *if_dangling)
+{
+    size_t i, j;
+	struct filters_args *valid_filters = NULL;
+	char **filter_until = NULL;
+	char **filter_dangling = NULL;
+    size_t filter_until_len = 0;
+
+    if (request->filters == NULL || request->filters->len == 0) {
+        INFO("No prune filter");
+        return 0;
+    }
+
+	valid_filters = filters_args_new();
+    if (valid_filters == NULL) {
+        ERROR("Out of memory");
+		return -1;
+	}
+
+    for (i = 0; i < request->filters->len; i++) {
+        for (j = 0; j < sizeof(prune_filters) / sizeof(struct filter_opt); j++) {
+            if (strcmp(request->filters->keys[i],  prune_filters[j].name) != 0) {
+                continue;
+            }
+			do_add_filters(request->filters->keys[i], request->filters->values[i], valid_filters, prune_filters[j].valid,
+                           prune_filters[j].pre);
+        }
+    }
+
+	filter_until = filters_args_get(valid_filters, "until");
+    filter_until_len = util_array_len((const char **)filter_until);
+    if (filter_until_len > 1) {
+        ERROR("Invalid filters. Only one filter until is supported");
+        return -1;
+    }
+    if (filter_until_len == 1) {
+        *time_until = util_str_to_time(filter_until[0]);
+    }
+
+	filter_dangling = filters_args_get(valid_filters, "dangling");
+	if (util_array_len((const char **)filter_dangling) != 0) {
+		util_str_to_bool(filter_dangling[0], if_dangling);
+	}
+
+    return 0;
+}
+
+static int image_delete(imagetool_image_summary *image, uint64_t time_until, bool if_dangling)
+{
+    int ret = 0;
+    uint64_t time_created = util_str_to_time(image->created);
+    
+	if (im_if_image_inuse(image->id) != 0) {
+        DEBUG("image %s is in use", image->id);
+		return -1;
+	}
+
+    if (time_until > time_created) {
+        DEBUG("Created time after until, skip %s", image->id);
+        return -1;
+    }
+
+    if (if_dangling && image->repo_tags_len != 0) {
+        DEBUG("Not dangling, skip %s", image->id);
+        return -1;
+    }
+
+    ret = delete_image(image->id, true);
+    if (ret != 0) {
+        ERROR("Failed to cleanup image %s", image->id);
+        return -1;
+    }
+
+    return 0;
+}
+
+/*
+ * Image prune cb.
+ * It will delete all unused/dangling images and return the reclaimed space.
+ * The method to identify unused images is to get all containers and skip the images they use.
+ * The filter "until" is to skip the images which created time is after the specific time.
+ * The format of filter "until" is as "1970-01-30T00:00:00".
+ */
+static int image_prune_cb(const image_prune_request *request, image_prune_response **response)
+{
+    int ret = 0;
+    int i = 0;
+    uint32_t cc = ISULAD_SUCCESS;
+    uint64_t time_until = 0;
+	bool if_dangling = true;
+    imagetool_images_list *images = NULL;
+
+    DAEMON_CLEAR_ERRMSG();
+    if (request == NULL || response == NULL) {
+        ERROR("Invalid NULL input");
+        return -1;
+    }
+
+    *response = util_common_calloc_s(sizeof(image_prune_response));
+    if (*response == NULL) {
+        ERROR("Out of memory");
+        return -1;
+    }
+
+    ret = prune_filter(request, &time_until, &if_dangling);
+    if (ret != 0) {
+        ERROR("Invalid filters");
+        cc = ISULAD_ERR_INPUT;
+        goto pack_response;
+    }
+
+    // Get all images
+    images = util_common_calloc_s(sizeof(imagetool_images_list));
+    if (images == NULL) {
+        ERROR("Out of memory");
+        cc = ISULAD_ERR_MEMOUT;
+        goto pack_response;
+    }
+    list_images_all_types(NULL, &images);
+
+    for (i = 0; i < images->images_len; i++) {
+        if (images->images[i] == NULL) {
+            continue;
+        }
+
+        if (image_delete(images->images[i], time_until, if_dangling) != 0) {
+            continue;
+        }
+
+        // record image
+        ret = util_mem_realloc((void **)&(*response)->images, sizeof(char*) * ((*response)->images_len + 1), (void *)(*response)->images,
+                sizeof(char*) * ((*response)->images_len));
+        if (ret != 0) {
+            ERROR("Out of memory");
+            cc = ISULAD_ERR_MEMOUT;
+            goto pack_response;
+        }
+        (*response)->space_reclaimed += images->images[i]->size;
+        (*response)->images[(*response)->images_len] = util_strdup_s(images->images[i]->id);
+        (*response)->images_len++;
+    }
+
+pack_response:
+    if (*response != NULL) {
+        (*response)->cc = cc;
+        if (g_isulad_errmsg != NULL) {
+            (*response)->errmsg = util_strdup_s(g_isulad_errmsg);
+            DAEMON_CLEAR_ERRMSG();
+        }
+    }
+    free_imagetool_images_list(images);
+    return (cc == ISULAD_SUCCESS) ? 0 : -1;
+}
+#endif
+
 /* image callback init */
 void image_callback_init(service_image_callback_t *cb)
 {
@@ -1214,5 +1380,8 @@ void image_callback_init(service_image_callback_t *cb)
     cb->pull = image_pull_cb;
 #ifdef ENABLE_IMAGE_SEARCH
     cb->search = image_search_cb;
+#endif
+#ifdef ENABLE_SYSTEM_PRUNE
+    cb->prune = image_prune_cb;
 #endif
 }

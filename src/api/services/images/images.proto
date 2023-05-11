@@ -30,6 +30,7 @@ service ImagesService {
 	rpc Tag(TagImageRequest) returns (TagImageResponse);
 	rpc Import(ImportRequest) returns (ImportResponse);
 	rpc Search(SearchRequest) returns (SearchResponse);
+	rpc Prune(PruneRequest) returns (PruneResponse);
 }
 
 message Descriptor {
@@ -150,6 +151,18 @@ message SearchRequest {
 message SearchResponse {
 	uint32 result_num = 1;
 	repeated SearchImage search_result = 2;
+	uint32 cc = 3;
+	string errmsg = 4;
+}
+
+message PruneRequest {
+	map<string, string>  filters = 1;
+	bool all = 2;
+}
+
+message PruneResponse {
+	repeated string images = 1;
+	uint64 space_reclaimed = 2;
 	uint32 cc = 3;
 	string errmsg = 4;
 }

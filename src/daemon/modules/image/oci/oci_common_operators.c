@@ -26,6 +26,7 @@
 #include "utils_images.h"
 #include "oci_config_merge.h"
 #include "image_rootfs_handler.h"
+#include "image_filter.h"
 #include "err_msg.h"
 #include "filters.h"
 #include "storage.h"
@@ -67,42 +68,6 @@ int oci_get_user_conf(const char *basefs, host_config *hc, const char *userstr, 
 static int oci_list_all_images(imagetool_images_list *images_list)
 {
     return storage_get_all_images(images_list);
-}
-
-static bool image_meet_dangling_filter(const imagetool_image_summary *src, const struct filters_args *filters)
-{
-    bool ret = false;
-    map_t *field_values_map = NULL;
-    const char *field = "dangling";
-    map_itor *itor = NULL;
-    bool dangling_value = false;
-
-    field_values_map = map_search(filters->fields, (void *)field);
-    if (field_values_map == NULL) {
-        return true;
-    }
-
-    itor = map_itor_new(field_values_map);
-    if (itor == NULL) {
-        ERROR("Out of memory");
-        return false;
-    }
-
-    for (; map_itor_valid(itor); map_itor_next(itor)) {
-        if (strcmp(map_itor_key(itor), "true") == 0) {
-            dangling_value = true;
-            break;
-        }
-    }
-
-    if (dangling_value) {
-        ret = src->repo_tags_len == 0;
-    } else {
-        ret = src->repo_tags_len != 0;
-    }
-
-    map_itor_free(itor);
-    return ret;
 }
 
 static int do_image_time_filter(map_itor *itor, bool is_before_filter, int64_t *cmp_nanos)

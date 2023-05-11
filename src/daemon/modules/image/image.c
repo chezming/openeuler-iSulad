@@ -102,6 +102,9 @@ struct bim_ops {
 #ifdef ENABLE_IMAGE_SEARCH
     int (*search_image)(const im_search_request *request, imagetool_search_result **results);
 #endif
+
+	/* if the image is in use or not */
+	int (*if_image_inuse)(const char *img_id);
 };
 
 struct bim {
@@ -123,6 +126,7 @@ struct bim_type {
 #include "driver.h"
 #include "storage.h"
 #include "oci_image.h"
+#include "utils_images.h"
 #endif
 
 #ifdef ENABLE_EMBEDDED_IMAGE
@@ -165,6 +169,7 @@ static const struct bim_ops g_embedded_ops = {
 #ifdef ENABLE_IMAGE_SEARCH
     .search_image = NULL,
 #endif
+	.if_image_inuse = NULL,
 };
 #endif
 
@@ -203,6 +208,7 @@ static const struct bim_ops g_oci_ops = {
 #ifdef ENABLE_IMAGE_SEARCH
     .search_image = oci_search,
 #endif
+	.if_image_inuse = oci_check_image_occupancy_status,
 };
 #endif
 
@@ -241,6 +247,7 @@ static const struct bim_ops g_ext_ops = {
 #ifdef ENABLE_IMAGE_SEARCH
     .search_image = NULL,
 #endif
+	.if_image_inuse = NULL,
 };
 
 static const struct bim_type g_bims[] = {
@@ -842,7 +849,7 @@ out:
     return ret;
 }
 
-static int append_images_to_response(im_list_response *response, imagetool_images_list *images_in)
+static int append_images(imagetool_images_list **images_all, imagetool_images_list *images_in)
 {
     int ret = 0;
     size_t images_num = 0;
@@ -852,15 +859,15 @@ static int append_images_to_response(im_list_response *response, imagetool_image
     size_t new_size = 0;
     size_t old_size = 0;
 
-    if (images_in == NULL || response == NULL) {
+    if (images_in == NULL || images_all == NULL) {
         ERROR("Invalid input arguments");
         ret = -1;
         goto out;
     }
 
-    if (response->images == NULL) {
-        response->images = util_common_calloc_s(sizeof(imagetool_images_list));
-        if (response->images == NULL) {
+    if (*images_all == NULL) {
+        *images_all = util_common_calloc_s(sizeof(imagetool_images_list));
+        if (*images_all == NULL) {
             ERROR("Memeory out");
             ret = -1;
             goto out;
@@ -872,39 +879,60 @@ static int append_images_to_response(im_list_response *response, imagetool_image
     if (images_num == 0) {
         goto out;
     }
-    if (images_num > SIZE_MAX / sizeof(imagetool_image_summary *) - response->images->images_len) {
+    if (images_num > SIZE_MAX / sizeof(imagetool_image_summary *) - (*images_all)->images_len) {
         ERROR("Too many images to append!");
         ret = -1;
         goto out;
     }
 
-    old_num = response->images->images_len;
+    old_num = (*images_all)->images_len;
 
     new_size = (old_num + images_num) * sizeof(imagetool_image_summary *);
     old_size = old_num * sizeof(imagetool_image_summary *);
-    ret = util_mem_realloc((void **)(&tmp), new_size, response->images->images, old_size);
+    ret = util_mem_realloc((void **)(&tmp), new_size, (*images_all)->images, old_size);
     if (ret != 0) {
         ERROR("Failed to realloc memory for append images");
         ret = -1;
         goto out;
     }
-    response->images->images = tmp;
+    (*images_all)->images = tmp;
     for (i = 0; i < images_num; i++) {
-        response->images->images[old_num + i] = images_in->images[i];
+        (*images_all)->images[old_num + i] = images_in->images[i];
         images_in->images[i] = NULL;
         images_in->images_len--;
-        response->images->images_len++;
+        (*images_all)->images_len++;
     }
 
 out:
     return ret;
 }
 
+void list_images_all_types(const im_list_request *ctx, imagetool_images_list **images)
+{
+    imagetool_images_list *images_tmp = NULL;
+    size_t i = 0;
+
+    for (i = 0; i < g_numbims; i++) {
+        if (g_bims[i].ops->list_ims == NULL) {
+            DEBUG("bim %s umimplements list images operator", g_bims[i].image_type);
+            continue;
+        }
+        int ret = g_bims[i].ops->list_ims(ctx, &images_tmp);
+        if (ret != 0) {
+            ERROR("Failed to list all images with type:%s", g_bims[i].image_type);
+            continue;
+        }
+        ret = append_images(images, images_tmp);
+        if (ret != 0) {
+            ERROR("Failed to append images with type:%s", g_bims[i].image_type);
+        }
+        free_imagetool_images_list(images_tmp);
+        images_tmp = NULL;
+    }
+}
+
 int im_list_images(const im_list_request *ctx, im_list_response **response)
 {
-    size_t i;
-    imagetool_images_list *images_tmp = NULL;
-
     if (response == NULL) {
         ERROR("Empty arguments");
         return -1;
@@ -917,24 +945,7 @@ int im_list_images(const im_list_request *ctx, im_list_response **response)
     }
 
     INFO("Event: {Object: list images, Type: listing}");
-
-    for (i = 0; i < g_numbims; i++) {
-        if (g_bims[i].ops->list_ims == NULL) {
-            DEBUG("bim %s umimplements list images operator", g_bims[i].image_type);
-            continue;
-        }
-        int ret = g_bims[i].ops->list_ims(ctx, &images_tmp);
-        if (ret != 0) {
-            ERROR("Failed to list all images with type:%s", g_bims[i].image_type);
-            continue;
-        }
-        ret = append_images_to_response(*response, images_tmp);
-        if (ret != 0) {
-            ERROR("Failed to append images with type:%s", g_bims[i].image_type);
-        }
-        free_imagetool_images_list(images_tmp);
-        images_tmp = NULL;
-    }
+    list_images_all_types(ctx, &((*response)->images));
 
     INFO("Event: {Object: list images, Type: listed}");
 
@@ -2377,3 +2388,25 @@ out:
     return ret;
 }
 #endif
+
+/*
+ * return: 1 in use
+ *         0 not in use
+ *         -1 unknown
+ */
+int im_if_image_inuse(const char *img_id)
+{
+    size_t i;
+	int if_inuse = 1;
+
+    for (i = 0; i < g_numbims; i++) {
+        if (g_bims[i].ops->if_image_inuse == NULL) {
+            continue;
+        }
+        if_inuse = g_bims[i].ops->if_image_inuse(img_id);
+		if (if_inuse != -1) {
+			return if_inuse;
+		}
+	}
+	return if_inuse;
+}

@@ -28,6 +28,9 @@ public:
                                              const char *container_id));
     MOCK_METHOD3(ImUmountContainerRootfs, int(const char *image_type, const char *image_name,
                                               const char *container_id));
+	MOCK_METHOD2(ListImagesAllTypes, void(const im_list_request *ctx, imagetool_images_list **images));
+	MOCK_METHOD1(ImIfImageInuse, int(const char *img_id));
+	MOCK_METHOD2(DeleteImage, int(const char *image_ref, bool force));
 };
 
 void MockImage_SetMock(MockImage *mock);

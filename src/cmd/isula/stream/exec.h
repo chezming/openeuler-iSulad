@@ -34,21 +34,21 @@ extern "C" {
     { CMD_OPT_TYPE_BOOL, false, "detach", 'd', &(cmdargs).detach, "Run container in background", NULL }, \
     { CMD_OPT_TYPE_BOOL, false, "tty", 't', &(cmdargs).custom_conf.tty, "Allocate a pseudo-TTY", NULL }, \
     { CMD_OPT_TYPE_BOOL,                                                                                 \
-        false,                                                                                             \
-        "interactive",                                                                                     \
-        'i',                                                                                               \
-        &(cmdargs).custom_conf.open_stdin,                                                                 \
-        "Keep STDIN open even if not attached",                                                            \
-        NULL },                                                                                            \
+      false,                                                                                             \
+      "interactive",                                                                                     \
+      'i',                                                                                               \
+      &(cmdargs).custom_conf.open_stdin,                                                                 \
+      "Keep STDIN open even if not attached",                                                            \
+      NULL },                                                                                            \
     { CMD_OPT_TYPE_STRING_DUP,                                                                           \
-        false,                                                                                             \
-        "user",                                                                                            \
-        'u',                                                                                               \
-        &(cmdargs).custom_conf.user,                                                                       \
-        "Username or UID (format: <name|uid>[:<group|gid>])",                                              \
-        NULL },                                                                                            \
+      false,                                                                                             \
+      "user",                                                                                            \
+      'u',                                                                                               \
+      &(cmdargs).custom_conf.user,                                                                       \
+      "Username or UID (format: <name|uid>[:<group|gid>])",                                              \
+      NULL },                                                                                            \
     { CMD_OPT_TYPE_STRING_DUP, false, "workdir", 0, &(cmdargs).custom_conf.workdir,                        \
-        "Working directory inside the container, supported only when runtime is lcr", NULL }
+      "Working directory inside the container, supported only when runtime is lcr", NULL }
 
 extern const char g_cmd_exec_desc[];
 extern const char g_cmd_exec_usage[];

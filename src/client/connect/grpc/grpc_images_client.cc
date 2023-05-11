@@ -670,6 +670,70 @@ public:
 };
 #endif
 
+#ifdef ENABLE_SYSTEM_PRUNE
+class ImagePrune : public ClientBase<ImagesService, ImagesService::Stub, isula_image_prune_request, PruneRequest,
+    isula_image_prune_response, PruneResponse> {
+public:
+    explicit ImagePrune(void *args)
+        : ClientBase(args)
+    {
+    }
+    ~ImagePrune() = default;
+    ImagePrune(const ImagePrune &) = delete;
+    ImagePrune &operator=(const ImagePrune &) = delete;
+
+    auto request_to_grpc(const isula_image_prune_request *request, PruneRequest *grequest) -> int override
+    {
+        size_t i = 0;
+
+        if (request == nullptr) {
+            return -1;
+        }
+
+        if (request->filters != nullptr) {
+            auto *map = grequest->mutable_filters();
+            for (i = 0; i < request->filters->len; i++) {
+                (*map)[request->filters->keys[i]] = request->filters->values[i];
+            }
+        }
+        grequest->set_all(request->all);
+
+        return 0;
+    }
+
+    auto response_from_grpc(PruneResponse *gresponse, isula_image_prune_response *response) -> int override
+    {
+        int i;
+        auto size = gresponse->images_size();
+        if (size != 0) {
+            response->images = static_cast<char **>(util_smart_calloc_s(sizeof(char *), size));
+            if (response->images == nullptr) {
+                ERROR("out of memory");
+                return -1;
+            }
+
+            for (i = 0; i < size; i++) {
+                response->images[i] = util_strdup_s(gresponse->images(i).c_str());
+                response->images_len++;
+            }
+        }
+        response->space_reclaimed = gresponse->space_reclaimed();
+        response->server_errono = static_cast<uint32_t>(gresponse->cc());
+
+        if (!gresponse->errmsg().empty()) {
+            response->errmsg = util_strdup_s(gresponse->errmsg().c_str());
+        }
+
+        return 0;
+    }
+
+    auto grpc_call(ClientContext *context, const PruneRequest &req, PruneResponse *reply) -> Status override
+    {
+        return stub_->Prune(context, req, reply);
+    }
+};
+#endif
+
 auto grpc_images_client_ops_init(isula_connect_ops *ops) -> int
 {
     if (ops == nullptr) {
@@ -688,6 +752,8 @@ auto grpc_images_client_ops_init(isula_connect_ops *ops) -> int
 #ifdef ENABLE_IMAGE_SEARCH
     ops->image.search = container_func<isula_search_request, isula_search_response, ImageSearch>;
 #endif
-
+#ifdef ENABLE_SYSTEM_PRUNE
+    ops->image.prune = container_func<isula_image_prune_request, isula_image_prune_response, ImagePrune>;
+#endif
     return 0;
 }

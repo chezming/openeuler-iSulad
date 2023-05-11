@@ -552,6 +552,22 @@ struct isula_logout_response {
     char *errmsg;
 };
 
+#ifdef ENABLE_SYSTEM_PRUNE
+struct isula_image_prune_request {
+    struct isula_filters *filters;
+    bool all;
+};
+
+struct isula_image_prune_response {
+    size_t images_len;
+    char **images;
+    uint64_t space_reclaimed;
+    uint32_t cc;
+    uint32_t server_errono;
+    char *errmsg;
+};
+#endif
+
 #ifdef ENABLE_IMAGE_SEARCH
 struct search_image_info {
     uint32_t star_count;
@@ -834,6 +850,10 @@ void isula_load_response_free(struct isula_load_response *response);
 void isula_login_response_free(struct isula_login_response *response);
 
 void isula_logout_response_free(struct isula_logout_response *response);
+
+#ifdef ENABLE_SYSTEM_PRUNE
+void isula_image_prune_response_free(struct isula_image_prune_response *response);
+#endif
 
 #ifdef ENABLE_IMAGE_SEARCH
 void search_image_info_free(struct search_image_info *info);
