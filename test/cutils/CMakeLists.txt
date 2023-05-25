@@ -7,9 +7,24 @@ add_library(libutils_ut STATIC
     ${local_cutils_srcs}
     ${local_cutils_map_srcs}
     )
+add_library(libutils_ut_dyl SHARED
+    ${local_cutils_srcs}
+    ${local_cutils_map_srcs}
+    )
+
 set_target_properties(libutils_ut PROPERTIES PREFIX "")
+set_target_properties(libutils_ut_dyl PROPERTIES PREFIX "")
+
 target_link_libraries(libutils_ut ${ISULA_LIBUTILS_LIBRARY})
+target_link_libraries(libutils_ut_dyl ${ISULA_LIBUTILS_LIBRARY})
+
 target_include_directories(libutils_ut
+    PUBLIC ${CMAKE_SOURCE_DIR}/src/common
+    PUBLIC ${CMAKE_SOURCE_DIR}/src/utils/cutils
+    PUBLIC ${CMAKE_SOURCE_DIR}/src/utils/cutils/map
+)
+
+target_include_directories(libutils_ut_dyl
     PUBLIC ${CMAKE_SOURCE_DIR}/src/common
     PUBLIC ${CMAKE_SOURCE_DIR}/src/utils/cutils
     PUBLIC ${CMAKE_SOURCE_DIR}/src/utils/cutils/map
