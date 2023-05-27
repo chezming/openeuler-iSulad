@@ -20,15 +20,29 @@
 #include <memory>
 
 namespace CRISecurity {
-static void ModifyContainerConfig(const runtime::v1alpha2::LinuxContainerSecurityContext &sc, container_config *config)
+static void ModifyContainerConfig(const runtime::v1alpha2::LinuxContainerSecurityContext &sc, container_config *config,
+                                  Errors &error)
 {
     if (sc.has_run_as_user()) {
         free(config->user);
         config->user = util_strdup_s(std::to_string(sc.run_as_user().value()).c_str());
     }
     if (!sc.run_as_username().empty()) {
-        free(config->user);
         config->user = util_strdup_s(sc.run_as_username().c_str());
+    }
+    std::string user = config->user != nullptr ? config->user : "";
+
+    if (sc.has_run_as_group()) {
+        if (user.empty()) {
+            error.SetError("runAsGroup is specified without a runAsUser");
+            return;
+        }
+        user += (":" + std::to_string(sc.run_as_group().value()));
+    }
+
+    if (!user.empty()) {
+        free(config->user);
+        config->user = util_strdup_s(user.c_str());
     }
 }
 
@@ -218,10 +232,13 @@ void ApplySandboxSecurityContext(const runtime::v1alpha2::LinuxPodSandboxConfig 
         if (old.has_selinux_options()) {
             *sc->mutable_selinux_options() = old.selinux_options();
         }
+	if (old.has_run_as_group()) {
+            *sc->mutable_run_as_group() = old.run_as_group();
+        }
         *sc->mutable_supplemental_groups() = old.supplemental_groups();
         sc->set_readonly_rootfs(old.readonly_rootfs());
     }
-    ModifyContainerConfig(*sc, config);
+    ModifyContainerConfig(*sc, config, error);
     ModifyHostConfig(*sc, hc, error);
     if (error.NotEmpty()) {
         return;
@@ -234,7 +251,7 @@ void ApplyContainerSecurityContext(const runtime::v1alpha2::LinuxContainerConfig
 {
     if (lc.has_security_context()) {
         const runtime::v1alpha2::LinuxContainerSecurityContext &sc = lc.security_context();
-        ModifyContainerConfig(sc, config);
+        ModifyContainerConfig(sc, config, error);
         ModifyHostConfig(sc, hc, error);
         if (error.NotEmpty()) {
             return;
