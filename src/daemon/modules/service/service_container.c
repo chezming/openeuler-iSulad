@@ -53,6 +53,7 @@
 #include "runtime_api.h"
 #ifdef ENABLE_SANDBOX
 #include "controller_api.h"
+#include <isula_libutils/defs_process.h>
 #endif
 #include "error.h"
 #include "io_handler.h"
@@ -682,7 +683,7 @@ out:
 }
 
 #ifdef ENABLE_SANDBOX
-static int generate_ctrl_rootfs(container_t *cont, ctrl_mount_t **rootfs, size_t *mounts_len)
+static int generate_ctrl_rootfs(const container_t *cont, ctrl_mount_t **rootfs, size_t *mounts_len)
 {
     size_t mount_count = 0;
     size_t rootfs_len = 0;
@@ -742,12 +743,15 @@ static int generate_ctrl_rootfs(container_t *cont, ctrl_mount_t **rootfs, size_t
     return 0;
 }
 
-static void build_ctrl_prepare_params(container_t *cont, const char *oci_spec, 
-                                      const char *console_fifos[], bool tty,
-                                      ctrl_mount_t *rootfs, size_t mounts_len,
+static void build_ctrl_prepare_params(const container_t *cont, const char *exec_id,
+                                      const char *oci_spec, const char *console_fifos[],
+                                      bool tty, ctrl_mount_t *rootfs, size_t mounts_len,
                                       ctrl_prepare_params_t *params)
 {
     params->container_id = cont->common_config->id;
+    if (exec_id != NULL) {
+        params->exec_id = exec_id;
+    }
     params->oci_spec = oci_spec;
     params->stdin = console_fifos[0];
     params->stdout = console_fifos[1];
@@ -780,8 +784,8 @@ out:
     return ret;
 }
 
-static int prepare_container_in_sandbox(container_t *cont, const char *oci_spec,
-                                        const char *console_fifos[], bool tty)
+static int prepare_container(const container_t *cont, const char *exec_id, const char *oci_spec,
+                             const char *console_fifos[], bool tty)
 {
     int ret = 0;
     ctrl_prepare_params_t params = {0};
@@ -816,7 +820,7 @@ static int prepare_container_in_sandbox(container_t *cont, const char *oci_spec,
         goto err_out;
     }
 
-    build_ctrl_prepare_params(cont, oci_spec, console_fifos, tty, rootfs, rootfs_len, &params);
+    build_ctrl_prepare_params(cont, exec_id, oci_spec, console_fifos, tty, rootfs, rootfs_len, &params);
 
     if (sandbox_ctrl_prepare(sandbox->sandboxer, cont->sandbox_id, &params, &response) != 0) {
         ERROR("Failed to call sandbox controller to prepare container '%s'", cont->common_config->id);
@@ -1015,7 +1019,7 @@ static int do_start_container(container_t *cont, const char *console_fifos[], bo
     }
 
 #ifdef ENABLE_SANDBOX
-    if (prepare_container_in_sandbox(cont, json_oci_spec, console_fifos, tty) != 0) {
+    if (prepare_container(cont, NULL, json_oci_spec, console_fifos, tty) != 0) {
         ERROR("Failed to append container");
         ret = -1;
         goto close_exit_fd;
@@ -1552,7 +1556,7 @@ out:
 }
 
 #ifdef ENABLE_SANDBOX
-static int remove_container_from_sandbox(container_t *cont)
+static int purge_container(const container_t *cont, const char *exec_id)
 {
     int ret = 0;
     sandbox_t *sandbox = NULL;
@@ -1563,11 +1567,14 @@ static int remove_container_from_sandbox(container_t *cont)
 
     sandbox = sandboxes_store_get(cont->sandbox_id);
     if (sandbox == NULL) {
-        ERROR("Failed to get sandbox '%s' for removing container", cont->sandbox_id);
-        isulad_set_error_message("Failed to get sandbox '%s' for removing container", cont->sandbox_id);
+        ERROR("Failed to get sandbox '%s' for purging container", cont->sandbox_id);
+        isulad_set_error_message("Failed to get sandbox '%s' for purging container", cont->sandbox_id);
         return -1;
     }
     params.container_id = cont->common_config->id;
+    if (exec_id != NULL) {
+        params.exec_id = exec_id;
+    }
     ret = sandbox_ctrl_purge(sandbox->sandboxer, cont->sandbox_id, &params);
     sandbox_unref(sandbox);
     return ret;
@@ -1756,7 +1763,7 @@ int stop_container(container_t *cont, int timeout, bool force, bool restart)
 
 #ifdef ENABLE_SANDBOX
     if (ret == 0) {
-        ret = remove_container_from_sandbox(cont);
+        ret = purge_container(cont, NULL);
         if (ret != 0) {
             ERROR("Failed to remove container %s from sandbox", id);
             isulad_set_error_message("Failed to remove container %s from sandbox", id);
@@ -2184,6 +2191,7 @@ static int do_exec_container(const container_t *cont, const char *runtime, char 
     const char *id = cont->common_config->id;
     oci_runtime_spec *oci_spec = NULL;
     defs_process *process_spec = NULL;
+    char *json_process_spec = NULL;
     rt_exec_params_t params = { 0 };
 
     loglevel = conf_get_isulad_loglevel();
@@ -2223,6 +2231,22 @@ static int do_exec_container(const container_t *cont, const char *runtime, char 
         goto out;
     }
 
+#ifdef ENABLE_SANDBOX
+    parser_error err = NULL;
+    json_process_spec = defs_process_generate_json(process_spec, NULL, &err);
+    if (json_process_spec == NULL) {
+        ERROR("Failed to generate process spec json: %s", err);
+        ret = -1;
+        goto out;
+    }
+
+    if (prepare_container(cont, request->suffix, json_process_spec, (const char **)console_fifos, request->tty) != 0) {
+        ERROR("Failed to prepare process for container %s", id);
+        ret = -1;
+        goto out;
+    }
+#endif
+
     params.loglevel = loglevel;
     params.logpath = engine_log_path;
     params.console_fifos = (const char **)console_fifos;
@@ -2245,6 +2269,7 @@ out:
     free(engine_log_path);
     free(logdriver);
     free_defs_process(process_spec);
+    free(json_process_spec);
     free_oci_runtime_spec(oci_spec);
 
     return ret;
@@ -2280,9 +2305,14 @@ out:
     return ret;
 }
 
-static void exec_container_end(container_exec_response *response, uint32_t cc, int exit_code, int sync_fd,
-                               pthread_t thread_id)
+static void exec_container_end(container_exec_response *response, const container_t *cont, const char* exec_id,
+                               uint32_t cc, int exit_code, int sync_fd, pthread_t thread_id)
 {
+#ifdef ENABLE_SANDBOX
+    if (purge_container(cont, exec_id) != 0) {
+        ERROR("Failed to purge container for exec %s", exec_id);
+    }
+#endif
     if (response != NULL) {
         response->cc = cc;
         response->exit_code = (uint32_t)exit_code;
@@ -2441,7 +2471,7 @@ int exec_container(const container_t *cont, const container_exec_request *reques
     (void)isulad_monitor_send_container_event(id, EXEC_DIE, -1, 0, NULL, NULL);
 
 pack_response:
-    exec_container_end(response, cc, exit_code, sync_fd, thread_id);
+    exec_container_end(response, cont, request->suffix, cc, exit_code, sync_fd, thread_id);
     delete_daemon_fifos(fifopath, (const char **)fifos);
     free(fifos[0]);
     free(fifos[1]);

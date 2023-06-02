@@ -52,13 +52,13 @@ typedef struct _ctrl_prepare_params_t {
 } ctrl_prepare_params_t;
 
 typedef struct _ctrl_purge_params_t {
-    char *container_id;
-    char *exec_id;
+    const char *container_id;
+    const char *exec_id;
 } ctrl_purge_params_t;
 
 typedef struct _ctrl_update_resources_params_t {
-    char *container_id;
-    char *resources;
+    const char *container_id;
+    const char *resources;
     // TODO: Add annotations
 } ctrl_update_resources_params_t;
 
