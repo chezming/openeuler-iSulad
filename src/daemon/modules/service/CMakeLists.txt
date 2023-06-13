@@ -7,6 +7,7 @@ endif()
 
 if(NOT ENABLE_SANDBOX)
     list(REMOVE_ITEM local_service_srcs "${CMAKE_CURRENT_SOURCE_DIR}/service_sandboxer.c")
+    list(REMOVE_ITEM local_service_srcs "${CMAKE_CURRENT_SOURCE_DIR}/container_helper.c")
 endif()
 
 set(SERVICE_SRCS

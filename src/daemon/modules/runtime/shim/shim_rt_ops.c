@@ -443,7 +443,7 @@ static int write_to_exit_fifo(const char *exit_fifo, int exit_status)
         ERROR("Failed to write exit fifo fd %s", exit_fifo);
         ret = -1;
     }
-
+ 
     close(exit_fifo_fd);
 out:
     return ret;

@@ -52,8 +52,7 @@
 #include "namespace.h"
 #include "runtime_api.h"
 #ifdef ENABLE_SANDBOX
-#include "controller_api.h"
-#include <isula_libutils/defs_process.h>
+#include "container_helper.h"
 #endif
 #include "error.h"
 #include "io_handler.h"
@@ -681,162 +680,6 @@ out:
     free(container_id);
     epoll_loop_close(&descr);
 }
-
-#ifdef ENABLE_SANDBOX
-static int generate_ctrl_rootfs(const container_t *cont, ctrl_mount_t **rootfs, size_t *mounts_len)
-{
-    size_t mount_count = 0;
-    size_t rootfs_len = 0;
-    ctrl_mount_t *rootfs_mounts = NULL;
-    container_config_v2_common_config_mount_points *mount_points = NULL;
-    container_config_v2_common_config_mount_points_element *mp = NULL;
-
-    if (cont->common_config != NULL && cont->common_config->mount_points != NULL) {
-        mount_points = cont->common_config->mount_points;
-        rootfs_len += mount_points->len;
-    }
-
-    if (cont->common_config->base_fs != NULL) {
-        rootfs_len += 1;
-    }
-
-    if (rootfs_len == 0) {
-        *rootfs = NULL;
-        *mounts_len = 0;
-        return 0;
-    }
-
-    rootfs_mounts = util_common_calloc_s(sizeof(ctrl_mount_t) * rootfs_len);
-    if (rootfs_mounts == NULL) {
-        ERROR("Out of memory");
-        return -1;
-    }
-
-    if (cont->common_config->base_fs != NULL) {
-        // TODO: type is optional, and is infered from real file type
-        //       So the type here is not that important, however,
-        //       it is necessary to get this value correctly.
-        //       if device mapper is used, this should be filesystem type,
-        //       if overlay, this should be bind?
-        rootfs_mounts[mount_count].type = "bind";
-        rootfs_mounts[mount_count].source = cont->common_config->base_fs;
-        rootfs_mounts[mount_count].target = "";
-        // TODO: Handle options for mount point
-        rootfs_mounts[mount_count].options = "";
-        mount_count++;
-    }
-
-    if (mount_points != NULL) {
-        while (mount_count < rootfs_len) {
-            mp = mount_points->values[mount_count];
-            rootfs_mounts[mount_count].type = mp->type;
-            rootfs_mounts[mount_count].source = mp->source;
-            rootfs_mounts[mount_count].target = mp->destination;
-            // TODO: Handle options for mount point
-            rootfs_mounts[mount_count].options = "";
-            mount_count++;
-        }
-    }
- 
-    *rootfs = rootfs_mounts;
-    *mounts_len = rootfs_len;
-    return 0;
-}
-
-static void build_ctrl_prepare_params(const container_t *cont, const char *exec_id,
-                                      const char *oci_spec, const char *console_fifos[],
-                                      bool tty, ctrl_mount_t *rootfs, size_t mounts_len,
-                                      ctrl_prepare_params_t *params)
-{
-    params->container_id = cont->common_config->id;
-    if (exec_id != NULL) {
-        params->exec_id = exec_id;
-    }
-    params->oci_spec = oci_spec;
-    params->stdin = console_fifos[0];
-    params->stdout = console_fifos[1];
-    params->stderr = console_fifos[2];
-    params->terminal = tty;
-    params->rootfs = rootfs;
-    params->rootfs_len = mounts_len;
-}
-
-static int validate_target_container(const container_t *container)
-{
-    int ret = 0;
-    container_t *connected = NULL;
-    char *connected_id = namespace_get_connected_container(container->hostconfig->pid_mode);
-    if (connected_id != NULL) {
-        connected = containers_store_get(connected_id);
-        if (connected == NULL) {
-            ERROR("Failed to get connected container, '%s'", connected_id);
-            ret = -1;
-            goto out;
-        }
-        if (connected->sandbox_id == NULL || strcmp(connected->sandbox_id, container->sandbox_id) != 0) {
-            ERROR("Connected container are not in the sandbox, '%s'", connected_id);
-            ret = -1;
-        }
-    }
-out:
-    container_unref(connected);
-    free(connected_id);
-    return ret;
-}
-
-static int prepare_container(const container_t *cont, const char *exec_id, const char *oci_spec,
-                             const char *console_fifos[], bool tty)
-{
-    int ret = 0;
-    ctrl_prepare_params_t params = {0};
-    ctrl_prepare_response_t response = {0};
-    ctrl_mount_t *rootfs = NULL;
-    size_t rootfs_len;
-    sandbox_t *sandbox = NULL;
-    // Check if sandbox is used
-    if (cont->sandbox_id == NULL) {
-        return 0;
-    }
-
-    INFO("Prepare container %s in sandbox %s", cont->common_config->id, cont->sandbox_id);
-
-    sandbox = sandboxes_store_get(cont->sandbox_id);
-    if (sandbox == NULL) {
-        ERROR("Failed to get sandbox '%s' for preparing container", cont->sandbox_id);
-        isulad_set_error_message("Failed to get sandbox '%s' for preparing container", cont->sandbox_id);
-        ret = -1;
-        goto err_out;
-    }
-
-    if (validate_target_container(cont) != 0) {
-        ERROR("Invalid target container");
-        ret = -1;
-        goto err_out;
-    }
-
-    if (generate_ctrl_rootfs(cont, &rootfs, &rootfs_len) != 0) {
-        ERROR("Failed to generate rootfs mount points for appending container, %s", cont->common_config->id);
-        ret = -1;
-        goto err_out;
-    }
-
-    build_ctrl_prepare_params(cont, exec_id, oci_spec, console_fifos, tty, rootfs, rootfs_len, &params);
-
-    if (sandbox_ctrl_prepare(sandbox->sandboxer, cont->sandbox_id, &params, &response) != 0) {
-        ERROR("Failed to call sandbox controller to prepare container '%s'", cont->common_config->id);
-        ret = -1;
-        goto err_out;
-    }
-
-    // TODO: How to handle bundle directory created by sandboxer, link or not
-
-    INFO("Successfully prepared container %s in sandbox %s", cont->common_config->id, cont->sandbox_id);
-err_out:
-    free(rootfs);
-    sandbox_unref(sandbox);
-    return ret;
-}
-#endif
  
 static int do_runtime_create(container_t *cont, char *bundle, oci_runtime_spec *oci_spec,
                              const char *console_fifos[], bool tty, char *exit_fifo, bool open_stdin)
@@ -897,12 +740,10 @@ static int do_start_container(container_t *cont, const char *console_fifos[], bo
     char *logdriver = NULL;
     char *exit_fifo = NULL;
     char *pidfile = NULL;
-    char *json_oci_spec = NULL;
     char bundle[PATH_MAX] = { 0 };
     const char *runtime = cont->runtime;
     const char *id = cont->common_config->id;
     oci_runtime_spec *oci_spec = NULL;
-    struct parser_context ctx = { OPT_PARSE_STRICT, stderr };
     parser_error err = NULL;
 
     nret = snprintf(bundle, sizeof(bundle), "%s/%s", cont->root_path, id);
@@ -992,14 +833,7 @@ static int do_start_container(container_t *cont, const char *console_fifos[], bo
         goto close_exit_fd;
     }
 
-    json_oci_spec = oci_runtime_spec_generate_json(oci_spec, &ctx, &err);
-    if (json_oci_spec == NULL) {
-        ERROR("Failed to generate container spec json: %s", err);
-        ret = -1;
-        goto close_exit_fd;
-    }
-
-    if (save_oci_json(id, cont->root_path, json_oci_spec) != 0) {
+    if (save_oci_config(id, cont->root_path, oci_spec) != 0) {
         ERROR("Failed to save container settings");
         ret = -1;
         goto close_exit_fd;
@@ -1019,12 +853,10 @@ static int do_start_container(container_t *cont, const char *console_fifos[], bo
     }
 
 #ifdef ENABLE_SANDBOX
-    if (prepare_container(cont, NULL, json_oci_spec, console_fifos, tty) != 0) {
-        ERROR("Failed to append container");
+    if (sandbox_prepare_container(cont, oci_spec, console_fifos, tty) != 0) {
         ret = -1;
         goto close_exit_fd;
     }
-    // TODO: Think of how to rollback
 #endif
 
     if (do_runtime_create(cont, bundle, oci_spec, console_fifos,
@@ -1060,7 +892,6 @@ out:
     free(exit_fifo);
     free(pidfile);
     free_oci_runtime_spec(oci_spec);
-    free(json_oci_spec);
     free(err);
     if (ret != 0) {
         umount_rootfs_on_failure(cont);
@@ -1555,32 +1386,6 @@ out:
     return ret;
 }
 
-#ifdef ENABLE_SANDBOX
-static int purge_container(const container_t *cont, const char *exec_id)
-{
-    int ret = 0;
-    sandbox_t *sandbox = NULL;
-    ctrl_purge_params_t params = {0};
-    if (cont->sandbox_task_address == NULL || cont->sandbox_id == NULL) {
-        return 0;
-    }
-
-    sandbox = sandboxes_store_get(cont->sandbox_id);
-    if (sandbox == NULL) {
-        ERROR("Failed to get sandbox '%s' for purging container", cont->sandbox_id);
-        isulad_set_error_message("Failed to get sandbox '%s' for purging container", cont->sandbox_id);
-        return -1;
-    }
-    params.container_id = cont->common_config->id;
-    if (exec_id != NULL) {
-        params.exec_id = exec_id;
-    }
-    ret = sandbox_ctrl_purge(sandbox->sandboxer, cont->sandbox_id, &params);
-    sandbox_unref(sandbox);
-    return ret;
-}
-#endif
-
 static int send_signal_to_process(pid_t pid, unsigned long long start_time, uint32_t stop_signal, uint32_t signal)
 {
     if (util_process_alive(pid, start_time) == false) {
@@ -1763,7 +1568,7 @@ int stop_container(container_t *cont, int timeout, bool force, bool restart)
 
 #ifdef ENABLE_SANDBOX
     if (ret == 0) {
-        ret = purge_container(cont, NULL);
+        ret = sandbox_purge_container(cont);
         if (ret != 0) {
             ERROR("Failed to remove container %s from sandbox", id);
             isulad_set_error_message("Failed to remove container %s from sandbox", id);
@@ -2232,16 +2037,8 @@ static int do_exec_container(const container_t *cont, const char *runtime, char 
     }
 
 #ifdef ENABLE_SANDBOX
-    parser_error err = NULL;
-    json_process_spec = defs_process_generate_json(process_spec, NULL, &err);
-    if (json_process_spec == NULL) {
-        ERROR("Failed to generate process spec json: %s", err);
-        ret = -1;
-        goto out;
-    }
-
-    if (prepare_container(cont, request->suffix, json_process_spec, (const char **)console_fifos, request->tty) != 0) {
-        ERROR("Failed to prepare process for container %s", id);
+    if (sandbox_prepare_exec(cont, request->suffix, process_spec, (const char **)console_fifos, request->tty) != 0) {
+        ERROR("Failed to prepare exec for container %s", id);
         ret = -1;
         goto out;
     }
@@ -2309,7 +2106,7 @@ static void exec_container_end(container_exec_response *response, const containe
                                uint32_t cc, int exit_code, int sync_fd, pthread_t thread_id)
 {
 #ifdef ENABLE_SANDBOX
-    if (purge_container(cont, exec_id) != 0) {
+    if (sandbox_purge_exec(cont, exec_id) != 0) {
         ERROR("Failed to purge container for exec %s", exec_id);
     }
 #endif
