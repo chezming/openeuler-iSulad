@@ -94,6 +94,15 @@ void sandbox_unlock(sandbox_t *sandbox);
 
 void sandbox_free(sandbox_t *sandbox);
 
+inline void auto_cleanup_sandbox_t_free(sandbox_t **ptr)
+{
+    if (ptr != NULL) {
+        sandbox_unref(*ptr);
+    }
+}
+
+#define __auto_cleanup_sandbox_ptr_t __attribute__((cleanup(auto_cleanup_sandbox_t_free))) sandbox_t *
+
 /* Sandbox store */
 int sandboxes_store_init(void);
 

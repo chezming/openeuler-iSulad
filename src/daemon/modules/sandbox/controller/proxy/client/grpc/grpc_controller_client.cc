@@ -53,11 +53,10 @@ ControllerClient::ControllerClient(const char *sandboxer, const ctrl_client_conf
 
 void ControllerClient::convert_mount_info(Mount* rootfs_entry, ctrl_mount_t *mount)
 {
-    rootfs_entry->set_type(mount->type);
-    rootfs_entry->set_source(mount->source);
-    rootfs_entry->set_target(mount->target);
-    // TODO: Options not implemented
-    // rootfs_entry->set_options(mount->.options);
+    rootfs_entry->set_type(mount->type == NULL ? "" : mount->type);
+    rootfs_entry->set_source(mount->source == NULL ? "" : mount->source);
+    rootfs_entry->set_target(mount->target == NULL ? "" : mount->target);
+    // Options are not supported yet for rootfs mounts
 }
 
 void ControllerClient::init_grpc_create_request(ControllerCreateRequest &grpc_request, const char *sandbox_id,
