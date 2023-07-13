@@ -14,11 +14,14 @@
 *******************************************************************************/
 #include "oci_pull.h"
 
+#include <pthread.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "isula_libutils/log.h"
+#include "isula_libutils/image_progress.h"
 #include "utils.h"
 #include "utils_images.h"
 #include "registry.h"
@@ -85,7 +88,7 @@ static void update_option_insecure_registry(registry_pull_options *options, char
     }
 }
 
-static int pull_image(const im_pull_request *request, char **name)
+static int pull_image(const im_pull_request *request, map_s *progress_status_store, char **name)
 {
     int ret = -1;
     registry_pull_options *options = NULL;
@@ -112,6 +115,7 @@ static int pull_image(const im_pull_request *request, char **name)
         options->auth.username = util_strdup_s(request->username);
         options->auth.password = util_strdup_s(request->password);
     }
+    options->progress_status_store = progress_status_store;
 
     oci_image_data = get_oci_image_data();
     options->skip_tls_verify = oci_image_data->insecure_skip_verify_enforce;
@@ -174,19 +178,118 @@ out:
     return ret;
 }
 
-int oci_do_pull_image(const im_pull_request *request, im_pull_response *response)
+typedef struct status_arg {
+    map_s *status_store;
+    bool should_terminal;
+    imagetool_image_summary *image;
+    stream_func_wrapper *stream;
+} status_arg;
+
+static void get_progress(char *str, int64_t *total, int64_t *current)
+{
+    const char *delimiter = "/";
+    char info[256] = {0};
+    char *saveptr;
+
+    strcpy(info, str);
+
+    char *t = strtok_r(info, delimiter, &saveptr);
+    if (t != NULL) {
+        // Convert the first token to int64_t
+        *current = strtoll(t, NULL, 10);
+
+        t = strtok_r(NULL, delimiter, &saveptr);
+        if (t != NULL) {
+            // Convert the second token to int64_t
+            *total = strtoll(t, NULL, 10);
+        }
+    }
+}
+
+void *get_progress_status(void *arg)
+{
+    status_arg *status = (status_arg *)arg;
+    int delay = 100;
+    int i = 0;
+    bool write_ok = false;
+    char buffer[512] = {0};
+
+    if (status->status_store == NULL || status->stream == NULL) {
+        ERROR("get progress status condition error");
+        return NULL;
+    }
+
+    for(;;) {
+        if (status->should_terminal && status->image == NULL) {
+            break;
+        }
+        map_s_itor *itor = map_s_itor_new(status->status_store);
+        size_t progress_size = map_s_size(status->status_store);
+        image_progress *progresses;
+        
+        progresses = util_common_calloc_s(sizeof(image_progress));
+        memset(progresses, 0, sizeof(image_progress));
+        memset(buffer, 0, sizeof(buffer));
+        
+        if (status->image != NULL) {
+            progresses->image = util_strdup_s(status->image->id);
+            status->image = NULL;
+        }
+        progresses->progresses_len = progress_size;
+        progresses->progresses = util_common_calloc_s(sizeof(image_progress_progresses_element *) * progress_size);
+
+        for (i = 0; map_s_itor_valid(itor); map_s_itor_next(itor), i++) {
+            void *id = map_s_itor_key(itor);
+            const char *value = map_s_itor_value(itor);
+
+            progresses->progresses[i] = util_common_calloc_s(sizeof(image_progress_progresses_element));
+            progresses->progresses[i]->id = util_strdup_s((char *)id + strlen((char *)id) - 12);
+            get_progress((char *)value, &(progresses->progresses[i]->total), &(progresses->progresses[i]->current));
+        }
+        map_s_itor_free(itor);
+
+        /* send to client */
+        write_ok = status->stream->write_func(status->stream->writer, progresses);
+        if (!write_ok) {
+            ERROR("Send progress data to client failed");
+        }
+        free_image_progress(progresses);
+
+        usleep(delay * 1000);  // Sleep for 100 milliseconds
+    }
+    return NULL;
+}
+
+int oci_do_pull_image(const im_pull_request *request, stream_func_wrapper *stream, im_pull_response *response)
 {
     int ret = 0;
     imagetool_image_summary *image = NULL;
     imagetool_image_summary *image2 = NULL;
     char *dest_image_name = NULL;
+    map_s *progress_status_store = NULL;
 
     if (request == NULL || request->image == NULL || response == NULL) {
         ERROR("Invalid NULL param");
         return -1;
     }
 
-    ret = pull_image(request, &dest_image_name);
+    pthread_t tid = 0;
+    status_arg arg;
+    if (request->if_show_progress) {
+        progress_status_store = map_s_new(MAP_STR_STR, MAP_DEFAULT_CMP_FUNC, MAP_DEFAULT_FREE_FUNC);
+        if (progress_status_store == NULL) {
+            ERROR("out of memory and will not show the pull progress");
+        }
+        arg.should_terminal = false;
+        arg.status_store = progress_status_store;
+        arg.stream = stream;
+        if (pthread_create(&tid, NULL, get_progress_status, (void *)&arg) != 0) {
+           ERROR("failed to start thread to get progress status");
+        }
+
+    }
+
+    ret = pull_image(request, progress_status_store, &dest_image_name);
     if (ret != 0) {
         ERROR("pull image %s failed", request->image);
         isulad_set_error_message("Failed to pull image %s with error: %s", request->image, g_isulad_errmsg);
@@ -202,12 +305,15 @@ int oci_do_pull_image(const im_pull_request *request, im_pull_response *response
         ret = -1;
         goto out;
     }
-
-    response->image_ref = util_strdup_s(image->id);
+    arg.image = image;
 
 out:
+    arg.should_terminal = true;
+    pthread_join(tid, NULL);
+
     free_imagetool_image_summary(image);
     free_imagetool_image_summary(image2);
     free(dest_image_name);
+    free(progress_status_store);
     return ret;
 }

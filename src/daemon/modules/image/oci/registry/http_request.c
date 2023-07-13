@@ -37,6 +37,11 @@
 #include "utils_base64.h"
 #include "utils_string.h"
 
+typedef struct progress_arg {
+    char *digest;
+    map_s *map_store;
+} progress_arg;
+
 #define MIN_TOKEN_EXPIRES_IN 60
 
 static int http_request_get_token(pull_descriptor *desc, challenge *c, char **output);
@@ -683,28 +688,23 @@ out:
     return ret;
 }
 
-static int progress(void *p, double dltotal, double dlnow, double ultotal, double ulnow)
-{
-    bool *cancel = p;
-    if (*cancel) {
-        // return nonzero code means abort transition
-        return -1;
-    }
-    return 0;
-}
-
 static int xfer(void *p, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow)
 {
-    bool *cancel = p;
-    if (*cancel) {
-        // return nonzero code means abort transition
-        return -1;
+    
+    progress_arg *arg = (progress_arg *)p;
+    char info[256] = {0};
+
+    snprintf(info, sizeof(info)-1, "%ld/%ld", dlnow, dltotal);
+
+    if (arg->map_store != NULL && arg->digest != NULL) {
+        map_s_replace(arg->map_store, arg->digest, info);
     }
+
     return 0;
 }
 
 int http_request_file(pull_descriptor *desc, const char *url, const char **custom_headers, char *file,
-                      resp_data_type type, CURLcode *errcode)
+                      resp_data_type type, CURLcode *errcode, char *digest)
 {
     int ret = 0;
     struct http_get_options *options = NULL;
@@ -730,11 +730,21 @@ int http_request_file(pull_descriptor *desc, const char *url, const char **custo
     }
     options->outputtype = HTTP_REQUEST_FILE;
     options->output = file;
-    options->show_progress = 1;
-    options->progressinfo = &desc->cancel;
-    options->progress_info_op = progress;
-    options->xferinfo = &desc->cancel;
-    options->xferinfo_op = xfer;
+    progress_arg *arg = util_common_calloc_s(sizeof(progress_arg));
+    if (arg == NULL) {
+        ERROR("Out of memory");
+        goto out;
+    }
+    if (desc->progress_status_store != NULL) {
+        
+        arg->digest = digest;
+        arg->map_store = desc->progress_status_store;
+        options->xferinfo = arg;
+        options->xferinfo_op = xfer;
+        options->show_progress = 1;
+    } else {
+        options->show_progress = 0;
+    }
     options->timeout = true;
 
     ret = setup_common_options(desc, options, url, custom_headers);
@@ -755,6 +765,7 @@ int http_request_file(pull_descriptor *desc, const char *url, const char **custo
 out:
     *errcode = options->errcode;
     free_http_get_options(options);
+    free(arg);
     options = NULL;
 
     return ret;

@@ -16,6 +16,9 @@
 #include "api.grpc.pb.h"
 #include "client_base.h"
 #include "images.grpc.pb.h"
+
+#include "isula_libutils/image_progress.h"
+#include "progress.h"
 #include "utils.h"
 #include "constants.h"
 #include <string>
@@ -337,9 +340,9 @@ public:
     }
 };
 
-class ImagesPull : public ClientBase<runtime::v1alpha2::ImageService, runtime::v1alpha2::ImageService::Stub,
-    isula_pull_request, runtime::v1alpha2::PullImageRequest, isula_pull_response,
-    runtime::v1alpha2::PullImageResponse> {
+class ImagesPull : public ClientBase<ImagesService, ImagesService::Stub,
+    isula_pull_request, PullImageRequest,
+	isula_pull_response, PullImageResponse> {
 public:
     explicit ImagesPull(void *args)
         : ClientBase(args)
@@ -347,26 +350,27 @@ public:
     }
     ~ImagesPull() = default;
 
-    auto request_to_grpc(const isula_pull_request *request, runtime::v1alpha2::PullImageRequest *grequest)
+    auto request_to_grpc(const isula_pull_request *request, PullImageRequest *grequest)
     -> int override
     {
         if (request == nullptr) {
             return -1;
         }
-
+	
         if (request->image_name != nullptr) {
-            auto *image_spec = new (std::nothrow) runtime::v1alpha2::ImageSpec;
+            auto *image_spec = new (std::nothrow) ImageSpec;
             if (image_spec == nullptr) {
                 return -1;
             }
             image_spec->set_image(request->image_name);
-            grequest->set_allocated_image(image_spec);
-        }
+            grequest->set_allocated_image(image_spec);	
+		}
+		grequest->set_if_show_progress(request->if_show_progress);
 
         return 0;
     }
 
-    auto response_from_grpc(runtime::v1alpha2::PullImageResponse *gresponse, isula_pull_response *response)
+    auto response_from_grpc(PullImageResponse *gresponse, isula_pull_response *response)
     -> int override
     {
         if (!gresponse->image_ref().empty()) {
@@ -376,9 +380,9 @@ public:
         return 0;
     }
 
-    auto check_parameter(const runtime::v1alpha2::PullImageRequest &req) -> int override
+    auto check_parameter(const PullImageRequest &req) -> int override
     {
-        if (req.image().image().empty()) {
+		if (req.image().image().empty()) {
             ERROR("Missing image name in the request");
             return -1;
         }
@@ -386,10 +390,57 @@ public:
         return 0;
     }
 
-    auto grpc_call(ClientContext *context, const runtime::v1alpha2::PullImageRequest &req,
-                   runtime::v1alpha2::PullImageResponse *reply) -> Status override
+	auto run(const struct isula_pull_request *request, struct isula_pull_response *response) -> int override
     {
-        return stub_->PullImage(context, req, reply);
+        ClientContext context;
+        PullImageRequest grequest;
+
+#ifdef OPENSSL_VERIFY
+        // Set common name from cert.perm
+        char common_name_value[ClientBaseConstants::COMMON_NAME_LEN] = { 0 };
+        int ret = get_common_name_from_tls_cert(m_certFile.c_str(), common_name_value,
+                                                ClientBaseConstants::COMMON_NAME_LEN);
+        if (ret != 0) {
+            ERROR("Failed to get common name in: %s", m_certFile.c_str());
+            return -1;
+        }
+        context.AddMetadata("username", std::string(common_name_value, strlen(common_name_value)));
+        context.AddMetadata("tls_mode", m_tlsMode);
+#endif
+
+        if (request_to_grpc(request, &grequest) != 0) {
+            ERROR("Failed to transform pull request to grpc");
+            response->server_errono = ISULAD_ERR_INPUT;
+            return -1;
+        }
+
+        auto reader = stub_->PullImage(&context, grequest);
+
+        PullImageResponse gresponse;
+        while (reader->Read(&gresponse)) {
+			output_progress(gresponse);
+        }
+        Status status = reader->Finish();
+        if (!status.ok()) {
+            ERROR("error code: %d: %s", status.error_code(), status.error_message().c_str());
+            unpackStatus(status, response);
+            return -1;
+        }
+		response->image_ref = util_strdup_s(gresponse.image_ref().c_str());
+        return 0;
+    }
+
+private:
+	void output_progress(PullImageResponse &gresponse)
+    {
+		char *err;
+		struct parser_context ctx = { OPT_GEN_SIMPLIFY, 0 };
+
+		image_progress * progresses = image_progress_parse_data(gresponse.progress_data().c_str(), &ctx, &err);
+		if (progresses == NULL) {
+			return;
+		}
+		show_processes(progresses);
     }
 };
 

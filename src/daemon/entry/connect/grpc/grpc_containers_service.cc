@@ -25,6 +25,7 @@
 #include "error.h"
 #include "cxxutils.h"
 #include "stoppable_thread.h"
+#include "grpc_common.h"
 #include "grpc_server_tls_auth.h"
 #include "container_api.h"
 #include "service_base.h"
@@ -105,17 +106,6 @@ void copy_from_container_response_to_grpc(const struct isulad_copy_from_containe
     if (copy->data != nullptr && copy->data_len > 0) {
         gcopy->set_data(copy->data, copy->data_len);
     }
-}
-
-bool grpc_is_call_cancelled(void *context)
-{
-    return ((ServerContext *)context)->IsCancelled();
-}
-
-bool grpc_add_initial_metadata(void *context, const char *header, const char *val)
-{
-    ((ServerContext *)context)->AddInitialMetadata(header, val);
-    return true;
 }
 
 bool grpc_event_write_function(void *writer, void *data)

@@ -32,6 +32,8 @@
 #ifdef ENABLE_IMAGE_SEARCH
 #include "isula_libutils/imagetool_search_result.h"
 #endif
+#include "map_s.h"
+#include "stream_wrapper.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -150,6 +152,9 @@ typedef struct {
     char *server_address;
     char *identity_token;
     char *registry_token;
+
+    bool if_show_progress;
+    map_s *progress_status_store;
 } im_pull_request;
 
 typedef struct {
@@ -304,7 +309,7 @@ void free_im_load_request(im_load_request *ptr);
 
 void free_im_load_response(im_load_response *ptr);
 
-int im_pull_image(const im_pull_request *request, im_pull_response **response);
+int im_pull_image(const im_pull_request *request, stream_func_wrapper *stream, im_pull_response **response);
 
 void free_im_pull_request(im_pull_request *req);
 

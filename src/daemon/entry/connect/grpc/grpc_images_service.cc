@@ -22,7 +22,9 @@
 #include <string>
 
 #include "isula_libutils/log.h"
+#include "isula_libutils/image_progress.h"
 #include "utils.h"
+#include "grpc_common.h"
 #include "grpc_server_tls_auth.h"
 
 int ImagesServiceImpl::image_list_request_from_grpc(const ListImagesRequest *grequest,
@@ -592,6 +594,94 @@ Status ImagesServiceImpl::Logout(ServerContext *context, const LogoutRequest *re
 
     free_image_logout_request(image_req);
     free_image_logout_response(image_res);
+
+    return Status::OK;
+}
+
+int ImagesServiceImpl::image_pull_request_from_grpc(const PullImageRequest *grequest, image_pull_image_request **request)
+{
+    auto *tmpreq = (image_pull_image_request *)util_common_calloc_s(sizeof(image_pull_image_request));
+    if (tmpreq == nullptr) {
+        ERROR("Out of memory");
+        return -1;
+    }
+
+    if (!grequest->image().image().empty()) {
+        tmpreq->image_name = util_strdup_s(grequest->image().image().c_str());
+    }
+	tmpreq->if_show_progress = grequest->if_show_progress();
+    *request = tmpreq;
+
+    return 0;
+}
+
+void image_pull_progress_to_grpc(const image_progress *progress,
+                                 PullImageResponse *gresponse)
+{
+	gresponse->Clear();
+	char *err;
+	struct parser_context ctx = { OPT_GEN_SIMPLIFY, 0 };
+	char *data = image_progress_generate_json(progress, &ctx, &err);
+
+	gresponse->set_progress_data(data, strlen(data));
+	if (progress->image != nullptr) {
+        gresponse->set_image_ref(progress->image);
+	}
+    return;
+}
+
+bool grpc_pull_write_function(void *writer, void *data)
+{
+    auto *response = static_cast<image_progress *>(data);
+    auto *gwriter = static_cast<ServerWriter<PullImageResponse> *>(writer);
+    PullImageResponse gresponse;
+    image_pull_progress_to_grpc(response, &gresponse);
+
+    return gwriter->Write(gresponse);
+}
+
+Status ImagesServiceImpl::PullImage(ServerContext *context, const PullImageRequest *request, ServerWriter<PullImageResponse> *writer)
+{
+    prctl(PR_SET_NAME, "RegistryPull");
+
+    int ret = 0;
+	std::string errmsg = "Failed to execute image pull";
+	stream_func_wrapper stream = { 0 };
+    image_pull_image_request *image_req = nullptr;
+    image_pull_image_response *image_res = nullptr;
+    auto status = GrpcServerTlsAuth::auth(context, "pull");
+    if (!status.ok()) {
+        return status;
+    }
+
+    service_executor_t *cb = get_service_executor();
+    if (cb == nullptr || cb->image.pull == nullptr) {
+        return Status(StatusCode::UNIMPLEMENTED, "Unimplemented callback");
+    }
+
+    ret = image_pull_request_from_grpc(request, &image_req);
+    if (ret != 0) {
+        ERROR("Failed to transform grpc request");
+		return Status(StatusCode::UNKNOWN, "Failed to transform grpc request");
+	}
+
+    stream.context = (void *)context;
+    stream.is_cancelled = &grpc_is_call_cancelled;
+    stream.write_func = &grpc_pull_write_function;
+    stream.writer = (void *)writer;
+
+    ret = cb->image.pull(image_req, &stream, &image_res);
+	
+	if (image_res == nullptr) {
+        return Status(StatusCode::UNKNOWN, errmsg);
+    }
+    errmsg = (image_res->errmsg != nullptr) ? image_res->errmsg : "Failed to execute image pull";
+    if (ret != 0) {
+        return Status(StatusCode::UNKNOWN, errmsg);
+    }
+	
+    free_image_pull_image_request(image_req);
+	free_image_pull_image_response(image_res); 
 
     return Status::OK;
 }

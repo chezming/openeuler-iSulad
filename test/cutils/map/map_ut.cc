@@ -17,6 +17,7 @@
 #include <stdio.h>
 #include <gtest/gtest.h>
 #include "map.h"
+#include "map_s.h"
 
 static void ptr_ptr_map_kefree(void *key, void *value)
 {
@@ -84,4 +85,24 @@ TEST(map_map_ut, test_map_ptr)
     map_clear(map_test);
     delete key_ptr;
     delete value_ptr;
+}
+
+TEST(map_map_ut, test_map_s_string)
+{
+    // map[string][string]
+    map_s *map_test = nullptr;
+    char *value = (char *)"value";
+
+    map_test = map_s_new(MAP_STR_BOOL, MAP_DEFAULT_CMP_FUNC, MAP_DEFAULT_FREE_FUNC);
+    ASSERT_NE(map_test, nullptr);
+    ASSERT_EQ(map_s_replace(map_test, (void *)"key", value), true);
+
+    map_s_itor *itor = map_s_itor_new(map_test);
+    ASSERT_NE(itor, nullptr);
+    ASSERT_EQ(map_s_itor_first(itor), true);
+    ASSERT_EQ(map_s_itor_last(itor), true);
+    ASSERT_EQ(map_s_itor_prev(itor), false);
+
+    map_s_itor_free(itor);
+    map_s_clear(map_test);
 }

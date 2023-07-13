@@ -16,6 +16,7 @@
 #define DAEMON_MODULES_IMAGE_OCI_REGISTRY_REGISTRY_H
 
 #include <stdbool.h>
+#include <map_s.h>
 
 #ifdef ENABLE_IMAGE_SEARCH
 #include <isula_libutils/imagetool_search_result.h>
@@ -36,6 +37,7 @@ typedef struct {
     registry_auth auth;
     bool skip_tls_verify;
     bool insecure_registry;
+    map_s *progress_status_store;
 } registry_pull_options;
 
 typedef struct {
