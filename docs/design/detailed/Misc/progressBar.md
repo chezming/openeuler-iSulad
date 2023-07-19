@@ -70,7 +70,7 @@ map *get_progress_status();
 ```
 int http_request_with_status(const char *url, struct http_get_options *options, long *response_code, int recursive_len, void *outputFunc(void *), void *output_param);
 ```
-在http_request_with_status中，新建线程，在curl_easy_perform之后，每隔100ms获取更新一次本任务状态。
+在http_request_with_status中，新建线程，在curl_easy_perform之后，每隔100ms获取更新一次本任务状态并更新progress status map。
 
 ```
 curl_off_t dl;
