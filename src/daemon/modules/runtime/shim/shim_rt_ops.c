@@ -29,6 +29,7 @@
 #include "error.h"
 #include "err_msg.h"
 #include "engine.h"
+#include "shim_rt_monitor.h"
 
 #define EXIT_SIGNAL_OFFSET_X 128
 
@@ -402,7 +403,7 @@ int rt_shim_start(const char *id, const char *runtime, const rt_start_params_t *
 
     pid_info->pid = pid;
 
-    return 0;
+    return shim_rt_monitor(id, NULL, params->exit_fifo);
 }
 
 int rt_shim_restart(const char *id, const char *runtime, const rt_restart_params_t *params)
