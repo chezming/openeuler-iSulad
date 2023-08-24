@@ -38,6 +38,8 @@
 #include "isula_libutils/image_search_images_request.h"
 #include "isula_libutils/image_search_images_response.h"
 #endif
+#include "isula_libutils/image_history_request.h"
+#include "isula_libutils/image_history_response.h"
 
 #ifndef RestHttpHead
 #define RestHttpHead "http://localhost"
@@ -55,6 +57,7 @@
 #ifdef ENABLE_IMAGE_SEARCH
 #define ImagesServiceSearch "/ImagesService/Search"
 #endif
+#define ImagesServiceHistory "/ImagesService/History"
 
 #endif
 

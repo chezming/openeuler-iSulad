@@ -26,6 +26,8 @@
 #include "utils_string.h"
 #include "utils_verify.h"
 
+#define CREATED_DISPLAY_FORMAT "YYYY-MM-DD HH:MM:SS"
+
 bool unix_nanos_to_timestamp(int64_t nanos, types_timestamp_t *timestamp)
 {
     if (timestamp == NULL) {
@@ -1084,4 +1086,24 @@ int util_time_str_to_nanoseconds(const char *value, int64_t *nanoseconds)
 out:
     free(num_str);
     return ret;
+}
+
+char *util_format_time(int64_t rawtime)
+{
+    struct tm t;
+    int nret = 0;
+    char formated_time[sizeof(CREATED_DISPLAY_FORMAT)] = { 0 };
+    time_t time = (time_t)rawtime;
+
+    if (!localtime_r(&time, &t)) {
+        ERROR("translate time for created failed: %s", strerror(errno));
+        return NULL;
+    }
+    nret = strftime(formated_time, sizeof(formated_time), "%Y-%m-%d %H:%M:%S", &t);
+    if (nret < 0 || nret >= sizeof(formated_time)) {
+        ERROR("format created time failed");
+        return NULL;
+    }
+
+    return util_strdup_s(formated_time);
 }

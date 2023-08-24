@@ -332,6 +332,8 @@ void *util_common_calloc_s(size_t size);
 
 char *util_strdup_s(const char *src);
 
+char *util_strdup_with_default_s(const char *src, const char *def);
+
 int util_wait_for_pid(pid_t pid);
 
 int util_waitpid_with_timeout(pid_t pid, const int64_t timeout, handle_timeout_callback_t cb);

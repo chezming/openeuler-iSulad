@@ -74,7 +74,7 @@ public:
         }
         images_list = (struct isula_image_info *)util_smart_calloc_s(sizeof(struct isula_image_info), (size_t)num);
         if (images_list == nullptr) {
-            ERROR("out of memory");
+            ERROR("Out of memory");
             response->cc = ISULAD_ERR_MEMOUT;
             return -1;
         }
@@ -334,6 +334,76 @@ public:
     auto grpc_call(ClientContext *context, const ImportRequest &req, ImportResponse *reply) -> Status override
     {
         return stub_->Import(context, req, reply);
+    }
+};
+
+class History : public ClientBase<ImagesService, ImagesService::Stub, isula_history_request, HistoryRequest,
+    isula_history_response, HistoryResponse> {
+public:
+    explicit History(void *args)
+        : ClientBase(args)
+    {
+    }
+    ~History() = default;
+
+    auto request_to_grpc(const isula_history_request *request, HistoryRequest *grequest) -> int override
+    {
+        if (request == nullptr) {
+            return -1;
+        }
+
+        if (request->image_name != nullptr) {
+            grequest->set_name(request->image_name);
+        }
+
+        return 0;
+    }
+
+    auto response_from_grpc(HistoryResponse *gresponse, isula_history_response *response) -> int override
+    {
+        int num = gresponse->info_size();
+
+        if (num <= 0) {
+            response->history_list = nullptr;
+            response->history_num = 0;
+            response->server_errono = gresponse->cc();
+            if (!gresponse->errmsg().empty()) {
+                response->errmsg = util_strdup_s(gresponse->errmsg().c_str());
+            }
+            return 0;
+        }
+
+        response->history_list = 
+            static_cast<struct isula_history_info *>(util_smart_calloc_s(sizeof(struct isula_history_info), num));
+        if (response->history_list == nullptr) {
+            ERROR("Out of memory");
+            response->cc = ISULAD_ERR_MEMOUT;
+            return -1;
+        }
+
+        for (int i = 0; i < num; i++) {
+            const HistoryInfo &info = gresponse->info(i);
+            response->history_list[i].id = util_strdup_s(!info.id().empty() ? info.id().c_str() : "-");
+            response->history_list[i].comment = util_strdup_s(!info.comment().empty() ? info.comment().c_str() : "-");
+            response->history_list[i].create_by = util_strdup_s(!info.create_by().empty() ? info.create_by().c_str() : "-");
+            if (info.has_created()) {
+                response->history_list[i].created = info.created().seconds();
+            }
+            response->history_list[i].size = info.size();
+        }
+
+        response->history_num = static_cast<size_t>(num);
+        response->server_errono = gresponse->cc();
+        if (!gresponse->errmsg().empty()) {
+            response->errmsg = util_strdup_s(gresponse->errmsg().c_str());
+        }
+
+        return 0;
+    }
+
+    auto grpc_call(ClientContext *context, const HistoryRequest &req, HistoryResponse *reply) -> Status override
+    {
+        return stub_->History(context, req, reply);
     }
 };
 
@@ -622,7 +692,7 @@ public:
 
         search_result = (struct search_image_info *)util_smart_calloc_s(sizeof(struct search_image_info), (size_t)num);
         if (search_result == nullptr) {
-            ERROR("out of memory");
+            ERROR("Out of memory");
             response->cc = ISULAD_ERR_MEMOUT;
             return -1;
         }
@@ -688,6 +758,6 @@ auto grpc_images_client_ops_init(isula_connect_ops *ops) -> int
 #ifdef ENABLE_IMAGE_SEARCH
     ops->image.search = container_func<isula_search_request, isula_search_response, ImageSearch>;
 #endif
-
+    ops->image.history = container_func<isula_history_request, isula_history_response, History>;
     return 0;
 }

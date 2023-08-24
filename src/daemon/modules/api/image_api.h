@@ -158,6 +158,27 @@ typedef struct {
 } im_pull_response;
 
 typedef struct {
+   // Spec of the image.
+    image_spec image;
+    char *type;
+} im_history_request;
+
+
+typedef struct {
+    char *created;
+    char *id;
+    char *created_by;
+    char *comment;
+    size_t size;
+} image_history_info_t;
+
+typedef struct {
+    image_history_info_t **history_info;
+    size_t history_info_len;
+    char *errmsg;
+} im_history_response;
+
+typedef struct {
     char *server;
     char *username;
     char *password;
@@ -309,6 +330,12 @@ int im_pull_image(const im_pull_request *request, im_pull_response **response);
 void free_im_pull_request(im_pull_request *req);
 
 void free_im_pull_response(im_pull_response *resp);
+
+int im_history_image(const im_history_request *request, im_history_response **response);
+
+void free_im_history_request(im_history_request *req);
+
+void free_im_history_response(im_history_response *resp);
 
 char *im_get_image_type(const char *image, const char *external_rootfs);
 

@@ -88,6 +88,9 @@ struct bim_ops {
     /* pull image */
     int (*pull_image)(const im_pull_request *request, im_pull_response *response);
 
+    /* history image */
+    int (*history_image)(const im_history_request *request, im_history_response *response);
+
     /* login */
     int (*login)(const im_login_request *request);
 
@@ -156,7 +159,7 @@ static const struct bim_ops g_embedded_ops = {
     .image_status = NULL,
     .load_image = embedded_load_image,
     .pull_image = NULL,
-
+    .history_image = NULL,
     .login = NULL,
     .logout = NULL,
     .tag_image = NULL,
@@ -194,7 +197,8 @@ static const struct bim_ops g_oci_ops = {
     .get_filesystem_info = oci_get_filesystem_info,
     .image_status = oci_status_image,
     .load_image = oci_load_image,
-    .pull_image = oci_pull_rf,
+    .pull_image = oci_pull,
+    .history_image = oci_history,
     .login = oci_login,
     .logout = oci_logout,
     .tag_image = oci_tag,
@@ -233,6 +237,7 @@ static const struct bim_ops g_ext_ops = {
     .get_filesystem_info = NULL,
     .load_image = ext_load_image,
     .pull_image = NULL,
+    .history_image = NULL,
     .login = ext_login,
     .logout = ext_logout,
     .tag_image = NULL,
@@ -1064,6 +1069,88 @@ void free_im_pull_response(im_pull_response *resp)
     }
     free(resp->image_ref);
     resp->image_ref = NULL;
+    free(resp->errmsg);
+    resp->errmsg = NULL;
+    free(resp);
+}
+
+int im_history_image(const im_history_request *request, im_history_response **response)
+{
+    int ret = 0;
+    im_history_response *tmp_res = NULL;
+    struct bim *bim = NULL;
+
+    DAEMON_CLEAR_ERRMSG();
+
+    tmp_res = (im_history_response *)util_common_calloc_s(sizeof(im_history_response));
+    if (tmp_res == NULL) {
+        ERROR("Out of memory");
+        return -1;
+    }
+
+    bim = bim_get(request->type, NULL, NULL, NULL);
+    if (bim == NULL) {
+        ERROR("Failed to init bim, image type: %s", request->type);
+        return -1;
+    }
+
+    if (bim->ops->history_image == NULL) {
+        ERROR("Unimplements search image in %s", bim->type);
+        ret = -1;
+        goto out;
+    }
+
+    EVENT("Event: {Object: %s, Type: History}", request->image.image);
+    ret = bim->ops->history_image(request, tmp_res);
+    if (ret != 0) {
+        ERROR("History image %s failed", request->image.image);
+        ret = -1;
+        goto out;
+    }
+   
+    EVENT("Event: {Object: %s, Type:History}", request->image.image);
+
+out:
+    if (ret != 0 && tmp_res != NULL && g_isulad_errmsg != NULL) {
+        tmp_res->errmsg = util_strdup_s(g_isulad_errmsg);
+    }
+    DAEMON_CLEAR_ERRMSG();
+    *response = tmp_res;
+    return ret;
+}
+
+void free_im_history_request(im_history_request *req)
+{
+    if (req == NULL) {
+        return;
+    }
+    free(req->image.image);
+    req->image.image = NULL;
+    free(req);
+}
+
+void free_im_history_response(im_history_response *resp)
+{
+    if (resp == NULL) {
+        return;
+    }
+    
+    size_t i = 0;
+
+    for (i = 0; i < resp->history_info_len; i++) {
+        free(resp->history_info[i]->id);
+        resp->history_info[i]->id = NULL;
+        free(resp->history_info[i]->comment);
+        resp->history_info[i]->comment = NULL;
+        free(resp->history_info[i]->created);
+        resp->history_info[i]->created = NULL;
+        free(resp->history_info[i]->created_by);
+        resp->history_info[i]->created_by = NULL;
+        free(resp->history_info[i]);
+        resp->history_info[i] = NULL;
+    }
+    free(resp->history_info);
+    resp->history_info = NULL;
     free(resp->errmsg);
     resp->errmsg = NULL;
     free(resp);

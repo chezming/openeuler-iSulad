@@ -94,7 +94,7 @@ typedef struct {
 #ifdef ENABLE_IMAGE_SEARCH
     int (*search)(const struct isula_search_request *request, struct isula_search_response *response, void *arg);
 #endif
-
+    int (*history)(const struct isula_history_request *request, struct isula_history_response *response, void *arg);
 } image_ops;
 
 typedef struct {

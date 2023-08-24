@@ -58,6 +58,7 @@
 #ifdef ENABLE_IMAGE_SEARCH
 #include "search.h"
 #endif
+#include "history.h"
 #ifdef ENABLE_NATIVE_NETWORK
 #include "network.h"
 #include "port.h"
@@ -214,6 +215,10 @@ struct command g_commands[] = {
         "search", false, cmd_search_main, g_cmd_search_desc, NULL, &g_cmd_search_args
     },
 #endif
+    {
+        // `history` sub-command
+        "history", false, cmd_history_main, g_cmd_history_desc, NULL, &g_cmd_history_args
+    },
     {
         // `volume` sub-command
         "volume", true, cmd_volume_main, g_cmd_volume_desc, NULL, NULL

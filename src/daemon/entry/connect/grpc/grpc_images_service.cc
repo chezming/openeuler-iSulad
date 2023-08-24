@@ -125,6 +125,95 @@ void ImagesServiceImpl::image_list_response_to_grpc(image_list_images_response *
     }
 }
 
+int ImagesServiceImpl::history_request_from_grpc(const HistoryRequest *grequest,
+                                                    image_history_request **request)
+{
+    
+    auto *tmpreq = static_cast<image_history_request *>(util_common_calloc_s(sizeof(image_history_request)));
+    if (tmpreq == nullptr) {
+        ERROR("Out of memory");
+        return -1;
+    }
+
+    if (grequest->name().empty()) {
+        ERROR("recive NULL Request image name");
+        return -1;
+    }
+    tmpreq->image_name = util_strdup_s(grequest->name().c_str());
+    *request = tmpreq;
+
+    return 0;
+
+}
+
+void ImagesServiceImpl::history_response_to_grpc(const image_history_response *response, HistoryResponse *gresponse)
+{
+    if (response == nullptr) {
+        gresponse->set_cc(ISULAD_ERR_MEMOUT);
+        return;
+    }
+
+    gresponse->set_cc(response->cc);
+    if (response->errmsg != nullptr) {
+        gresponse->set_errmsg(response->errmsg);
+    }
+
+    for (size_t i = 0; i < response->history_info_len; i++) {
+        HistoryInfo *info = gresponse->add_info();
+        if (response->history_info[i]->id != nullptr) {
+            info->set_id(response->history_info[i]->id);
+        }
+        if (response->history_info[i]->comment != nullptr) {
+            info->set_comment(response->history_info[i]->comment);
+        }
+        if (response->history_info[i]->create_by != nullptr) {
+            info->set_create_by(response->history_info[i]->create_by);
+        }
+
+        info->set_size(response->history_info[i]->size);
+       
+        Timestamp *timestamp = info->mutable_created();
+        if (timestamp == nullptr) {
+            ERROR("History timestamp is Null");
+            gresponse->set_cc(ISULAD_ERR_MEMOUT);
+            return;
+        }
+        timestamp->set_seconds(response->history_info[i]->created_at->seconds);
+    }
+}
+
+
+Status ImagesServiceImpl::History(ServerContext *context, const HistoryRequest *request, HistoryResponse *reply)
+{
+    prctl(PR_SET_NAME, "ImageHistory");
+
+    auto status = GrpcServerTlsAuth::auth(context, "image_history");
+    if (!status.ok()) {
+        return status;
+    }
+    service_executor_t *cb = get_service_executor();
+    if (cb == nullptr || cb->image.history == nullptr) {
+        return Status(StatusCode::UNIMPLEMENTED, "Unimplemented history callback");
+    }
+
+    image_history_request *req = nullptr;
+    int tret = history_request_from_grpc(request, &req);
+    if (tret != 0) {
+        ERROR("Failed to transform grpc request");
+        reply->set_cc(ISULAD_ERR_INPUT);
+        return Status::OK;
+    }
+
+    image_history_response *res = nullptr;
+    (void)cb->image.history(req, &res);
+    history_response_to_grpc(res, reply);
+
+    free_image_history_request(req);
+    free_image_history_response(res);
+
+    return Status::OK;
+}
+
 int ImagesServiceImpl::image_remove_request_from_grpc(const DeleteImageRequest *grequest,
                                                       image_delete_image_request **request)
 {
