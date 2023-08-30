@@ -24,6 +24,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sched.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -104,7 +105,7 @@ static void do_disable_unneccessary_caps()
     cap_free(caps);
 }
 
-static int make_safedir_is_noexec(const char *dstdir, char **safe_dir)
+static int create_safedir(const char *dstdir, char **safe_dir)
 {
     struct stat buf;
     char *isulad_tmpdir_env = NULL;
@@ -156,32 +157,44 @@ static int make_safedir_is_noexec(const char *dstdir, char **safe_dir)
         return -1;
     }
 
-    if (mount(dstdir, tmp_dir, "none", MS_BIND, NULL) != 0) {
-        SYSERROR("Mount safe dir failed");
-        if (util_path_remove(tmp_dir) != 0) {
-            ERROR("Failed to remove path %s", tmp_dir);
-        }
-        return -1;
-    }
-
-    if (mount(tmp_dir, tmp_dir, "none", MS_BIND | MS_REMOUNT | MS_NOEXEC, NULL) != 0) {
-        SYSERROR("Mount safe dir failed");
-        if (umount(tmp_dir) != 0) {
-            ERROR("Failed to umount target %s", tmp_dir);
-        }
-        if (util_path_remove(tmp_dir) != 0) {
-            ERROR("Failed to remove path %s", tmp_dir);
-        }
-        return -1;
-    }
-
     *safe_dir = util_strdup_s(tmp_dir);
     return 0;
 }
 
-// fix loading of nsswitch based config inside chroot under glibc
-static int do_safe_chroot(const char *dstdir)
+// Unshare new mount namespace.
+// Because bind mount usually makes safedir shared mount point,
+// and sometimes it will cause "mount point explosion".
+// E.g. concurrently execute isula cp /tmp/<XXX-File> <CONTAINER-ID>:<CONTAINER-PATH>
+static int switch_new_mount_namespace(void)
 {
+    if (unshare(CLONE_NEWNS) != 0) {
+        ERROR("Failed to unshare");
+        fprintf(stderr, "Failed to unshare");
+        return -1;
+    }
+
+    if (mount(NULL, "/", NULL, MS_PRIVATE | MS_REC, NULL) != 0) {
+        ERROR("Failed to recursively turn root mount tree into dependent mount");
+        fprintf(stderr, "Failed to recursively turn root mount tree into dependent mount");
+        return -1;
+    }
+
+    return 0;
+}
+
+// fix loading of nsswitch based config inside chroot under glibc
+static int do_safe_chroot(const char *dstdir, const char *safe_dir)
+{
+    if (mount(dstdir, safe_dir, "none", MS_BIND, NULL) != 0) {
+        SYSERROR("Failed to mount dstdir %s to safedir %s", dstdir, safe_dir);
+        fprintf(stderr, "Failed to mount dstdir %s to safedir %s: %s", dstdir, safe_dir, strerror(errno));
+    }
+
+    if (mount(safe_dir, safe_dir, "none", MS_BIND | MS_REMOUNT | MS_NOEXEC, NULL) != 0) {
+        SYSERROR("Failed to mount dstdir %s to safedir %s", dstdir, safe_dir);
+        fprintf(stderr, "Failed to mount dstdir %s to safedir %s: %s", dstdir, safe_dir, strerror(errno));
+    }
+
     // don't call getpwnam
     // because it will change file with nobody uid/gid which copied from host to container
     // if nobody uid/gid is different between host and container
@@ -189,9 +202,9 @@ static int do_safe_chroot(const char *dstdir)
     // set No New Privileges
     prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0);
 
-    if (chroot(dstdir) != 0) {
-        SYSERROR("Failed to chroot to %s", dstdir);
-        fprintf(stderr, "Failed to chroot to %s: %s", dstdir, strerror(errno));
+    if (chroot(safe_dir) != 0) {
+        SYSERROR("Failed to chroot to %s", safe_dir);
+        fprintf(stderr, "Failed to chroot to %s: %s", safe_dir, strerror(errno));
         return -1;
     }
 
@@ -732,7 +745,7 @@ int archive_unpack(const struct io_read_wrapper *content, const char *dstdir, co
     char errbuf[BUFSIZ + 1] = { 0 };
     char *safe_dir = NULL;
 
-    if (make_safedir_is_noexec(dstdir, &safe_dir) != 0) {
+    if (create_safedir(dstdir, &safe_dir) != 0) {
         ERROR("Prepare safe dir failed");
         return -1;
     }
@@ -755,6 +768,12 @@ int archive_unpack(const struct io_read_wrapper *content, const char *dstdir, co
         keepfds[0] = isula_libutils_get_log_fd();
         keepfds[1] = *(int *)(content->context);
         keepfds[2] = pipe_stderr[1];
+
+        if (switch_new_mount_namespace() != 0) {
+            ret = -1;
+            goto child_out;
+        }
+
         ret = util_check_inherited_exclude_fds(true, keepfds, 3);
         if (ret != 0) {
             ERROR("Failed to close fds.");
@@ -770,7 +789,7 @@ int archive_unpack(const struct io_read_wrapper *content, const char *dstdir, co
             goto child_out;
         }
 
-        if (do_safe_chroot(safe_dir) != 0) {
+        if (do_safe_chroot(dstdir, safe_dir) != 0) {
             SYSERROR("Failed to chroot to %s", safe_dir);
             fprintf(stderr, "Failed to chroot to %s: %s", safe_dir, strerror(errno));
             ret = -1;
@@ -1137,7 +1156,7 @@ int archive_chroot_tar(char *path, char *file, char **errmsg)
     int fd = 0;
     char *safe_dir = NULL;
 
-    if (make_safedir_is_noexec(path, &safe_dir) != 0) {
+    if (create_safedir(path, &safe_dir) != 0) {
         ERROR("Prepare safe dir failed");
         return -1;
     }
@@ -1160,6 +1179,12 @@ int archive_chroot_tar(char *path, char *file, char **errmsg)
 
         keepfds[0] = isula_libutils_get_log_fd();
         keepfds[1] = pipe_for_read[1];
+
+        if (switch_new_mount_namespace() != 0) {
+            ret = -1;
+            goto child_out;
+        }
+
         ret = util_check_inherited_exclude_fds(true, keepfds, 2);
         if (ret != 0) {
             ERROR("Failed to close fds.");
@@ -1182,7 +1207,7 @@ int archive_chroot_tar(char *path, char *file, char **errmsg)
             goto child_out;
         }
 
-        if (do_safe_chroot(safe_dir) != 0) {
+        if (do_safe_chroot(path, safe_dir) != 0) {
             ERROR("Failed to chroot to %s", safe_dir);
             fprintf(stderr, "Failed to chroot to %s\n", safe_dir);
             ret = -1;
@@ -1371,7 +1396,7 @@ int archive_chroot_untar_stream(const struct io_read_wrapper *context, const cha
     };
     char *safe_dir = NULL;
 
-    if (make_safedir_is_noexec(chroot_dir, &safe_dir) != 0) {
+    if (create_safedir(chroot_dir, &safe_dir) != 0) {
         ERROR("Prepare safe dir failed");
         return -1;
     }
@@ -1397,6 +1422,12 @@ int archive_chroot_untar_stream(const struct io_read_wrapper *context, const cha
         keepfds[0] = isula_libutils_get_log_fd();
         keepfds[1] = pipe_stderr[1];
         keepfds[2] = pipe_stream[0];
+
+        if (switch_new_mount_namespace() != 0) {
+            ret = -1;
+            goto child_out;
+        }
+
         ret = util_check_inherited_exclude_fds(true, keepfds, 3);
         if (ret != 0) {
             ERROR("Failed to close fds.");
@@ -1411,7 +1442,7 @@ int archive_chroot_untar_stream(const struct io_read_wrapper *context, const cha
             goto child_out;
         }
 
-        if (do_safe_chroot(safe_dir) != 0) {
+        if (do_safe_chroot(chroot_dir, safe_dir) != 0) {
             SYSERROR("Failed to chroot to %s", safe_dir);
             ret = -1;
             goto child_out;
@@ -1499,7 +1530,7 @@ int archive_chroot_tar_stream(const char *chroot_dir, const char *tar_path, cons
     struct archive_context *ctx = NULL;
     char *safe_dir = NULL;
 
-    if (make_safedir_is_noexec(chroot_dir, &safe_dir) != 0) {
+    if (create_safedir(chroot_dir, &safe_dir) != 0) {
         ERROR("Prepare safe dir failed");
         return -1;
     }
@@ -1524,6 +1555,10 @@ int archive_chroot_tar_stream(const char *chroot_dir, const char *tar_path, cons
         char *tar_base_name = NULL;
 
         set_child_process_pdeathsig();
+        if (switch_new_mount_namespace() != 0) {
+            ret = -1;
+            goto child_out;
+        }
 
         keepfds[0] = isula_libutils_get_log_fd();
         keepfds[1] = pipe_stderr[1];
@@ -1542,7 +1577,7 @@ int archive_chroot_tar_stream(const char *chroot_dir, const char *tar_path, cons
             goto child_out;
         }
 
-        if (do_safe_chroot(safe_dir) != 0) {
+        if (do_safe_chroot(chroot_dir, safe_dir) != 0) {
             ERROR("Failed to chroot to %s", safe_dir);
             fprintf(stderr, "Failed to chroot to %s\n", safe_dir);
             ret = -1;
