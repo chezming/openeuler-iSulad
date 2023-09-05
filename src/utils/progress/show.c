@@ -23,27 +23,32 @@
 #define MB (1024 * 1024)
 #define KB 1024
 
-void move_to_row(int row) {
+void move_to_row(int row)
+{
     printf("\033[%d;1H", row);
     fflush(stdout);
 }
 
-void move_cursor_up(int rows) {
+void move_cursor_up(int rows)
+{
     printf("\033[%dA", rows);  // ANSI escape code to move cursor up 'rows' rows
 }
 
-void clear_row(int row) {
+void clear_row(int row)
+{
     move_to_row(row);
     printf("\033[2K");
     fflush(stdout);
 }
 
-void clear_lines_below() {
+void clear_lines_below()
+{
     printf("\x1b[J");  // ANSI escape code to clear from cursor to end of screen
     fflush(stdout);
 }
 
-int get_current_row() {
+int get_current_row()
+{
     struct termios term;
     if (tcgetattr(STDOUT_FILENO, &term) == -1) {
         perror("tcgetattr");
@@ -52,7 +57,8 @@ int get_current_row() {
     return term.c_cc[VERASE];
 }
 
-int get_terminal_width() {
+int get_terminal_width()
+{
     struct winsize ws;
     if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws) == -1) {
         perror("ioctl");
@@ -61,7 +67,8 @@ int get_terminal_width() {
     return ws.ws_col;
 }
 
-static void get_printed_value(int64_t value, char *printed) {
+static void get_printed_value(int64_t value, char *printed)
+{
     float float_value = 0.0;
 
     if ((float)value / GB > 1) {
@@ -78,12 +85,13 @@ static void get_printed_value(int64_t value, char *printed) {
     }
 }
 
-void display_progress_bar(image_progress_progresses_element *progress_item, int width, bool if_show_all) {
+void display_progress_bar(image_progress_progresses_element *progress_item, int width, bool if_show_all)
+{
     int i = 0;
     float progress = 0.0;
     int filled_width = 0;
     char total[16] = {0};
-    char current[16] = {0}; 
+    char current[16] = {0};
     int empty_width = 0;
 
     if (progress_item->total != 0) {
@@ -114,7 +122,8 @@ void display_progress_bar(image_progress_progresses_element *progress_item, int 
     fflush(stdout);
 }
 
-void display_multiple_progress_bars(image_progress *progresses, int width) {
+void display_multiple_progress_bars(image_progress *progresses, int width)
+{
     size_t i = 0;
     static int len = 0;
 
@@ -134,9 +143,10 @@ void display_multiple_progress_bars(image_progress *progresses, int width) {
     }
 }
 
-void show_processes (image_progress *progresses){
+void show_processes(image_progress *progresses)
+{
     int width = 50;  // Width of the progress bars
-    
+
     display_multiple_progress_bars(progresses, width);
 
     return;

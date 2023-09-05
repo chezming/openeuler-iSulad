@@ -47,13 +47,6 @@ message ImageSpec {
 message AuthConfig {
     string username = 1;
     string password = 2;
-    string auth = 3;
-    string server_address = 4;
-    // IdentityToken is used to authenticate the user and get
-    // an access token for the registry.
-    string identity_token = 5;
-    // RegistryToken is a bearer token to be sent to a registry
-    string registry_token = 6;
 }
 
 message Descriptor {
@@ -183,9 +176,7 @@ message PullImageRequest {
     ImageSpec image = 1;
     // Authentication configuration for pulling the image.
     AuthConfig auth = 2;
-    // Config of the PodSandbox, which is used to pull image in PodSandbox context.
-    // PodSandboxConfig sandbox_config = 3;
-    bool if_show_progress = 4;
+    bool is_progress_visible = 3;
 }
 
 message PullImageResponse {

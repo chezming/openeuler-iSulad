@@ -598,7 +598,8 @@ Status ImagesServiceImpl::Logout(ServerContext *context, const LogoutRequest *re
     return Status::OK;
 }
 
-int ImagesServiceImpl::image_pull_request_from_grpc(const PullImageRequest *grequest, image_pull_image_request **request)
+int ImagesServiceImpl::image_pull_request_from_grpc(const PullImageRequest *grequest,
+                                                    image_pull_image_request **request)
 {
     auto *tmpreq = (image_pull_image_request *)util_common_calloc_s(sizeof(image_pull_image_request));
     if (tmpreq == nullptr) {
@@ -609,7 +610,7 @@ int ImagesServiceImpl::image_pull_request_from_grpc(const PullImageRequest *greq
     if (!grequest->image().image().empty()) {
         tmpreq->image_name = util_strdup_s(grequest->image().image().c_str());
     }
-	tmpreq->if_show_progress = grequest->if_show_progress();
+    tmpreq->is_progress_visible = grequest->is_progress_visible();
     *request = tmpreq;
 
     return 0;
@@ -618,15 +619,15 @@ int ImagesServiceImpl::image_pull_request_from_grpc(const PullImageRequest *greq
 void image_pull_progress_to_grpc(const image_progress *progress,
                                  PullImageResponse *gresponse)
 {
-	gresponse->Clear();
-	char *err;
-	struct parser_context ctx = { OPT_GEN_SIMPLIFY, 0 };
-	char *data = image_progress_generate_json(progress, &ctx, &err);
+    gresponse->Clear();
+    char *err;
+    struct parser_context ctx = { OPT_GEN_SIMPLIFY, 0 };
+    char *data = image_progress_generate_json(progress, &ctx, &err);
 
-	gresponse->set_progress_data(data, strlen(data));
-	if (progress->image != nullptr) {
+    gresponse->set_progress_data(data, strlen(data));
+    if (progress->image != nullptr) {
         gresponse->set_image_ref(progress->image);
-	}
+    }
     return;
 }
 
@@ -640,13 +641,14 @@ bool grpc_pull_write_function(void *writer, void *data)
     return gwriter->Write(gresponse);
 }
 
-Status ImagesServiceImpl::PullImage(ServerContext *context, const PullImageRequest *request, ServerWriter<PullImageResponse> *writer)
+Status ImagesServiceImpl::PullImage(ServerContext *context, const PullImageRequest *request,
+                                    ServerWriter<PullImageResponse> *writer)
 {
     prctl(PR_SET_NAME, "RegistryPull");
 
     int ret = 0;
-	std::string errmsg = "Failed to execute image pull";
-	stream_func_wrapper stream = { 0 };
+    std::string errmsg = "Failed to execute image pull";
+    stream_func_wrapper stream = { 0 };
     image_pull_image_request *image_req = nullptr;
     image_pull_image_response *image_res = nullptr;
     auto status = GrpcServerTlsAuth::auth(context, "pull");
@@ -662,8 +664,8 @@ Status ImagesServiceImpl::PullImage(ServerContext *context, const PullImageReque
     ret = image_pull_request_from_grpc(request, &image_req);
     if (ret != 0) {
         ERROR("Failed to transform grpc request");
-		return Status(StatusCode::UNKNOWN, "Failed to transform grpc request");
-	}
+        return Status(StatusCode::UNKNOWN, "Failed to transform grpc request");
+    }
 
     stream.context = (void *)context;
     stream.is_cancelled = &grpc_is_call_cancelled;
@@ -671,17 +673,17 @@ Status ImagesServiceImpl::PullImage(ServerContext *context, const PullImageReque
     stream.writer = (void *)writer;
 
     ret = cb->image.pull(image_req, &stream, &image_res);
-	
-	if (image_res == nullptr) {
+
+    if (image_res == nullptr) {
         return Status(StatusCode::UNKNOWN, errmsg);
     }
     errmsg = (image_res->errmsg != nullptr) ? image_res->errmsg : "Failed to execute image pull";
     if (ret != 0) {
         return Status(StatusCode::UNKNOWN, errmsg);
     }
-	
+
     free_image_pull_image_request(image_req);
-	free_image_pull_image_response(image_res); 
+    free_image_pull_image_response(image_res);
 
     return Status::OK;
 }

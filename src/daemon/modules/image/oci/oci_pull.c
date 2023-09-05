@@ -219,18 +219,18 @@ void *get_progress_status(void *arg)
         return NULL;
     }
 
-    for(;;) {
+    for (;;) {
         if (status->should_terminal && status->image == NULL) {
             break;
         }
         map_s_itor *itor = map_s_itor_new(status->status_store);
         size_t progress_size = map_s_size(status->status_store);
         image_progress *progresses;
-        
+
         progresses = util_common_calloc_s(sizeof(image_progress));
         memset(progresses, 0, sizeof(image_progress));
         memset(buffer, 0, sizeof(buffer));
-        
+
         if (status->image != NULL) {
             progresses->image = util_strdup_s(status->image->id);
             status->image = NULL;
@@ -275,7 +275,7 @@ int oci_do_pull_image(const im_pull_request *request, stream_func_wrapper *strea
 
     pthread_t tid = 0;
     status_arg arg;
-    if (request->if_show_progress) {
+    if (request->is_progress_visible) {
         progress_status_store = map_s_new(MAP_STR_STR, MAP_DEFAULT_CMP_FUNC, MAP_DEFAULT_FREE_FUNC);
         if (progress_status_store == NULL) {
             ERROR("out of memory and will not show the pull progress");
@@ -284,9 +284,8 @@ int oci_do_pull_image(const im_pull_request *request, stream_func_wrapper *strea
         arg.status_store = progress_status_store;
         arg.stream = stream;
         if (pthread_create(&tid, NULL, get_progress_status, (void *)&arg) != 0) {
-           ERROR("failed to start thread to get progress status");
+            ERROR("failed to start thread to get progress status");
         }
-
     }
 
     ret = pull_image(request, progress_status_store, &dest_image_name);

@@ -479,7 +479,7 @@ struct isula_rmi_response {
 
 struct isula_pull_request {
     char *image_name;
-    bool if_show_progress;
+    bool is_progress_visible;
 };
 
 struct isula_tag_request {

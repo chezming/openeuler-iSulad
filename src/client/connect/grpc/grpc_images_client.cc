@@ -17,7 +17,7 @@
 #include "client_base.h"
 #include "images.grpc.pb.h"
 
-#include "isula_libutils/image_progress.h"
+#include <isula_libutils/image_progress.h>
 #include "progress.h"
 #include "utils.h"
 #include "constants.h"
@@ -342,7 +342,7 @@ public:
 
 class ImagesPull : public ClientBase<ImagesService, ImagesService::Stub,
     isula_pull_request, PullImageRequest,
-	isula_pull_response, PullImageResponse> {
+    isula_pull_response, PullImageResponse> {
 public:
     explicit ImagesPull(void *args)
         : ClientBase(args)
@@ -356,16 +356,15 @@ public:
         if (request == nullptr) {
             return -1;
         }
-	
         if (request->image_name != nullptr) {
             auto *image_spec = new (std::nothrow) ImageSpec;
             if (image_spec == nullptr) {
                 return -1;
             }
             image_spec->set_image(request->image_name);
-            grequest->set_allocated_image(image_spec);	
-		}
-		grequest->set_if_show_progress(request->if_show_progress);
+            grequest->set_allocated_image(image_spec);
+        }
+        grequest->set_is_progress_visible(request->is_progress_visible);
 
         return 0;
     }
@@ -382,7 +381,7 @@ public:
 
     auto check_parameter(const PullImageRequest &req) -> int override
     {
-		if (req.image().image().empty()) {
+        if (req.image().image().empty()) {
             ERROR("Missing image name in the request");
             return -1;
         }
@@ -390,7 +389,7 @@ public:
         return 0;
     }
 
-	auto run(const struct isula_pull_request *request, struct isula_pull_response *response) -> int override
+    auto run(const struct isula_pull_request *request, struct isula_pull_response *response) -> int override
     {
         ClientContext context;
         PullImageRequest grequest;
@@ -418,7 +417,7 @@ public:
 
         PullImageResponse gresponse;
         while (reader->Read(&gresponse)) {
-			output_progress(gresponse);
+            output_progress(gresponse);
         }
         Status status = reader->Finish();
         if (!status.ok()) {
@@ -426,21 +425,21 @@ public:
             unpackStatus(status, response);
             return -1;
         }
-		response->image_ref = util_strdup_s(gresponse.image_ref().c_str());
+        response->image_ref = util_strdup_s(gresponse.image_ref().c_str());
         return 0;
     }
 
 private:
-	void output_progress(PullImageResponse &gresponse)
+    void output_progress(PullImageResponse &gresponse)
     {
-		char *err;
-		struct parser_context ctx = { OPT_GEN_SIMPLIFY, 0 };
+        char *err;
+        struct parser_context ctx = { OPT_GEN_SIMPLIFY, 0 };
 
-		image_progress * progresses = image_progress_parse_data(gresponse.progress_data().c_str(), &ctx, &err);
-		if (progresses == NULL) {
-			return;
-		}
-		show_processes(progresses);
+        image_progress * progresses = image_progress_parse_data(gresponse.progress_data().c_str(), &ctx, &err);
+        if (progresses == NULL) {
+            return;
+        }
+        show_processes(progresses);
     }
 };
 

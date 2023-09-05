@@ -955,13 +955,14 @@ int pull_request_from_rest(const image_pull_image_request *request, im_pull_requ
     }
 
     (*im_req)->image = util_strdup_s(request->image_name);
-	(*im_req)->if_show_progress = request->if_show_progress;
+    (*im_req)->is_progress_visible = request->is_progress_visible;
 
     return 0;
 }
 
 /* image pull cb */
-static int image_pull_cb(const image_pull_image_request *request, stream_func_wrapper *stream, image_pull_image_response **response)
+static int image_pull_cb(const image_pull_image_request *request, stream_func_wrapper *stream,
+                         image_pull_image_response **response)
 {
     int ret = -1;
     im_pull_request *im_req = NULL;

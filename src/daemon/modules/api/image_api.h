@@ -153,7 +153,7 @@ typedef struct {
     char *identity_token;
     char *registry_token;
 
-    bool if_show_progress;
+    bool is_progress_visible;
     map_s *progress_status_store;
 } im_pull_request;
 

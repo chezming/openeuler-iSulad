@@ -58,7 +58,8 @@ public:
 
     Status Logout(ServerContext *context, const LogoutRequest *request, LogoutResponse *reply) override;
 
-	Status PullImage(ServerContext *context, const PullImageRequest *request, ServerWriter<PullImageResponse> *writer) override;
+    Status PullImage(ServerContext *context, const PullImageRequest *request,
+                     ServerWriter<PullImageResponse> *writer) override;
 
 #ifdef ENABLE_IMAGE_SEARCH
     Status Search(ServerContext *context, const SearchRequest *request, SearchResponse *reply) override;
@@ -101,7 +102,7 @@ private:
 
     int image_logout_request_from_grpc(const LogoutRequest *grequest, image_logout_request **request);
 
-	int image_pull_request_from_grpc(const PullImageRequest *grequest, image_pull_image_request **request);
+    int image_pull_request_from_grpc(const PullImageRequest *grequest, image_pull_image_request **request);
 
     void image_pull_response_to_grpc(const image_pull_image_response *response, PullImageResponse *gresponse);
 

@@ -25,12 +25,12 @@ extern "C" {
 typedef struct map_s {
     struct _map_t *map;
     pthread_mutex_t mutex;
-}map_s;
+} map_s;
 
 typedef struct map_s_itor {
     map_itor *itor;
     pthread_mutex_t *mutex;
-}map_s_itor;
+} map_s_itor;
 
 
 /* function to remove element by key */

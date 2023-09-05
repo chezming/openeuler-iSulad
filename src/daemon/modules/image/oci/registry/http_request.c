@@ -690,11 +690,11 @@ out:
 
 static int xfer(void *p, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow)
 {
-    
+
     progress_arg *arg = (progress_arg *)p;
     char info[256] = {0};
 
-    snprintf(info, sizeof(info)-1, "%ld/%ld", dlnow, dltotal);
+    snprintf(info, sizeof(info) - 1, "%ld/%ld", dlnow, dltotal);
 
     if (arg->map_store != NULL && arg->digest != NULL) {
         map_s_replace(arg->map_store, arg->digest, info);
@@ -736,7 +736,7 @@ int http_request_file(pull_descriptor *desc, const char *url, const char **custo
         goto out;
     }
     if (desc->progress_status_store != NULL) {
-        
+
         arg->digest = digest;
         arg->map_store = desc->progress_status_store;
         options->xferinfo = arg;

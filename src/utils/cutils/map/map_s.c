@@ -32,7 +32,7 @@ map_s_itor *map_s_itor_new(const map_s *map_s)
         return NULL;
     }
 
-    itor_s->mutex = (pthread_mutex_t *)&(map_s->mutex);
+    itor_s->mutex = (pthread_mutex_t *) & (map_s->mutex);
     itor_s->itor = map_itor_new(map_s->map);
     return itor_s;
 }
@@ -162,9 +162,9 @@ size_t map_s_size(const map_s *map_s)
     }
 
     size_t ret = false;
-    pthread_mutex_lock((pthread_mutex_t *)&(map_s->mutex));
+    pthread_mutex_lock((pthread_mutex_t *) & (map_s->mutex));
     ret = map_size(map_s->map);
-    pthread_mutex_unlock((pthread_mutex_t *)&(map_s->mutex));
+    pthread_mutex_unlock((pthread_mutex_t *) & (map_s->mutex));
 
     return ret;
 }
@@ -178,9 +178,9 @@ bool map_s_replace(const map_s *map_s, void *key, void *value)
     }
 
     bool ret = false;
-    pthread_mutex_lock((pthread_mutex_t *)&(map_s->mutex));
+    pthread_mutex_lock((pthread_mutex_t *) & (map_s->mutex));
     ret = map_replace(map_s->map, key, value);
-    pthread_mutex_unlock((pthread_mutex_t *)&(map_s->mutex));
+    pthread_mutex_unlock((pthread_mutex_t *) & (map_s->mutex));
 
     return ret;
 }
@@ -194,9 +194,9 @@ bool map_s_insert(map_s *map_s, void *key, void *value)
     }
 
     bool ret = false;
-    pthread_mutex_lock((pthread_mutex_t *)&(map_s->mutex));
+    pthread_mutex_lock((pthread_mutex_t *) & (map_s->mutex));
     ret = map_insert(map_s->map, key, value);
-    pthread_mutex_unlock((pthread_mutex_t *)&(map_s->mutex));
+    pthread_mutex_unlock((pthread_mutex_t *) & (map_s->mutex));
 
     return ret;
 }
@@ -209,9 +209,9 @@ bool map_s_remove(map_s *map_s, void *key)
     }
 
     bool ret = false;
-    pthread_mutex_lock((pthread_mutex_t *)&(map_s->mutex));
+    pthread_mutex_lock((pthread_mutex_t *) & (map_s->mutex));
     ret = map_remove(map_s->map, key);
-    pthread_mutex_unlock((pthread_mutex_t *)&(map_s->mutex));
+    pthread_mutex_unlock((pthread_mutex_t *) & (map_s->mutex));
 
     return ret;
 }
@@ -224,9 +224,9 @@ void *map_s_search(const map_s *map_s, void *key)
     }
 
     void *ret = NULL;
-    pthread_mutex_lock((pthread_mutex_t *)&(map_s->mutex));
+    pthread_mutex_lock((pthread_mutex_t *) & (map_s->mutex));
     ret = map_search(map_s->map, key);
-    pthread_mutex_unlock((pthread_mutex_t *)&(map_s->mutex));
+    pthread_mutex_unlock((pthread_mutex_t *) & (map_s->mutex));
 
     return ret;
 }
@@ -241,18 +241,18 @@ map_s *map_s_new(map_type_t kvtype, map_cmp_func comparator, map_kvfree_func kvf
         return NULL;
     }
     map_s->map = map_new(kvtype, comparator, kvfree);
-    pthread_mutex_init((pthread_mutex_t *)&(map_s->mutex), NULL);
+    pthread_mutex_init((pthread_mutex_t *) & (map_s->mutex), NULL);
     return map_s;
 }
 
 /* just clear all nodes */
 void map_s_clear(map_s *map_s)
 {
-    pthread_mutex_lock((pthread_mutex_t *)&(map_s->mutex));
+    pthread_mutex_lock((pthread_mutex_t *) & (map_s->mutex));
     if (map_s != NULL && map_s->map != NULL) {
         map_clear(map_s->map);
     }
-    pthread_mutex_unlock((pthread_mutex_t *)&(map_s->mutex));
+    pthread_mutex_unlock((pthread_mutex_t *) & (map_s->mutex));
 }
 
 /* map free */

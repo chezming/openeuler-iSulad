@@ -13,7 +13,7 @@
  * Description: print progress
  ******************************************************************************/
 
-#ifndef UTILS_PROGRESS_H 
+#ifndef UTILS_PROGRESS_H
 #define UTILS_PROGRESS_H
 
 #ifdef __cplusplus
@@ -22,7 +22,7 @@ extern "C" {
 
 #include "isula_libutils/image_progress.h"
 
-void show_processes (image_progress *progresses);
+void show_processes(image_progress *progresses);
 
 #ifdef __cplusplus
 }

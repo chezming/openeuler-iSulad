@@ -47,7 +47,7 @@ int client_pull(const struct client_arguments *args)
     }
 
     request.image_name = args->image_name;
-    request.if_show_progress = true;
+    request.is_progress_visible = true;
 
     ops = get_connect_client_ops();
     if (ops == NULL || ops->image.pull == NULL) {
@@ -56,7 +56,7 @@ int client_pull(const struct client_arguments *args)
         goto out;
     }
     COMMAND_ERROR("Image \"%s\" pulling", request.image_name);
-    
+
     config = get_connect_config(args);
     ret = ops->image.pull(&request, response, &config);
     if (ret != 0) {
