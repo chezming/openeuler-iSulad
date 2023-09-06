@@ -21,8 +21,8 @@
 #include <new>
 #include <string>
 
-#include "isula_libutils/log.h"
-#include "isula_libutils/image_progress.h"
+#include <isula_libutils/log.h>
+#include <isula_libutils/image_progress.h>
 #include "utils.h"
 #include "grpc_common.h"
 #include "grpc_server_tls_auth.h"
@@ -617,10 +617,10 @@ int ImagesServiceImpl::image_pull_request_from_grpc(const PullImageRequest *greq
 }
 
 void image_pull_progress_to_grpc(const image_progress *progress,
-                                 PullImageResponse *gresponse)
+                                 PullImageResponse &gresponse)
 {
     gresponse->Clear();
-    char *err;
+    char *err = nullptr;
     struct parser_context ctx = { OPT_GEN_SIMPLIFY, 0 };
     char *data = image_progress_generate_json(progress, &ctx, &err);
 
@@ -636,7 +636,7 @@ bool grpc_pull_write_function(void *writer, void *data)
     auto *response = static_cast<image_progress *>(data);
     auto *gwriter = static_cast<ServerWriter<PullImageResponse> *>(writer);
     PullImageResponse gresponse;
-    image_pull_progress_to_grpc(response, &gresponse);
+    image_pull_progress_to_grpc(response, gresponse);
 
     return gwriter->Write(gresponse);
 }
