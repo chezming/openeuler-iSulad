@@ -6,5 +6,5 @@ whoami
 ls
 cd docs/build_docs/guide/script
 chmod +x ./install_iSulad_on_Ubuntu_20_04_LTS.sh
-./install_iSulad_on_Ubuntu_20_04_LTS
+./install_iSulad_on_Ubuntu_20_04_LTS.sh
 
