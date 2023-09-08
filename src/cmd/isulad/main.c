@@ -40,9 +40,7 @@
 #include <string.h>
 #include <strings.h>
 #include <sys/time.h>
-#ifdef ENABLE_SUP_GROUPS
 #include <grp.h>
-#endif
 #ifdef SYSTEMD_NOTIFY
 #include <systemd/sd-daemon.h>
 #endif
@@ -1228,9 +1226,10 @@ out:
     return ret;
 }
 
-static int isulad_tmpdir_security_check(const char *tmp_dir)
+static int isulad_tmpdir_security_check(const char *tmp_dir, const char *group)
 {
     struct stat st = { 0 };
+    struct group* grp = NULL;
 
     if (lstat(tmp_dir, &st) != 0) {
         SYSERROR("Failed to lstat %s", tmp_dir);
@@ -1249,6 +1248,20 @@ static int isulad_tmpdir_security_check(const char *tmp_dir)
         return -1;
     }
 
+    // https://man7.org/linux/man-pages/man3/getgrgid.3p.html
+    // The application shall not modify the structure to which the
+    // return value points, nor any storage areas pointed to by pointers
+    // within the structure. The returned pointer, and pointers within
+    // the structure, might be invalidated or the structure or the
+    // storage areas might be overwritten by a subsequent call to
+    // getgrent(), getgrgid(), or getgrnam().  The returned pointer, and
+    // pointers within the structure, might also be invalidated if the
+    // calling thread is terminated.
+    grp = getgrgid(st.st_gid);
+    if (grp != NULL && strcmp(grp->gr_name, group) != 0) {
+        return -1;
+    }
+
     if (S_ISLNK(st.st_mode)) {
         return -1;
     }
@@ -1256,7 +1269,7 @@ static int isulad_tmpdir_security_check(const char *tmp_dir)
     return 0;
 }
 
-static int recreate_tmpdir(const char *tmp_dir)
+static int recreate_tmpdir(const char *tmp_dir, const char *group)
 {
     if (util_recursive_rmdir(tmp_dir, 0) != 0) {
         ERROR("Failed to remove directory %s", tmp_dir);
@@ -1268,6 +1281,11 @@ static int recreate_tmpdir(const char *tmp_dir)
         return -1;
     }
 
+    if (util_set_file_group(tmp_dir, group) != 0) {
+        ERROR("Failed to set group of the path: %s", tmp_dir);
+        return -1;
+    }
+
     return 0;
 }
 
@@ -1276,6 +1294,7 @@ static int do_ensure_isulad_tmpdir_security(const char *isulad_tmp_dir)
     int nret;
     char tmp_dir[PATH_MAX] = { 0 };
     char cleanpath[PATH_MAX] = { 0 };
+    struct service_arguments *args = NULL;
 
     nret = snprintf(tmp_dir, PATH_MAX, "%s/isulad_tmpdir", isulad_tmp_dir);
     if (nret < 0 || (size_t)nret >= PATH_MAX) {
@@ -1288,12 +1307,23 @@ static int do_ensure_isulad_tmpdir_security(const char *isulad_tmp_dir)
         return -1;
     }
 
-    if (isulad_tmpdir_security_check(cleanpath) == 0) {
+    args = conf_get_server_conf();
+    if (args == NULL) {
+        ERROR("Failed to get isulad server config");
+        return -1;
+    }
+
+    if (args->json_confs == NULL || args->json_confs->group == NULL) {
+        ERROR("Failed to get isulad group config");
+        return -1;
+    }
+
+    if (isulad_tmpdir_security_check(cleanpath, args->json_confs->group) == 0) {
         return 0;
     }
 
-    INFO("iSulad tmpdir: %s does not meet security requirements, recreate it", isulad_tmp_dir);
-    return recreate_tmpdir(cleanpath);
+    INFO("iSulad tmpdir: %s does not meet security requirements, recreate it", tmp_dir);
+    return recreate_tmpdir(cleanpath, args->json_confs->group);
 }
 
 static int ensure_isulad_tmpdir_security()
