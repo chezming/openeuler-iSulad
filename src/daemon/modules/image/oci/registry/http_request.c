@@ -736,7 +736,6 @@ int http_request_file(pull_descriptor *desc, const char *url, const char **custo
         goto out;
     }
     if (desc->progress_status_store != NULL) {
-
         arg->digest = digest;
         arg->map_store = desc->progress_status_store;
         options->xferinfo = arg;

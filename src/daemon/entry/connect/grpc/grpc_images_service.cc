@@ -619,14 +619,19 @@ int ImagesServiceImpl::image_pull_request_from_grpc(const PullImageRequest *greq
 void image_pull_progress_to_grpc(const image_progress *progress,
                                  PullImageResponse &gresponse)
 {
-    gresponse->Clear();
+    gresponse.Clear();
     char *err = nullptr;
     struct parser_context ctx = { OPT_GEN_SIMPLIFY, 0 };
     char *data = image_progress_generate_json(progress, &ctx, &err);
 
-    gresponse->set_progress_data(data, strlen(data));
+    if (data == nullptr) {
+        ERROR("error pull progress data");
+        return;
+    }
+
+    gresponse.set_progress_data(data, strlen(data));
     if (progress->image != nullptr) {
-        gresponse->set_image_ref(progress->image);
+        gresponse.set_image_ref(progress->image);
     }
     return;
 }
@@ -636,6 +641,7 @@ bool grpc_pull_write_function(void *writer, void *data)
     auto *response = static_cast<image_progress *>(data);
     auto *gwriter = static_cast<ServerWriter<PullImageResponse> *>(writer);
     PullImageResponse gresponse;
+
     image_pull_progress_to_grpc(response, gresponse);
 
     return gwriter->Write(gresponse);
@@ -646,8 +652,12 @@ Status ImagesServiceImpl::PullImage(ServerContext *context, const PullImageReque
 {
     prctl(PR_SET_NAME, "RegistryPull");
 
+    if (context == nullptr || request == nullptr || writer == nullptr) {
+        return Status(StatusCode::INVALID_ARGUMENT, "Invalid argument");
+    }
+
     int ret = 0;
-    std::string errmsg = "Failed to execute image pull";
+    std::string errmsg;
     stream_func_wrapper stream = { 0 };
     image_pull_image_request *image_req = nullptr;
     image_pull_image_response *image_res = nullptr;
@@ -673,12 +683,14 @@ Status ImagesServiceImpl::PullImage(ServerContext *context, const PullImageReque
     stream.writer = (void *)writer;
 
     ret = cb->image.pull(image_req, &stream, &image_res);
-
     if (image_res == nullptr) {
+        free_image_pull_image_request(image_req);
         return Status(StatusCode::UNKNOWN, errmsg);
     }
-    errmsg = (image_res->errmsg != nullptr) ? image_res->errmsg : "Failed to execute image pull";
     if (ret != 0) {
+        errmsg = (image_res->errmsg != nullptr) ? image_res->errmsg : "Failed to execute image pull";
+        free_image_pull_image_request(image_req);
+        free_image_pull_image_response(image_res);
         return Status(StatusCode::UNKNOWN, errmsg);
     }
 

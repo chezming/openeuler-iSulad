@@ -14,14 +14,14 @@
 *******************************************************************************/
 #include "oci_pull.h"
 
+#include <isula_libutils/image_progress.h>
+#include <isula_libutils/log.h>
 #include <pthread.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
-#include "isula_libutils/log.h"
-#include "isula_libutils/image_progress.h"
 #include "utils.h"
 #include "utils_images.h"
 #include "registry.h"
@@ -209,10 +209,9 @@ static void get_progress(char *str, int64_t *total, int64_t *current)
 void *get_progress_status(void *arg)
 {
     status_arg *status = (status_arg *)arg;
-    int delay = 100;
+    const int delay = 100;
     int i = 0;
     bool write_ok = false;
-    char buffer[512] = {0};
 
     if (status->status_store == NULL || status->stream == NULL) {
         ERROR("get progress status condition error");
@@ -223,28 +222,37 @@ void *get_progress_status(void *arg)
         if (status->should_terminal && status->image == NULL) {
             break;
         }
-        map_s_itor *itor = map_s_itor_new(status->status_store);
-        size_t progress_size = map_s_size(status->status_store);
+        
         image_progress *progresses;
+        size_t progress_size = map_s_size(status->status_store);
 
         progresses = util_common_calloc_s(sizeof(image_progress));
-        memset(progresses, 0, sizeof(image_progress));
-        memset(buffer, 0, sizeof(buffer));
+        if (progresses == NULL) {
+            break;   
+        }
 
+        progresses->progresses = util_common_calloc_s(sizeof(image_progress_progresses_element *) * progress_size);
+        if (progresses->progresses == NULL) {
+            free_image_progress(progresses);    
+            break;
+        }
         if (status->image != NULL) {
             progresses->image = util_strdup_s(status->image->id);
             status->image = NULL;
         }
-        progresses->progresses_len = progress_size;
-        progresses->progresses = util_common_calloc_s(sizeof(image_progress_progresses_element *) * progress_size);
 
+        map_s_itor *itor = map_s_itor_new(status->status_store); 
         for (i = 0; map_s_itor_valid(itor); map_s_itor_next(itor), i++) {
             void *id = map_s_itor_key(itor);
             const char *value = map_s_itor_value(itor);
 
             progresses->progresses[i] = util_common_calloc_s(sizeof(image_progress_progresses_element));
+            if (progresses->progresses[i] == NULL) {
+                break;
+            }
             progresses->progresses[i]->id = util_strdup_s((char *)id + strlen((char *)id) - 12);
             get_progress((char *)value, &(progresses->progresses[i]->total), &(progresses->progresses[i]->current));
+            progresses->progresses_len++;
         }
         map_s_itor_free(itor);
 
@@ -252,6 +260,8 @@ void *get_progress_status(void *arg)
         write_ok = status->stream->write_func(status->stream->writer, progresses);
         if (!write_ok) {
             ERROR("Send progress data to client failed");
+            free_image_progress(progresses);
+            break;
         }
         free_image_progress(progresses);
 
@@ -279,12 +289,13 @@ int oci_do_pull_image(const im_pull_request *request, stream_func_wrapper *strea
         progress_status_store = map_s_new(MAP_STR_STR, MAP_DEFAULT_CMP_FUNC, MAP_DEFAULT_FREE_FUNC);
         if (progress_status_store == NULL) {
             ERROR("out of memory and will not show the pull progress");
-        }
-        arg.should_terminal = false;
-        arg.status_store = progress_status_store;
-        arg.stream = stream;
-        if (pthread_create(&tid, NULL, get_progress_status, (void *)&arg) != 0) {
-            ERROR("failed to start thread to get progress status");
+        } else {
+            arg.should_terminal = false;
+            arg.status_store = progress_status_store;
+            arg.stream = stream;
+            if (pthread_create(&tid, NULL, get_progress_status, (void *)&arg) != 0) {
+                ERROR("failed to start thread to get progress status");
+            }
         }
     }
 
