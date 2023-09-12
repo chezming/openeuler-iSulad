@@ -259,3 +259,19 @@ int run_command(struct command *all_commands, int argc, const char **argv)
     printf("run `%s --help` for a list of sub-commands\n", argv[0]);
     return 1;
 }
+
+// Check if the input is 'y' or 'Y'.
+bool check_input_yes(void)
+{
+    char ch;
+
+    ch = getchar();
+    return ch == 'y' || ch == 'Y';
+}
+
+// Output the prompt message and choise message, and check if the input choice is as expected.
+bool user_prompt(const char *prompt_msg, const char *choise_msg, command_check_input check_cb)
+{
+    printf("%s\n%s\n", prompt_msg, choise_msg);
+    return check_cb();
+}

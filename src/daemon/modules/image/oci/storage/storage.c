@@ -712,7 +712,7 @@ static void free_rootfs_list(struct rootfs_list *list)
     free(list);
 }
 
-static int check_image_occupancy_status(const char *img_id, bool *in_using)
+int check_image_occupancy_status(const char *img_id, bool *in_using)
 {
     bool ret = 0;
     size_t i;

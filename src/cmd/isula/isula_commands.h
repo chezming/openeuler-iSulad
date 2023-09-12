@@ -51,6 +51,10 @@ int command_subcmd_help(const char * const program_name, struct command *command
 
 int run_command(struct command *commands, int argc, const char **argv);
 
+typedef bool (*command_check_input)(void);
+bool user_prompt(const char *prompt_msg, const char *choise_msg, command_check_input check_cb);
+bool check_input_yes(void);
+
 #ifdef __cplusplus
 }
 #endif

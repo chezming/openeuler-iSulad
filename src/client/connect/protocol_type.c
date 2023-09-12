@@ -1211,6 +1211,22 @@ void isula_logout_response_free(struct isula_logout_response *response)
     free(response);
 }
 
+#ifdef ENABLE_SYSTEM_PRUNE
+void isula_image_prune_response_free(struct isula_image_prune_response *response)
+{
+    if (response == NULL) {
+        return;
+    }
+
+    util_free_array_by_len(response->images, response->images_len);
+
+    free(response->errmsg);
+    response->errmsg = NULL;
+
+    free(response);
+}
+#endif
+
 #ifdef ENABLE_IMAGE_SEARCH
 
 void search_image_info_free(struct search_image_info *info)

@@ -1088,3 +1088,37 @@ out:
     free(num_str);
     return ret;
 }
+
+// Convert the formatted string to a timestamp.
+// The format is as "<Year>-<Month>-<Day>T<Hour>:<Minute>:<Second>".
+// It returns the number of seconds elapsed since the Epoch, 1970-01-01 00:00:00 +0000 (UTC).
+uint64_t util_str_to_time(const char *time_str)
+{
+    struct tm timeinfo;
+    int item = 0;
+
+    memset(&timeinfo, 0, sizeof(struct tm));
+    item = sscanf(time_str, "%d-%d-%dT%d:%d:%d",
+                  &timeinfo.tm_year, &timeinfo.tm_mon, &timeinfo.tm_mday,
+                  &timeinfo.tm_hour, &timeinfo.tm_min, &timeinfo.tm_sec);
+    if (item != 6) {
+        return 0;
+    } else {
+        time_t timestamp = mktime(&timeinfo);
+        if (timestamp == -1) {
+            ERROR("error timestamp");
+            return 0;
+        } else {
+            return (uint64_t)timestamp;
+        }
+    }
+
+}
+
+// Judge if the string time format is valid.
+// The format is as "<Year>-<Month>-<Day>T<Hour>:<Minute>:<Second>".
+bool util_is_valid_time_format(const char *time_str)
+{
+    uint64_t timestamp = util_str_to_time(time_str);
+    return timestamp == 0 ? false : true;
+}

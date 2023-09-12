@@ -83,6 +83,10 @@ types_timestamp_t util_to_timestamp_from_str(const char *str);
 int util_time_str_to_nanoseconds(const char *value, int64_t *nanoseconds);
 
 int64_t util_get_now_time_nanos();
+
+uint64_t util_str_to_time(const char *time_str);
+
+bool util_is_valid_time_format(const char *time_str);
 #ifdef __cplusplus
 }
 #endif

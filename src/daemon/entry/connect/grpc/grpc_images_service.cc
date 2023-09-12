@@ -724,3 +724,132 @@ Status ImagesServiceImpl::Search(ServerContext *context, const SearchRequest *re
     return Status::OK;
 }
 #endif
+
+#ifdef ENABLE_SYSTEM_PRUNE
+int ImagesServiceImpl::image_prune_request_from_grpc(const PruneRequest *grequest,
+                                                     image_prune_request **request)
+{
+    size_t len;
+    auto *tmpreq =
+        static_cast<image_prune_request *>(util_common_calloc_s(sizeof(image_prune_request)));
+    if (tmpreq == nullptr) {
+        ERROR("Out of memory");
+        return -1;
+    }
+
+    len = (size_t)grequest->filters_size();
+    if (len == 0) {
+        *request = tmpreq;
+        return 0;
+    }
+
+    tmpreq->filters = (defs_filters *)util_common_calloc_s(sizeof(defs_filters));
+    if (tmpreq->filters == nullptr) {
+        ERROR("Out of memory");
+        goto cleanup;
+    }
+
+    tmpreq->filters->keys = static_cast<char **>(util_smart_calloc_s(sizeof(char *), len));
+    if (tmpreq->filters->keys == nullptr) {
+        ERROR("Out of memory");
+        goto cleanup;
+    }
+    tmpreq->filters->values =
+        static_cast<json_map_string_bool **>(util_smart_calloc_s(sizeof(json_map_string_bool *), len));
+    if (tmpreq->filters->values == nullptr) {
+        free(tmpreq->filters->keys);
+        ERROR("Out of memory");
+        tmpreq->filters->keys = nullptr;
+        goto cleanup;
+    }
+
+    for (auto &iter : grequest->filters()) {
+        tmpreq->filters->values[tmpreq->filters->len] =
+            static_cast<json_map_string_bool *>(util_common_calloc_s(sizeof(json_map_string_bool)));
+        if (tmpreq->filters->values[tmpreq->filters->len] == nullptr) {
+            ERROR("Out of memory");
+            goto cleanup;
+        }
+        if (append_json_map_string_bool(tmpreq->filters->values[tmpreq->filters->len],
+                                        iter.second.empty() ? "" : iter.second.c_str(), true)) {
+            ERROR("Append failed");
+			free(tmpreq->filters->values[tmpreq->filters->len]);
+            tmpreq->filters->values[tmpreq->filters->len] = nullptr;
+
+            goto cleanup;
+        }
+        tmpreq->filters->keys[tmpreq->filters->len] = util_strdup_s(iter.first.empty() ? "" : iter.first.c_str());
+        tmpreq->filters->len++;
+    }
+
+    tmpreq->all = grequest->all();
+    *request = tmpreq;
+    return 0;
+
+cleanup:
+    free_image_prune_request(tmpreq);
+    return -1;
+}
+
+int ImagesServiceImpl::image_prune_response_to_grpc(image_prune_response *response,
+                                                    PruneResponse *gresponse)
+{
+    if (response == nullptr) {
+        gresponse->set_cc(ISULAD_ERR_MEMOUT);
+        return 0;
+    }
+
+    gresponse->set_cc(response->cc);
+    gresponse->set_space_reclaimed(response->space_reclaimed);
+    if (response->errmsg != nullptr) {
+        gresponse->set_errmsg(response->errmsg);
+    }
+
+    for (size_t i {}; i < response->images_len; i++) {
+        gresponse->add_images(response->images[i]);
+    }
+
+    return 0;
+}
+
+Status ImagesServiceImpl::Prune(ServerContext *context, const PruneRequest *request,
+                                PruneResponse *reply)
+{
+    int ret = 0;
+    int tret = 0;
+    service_executor_t *cb = nullptr;
+    image_prune_request *prune_request = nullptr;
+    image_prune_response *prune_response = nullptr;
+
+    prctl(PR_SET_NAME, "ImagePrune");
+
+    auto status = GrpcServerTlsAuth::auth(context, "image_prune");
+    if (!status.ok()) {
+        return status;
+    }
+
+    cb = get_service_executor();
+    if (cb == nullptr || cb->image.prune == nullptr) {
+        return Status(StatusCode::UNIMPLEMENTED, "Unimplemented callback");
+    }
+
+    ret = image_prune_request_from_grpc(request, &prune_request);
+    if (ret != 0) {
+        ERROR("Failed to transform grpc request");
+        return Status(StatusCode::UNKNOWN, "Failed to transform grpc request");
+    }
+
+    ret = cb->image.prune(prune_request, &prune_response);
+
+    tret = image_prune_response_to_grpc(prune_response, reply);
+    free_image_prune_request(prune_request);
+    free_image_prune_response(prune_response);
+    if (tret != 0) {
+        reply->set_errmsg(util_strdup_s(errno_to_error_message(ISULAD_ERR_INTERNAL)));
+        reply->set_cc(ISULAD_ERR_INPUT);
+        ERROR("Failed to translate response to grpc, operation is %s", ret ? "failed" : "success");
+    }
+
+    return Status::OK;
+}
+#endif

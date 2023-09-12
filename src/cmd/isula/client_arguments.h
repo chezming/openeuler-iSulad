@@ -298,6 +298,11 @@ struct client_arguments {
     bool interactive;
     // stop/kill/delete
     bool force;
+    
+#ifdef ENABLE_SYSTEM_PRUNE
+    // if deal with all elements
+    bool all;
+#endif
     int time;
 
     // delete

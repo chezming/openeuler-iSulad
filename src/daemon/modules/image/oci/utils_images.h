@@ -60,6 +60,7 @@ int makesure_isulad_tmpdir_perm_right(const char *root_dir);
 char *get_hostname_to_strip();
 
 char *oci_image_digest_pos(const char *name);
+int oci_check_image_occupancy_status(const char *img_id);
 
 #ifdef __cplusplus
 }

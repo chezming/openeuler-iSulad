@@ -205,4 +205,11 @@ if (ENABLE_IMAGE_SEARCH STREQUAL "ON")
     message("${Green}--  Enable isula search${ColourReset}")
 endif()
 
+option(ENABLE_SYSTEM_PRUNE "Enable isula system prune" ON)
+if (ENABLE_SYSTEM_PRUNE STREQUAL "ON")
+    add_definitions(-DENABLE_SYSTEM_PRUNE)
+    set(ENABLE_SYSTEM_PRUNE 1)
+    message("${Green}--  Enable isula system prune${ColourReset}")
+endif()
+
 message("${BoldGreen}---- Selected options end ----${ColourReset}")

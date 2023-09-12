@@ -62,6 +62,9 @@ public:
     Status Search(ServerContext *context, const SearchRequest *request, SearchResponse *reply) override;
 #endif
 
+#ifdef ENABLE_SYSTEM_PRUNE
+    Status Prune(ServerContext *context, const PruneRequest *request, PruneResponse *reply) override;
+#endif
 private:
     template <class T1, class T2>
     void response_to_grpc(const T1 *response, T2 *gresponse)
@@ -103,6 +106,10 @@ private:
     int search_request_from_grpc(const SearchRequest *grequest, image_search_images_request **request);
 
     void search_response_to_grpc(const image_search_images_response *response, SearchResponse *gresponse);
+#endif
+#ifdef ENABLE_SYSTEM_PRUNE
+    int image_prune_request_from_grpc(const PruneRequest *grequest, image_prune_request **request);
+    int image_prune_response_to_grpc(image_prune_response *response, PruneResponse *gresponse);
 #endif
 };
 

@@ -81,6 +81,10 @@
 #include "isula_libutils/image_logout_response.h"
 #include "isula_libutils/image_pull_image_request.h"
 #include "isula_libutils/image_pull_image_response.h"
+#ifdef ENABLE_SYSTEM_PRUNE
+#include "isula_libutils/image_prune_request.h"
+#include "isula_libutils/image_prune_response.h"
+#endif
 #include "isula_libutils/volume_list_volume_request.h"
 #include "isula_libutils/volume_list_volume_response.h"
 #include "isula_libutils/volume_remove_volume_request.h"
@@ -288,6 +292,9 @@ typedef struct {
     int (*pull)(const image_pull_image_request *request, image_pull_image_response **response);
 #ifdef ENABLE_IMAGE_SEARCH
     int (*search)(const image_search_images_request *request, image_search_images_response **response);
+#endif
+#ifdef ENABLE_SYSTEM_PRUNE
+    int (*prune)(const image_prune_request *request, image_prune_response **response);
 #endif
 } service_image_callback_t;
 

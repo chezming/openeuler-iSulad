@@ -26,6 +26,9 @@
 #include "exec.h"
 #include "run.h"
 #include "images.h"
+#ifdef ENABLE_SYSTEM_PRUNE
+#include "image/image.h"
+#endif
 #include "rmi.h"
 #include "tag.h"
 #include "import.h"
@@ -227,6 +230,11 @@ struct command g_commands[] = {
     {
         // `port` sub-command
         "port", false, cmd_port_main, g_cmd_port_desc, NULL, NULL
+    },
+#endif
+#ifdef ENABLE_SYSTEM_PRUNE
+    {
+        "image", true, cmd_image_main, g_cmd_image_desc, NULL, NULL
     },
 #endif
     { NULL, NULL, NULL, NULL, NULL } // End of the list

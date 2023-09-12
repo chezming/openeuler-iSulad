@@ -32,6 +32,7 @@
 #include "isula_libutils/log.h"
 #include "utils.h"
 #include "sha256.h"
+#include "storage.h"
 #include "utils_array.h"
 #include "utils_base64.h"
 #include "utils_file.h"
@@ -677,3 +678,20 @@ int oci_split_search_name(const char *search_name, char **host, char **name)
     return 0;
 }
 #endif
+
+int oci_check_image_occupancy_status(const char *img_id)
+{
+    int ret = -1;
+    bool is_inuse = false;
+
+    ret = check_image_occupancy_status(img_id, &is_inuse);
+    if (ret != 0) {
+        return -1;
+    }
+
+    if (is_inuse) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
