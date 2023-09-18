@@ -154,7 +154,7 @@ typedef struct {
     char *registry_token;
 
     bool is_progress_visible;
-    map_s *progress_status_store;
+    // map_s *progress_status_store;
 } im_pull_request;
 
 typedef struct {

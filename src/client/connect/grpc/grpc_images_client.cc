@@ -421,7 +421,7 @@ public:
         }
         Status status = reader->Finish();
         if (!status.ok()) {
-            ERROR("error code: %d: %s", status.error_code(), status.error_message().c_str());
+            ERROR("Error code: %d: %s", status.error_code(), status.error_message().c_str());
             unpackStatus(status, response);
             return -1;
         }
