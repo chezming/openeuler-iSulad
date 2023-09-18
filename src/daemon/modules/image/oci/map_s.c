@@ -1,5 +1,5 @@
 /******************************************************************************
- * Copyright (c) China Unicom Technologies Co., Ltd. 2023-2033. All rights reserved.
+ * Copyright (c) China Unicom Technologies Co., Ltd. 2023. All rights reserved.
  * iSulad licensed under the Mulan PSL v2.
  * You can use this software according to the terms and conditions of the Mulan PSL v2.
  * You may obtain a copy of Mulan PSL v2 at:
@@ -55,7 +55,7 @@ bool map_s_itor_first(map_s_itor *itor_s)
         return NULL;
     }
 
-    bool ret = NULL;
+    bool ret = false;
     pthread_mutex_lock(itor_s->mutex);
     ret = map_itor_first(itor_s->itor);
     pthread_mutex_unlock(itor_s->mutex);
@@ -70,7 +70,7 @@ bool map_s_itor_last(map_s_itor *itor_s)
         return NULL;
     }
 
-    bool ret = NULL;
+    bool ret = false;
     pthread_mutex_lock(itor_s->mutex);
     ret = map_itor_last(itor_s->itor);
     pthread_mutex_unlock(itor_s->mutex);
@@ -85,7 +85,7 @@ bool map_s_itor_next(map_s_itor *itor_s)
         return NULL;
     }
 
-    bool ret = NULL;
+    bool ret = false;
     pthread_mutex_lock(itor_s->mutex);
     ret = map_itor_next(itor_s->itor);
     pthread_mutex_unlock(itor_s->mutex);
@@ -100,7 +100,7 @@ bool map_s_itor_prev(map_s_itor *itor_s)
         return NULL;
     }
 
-    bool ret = NULL;
+    bool ret = false;
     pthread_mutex_lock(itor_s->mutex);
     ret = map_itor_prev(itor_s->itor);
     pthread_mutex_unlock(itor_s->mutex);
@@ -115,7 +115,7 @@ bool map_s_itor_valid(const map_s_itor *itor_s)
         return NULL;
     }
 
-    bool ret = NULL;
+    bool ret = false;
     pthread_mutex_lock(itor_s->mutex);
     ret = map_itor_valid(itor_s->itor);
     pthread_mutex_unlock(itor_s->mutex);
@@ -161,7 +161,7 @@ size_t map_s_size(const map_s *map_s)
         return false;
     }
 
-    size_t ret = false;
+    size_t ret = 0;
     pthread_mutex_lock((pthread_mutex_t *) & (map_s->mutex));
     ret = map_size(map_s->map);
     pthread_mutex_unlock((pthread_mutex_t *) & (map_s->mutex));
@@ -172,7 +172,7 @@ size_t map_s_size(const map_s *map_s)
 /* function to replace key value */
 bool map_s_replace(const map_s *map_s, void *key, void *value)
 {
-    if (map_s == NULL) {
+    if (map_s == NULL || key == NULL || value == NULL) {
         ERROR("invalid parameter");
         return false;
     }
@@ -188,7 +188,7 @@ bool map_s_replace(const map_s *map_s, void *key, void *value)
 /* function to insert key value */
 bool map_s_insert(map_s *map_s, void *key, void *value)
 {
-    if (map_s == NULL) {
+    if (map_s == NULL || key == NULL || value == NULL) {
         ERROR("invalid parameter");
         return false;
     }
@@ -204,7 +204,7 @@ bool map_s_insert(map_s *map_s, void *key, void *value)
 /* function to remove element by key */
 bool map_s_remove(map_s *map_s, void *key)
 {
-    if (map_s == NULL) {
+    if (map_s == NULL || key == NULL) {
         return false;
     }
 
@@ -219,7 +219,7 @@ bool map_s_remove(map_s *map_s, void *key)
 /* function to search key */
 void *map_s_search(const map_s *map_s, void *key)
 {
-    if (map_s == NULL) {
+    if (map_s == NULL || key == NULL) {
         return NULL;
     }
 
@@ -241,7 +241,10 @@ map_s *map_s_new(map_type_t kvtype, map_cmp_func comparator, map_kvfree_func kvf
         return NULL;
     }
     map_s->map = map_new(kvtype, comparator, kvfree);
-    pthread_mutex_init((pthread_mutex_t *) & (map_s->mutex), NULL);
+    if (pthread_mutex_init((pthread_mutex_t *) & (map_s->mutex), NULL) != 0) {
+        ERROR("New map failed for mutex init");
+        return NULL;
+    }
     return map_s;
 }
 

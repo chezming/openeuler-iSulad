@@ -1,5 +1,5 @@
 /******************************************************************************
- * Copyright (c) China Unicom Technologies Co., Ltd. 2023-2033. All rights reserved.
+ * Copyright (c) China Unicom Technologies Co., Ltd. 2023. All rights reserved.
  * iSulad licensed under the Mulan PSL v2.
  * You can use this software according to the terms and conditions of the Mulan PSL v2.
  * You may obtain a copy of Mulan PSL v2 at:
@@ -17,6 +17,7 @@
 
 #include "map.h"
 #include <pthread.h>
+#include <stdint.h>
 
 #if defined(__cplusplus) || defined(c_plusplus)
 extern "C" {
@@ -32,6 +33,10 @@ typedef struct map_s_itor {
     pthread_mutex_t *mutex;
 } map_s_itor;
 
+typedef struct progress {
+   int64_t dlnow;
+   int64_t dltotal; 
+} progress;
 
 /* function to remove element by key */
 bool map_s_remove(map_s *map_s, void *key);

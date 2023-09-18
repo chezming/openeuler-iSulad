@@ -108,6 +108,18 @@ void copy_from_container_response_to_grpc(const struct isulad_copy_from_containe
     }
 }
 
+bool grpc_is_call_cancelled(void *context)
+{
+    return ((ServerContext *)context)->IsCancelled();
+}
+
+bool grpc_add_initial_metadata(void *context, const char *header, const char *val)
+{
+    ((ServerContext *)context)->AddInitialMetadata(header, val);
+    return true;
+}
+
+
 bool grpc_event_write_function(void *writer, void *data)
 {
     auto *event = (struct isulad_events_format *)data;

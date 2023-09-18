@@ -26,6 +26,7 @@
 #include "utils.h"
 #include "grpc_common.h"
 #include "grpc_server_tls_auth.h"
+#include "grpc_containers_service.h"
 
 int ImagesServiceImpl::image_list_request_from_grpc(const ListImagesRequest *grequest,
                                                     image_list_images_request **request)
@@ -619,13 +620,18 @@ int ImagesServiceImpl::image_pull_request_from_grpc(const PullImageRequest *greq
 void image_pull_progress_to_grpc(const image_progress *progress,
                                  PullImageResponse &gresponse)
 {
+    if (progress == nullptr) {
+        ERROR("Invalid parameter");
+        return;
+    }
+
     gresponse.Clear();
     char *err = nullptr;
     struct parser_context ctx = { OPT_GEN_SIMPLIFY, 0 };
     char *data = image_progress_generate_json(progress, &ctx, &err);
 
     if (data == nullptr) {
-        ERROR("error pull progress data");
+        ERROR("Failed to generate image progress json: %s", err);
         return;
     }
 
@@ -633,7 +639,6 @@ void image_pull_progress_to_grpc(const image_progress *progress,
     if (progress->image != nullptr) {
         gresponse.set_image_ref(progress->image);
     }
-    return;
 }
 
 bool grpc_pull_write_function(void *writer, void *data)
@@ -652,15 +657,16 @@ Status ImagesServiceImpl::PullImage(ServerContext *context, const PullImageReque
 {
     prctl(PR_SET_NAME, "RegistryPull");
 
+    int ret = 0;
+    std::string errmsg = "Failed to execute image pull";
+    stream_func_wrapper stream = { 0 };
+    image_pull_image_request *image_req = nullptr;
+    image_pull_image_response *image_res = nullptr;
+
     if (context == nullptr || request == nullptr || writer == nullptr) {
         return Status(StatusCode::INVALID_ARGUMENT, "Invalid argument");
     }
 
-    int ret = 0;
-    std::string errmsg;
-    stream_func_wrapper stream = { 0 };
-    image_pull_image_request *image_req = nullptr;
-    image_pull_image_response *image_res = nullptr;
     auto status = GrpcServerTlsAuth::auth(context, "pull");
     if (!status.ok()) {
         return status;
@@ -688,7 +694,6 @@ Status ImagesServiceImpl::PullImage(ServerContext *context, const PullImageReque
         return Status(StatusCode::UNKNOWN, errmsg);
     }
     if (ret != 0) {
-        errmsg = (image_res->errmsg != nullptr) ? image_res->errmsg : "Failed to execute image pull";
         free_image_pull_image_request(image_req);
         free_image_pull_image_response(image_res);
         return Status(StatusCode::UNKNOWN, errmsg);
