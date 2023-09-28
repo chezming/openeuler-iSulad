@@ -23,7 +23,7 @@
 #include <unistd.h>
 
 #include "err_msg.h"
-#include "map_s.h"
+#include "progress.h"
 #include "oci_image.h"
 #include "progress.h"
 #include "registry.h"
@@ -90,7 +90,7 @@ static void update_option_insecure_registry(registry_pull_options *options, char
     }
 }
 
-static int pull_image(const im_pull_request *request, map_s *progress_status_store, char **name)
+static int pull_image(const im_pull_request *request, progress_status_map *progress_status_store, char **name)
 {
     int ret = -1;
     registry_pull_options *options = NULL;
@@ -181,7 +181,7 @@ out:
 }
 
 typedef struct status_arg {
-    map_s *status_store;
+    progress_status_map *status_store;
     bool should_terminal;
     imagetool_image_summary *image;
     stream_func_wrapper *stream;
@@ -206,7 +206,7 @@ void *get_progress_status(void *arg)
         }
         
         image_progress *progresses;
-        size_t progress_size = map_s_size(status->status_store);
+        size_t progress_size = progress_status_map_size(status->status_store);
 
         progresses = util_common_calloc_s(sizeof(image_progress));
         if (progresses == NULL) {
@@ -223,10 +223,10 @@ void *get_progress_status(void *arg)
             status->image = NULL;
         }
 
-        map_s_itor *itor = map_s_itor_new(status->status_store); 
-        for (i = 0; map_s_itor_valid(itor); map_s_itor_next(itor), i++) {
-            void *id = map_s_itor_key(itor);
-            const progress *value = map_s_itor_value(itor);
+        progress_status_map_itor *itor = progress_status_map_itor_new(status->status_store); 
+        for (i = 0; progress_status_map_itor_valid(itor); progress_status_map_itor_next(itor), i++) {
+            void *id = progress_status_map_itor_key(itor);
+            const progress *value = progress_status_map_itor_value(itor);
 
             progresses->progresses[i] = util_common_calloc_s(sizeof(image_progress_progresses_element));
             if (progresses->progresses[i] == NULL) {
@@ -237,7 +237,7 @@ void *get_progress_status(void *arg)
             progresses->progresses[i]->current = value->dlnow;
             progresses->progresses_len++;
         }
-        map_s_itor_free(itor);
+        progress_status_map_itor_free(itor);
 
         /* send to client */
         write_ok = status->stream->write_func(status->stream->writer, progresses);
@@ -263,7 +263,7 @@ int oci_do_pull_image(const im_pull_request *request, stream_func_wrapper *strea
     imagetool_image_summary *image = NULL;
     imagetool_image_summary *image2 = NULL;
     char *dest_image_name = NULL;
-    map_s *progress_status_store = NULL;
+    progress_status_map *progress_status_store = NULL;
 
     if (request == NULL || request->image == NULL || response == NULL) {
         ERROR("Invalid NULL param");
@@ -273,7 +273,7 @@ int oci_do_pull_image(const im_pull_request *request, stream_func_wrapper *strea
     pthread_t tid = 0;
     status_arg arg;
     if (request->is_progress_visible) {
-        progress_status_store = map_s_new(MAP_STR_PTR, MAP_DEFAULT_CMP_FUNC, MAP_DEFAULT_FREE_FUNC);
+        progress_status_store = progress_status_map_new(MAP_STR_PTR, MAP_DEFAULT_CMP_FUNC, MAP_DEFAULT_FREE_FUNC);
         if (progress_status_store == NULL) {
             WARN("Out of memory and will not show the pull progress");
         } else {

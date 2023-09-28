@@ -40,7 +40,7 @@
 
 typedef struct progress_arg {
     char *digest;
-    map_s *map_store;
+    progress_status_map *map_store;
 } progress_arg;
 
 #define MIN_TOKEN_EXPIRES_IN 60
@@ -702,7 +702,7 @@ static int xfer(void *p, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultota
     progress_value->dltotal = (int64_t)dltotal;
 
     if (arg->map_store != NULL && arg->digest != NULL) {
-        map_s_replace(arg->map_store, arg->digest, progress_value);
+        progress_status_map_replace(arg->map_store, arg->digest, progress_value);
     }
 
     return 0;
