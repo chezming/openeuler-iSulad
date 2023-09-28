@@ -52,7 +52,7 @@ void map_s_itor_free(map_s_itor *itor_s)
 bool map_s_itor_first(map_s_itor *itor_s)
 {
     if (itor_s == NULL || itor_s->mutex == NULL) {
-        return NULL;
+        return false;
     }
 
     bool ret = false;
@@ -67,7 +67,7 @@ bool map_s_itor_first(map_s_itor *itor_s)
 bool map_s_itor_last(map_s_itor *itor_s)
 {
     if (itor_s == NULL || itor_s->mutex == NULL) {
-        return NULL;
+        return false;
     }
 
     bool ret = false;
@@ -82,7 +82,7 @@ bool map_s_itor_last(map_s_itor *itor_s)
 bool map_s_itor_next(map_s_itor *itor_s)
 {
     if (itor_s == NULL || itor_s->mutex == NULL) {
-        return NULL;
+        return false;
     }
 
     bool ret = false;
@@ -97,7 +97,7 @@ bool map_s_itor_next(map_s_itor *itor_s)
 bool map_s_itor_prev(map_s_itor *itor_s)
 {
     if (itor_s == NULL || itor_s->mutex == NULL) {
-        return NULL;
+        return false;
     }
 
     bool ret = false;
@@ -112,7 +112,7 @@ bool map_s_itor_prev(map_s_itor *itor_s)
 bool map_s_itor_valid(const map_s_itor *itor_s)
 {
     if (itor_s == NULL || itor_s->mutex == NULL) {
-        return NULL;
+        return false;
     }
 
     bool ret = false;
@@ -158,7 +158,7 @@ size_t map_s_size(const map_s *map_s)
 {
     if (map_s == NULL) {
         ERROR("invalid parameter");
-        return false;
+        return 0;
     }
 
     size_t ret = 0;

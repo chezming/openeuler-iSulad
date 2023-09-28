@@ -24,7 +24,6 @@
 #include <isula_libutils/log.h>
 #include <isula_libutils/image_progress.h>
 #include "utils.h"
-#include "grpc_common.h"
 #include "grpc_server_tls_auth.h"
 #include "grpc_containers_service.h"
 
@@ -629,7 +628,6 @@ void image_pull_progress_to_grpc(const image_progress *progress,
     char *err = nullptr;
     struct parser_context ctx = { OPT_GEN_SIMPLIFY, 0 };
     char *data = image_progress_generate_json(progress, &ctx, &err);
-
     if (data == nullptr) {
         ERROR("Failed to generate image progress json: %s", err);
         return;
@@ -689,10 +687,6 @@ Status ImagesServiceImpl::PullImage(ServerContext *context, const PullImageReque
     stream.writer = (void *)writer;
 
     ret = cb->image.pull(image_req, &stream, &image_res);
-    if (image_res == nullptr) {
-        free_image_pull_image_request(image_req);
-        return Status(StatusCode::UNKNOWN, errmsg);
-    }
     if (ret != 0) {
         free_image_pull_image_request(image_req);
         free_image_pull_image_response(image_res);

@@ -15,24 +15,25 @@
 
 #define _GNU_SOURCE /* See feature_test_macros(7) */
 #include "http_request.h"
-#include <stdio.h>
-#include <string.h>
+#include <curl/curl.h>
 #include <isula_libutils/json_common.h>
+#include "isula_libutils/log.h"
+#include "isula_libutils/registry_token.h"
+#include <pthread.h>
 #include <stdbool.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <strings.h>
 #include <time.h>
-#include <curl/curl.h>
-#include <pthread.h>
 
-#include "isula_libutils/log.h"
 #include "buffer.h"
+#include "certs.h"
+#include "err_msg.h"
 #include "http.h"
 #include "utils.h"
 #include "utils_images.h"
-#include "certs.h"
-#include "isula_libutils/registry_token.h"
-#include "err_msg.h"
+#include "progress.h"
 #include "utils_array.h"
 #include "utils_base64.h"
 #include "utils_string.h"
@@ -697,8 +698,8 @@ static int xfer(void *p, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultota
         return -1;
     }
 
-    progress_value->dlnow = dlnow;
-    progress_value->dltotal = dltotal;
+    progress_value->dlnow = (int64_t)dlnow;
+    progress_value->dltotal = (int64_t)dltotal;
 
     if (arg->map_store != NULL && arg->digest != NULL) {
         map_s_replace(arg->map_store, arg->digest, progress_value);
@@ -739,15 +740,16 @@ int http_request_file(pull_descriptor *desc, const char *url, const char **custo
         ERROR("Out of memory");
         goto out;
     }
+    options->show_progress = 0;
+#if (LIBCURL_VERSION_NUM >= 0x073200)
     if (desc->progress_status_store != NULL) {
         arg->digest = digest;
         arg->map_store = desc->progress_status_store;
         options->xferinfo = arg;
         options->xferinfo_op = xfer;
         options->show_progress = 1;
-    } else {
-        options->show_progress = 0;
     }
+#endif
     options->timeout = true;
 
     ret = setup_common_options(desc, options, url, custom_headers);

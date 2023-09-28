@@ -17,7 +17,6 @@
 #include <stdio.h>
 #include <gtest/gtest.h>
 #include "map.h"
-#include "map_s.h"
 
 static void ptr_ptr_map_kefree(void *key, void *value)
 {

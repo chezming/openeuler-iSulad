@@ -12,8 +12,8 @@
  * Create: 2023-08-25
  * Description: provide pthread safe container map definition
  ******************************************************************************/
-#ifndef UTILS_CUTILS_MAP_MAP_S_H
-#define UTILS_CUTILS_MAP_MAP_S_H
+#ifndef DAEMON_MODULES_IMAGE_OCI_MAP_S_H
+#define DAEMON_MODULES_IMAGE_OCI_MAP_S_H
 
 #include "map.h"
 #include <pthread.h>
@@ -32,11 +32,6 @@ typedef struct map_s_itor {
     map_itor *itor;
     pthread_mutex_t *mutex;
 } map_s_itor;
-
-typedef struct progress {
-   int64_t dlnow;
-   int64_t dltotal; 
-} progress;
 
 /* function to remove element by key */
 bool map_s_remove(map_s *map_s, void *key);
@@ -90,5 +85,5 @@ void map_s_clear(map_s *map);
 }
 #endif
 
-#endif // UTILS_CUTILS_MAP_MAP_S_H
+#endif // DAEMON_MODULES_IMAGE_OCI_MAP_S_H
 

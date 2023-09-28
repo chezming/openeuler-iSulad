@@ -22,16 +22,17 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "map_s.h"
-#include "utils.h"
-#include "utils_images.h"
-#include "registry.h"
 #include "err_msg.h"
+#include "map_s.h"
+#include "oci_image.h"
+#include "progress.h"
+#include "registry.h"
 #include "storage.h"
+#include "utils.h"
 #include "utils_array.h"
 #include "utils_base64.h"
+#include "utils_images.h"
 #include "utils_string.h"
-#include "oci_image.h"
 
 static int decode_auth(const char *auth, char **username, char **password)
 {
@@ -274,13 +275,13 @@ int oci_do_pull_image(const im_pull_request *request, stream_func_wrapper *strea
     if (request->is_progress_visible) {
         progress_status_store = map_s_new(MAP_STR_PTR, MAP_DEFAULT_CMP_FUNC, MAP_DEFAULT_FREE_FUNC);
         if (progress_status_store == NULL) {
-            ERROR("Out of memory and will not show the pull progress");
+            WARN("Out of memory and will not show the pull progress");
         } else {
             arg.should_terminal = false;
             arg.status_store = progress_status_store;
             arg.stream = stream;
             if (pthread_create(&tid, NULL, get_progress_status, (void *)&arg) != 0) {
-                ERROR("Failed to start thread to get progress status");
+                WARN("Failed to start thread to get progress status");
             }
         }
     }

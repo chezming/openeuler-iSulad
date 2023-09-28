@@ -1,5 +1,5 @@
 /******************************************************************************
- * Copyright (c) Huawei Technologies Co., Ltd. 2018-2019. All rights reserved.
+ * Copyright (c) China Unicom Technologies Co., Ltd. 2023. All rights reserved.
  * iSulad licensed under the Mulan PSL v2.
  * You can use this software according to the terms and conditions of the Mulan PSL v2.
  * You may obtain a copy of Mulan PSL v2 at:
@@ -8,17 +8,29 @@
  * IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY OR FIT FOR A PARTICULAR
  * PURPOSE.
  * See the Mulan PSL v2 for more details.
- * Author: lifeng
- * Create: 2018-11-08
- * Description: provide grpc container functions
+ * Author: Chenwei
+ * Create: 2023-08-25
+ * Description: progress definition
  ******************************************************************************/
-#ifndef DAEMON_ENTRY_CONNECT_GRPC_GRPC_COMMON_H
-#define DAEMON_ENTRY_CONNECT_GRPC_GRPC_COMMON_H
+#ifndef DAEMON_MODULES_IMAGE_OCI_PROGRESS_H
+#define DAEMON_MODULES_IMAGE_OCI_PROGRESS_H
 
-bool grpc_is_call_cancelled(void *context);
+#include "map.h"
+#include <pthread.h>
+#include <stdint.h>
 
-bool grpc_add_initial_metadata(void *context, const char *header, const char *val);
-
-bool grpc_event_write_function(void *writer, void *data);
-
+#if defined(__cplusplus) || defined(c_plusplus)
+extern "C" {
 #endif
+
+typedef struct progress {
+   int64_t dlnow;
+   int64_t dltotal; 
+} progress;
+
+#if defined(__cplusplus) || defined(c_plusplus)
+}
+#endif
+
+#endif // DAEMON_MODULES_IMAGE_OCI_PROGRESS_H
+

@@ -32,7 +32,6 @@
 #ifdef ENABLE_IMAGE_SEARCH
 #include "isula_libutils/imagetool_search_result.h"
 #endif
-#include "map_s.h"
 #include "stream_wrapper.h"
 
 #ifdef __cplusplus
@@ -154,7 +153,6 @@ typedef struct {
     char *registry_token;
 
     bool is_progress_visible;
-    // map_s *progress_status_store;
 } im_pull_request;
 
 typedef struct {

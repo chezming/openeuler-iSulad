@@ -72,7 +72,6 @@ typedef struct {
     bool use;
     bool notified;
     char *diffid;
-    map_s *progress_status_store;
 } thread_fetch_info;
 
 typedef struct {
@@ -1541,7 +1540,6 @@ static int fetch_all(pull_descriptor *desc)
     for (i = 0; i < desc->layers_len; i++) {
         infos[i].desc = desc;
         infos[i].index = i;
-        infos[i].progress_status_store = desc->progress_status_store;
         // Skip empty layer
         if (desc->layers[i].empty_layer) {
             continue;

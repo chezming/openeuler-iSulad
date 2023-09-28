@@ -25,7 +25,6 @@
 #include "error.h"
 #include "cxxutils.h"
 #include "stoppable_thread.h"
-#include "grpc_common.h"
 #include "grpc_server_tls_auth.h"
 #include "container_api.h"
 #include "service_base.h"
@@ -118,7 +117,6 @@ bool grpc_add_initial_metadata(void *context, const char *header, const char *va
     ((ServerContext *)context)->AddInitialMetadata(header, val);
     return true;
 }
-
 
 bool grpc_event_write_function(void *writer, void *data)
 {
