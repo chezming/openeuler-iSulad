@@ -13,15 +13,11 @@
  * Description: print progress
  ******************************************************************************/
 
-#include "progress.h"
+#include "show.h"
 #include <unistd.h>
 #include <sys/ioctl.h>
 #include <termios.h>
 #include <stdio.h>
-
-#define GB (1024 * 1024 * 1024)
-#define MB (1024 * 1024)
-#define KB 1024
 
 void move_to_row(int row)
 {
@@ -65,89 +61,4 @@ int get_terminal_width()
         return -1; // Error
     }
     return ws.ws_col;
-}
-
-static void get_printed_value(int64_t value, char *printed)
-{
-    float float_value = 0.0;
-
-    if ((float)value / GB > 1) {
-        float_value = (float)value / GB;
-        sprintf(printed, "%.2fGB", float_value);
-    } else if ((float)value / MB > 1) {
-        float_value = (float)value / MB;
-        sprintf(printed, "%.2fMB", float_value);
-    } else if ((float)value / KB > 1) {
-        float_value = (float)value / KB;
-        sprintf(printed, "%.2fKB", float_value);
-    } else {
-        sprintf(printed, "%ldB", value);
-    }
-}
-
-void display_progress_bar(image_progress_progresses_element *progress_item, int width, bool if_show_all)
-{
-    int i = 0;
-    float progress = 0.0;
-    int filled_width = 0;
-    char total[16] = {0};
-    char current[16] = {0};
-    int empty_width = 0;
-
-    if (progress_item->total != 0) {
-        progress = (float)progress_item->current / (float)progress_item->total;
-    }
-    filled_width = (int)(progress * width);
-    empty_width = width - filled_width;
-    get_printed_value(progress_item->total, total);
-    get_printed_value(progress_item->current, current);
-
-    if (if_show_all) {
-        printf("%s: [", progress_item->id);
-
-        // Print filled characters
-        for (i = 0; i < filled_width; i++) {
-            printf("=");
-        }
-        printf(">");
-        // Print empty characters
-        for (i = 0; i < empty_width; i++) {
-            printf(" ");
-        }
-
-        printf("] %s/%s", current, total);
-    } else {
-        printf("%s:  %s/%s", progress_item->id, current, total);
-    }
-    fflush(stdout);
-}
-
-void display_multiple_progress_bars(image_progress *progresses, int width)
-{
-    size_t i = 0;
-    static int len = 0;
-
-    if (len != 0) {
-        move_cursor_up(len);
-    }
-    clear_lines_below();
-    len = (int)progresses->progresses_len;
-    int terminal_width = get_terminal_width();
-    bool if_show_all = true;
-    if (terminal_width < 110) {
-        if_show_all = false;
-    }
-    for (i = 0; i < len; i++) {
-        display_progress_bar(progresses->progresses[i], width, if_show_all);
-        printf("\n");
-    }
-}
-
-void show_processes(image_progress *progresses)
-{
-    int width = 50;  // Width of the progress bars
-
-    display_multiple_progress_bars(progresses, width);
-
-    return;
 }

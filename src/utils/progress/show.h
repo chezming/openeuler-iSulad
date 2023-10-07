@@ -13,16 +13,19 @@
  * Description: print progress
  ******************************************************************************/
 
-#ifndef UTILS_PROGRESS_H
-#define UTILS_PROGRESS_H
+#ifndef UTILS_SHOW_H
+#define UTILS_SHOW_H
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include "isula_libutils/image_progress.h"
-
-void show_processes(image_progress *progresses);
+void move_to_row(int row);
+void move_cursor_up(int rows);
+void clear_row(int row);
+void clear_lines_below();
+int get_current_row();
+int get_terminal_width();
 
 #ifdef __cplusplus
 }

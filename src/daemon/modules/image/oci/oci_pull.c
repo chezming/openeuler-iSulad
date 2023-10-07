@@ -200,6 +200,8 @@ void *get_progress_status(void *arg)
 
     for (;;) {
         int i = 0;
+        
+        usleep(delay * 1000);  // Sleep for 100 milliseconds
 
         if (status->should_terminal && status->image == NULL) {
             break;
@@ -251,8 +253,6 @@ void *get_progress_status(void *arg)
             ERROR("Send progress data to client failed");
         }
         free_image_progress(progresses);
-
-        usleep(delay * 1000);  // Sleep for 100 milliseconds
     }
     return NULL;
 }
@@ -275,13 +275,19 @@ int oci_do_pull_image(const im_pull_request *request, stream_func_wrapper *strea
     if (request->is_progress_visible) {
         progress_status_store = progress_status_map_new(MAP_STR_PTR, MAP_DEFAULT_CMP_FUNC, MAP_DEFAULT_FREE_FUNC);
         if (progress_status_store == NULL) {
-            WARN("Out of memory and will not show the pull progress");
+            ERROR("Out of memory and will not show the pull progress");
+            isulad_set_error_message("Failed to pull image %s with error: out of memory", request->image);
+            ret = -1;
+            goto out;
         } else {
             arg.should_terminal = false;
             arg.status_store = progress_status_store;
             arg.stream = stream;
             if (pthread_create(&tid, NULL, get_progress_status, (void *)&arg) != 0) {
-                WARN("Failed to start thread to get progress status");
+                ERROR("Failed to start thread to get progress status");
+                isulad_set_error_message("Failed to pull image %s with error: start progress thread error", request->image);
+                ret = -1;
+                goto out;
             }
         }
     }
@@ -306,7 +312,7 @@ int oci_do_pull_image(const im_pull_request *request, stream_func_wrapper *strea
 
 out:
     arg.should_terminal = true;
-    if (pthread_join(tid, NULL) != 0) {
+    if (tid != 0 && pthread_join(tid, NULL) != 0) {
         ERROR("Wait child pthread error");
     }
     free_imagetool_image_summary(image);
