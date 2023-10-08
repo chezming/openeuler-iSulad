@@ -37,7 +37,7 @@ typedef struct {
     registry_auth auth;
     bool skip_tls_verify;
     bool insecure_registry;
-    progress_status_map *progress_status_store;
+    progress_status_map *progress_status_store;  // Don't free it. It's freed at other place.
 } registry_pull_options;
 
 typedef struct {

@@ -318,6 +318,6 @@ out:
     free_imagetool_image_summary(image);
     free_imagetool_image_summary(image2);
     free(dest_image_name);
-    free(progress_status_store);
+    progress_status_map_free(progress_status_store);
     return ret;
 }

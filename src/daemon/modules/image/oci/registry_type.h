@@ -136,7 +136,7 @@ typedef struct {
     uint32_t limit;
 #endif
 
-    progress_status_map *progress_status_store;
+    progress_status_map *progress_status_store; // Don't free it. It's freed at other place.
 } pull_descriptor;
 
 void free_challenge(challenge *c);
