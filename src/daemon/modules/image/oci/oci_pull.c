@@ -23,7 +23,7 @@
 #include <unistd.h>
 
 #include "err_msg.h"
-#include "progress.h"
+#include "map.h"
 #include "oci_image.h"
 #include "progress.h"
 #include "registry.h"
@@ -225,10 +225,14 @@ void *get_progress_status(void *arg)
             status->image = NULL;
         }
 
-        progress_status_map_itor *itor = progress_status_map_itor_new(status->status_store); 
-        for (i = 0; progress_status_map_itor_valid(itor); progress_status_map_itor_next(itor), i++) {
-            void *id = progress_status_map_itor_key(itor);
-            const progress *value = progress_status_map_itor_value(itor);
+        if (!progress_status_map_lock(status->status_store)) {
+            ERROR("Cannot itorate progress status map for locking failed");
+            continue;
+        }
+        map_itor *itor = map_itor_new(status->status_store->map); 
+        for (i = 0; map_itor_valid(itor) && i < progress_size; map_itor_next(itor), i++) {
+            void *id = map_itor_key(itor);
+            const progress *value = map_itor_value(itor);
 
             progresses->progresses[i] = util_common_calloc_s(sizeof(image_progress_progresses_element));
             if (progresses->progresses[i] == NULL) {
@@ -239,8 +243,9 @@ void *get_progress_status(void *arg)
             progresses->progresses[i]->current = value->dlnow;
             progresses->progresses_len++;
         }
-        progress_status_map_itor_free(itor);
-
+        map_itor_free(itor);
+        progress_status_map_unlock(status->status_store);
+    
         /* send to client */
         write_ok = status->stream->write_func(status->stream->writer, progresses);
         if (!write_ok) {
@@ -271,7 +276,7 @@ int oci_do_pull_image(const im_pull_request *request, stream_func_wrapper *strea
     }
 
     pthread_t tid = 0;
-    status_arg arg;
+    status_arg arg = {0};
     if (request->is_progress_visible) {
         progress_status_store = progress_status_map_new(MAP_STR_PTR, MAP_DEFAULT_CMP_FUNC, MAP_DEFAULT_FREE_FUNC);
         if (progress_status_store == NULL) {
@@ -279,16 +284,15 @@ int oci_do_pull_image(const im_pull_request *request, stream_func_wrapper *strea
             isulad_set_error_message("Failed to pull image %s with error: out of memory", request->image);
             ret = -1;
             goto out;
-        } else {
-            arg.should_terminal = false;
-            arg.status_store = progress_status_store;
-            arg.stream = stream;
-            if (pthread_create(&tid, NULL, get_progress_status, (void *)&arg) != 0) {
-                ERROR("Failed to start thread to get progress status");
-                isulad_set_error_message("Failed to pull image %s with error: start progress thread error", request->image);
-                ret = -1;
-                goto out;
-            }
+        }
+        arg.should_terminal = false;
+        arg.status_store = progress_status_store;
+        arg.stream = stream;
+        if (pthread_create(&tid, NULL, get_progress_status, (void *)&arg) != 0) {
+            ERROR("Failed to start thread to get progress status");
+            isulad_set_error_message("Failed to pull image %s with error: start progress thread error", request->image);
+            ret = -1;
+            goto out;
         }
     }
 

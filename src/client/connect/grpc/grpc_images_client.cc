@@ -394,6 +394,7 @@ public:
         ClientContext context;
         PullImageRequest grequest;
 
+#ifdef ENABLE_GRPC_REMOTE_CONNECT
 #ifdef OPENSSL_VERIFY
         // Set common name from cert.perm
         char common_name_value[ClientBaseConstants::COMMON_NAME_LEN] = { 0 };
@@ -406,7 +407,7 @@ public:
         context.AddMetadata("username", std::string(common_name_value, strlen(common_name_value)));
         context.AddMetadata("tls_mode", m_tlsMode);
 #endif
-
+#endif
         if (request_to_grpc(request, &grequest) != 0) {
             ERROR("Failed to transform pull request to grpc");
             response->server_errono = ISULAD_ERR_INPUT;
@@ -416,8 +417,12 @@ public:
         auto reader = stub_->PullImage(&context, grequest);
 
         PullImageResponse gresponse;
-        while (reader->Read(&gresponse)) {
-            output_progress(gresponse);
+        if (init_output()) {
+            while (reader->Read(&gresponse)) {
+                output_progress(gresponse);
+            }
+        } else {
+            ERROR("The terminal may not support ANSI Escape code. Display is skipped");
         }
         Status status = reader->Finish();
         if (!status.ok()) {
@@ -432,11 +437,11 @@ public:
 private:
     void output_progress(PullImageResponse &gresponse)
     {
-        char *err;
+        char *err = nullptr;
         struct parser_context ctx = { OPT_GEN_SIMPLIFY, 0 };
 
-        image_progress * progresses = image_progress_parse_data(gresponse.progress_data().c_str(), &ctx, &err);
-        if (progresses == NULL) {
+        image_progress *progresses = image_progress_parse_data(gresponse.progress_data().c_str(), &ctx, &err);
+        if (progresses == nullptr) {
             return;
         }
         show_processes(progresses);
@@ -465,11 +470,11 @@ private:
 
     void display_progress_bar(image_progress_progresses_element *progress_item, int width, bool if_show_all)
     {
-        int i = 0;
         float progress = 0.0;
         int filled_width = 0;
-        char total[16] = {0};
-        char current[16] = {0};
+        const int FLOAT_STRING_SIZE = 64;
+        char total[FLOAT_STRING_SIZE] = {0};
+        char current[FLOAT_STRING_SIZE] = {0};
         int empty_width = 0;
 
         if (progress_item->total != 0) {
@@ -481,6 +486,8 @@ private:
         get_printed_value(progress_item->current, current);
 
         if (if_show_all) {
+            int i = 0;
+
             printf("%s: [", progress_item->id);
 
             // Print filled characters
@@ -500,10 +507,12 @@ private:
         fflush(stdout);
     }
 
-    void display_multiple_progress_bars(image_progress *progresses, int width)
+    void show_processes(image_progress *progresses)
     {
         int i = 0;
         static int len = 0;
+        const int TERMINAL_SHOW_WIDTH = 110;
+        const int width = 50;  // Width of the progress bars
 
         if (len != 0) {
             move_cursor_up(len);
@@ -512,7 +521,7 @@ private:
         len = (int)progresses->progresses_len;
         int terminal_width = get_terminal_width();
         bool if_show_all = true;
-        if (terminal_width < 110) {
+        if (terminal_width < TERMINAL_SHOW_WIDTH) {
             if_show_all = false;
         }
         for (i = 0; i < len; i++) {
@@ -521,13 +530,11 @@ private:
         }
     }
 
-    void show_processes(image_progress *progresses)
+    int init_output()
     {
-        const int width = 50;  // Width of the progress bars
-
-        display_multiple_progress_bars(progresses, width);
+        return init_progress_show();
     }
-    };
+};
 
 class ImageInspect : public ClientBase<ImagesService, ImagesService::Stub, isula_inspect_request, InspectImageRequest,
     isula_inspect_response, InspectImageResponse> {

@@ -14,10 +14,11 @@
  ******************************************************************************/
 
 #include "show.h"
-#include <unistd.h>
+#include <curses.h>
 #include <sys/ioctl.h>
-#include <termios.h>
 #include <stdio.h>
+#include <term.h>
+#include <unistd.h>
 
 void move_to_row(int row)
 {
@@ -61,4 +62,19 @@ int get_terminal_width()
         return -1; // Error
     }
     return ws.ws_col;
+}
+
+int init_progress_show()
+{
+    // Initialize the terminfo database
+    setupterm(NULL, STDOUT_FILENO, (int *)0);
+
+    // Query the database for the capability to move the cursor
+    char *cursor_movement = tgetstr("cm", NULL);
+
+    if (cursor_movement != NULL) {
+        return 1;
+    } else {
+        return 0;
+    }
 }

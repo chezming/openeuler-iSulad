@@ -120,7 +120,7 @@ target_link_libraries(${LIB_ISULAD_IMG}
     libhttpclient)
 
 if ((NOT ANDROID) AND (NOT MUSL))
-    target_link_libraries(${LIB_ISULAD_IMG} -lpthread)
+    target_link_libraries(${LIB_ISULAD_IMG} -lpthread -lncurses)
 endif()
 
 if (ENABLE_OCI_IMAGE)

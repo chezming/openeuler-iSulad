@@ -20,8 +20,10 @@
 extern "C" {
 #endif
 
+int init_progress_show();
+
 void move_to_row(int row);
-void move_cursor_up(int rows);
+void move_cursor_up(int lines);
 void clear_row(int row);
 void clear_lines_below();
 int get_current_row();

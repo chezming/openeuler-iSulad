@@ -18,215 +18,57 @@
 
 #include "utils.h"
 
-/* function to return map itor */
-progress_status_map_itor *progress_status_map_itor_new(const progress_status_map *progress_status_map)
-{
-    if (progress_status_map == NULL) {
-        ERROR("invalid parameter");
-        return NULL;
-    }
-
-    progress_status_map_itor *itor_s = util_common_calloc_s(sizeof(struct progress_status_map_itor));
-    if (itor_s == NULL) {
-        ERROR("Out of memory");
-        return NULL;
-    }
-
-    itor_s->mutex = (pthread_mutex_t *) & (progress_status_map->mutex);
-    itor_s->itor = map_itor_new(progress_status_map->map);
-    return itor_s;
-}
-
-/* function to free map itor */
-void progress_status_map_itor_free(progress_status_map_itor *itor_s)
-{
-    if (itor_s == NULL) {
-        return;
-    }
-
-    map_itor_free(itor_s->itor);
-    free(itor_s);
-}
-
-/* function to locate first map itor */
-bool progress_status_map_itor_first(progress_status_map_itor *itor_s)
-{
-    if (itor_s == NULL || itor_s->mutex == NULL) {
-        return false;
-    }
-
-    bool ret = false;
-    pthread_mutex_lock(itor_s->mutex);
-    ret = map_itor_first(itor_s->itor);
-    pthread_mutex_unlock(itor_s->mutex);
-
-    return ret;
-}
-
-/* function to locate last map itor */
-bool progress_status_map_itor_last(progress_status_map_itor *itor_s)
-{
-    if (itor_s == NULL || itor_s->mutex == NULL) {
-        return false;
-    }
-
-    bool ret = false;
-    pthread_mutex_lock(itor_s->mutex);
-    ret = map_itor_last(itor_s->itor);
-    pthread_mutex_unlock(itor_s->mutex);
-
-    return ret;
-}
-
-/* function to locate next itor */
-bool progress_status_map_itor_next(progress_status_map_itor *itor_s)
-{
-    if (itor_s == NULL || itor_s->mutex == NULL) {
-        return false;
-    }
-
-    bool ret = false;
-    pthread_mutex_lock(itor_s->mutex);
-    ret = map_itor_next(itor_s->itor);
-    pthread_mutex_unlock(itor_s->mutex);
-
-    return ret;
-}
-
-/* function to locate prev itor */
-bool progress_status_map_itor_prev(progress_status_map_itor *itor_s)
-{
-    if (itor_s == NULL || itor_s->mutex == NULL) {
-        return false;
-    }
-
-    bool ret = false;
-    pthread_mutex_lock(itor_s->mutex);
-    ret = map_itor_prev(itor_s->itor);
-    pthread_mutex_unlock(itor_s->mutex);
-
-    return ret;
-}
-
-/* function to check itor is valid */
-bool progress_status_map_itor_valid(const progress_status_map_itor *itor_s)
-{
-    if (itor_s == NULL || itor_s->mutex == NULL) {
-        return false;
-    }
-
-    bool ret = false;
-    pthread_mutex_lock(itor_s->mutex);
-    ret = map_itor_valid(itor_s->itor);
-    pthread_mutex_unlock(itor_s->mutex);
-
-    return ret;
-}
-
-/* function to check itor is valid */
-void *progress_status_map_itor_key(progress_status_map_itor *itor_s)
-{
-    if (itor_s == NULL || itor_s->mutex == NULL) {
-        return NULL;
-    }
-
-    void *ret = NULL;
-    pthread_mutex_lock(itor_s->mutex);
-    ret = map_itor_key(itor_s->itor);
-    pthread_mutex_unlock(itor_s->mutex);
-
-    return ret;
-}
-
-/* function to check itor is valid */
-void *progress_status_map_itor_value(progress_status_map_itor *itor_s)
-{
-    if (itor_s == NULL || itor_s->mutex == NULL) {
-        return NULL;
-    }
-
-    void *ret = NULL;
-    pthread_mutex_lock(itor_s->mutex);
-    ret = map_itor_value(itor_s->itor);
-    pthread_mutex_unlock(itor_s->mutex);
-
-    return ret;
-}
-
 /* function to get size of map */
 size_t progress_status_map_size(const progress_status_map *progress_status_map)
 {
+    size_t ret = 0;
+
     if (progress_status_map == NULL) {
-        ERROR("invalid parameter");
+        ERROR("Invalid parameter");
         return 0;
     }
 
-    size_t ret = 0;
-    pthread_mutex_lock((pthread_mutex_t *) & (progress_status_map->mutex));
+    if (!progress_status_map_lock(progress_status_map)) {
+        ERROR("Cannot get the progress status map size for locking failed");
+        return 0;
+    }
     ret = map_size(progress_status_map->map);
-    pthread_mutex_unlock((pthread_mutex_t *) & (progress_status_map->mutex));
-
+    progress_status_map_unlock(progress_status_map);
+    
     return ret;
 }
 
-/* function to replace key value */
-bool progress_status_map_replace(const progress_status_map *progress_status_map, void *key, void *value)
-{
-    if (progress_status_map == NULL || key == NULL || value == NULL) {
-        ERROR("invalid parameter");
-        return false;
-    }
-
-    bool ret = false;
-    pthread_mutex_lock((pthread_mutex_t *) & (progress_status_map->mutex));
-    ret = map_replace(progress_status_map->map, key, value);
-    pthread_mutex_unlock((pthread_mutex_t *) & (progress_status_map->mutex));
-
-    return ret;
-}
-
-/* function to insert key value */
-bool progress_status_map_insert(progress_status_map *progress_status_map, void *key, void *value)
-{
-    if (progress_status_map == NULL || key == NULL || value == NULL) {
-        ERROR("invalid parameter");
-        return false;
-    }
-
-    bool ret = false;
-    pthread_mutex_lock((pthread_mutex_t *) & (progress_status_map->mutex));
-    ret = map_insert(progress_status_map->map, key, value);
-    pthread_mutex_unlock((pthread_mutex_t *) & (progress_status_map->mutex));
-
-    return ret;
-}
-
-/* function to remove element by key */
-bool progress_status_map_remove(progress_status_map *progress_status_map, void *key)
-{
-    if (progress_status_map == NULL || key == NULL) {
-        return false;
-    }
-
-    bool ret = false;
-    pthread_mutex_lock((pthread_mutex_t *) & (progress_status_map->mutex));
-    ret = map_remove(progress_status_map->map, key);
-    pthread_mutex_unlock((pthread_mutex_t *) & (progress_status_map->mutex));
-
-    return ret;
-}
-
-/* function to search key */
 void *progress_status_map_search(const progress_status_map *progress_status_map, void *key)
 {
     if (progress_status_map == NULL || key == NULL) {
         return NULL;
     }
 
-    void *ret = NULL;
-    pthread_mutex_lock((pthread_mutex_t *) & (progress_status_map->mutex));
-    ret = map_search(progress_status_map->map, key);
-    pthread_mutex_unlock((pthread_mutex_t *) & (progress_status_map->mutex));
+    if (!progress_status_map_lock(progress_status_map)) {
+        ERROR("Cannot search the progress status map item for locking failed");
+        return NULL;
+    }
+    void *ret = map_search(progress_status_map->map, key);
+    progress_status_map_unlock(progress_status_map);
+
+    return ret;
+}
+
+bool progress_status_map_insert(const progress_status_map *progress_status_map, void *key, void *value)
+{
+    bool ret = false;
+
+    if (progress_status_map == NULL || key == NULL || value == NULL) {
+        ERROR("Invalid parameter");
+        return false;
+    }
+
+    if (!progress_status_map_lock(progress_status_map)) {
+        ERROR("Cannot replace the progress status map item for locking failed");
+        return false;
+    }
+    ret = map_insert(progress_status_map->map, key, value);
+    progress_status_map_unlock(progress_status_map);
 
     return ret;
 }
@@ -248,16 +90,6 @@ progress_status_map *progress_status_map_new(map_type_t kvtype, map_cmp_func com
     return progress_status_map;
 }
 
-/* just clear all nodes */
-void progress_status_map_clear(progress_status_map *progress_status_map)
-{
-    pthread_mutex_lock((pthread_mutex_t *) & (progress_status_map->mutex));
-    if (progress_status_map != NULL && progress_status_map->map != NULL) {
-        map_clear(progress_status_map->map);
-    }
-    pthread_mutex_unlock((pthread_mutex_t *) & (progress_status_map->mutex));
-}
-
 /* map free */
 void progress_status_map_free(progress_status_map *progress_status_map)
 {
@@ -267,4 +99,33 @@ void progress_status_map_free(progress_status_map *progress_status_map)
 
     map_free(progress_status_map->map);
     free(progress_status_map);
+}
+
+bool progress_status_map_lock(const progress_status_map *progress_status_map) {
+    int ret = 0;
+
+    if (progress_status_map == NULL) {
+        return false;
+    }
+
+    ret = pthread_mutex_lock((pthread_mutex_t *) & (progress_status_map->mutex));
+    if (ret != 0) {
+        ERROR("Lock progress status map failed: %s", strerror(ret));
+        return false;
+    } else {
+        return true;
+    }
+}
+
+void progress_status_map_unlock(const progress_status_map *progress_status_map) {
+    int ret = 0;
+
+    if (progress_status_map == NULL) {
+        return;
+    }
+
+    ret = pthread_mutex_unlock((pthread_mutex_t *) & (progress_status_map->mutex));
+    if (ret != 0) {
+        ERROR("Unlock progress status map failed: %s", strerror(ret));
+    }
 }

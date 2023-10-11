@@ -692,7 +692,28 @@ out:
 static int xfer(void *p, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow)
 {
     progress_arg *arg = (progress_arg *)p;
-    progress *progress_value = util_common_calloc_s(sizeof(progress));
+    progress *progress_value = NULL;
+
+    if (arg == NULL) {
+        ERROR("Wrong progress arg");
+        return -1;
+    }
+
+    // If the item exists, only replace the value.
+    progress_value = progress_status_map_search(arg->map_store, arg->digest);
+    if (progress_value != NULL) {
+        if (!progress_status_map_lock(arg->map_store)) {
+            ERROR("Cannot update progress status map for locking failed");
+            return -1;
+        }
+        progress_value->dlnow = (int64_t)dlnow;
+        progress_value->dltotal = (int64_t)dltotal;
+        progress_status_map_unlock(arg->map_store);
+
+        return 0;
+    }
+
+    progress_value = util_common_calloc_s(sizeof(progress));
     if (progress_value == NULL) {
         ERROR("Out of memory");
         return -1;
@@ -702,10 +723,15 @@ static int xfer(void *p, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultota
     progress_value->dltotal = (int64_t)dltotal;
 
     if (arg->map_store != NULL && arg->digest != NULL) {
-        progress_status_map_replace(arg->map_store, arg->digest, progress_value);
+        progress_status_map_insert(arg->map_store, arg->digest, progress_value);
     }
 
     return 0;
+}
+
+static int get_progress(void *p, double dltotal, double dlnow, double ultotal, double ulnow)
+{
+    return xfer(p, (curl_off_t)dltotal, (curl_off_t)dlnow, (curl_off_t)ultotal, (curl_off_t)ulnow);
 }
 
 int http_request_file(pull_descriptor *desc, const char *url, const char **custom_headers, char *file,
@@ -741,15 +767,15 @@ int http_request_file(pull_descriptor *desc, const char *url, const char **custo
         goto out;
     }
     options->show_progress = 0;
-#if (LIBCURL_VERSION_NUM >= 0x073200)
     if (desc->progress_status_store != NULL) {
         arg->digest = digest;
         arg->map_store = desc->progress_status_store;
         options->xferinfo = arg;
         options->xferinfo_op = xfer;
+        options->progressinfo = arg;
+        options->progress_info_op = get_progress;
         options->show_progress = 1;
     }
-#endif
     options->timeout = true;
 
     ret = setup_common_options(desc, options, url, custom_headers);

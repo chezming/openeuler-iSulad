@@ -48,7 +48,7 @@ target_include_directories(libisulad_tools
     )
 
 set_target_properties(libisulad_tools PROPERTIES PREFIX "")
-target_link_libraries(libisulad_tools ${ZLIB_LIBRARY} ${ISULA_LIBUTILS_LIBRARY} ${CRYPTO_LIBRARY} ${CAP_LIBRARY})
+target_link_libraries(libisulad_tools ${ZLIB_LIBRARY} ${ISULA_LIBUTILS_LIBRARY} ${CRYPTO_LIBRARY} ${CAP_LIBRARY} -lncurses)
 
 if (ENABLE_OCI_IMAGE)
     target_link_libraries(libisulad_tools ${LIBARCHIVE_LIBRARY})
@@ -101,7 +101,7 @@ add_executable(isula
     ${ISULA_SRCS}
     )
 target_include_directories(isula PUBLIC ${ISULA_INCS} ${SHARED_INCS})
-target_link_libraries(isula libisula_client ${LIBYAJL_LIBRARY})
+target_link_libraries(isula libisula_client -lncurses ${LIBYAJL_LIBRARY})
 if (ANDROID OR MUSL)
     target_link_libraries(isula ${LIBSSL_LIBRARY})
 else()
@@ -153,7 +153,7 @@ target_include_directories(isulad PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/utils/http
     )
 
-target_link_libraries(isulad ${LIBTAR_LIBRARY})
+target_link_libraries(isulad ${LIBTAR_LIBRARY} -lncurses)
 
 if (SYSTEMD_NOTIFY)
     target_link_libraries(isulad ${SYSTEMD_LIBRARY})
@@ -191,7 +191,7 @@ else()
     set_target_properties(isulad PROPERTIES LINKER_LANGUAGE "C")
 endif()
 
-target_link_libraries(isulad libisulad_tools libhttpclient -ldl)
+target_link_libraries(isulad libisulad_tools libhttpclient -ldl -lncurses)
 if (ANDROID OR MUSL)
     target_link_libraries(isulad ${LIBSSL_LIBRARY} ${LIBYAJL_LIBRARY})
 else()
