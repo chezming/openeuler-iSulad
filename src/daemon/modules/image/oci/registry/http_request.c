@@ -694,7 +694,7 @@ static int xfer(void *p, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultota
     progress_arg *arg = (progress_arg *)p;
     progress *progress_value = NULL;
 
-    if (arg == NULL) {
+    if (arg == NULL || arg->map_store == NULL || arg->digest == NULL) {
         ERROR("Wrong progress arg");
         return -1;
     }
