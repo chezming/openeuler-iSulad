@@ -364,7 +364,12 @@ public:
             image_spec->set_image(request->image_name);
             grequest->set_allocated_image(image_spec);
         }
-        grequest->set_is_progress_visible(request->is_progress_visible);
+        // If not support terminal output, disable it.
+        if (init_output()) {
+            grequest->set_is_progress_visible(request->is_progress_visible);
+        } else {
+            grequest->set_is_progress_visible(false);
+        }
 
         return 0;
     }
@@ -417,7 +422,7 @@ public:
         auto reader = stub_->PullImage(&context, grequest);
 
         PullImageResponse gresponse;
-        if (init_output()) {
+        if (grequest.is_progress_visible()) {
             while (reader->Read(&gresponse)) {
                 output_progress(gresponse);
             }
