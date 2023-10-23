@@ -212,12 +212,14 @@ void *get_progress_status(void *arg)
 
         progresses = util_common_calloc_s(sizeof(image_progress));
         if (progresses == NULL) {
+            ERROR("Out of memory. Skip progress show.");
             break;   
         }
 
         progresses->progresses = util_smart_calloc_s(sizeof(image_progress_progresses_element *), progress_size);
         if (progresses->progresses == NULL) {
             free_image_progress(progresses);    
+            ERROR("Out of memory. Skip progress show.");
             break;
         }
         if (status->image != NULL) {
@@ -232,10 +234,11 @@ void *get_progress_status(void *arg)
         map_itor *itor = map_itor_new(status->status_store->map); 
         for (i = 0; map_itor_valid(itor) && i < progress_size; map_itor_next(itor), i++) {
             void *id = map_itor_key(itor);
-            const progress *value = map_itor_value(itor);
+            const progress *value = (progress *)map_itor_value(itor);
 
             progresses->progresses[i] = util_common_calloc_s(sizeof(image_progress_progresses_element));
             if (progresses->progresses[i] == NULL) {
+                WARN("Out of memory. Skip progress show one time.");
                 break;
             }
             progresses->progresses[i]->id = util_strdup_s((char *)id + strlen((char *)id) - 12);
@@ -248,15 +251,15 @@ void *get_progress_status(void *arg)
     
         /* send to client */
         write_ok = status->stream->write_func(status->stream->writer, progresses);
-        if (!write_ok) {
-            if(status->stream->is_cancelled(status->stream->context)) {
-                ERROR("pull stream is cancelled");
-                free_image_progress(progresses);
-                break;
-            }
-            
-            ERROR("Send progress data to client failed");
-        }
+        if (write_ok) {
+            continue;
+        } 
+        if(status->stream->is_cancelled(status->stream->context)) {
+            ERROR("pull stream is cancelled");
+            break;
+        }    
+        ERROR("Send progress data to client failed");
+
         free_image_progress(progresses);
     }
     return NULL;

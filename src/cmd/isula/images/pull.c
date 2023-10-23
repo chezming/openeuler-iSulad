@@ -14,8 +14,10 @@
  ********************************************************************************/
 #include "pull.h"
 
+#include <curses.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <term.h>
 
 #include "utils.h"
 #include "client_arguments.h"
@@ -28,6 +30,21 @@ const char g_cmd_pull_desc[] = "Pull an image or a repository from a registry";
 const char g_cmd_pull_usage[] = "pull [OPTIONS] NAME[:TAG]";
 
 struct client_arguments g_cmd_pull_args = {};
+
+static bool is_terminal_show_supported()
+{
+    // Initialize the terminfo database
+    setupterm(NULL, STDOUT_FILENO, (int *)0);
+
+    // Query the database for the capability to move the cursor
+    char *cursor_movement = tgetstr("cm", NULL);
+
+    if (cursor_movement != NULL) {
+        return true;
+    } else {
+        return false;
+    }
+}
 
 /*
  * Pull an image or a repository from a registry
@@ -47,7 +64,7 @@ int client_pull(const struct client_arguments *args)
     }
 
     request.image_name = args->image_name;
-    request.is_progress_visible = true;
+    request.is_progress_visible = is_terminal_show_supported();
 
     ops = get_connect_client_ops();
     if (ops == NULL || ops->image.pull == NULL) {

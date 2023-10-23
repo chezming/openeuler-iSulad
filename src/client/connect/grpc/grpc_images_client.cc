@@ -17,6 +17,7 @@
 #include "client_base.h"
 #include "images.grpc.pb.h"
 
+#include <isula_libutils/auto_cleanup.h>
 #include <isula_libutils/image_progress.h>
 #include <string>
 #include "show.h"
@@ -364,12 +365,8 @@ public:
             image_spec->set_image(request->image_name);
             grequest->set_allocated_image(image_spec);
         }
-        // If not support terminal output, disable it.
-        if (init_output()) {
-            grequest->set_is_progress_visible(request->is_progress_visible);
-        } else {
-            grequest->set_is_progress_visible(false);
-        }
+
+        grequest->set_is_progress_visible(request->is_progress_visible);
 
         return 0;
     }
@@ -442,7 +439,7 @@ public:
 private:
     void output_progress(PullImageResponse &gresponse)
     {
-        char *err = nullptr;
+        __isula_auto_free char *err = nullptr;
         struct parser_context ctx = { OPT_GEN_SIMPLIFY, 0 };
 
         image_progress *progresses = image_progress_parse_data(gresponse.progress_data().c_str(), &ctx, &err);
@@ -509,13 +506,14 @@ private:
         } else {
             printf("%s:  %s/%s", progress_item->id, current, total);
         }
+        printf("\n");
         fflush(stdout);
     }
 
     void show_processes(image_progress *progresses)
     {
-        int i = 0;
-        static int len = 0;
+        size_t i = 0;
+        static size_t len = 0;
         const int TERMINAL_SHOW_WIDTH = 110;
         const int width = 50;  // Width of the progress bars
 
@@ -523,7 +521,7 @@ private:
             move_cursor_up(len);
         }
         clear_lines_below();
-        len = (int)progresses->progresses_len;
+        len = progresses->progresses_len;
         int terminal_width = get_terminal_width();
         bool if_show_all = true;
         if (terminal_width < TERMINAL_SHOW_WIDTH) {
@@ -531,13 +529,7 @@ private:
         }
         for (i = 0; i < len; i++) {
             display_progress_bar(progresses->progresses[i], width, if_show_all);
-            printf("\n");
         }
-    }
-
-    int init_output()
-    {
-        return init_progress_show();
     }
 };
 

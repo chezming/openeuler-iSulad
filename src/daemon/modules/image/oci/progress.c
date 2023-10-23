@@ -83,7 +83,11 @@ progress_status_map *progress_status_map_new(map_type_t kvtype, map_cmp_func com
         return NULL;
     }
     progress_status_map->map = map_new(kvtype, comparator, kvfree);
-    if (pthread_mutex_init((pthread_mutex_t *) & (progress_status_map->mutex), NULL) != 0) {
+    if (progress_status_map->map == NULL) {
+        ERROR("Out of memory");
+        return NULL;
+    }
+    if (pthread_mutex_init(&(progress_status_map->mutex), NULL) != 0) {
         ERROR("New map failed for mutex init");
         return NULL;
     }
@@ -112,9 +116,8 @@ bool progress_status_map_lock(const progress_status_map *progress_status_map) {
     if (ret != 0) {
         ERROR("Lock progress status map failed: %s", strerror(ret));
         return false;
-    } else {
-        return true;
     }
+    return true;
 }
 
 void progress_status_map_unlock(const progress_status_map *progress_status_map) {

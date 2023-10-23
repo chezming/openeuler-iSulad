@@ -21,6 +21,7 @@
 #include <new>
 #include <string>
 
+#include <isula_libutils/auto_cleanup.h>
 #include <isula_libutils/log.h>
 #include <isula_libutils/image_progress.h>
 #include "utils.h"
@@ -625,7 +626,7 @@ void image_pull_progress_to_grpc(const image_progress *progress,
     }
 
     gresponse.Clear();
-    char *err = nullptr;
+    __isula_auto_free char *err = nullptr;
     struct parser_context ctx = { OPT_GEN_SIMPLIFY, 0 };
     char *data = image_progress_generate_json(progress, &ctx, &err);
     if (data == nullptr) {
