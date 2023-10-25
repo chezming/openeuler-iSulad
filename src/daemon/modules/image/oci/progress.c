@@ -105,7 +105,8 @@ void progress_status_map_free(progress_status_map *progress_status_map)
     free(progress_status_map);
 }
 
-bool progress_status_map_lock(const progress_status_map *progress_status_map) {
+bool progress_status_map_lock(const progress_status_map *progress_status_map)
+{
     int ret = 0;
 
     if (progress_status_map == NULL) {
@@ -120,7 +121,8 @@ bool progress_status_map_lock(const progress_status_map *progress_status_map) {
     return true;
 }
 
-void progress_status_map_unlock(const progress_status_map *progress_status_map) {
+void progress_status_map_unlock(const progress_status_map *progress_status_map)
+{
     int ret = 0;
 
     if (progress_status_map == NULL) {

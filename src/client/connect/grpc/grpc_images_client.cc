@@ -13,7 +13,6 @@
  * Description: provide grpc container service functions
  ******************************************************************************/
 #include "grpc_images_client.h"
-#include "api.grpc.pb.h"
 #include "client_base.h"
 #include "images.grpc.pb.h"
 
@@ -424,7 +423,7 @@ public:
                 output_progress(gresponse);
             }
         } else {
-            ERROR("The terminal may not support ANSI Escape code. Display is skipped");
+            WARN("The terminal may not support ANSI Escape code. Display is skipped");
         }
         Status status = reader->Finish();
         if (!status.ok()) {
@@ -444,6 +443,7 @@ private:
 
         image_progress *progresses = image_progress_parse_data(gresponse.progress_data().c_str(), &ctx, &err);
         if (progresses == nullptr) {
+            ERROR("Parse image progress error %s", err);
             return;
         }
         show_processes(progresses);

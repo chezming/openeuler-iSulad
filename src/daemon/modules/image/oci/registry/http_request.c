@@ -689,7 +689,7 @@ out:
     return ret;
 }
 
-static int xfer(void *p, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow)
+static int xfer_inner(void *p, int64_t dltotal, int64_t dlnow, int64_t ultotal, int64_t ulnow)
 {
     progress_arg *arg = (progress_arg *)p;
     progress *progress_value = NULL;
@@ -706,8 +706,8 @@ static int xfer(void *p, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultota
             ERROR("Cannot update progress status map for locking failed");
             return -1;
         }
-        progress_value->dlnow = (int64_t)dlnow;
-        progress_value->dltotal = (int64_t)dltotal;
+        progress_value->dlnow = dlnow;
+        progress_value->dltotal = dltotal;
         progress_status_map_unlock(arg->map_store);
 
         return 0;
@@ -719,8 +719,8 @@ static int xfer(void *p, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultota
         return -1;
     }
 
-    progress_value->dlnow = (int64_t)dlnow;
-    progress_value->dltotal = (int64_t)dltotal;
+    progress_value->dlnow = dlnow;
+    progress_value->dltotal = dltotal;
 
     if (arg->map_store != NULL && arg->digest != NULL) {
         progress_status_map_insert(arg->map_store, arg->digest, progress_value);
@@ -729,10 +729,17 @@ static int xfer(void *p, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultota
     return 0;
 }
 
+#if (LIBCURL_VERSION_NUM >= 0x072000)
+static int xfer(void *p, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow)
+{
+    return xfer_inner(p, (int64_t)dltotal, (int64_t)dlnow, (int64_t)ultotal, (int64_t)ulnow);
+}
+#else
 static int get_progress(void *p, double dltotal, double dlnow, double ultotal, double ulnow)
 {
-    return xfer(p, (curl_off_t)dltotal, (curl_off_t)dlnow, (curl_off_t)ultotal, (curl_off_t)ulnow);
+    return xfer_inner(p, (int64_t)dltotal, (int64_t)dlnow, (int64_t)ultotal, (int64_t)ulnow);
 }
+#endif
 
 int http_request_file(pull_descriptor *desc, const char *url, const char **custom_headers, char *file,
                       resp_data_type type, CURLcode *errcode, char *digest)
@@ -770,10 +777,13 @@ int http_request_file(pull_descriptor *desc, const char *url, const char **custo
     if (desc->progress_status_store != NULL) {
         arg->digest = digest;
         arg->map_store = desc->progress_status_store;
+#if (LIBCURL_VERSION_NUM >= 0x072000)
         options->xferinfo = arg;
         options->xferinfo_op = xfer;
+#else
         options->progressinfo = arg;
         options->progress_info_op = get_progress;
+#endif
         options->show_progress = 1;
     }
     options->timeout = true;
