@@ -218,9 +218,8 @@ void *get_progress_status(void *arg)
 
         progresses->progresses = util_smart_calloc_s(sizeof(image_progress_progresses_element *), progress_size);
         if (progresses->progresses == NULL) {
-            free_image_progress(progresses);    
             ERROR("Out of memory. Skip progress show.");
-            break;
+            goto error;
         }
         if (status->image != NULL) {
             progresses->image = util_strdup_s(status->image->id);
@@ -229,19 +228,20 @@ void *get_progress_status(void *arg)
 
         if (!progress_status_map_lock(status->status_store)) {
             ERROR("Cannot itorate progress status map for locking failed");
-            continue;
+            goto error;
         }
         map_itor *itor = map_itor_new(status->status_store->map); 
         for (i = 0; map_itor_valid(itor) && i < progress_size; map_itor_next(itor), i++) {
             void *id = map_itor_key(itor);
             const progress *value = (progress *)map_itor_value(itor);
+            const int ID_LEN = 12; // The last 12 charactos of image digest.
 
             progresses->progresses[i] = util_common_calloc_s(sizeof(image_progress_progresses_element));
             if (progresses->progresses[i] == NULL) {
                 WARN("Out of memory. Skip progress show one time.");
-                break;
+                goto error;
             }
-            progresses->progresses[i]->id = util_strdup_s((char *)id + strlen((char *)id) - 12);
+            progresses->progresses[i]->id = util_strdup_s((char *)id + strlen((char *)id) - ID_LEN);
             progresses->progresses[i]->total = value->dltotal;
             progresses->progresses[i]->current = value->dlnow;
             progresses->progresses_len++;
@@ -256,10 +256,10 @@ void *get_progress_status(void *arg)
         } 
         if(status->stream->is_cancelled(status->stream->context)) {
             ERROR("pull stream is cancelled");
-            break;
+            goto error;
         }    
         ERROR("Send progress data to client failed");
-
+error:
         free_image_progress(progresses);
     }
     return NULL;
@@ -281,7 +281,7 @@ int oci_do_pull_image(const im_pull_request *request, stream_func_wrapper *strea
     pthread_t tid = 0;
     status_arg arg = {0};
     if (request->is_progress_visible) {
-        progress_status_store = progress_status_map_new(MAP_STR_PTR, MAP_DEFAULT_CMP_FUNC, MAP_DEFAULT_FREE_FUNC);
+        progress_status_store = progress_status_map_new(MAP_DEFAULT_CMP_FUNC, MAP_DEFAULT_FREE_FUNC);
         if (progress_status_store == NULL) {
             ERROR("Out of memory and will not show the pull progress");
             isulad_set_error_message("Failed to pull image %s with error: out of memory", request->image);

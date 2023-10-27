@@ -19,7 +19,7 @@
 #include "utils.h"
 
 /* function to get size of map */
-size_t progress_status_map_size(const progress_status_map *progress_status_map)
+size_t progress_status_map_size(progress_status_map *progress_status_map)
 {
     size_t ret = 0;
 
@@ -38,7 +38,7 @@ size_t progress_status_map_size(const progress_status_map *progress_status_map)
     return ret;
 }
 
-void *progress_status_map_search(const progress_status_map *progress_status_map, void *key)
+progress *progress_status_map_search(progress_status_map *progress_status_map, char *key)
 {
     if (progress_status_map == NULL || key == NULL) {
         return NULL;
@@ -51,10 +51,10 @@ void *progress_status_map_search(const progress_status_map *progress_status_map,
     void *ret = map_search(progress_status_map->map, key);
     progress_status_map_unlock(progress_status_map);
 
-    return ret;
+    return (progress *)ret;
 }
 
-bool progress_status_map_insert(const progress_status_map *progress_status_map, void *key, void *value)
+bool progress_status_map_insert(progress_status_map *progress_status_map, char *key, progress *value)
 {
     bool ret = false;
 
@@ -74,7 +74,7 @@ bool progress_status_map_insert(const progress_status_map *progress_status_map, 
 }
 
 // malloc a new map by type
-progress_status_map *progress_status_map_new(map_type_t kvtype, map_cmp_func comparator, map_kvfree_func kvfree)
+progress_status_map *progress_status_map_new(map_cmp_func comparator, map_kvfree_func kvfree)
 {
     progress_status_map *progress_status_map = NULL;
     progress_status_map = util_common_calloc_s(sizeof(struct progress_status_map));
@@ -82,7 +82,7 @@ progress_status_map *progress_status_map_new(map_type_t kvtype, map_cmp_func com
         ERROR("Out of memory");
         return NULL;
     }
-    progress_status_map->map = map_new(kvtype, comparator, kvfree);
+    progress_status_map->map = map_new(MAP_STR_PTR, comparator, kvfree);
     if (progress_status_map->map == NULL) {
         ERROR("Out of memory");
         return NULL;
@@ -105,7 +105,7 @@ void progress_status_map_free(progress_status_map *progress_status_map)
     free(progress_status_map);
 }
 
-bool progress_status_map_lock(const progress_status_map *progress_status_map)
+bool progress_status_map_lock(progress_status_map *progress_status_map)
 {
     int ret = 0;
 
@@ -113,7 +113,7 @@ bool progress_status_map_lock(const progress_status_map *progress_status_map)
         return false;
     }
 
-    ret = pthread_mutex_lock((pthread_mutex_t *) & (progress_status_map->mutex));
+    ret = pthread_mutex_lock(&(progress_status_map->mutex));
     if (ret != 0) {
         ERROR("Lock progress status map failed: %s", strerror(ret));
         return false;
@@ -121,7 +121,7 @@ bool progress_status_map_lock(const progress_status_map *progress_status_map)
     return true;
 }
 
-void progress_status_map_unlock(const progress_status_map *progress_status_map)
+void progress_status_map_unlock(progress_status_map *progress_status_map)
 {
     int ret = 0;
 
@@ -129,7 +129,7 @@ void progress_status_map_unlock(const progress_status_map *progress_status_map)
         return;
     }
 
-    ret = pthread_mutex_unlock((pthread_mutex_t *) & (progress_status_map->mutex));
+    ret = pthread_mutex_unlock(&(progress_status_map->mutex));
     if (ret != 0) {
         ERROR("Unlock progress status map failed: %s", strerror(ret));
     }

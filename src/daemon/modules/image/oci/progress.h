@@ -33,19 +33,19 @@ typedef struct progress {
    int64_t dltotal; 
 } progress;
 
-bool progress_status_map_insert(const progress_status_map *progress_status_map, void *key, void *value);
+bool progress_status_map_insert(progress_status_map *progress_status_map, char *key, progress *value);
 
-void *progress_status_map_search(const progress_status_map *progress_status_map, void *key);
+progress *progress_status_map_search(progress_status_map *progress_status_map, char *key);
 
-progress_status_map *progress_status_map_new(map_type_t kvtype, map_cmp_func comparator, map_kvfree_func kvfree);
+progress_status_map *progress_status_map_new(map_cmp_func comparator, map_kvfree_func kvfree);
 
-size_t progress_status_map_size(const progress_status_map *progress_status_map);
+size_t progress_status_map_size(progress_status_map *progress_status_map);
 
 void progress_status_map_free(progress_status_map *map);
 
-bool progress_status_map_lock(const progress_status_map *progress_status_map);
+bool progress_status_map_lock(progress_status_map *progress_status_map);
 
-void progress_status_map_unlock(const progress_status_map *progress_status_map);
+void progress_status_map_unlock(progress_status_map *progress_status_map);
 
 #if defined(__cplusplus) || defined(c_plusplus)
 }
