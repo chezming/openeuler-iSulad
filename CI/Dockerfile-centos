@@ -57,8 +57,6 @@ RUN yum clean all && yum makecache && yum install -y epel-release && yum swap -y
 			tar \
 			wget \
 			cppcheck \
-			python3 \
-			python3-pip \
 			device-mapper-devel \
 			xz-devel \
 			libtar \
@@ -88,7 +86,11 @@ RUN yum clean all && yum makecache && yum install -y epel-release && yum swap -y
 			lvm2 \
 			tcpdump \
 			sysvinit-tools
-RUN pip3 install meson ninja
+# RUN cd /tmp && wget https://www.python.org/ftp/python/3.9.10/Python-3.9.10.tgz \
+RUN cd /tmp && wget https://mirrors.huaweicloud.com/python/3.9.1/Python-3.9.1.tgz && \
+    tar -zxvf Python-3.9.1.tgz && cd Python-3.9.1 && ./configure --enable-optimizations --with-ssl && \
+    make altinstall && ln -fs /usr/local/bin/python3.9 /usr/bin/python3 && ln -fs /usr/local/bin/pip3.9 /usr/bin/pip3
+RUN pip3 install --default-timeout=100 meson ninja
 
 RUN yum clean all && \
     (cd /lib/systemd/system/sysinit.target.wants/; for i in *; \
