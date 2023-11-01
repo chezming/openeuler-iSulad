@@ -33,6 +33,7 @@ struct client_arguments g_cmd_pull_args = {};
 
 static bool is_terminal_show_supported()
 {
+#ifdef ENABLE_GRPC
     // Initialize the terminfo database
     setupterm(NULL, STDOUT_FILENO, (int *)0);
 
@@ -44,6 +45,9 @@ static bool is_terminal_show_supported()
     } else {
         return false;
     }
+#else
+    return false;
+#endif
 }
 
 /*

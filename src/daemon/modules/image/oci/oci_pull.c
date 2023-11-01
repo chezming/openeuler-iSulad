@@ -238,7 +238,9 @@ void *get_progress_status(void *arg)
 
             progresses->progresses[i] = util_common_calloc_s(sizeof(image_progress_progresses_element));
             if (progresses->progresses[i] == NULL) {
-                WARN("Out of memory. Skip progress show one time.");
+                WARN("Out of memory. Skip progress show.");
+                map_itor_free(itor);
+                progress_status_map_unlock(status->status_store);
                 goto error;
             }
             progresses->progresses[i]->id = util_strdup_s((char *)id + strlen((char *)id) - ID_LEN);
@@ -281,7 +283,7 @@ int oci_do_pull_image(const im_pull_request *request, stream_func_wrapper *strea
     pthread_t tid = 0;
     status_arg arg = {0};
     if (request->is_progress_visible) {
-        progress_status_store = progress_status_map_new(MAP_DEFAULT_CMP_FUNC, MAP_DEFAULT_FREE_FUNC);
+        progress_status_store = progress_status_map_new();
         if (progress_status_store == NULL) {
             ERROR("Out of memory and will not show the pull progress");
             isulad_set_error_message("Failed to pull image %s with error: out of memory", request->image);

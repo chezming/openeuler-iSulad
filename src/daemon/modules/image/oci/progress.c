@@ -38,22 +38,6 @@ size_t progress_status_map_size(progress_status_map *progress_status_map)
     return ret;
 }
 
-progress *progress_status_map_search(progress_status_map *progress_status_map, char *key)
-{
-    if (progress_status_map == NULL || key == NULL) {
-        return NULL;
-    }
-
-    if (!progress_status_map_lock(progress_status_map)) {
-        ERROR("Cannot search the progress status map item for locking failed");
-        return NULL;
-    }
-    void *ret = map_search(progress_status_map->map, key);
-    progress_status_map_unlock(progress_status_map);
-
-    return (progress *)ret;
-}
-
 bool progress_status_map_insert(progress_status_map *progress_status_map, char *key, progress *value)
 {
     bool ret = false;
@@ -74,7 +58,7 @@ bool progress_status_map_insert(progress_status_map *progress_status_map, char *
 }
 
 // malloc a new map by type
-progress_status_map *progress_status_map_new(map_cmp_func comparator, map_kvfree_func kvfree)
+progress_status_map *progress_status_map_new()
 {
     progress_status_map *progress_status_map = NULL;
     progress_status_map = util_common_calloc_s(sizeof(struct progress_status_map));
@@ -82,7 +66,7 @@ progress_status_map *progress_status_map_new(map_cmp_func comparator, map_kvfree
         ERROR("Out of memory");
         return NULL;
     }
-    progress_status_map->map = map_new(MAP_STR_PTR, comparator, kvfree);
+    progress_status_map->map = map_new(MAP_STR_PTR, MAP_DEFAULT_CMP_FUNC, MAP_DEFAULT_FREE_FUNC);
     if (progress_status_map->map == NULL) {
         ERROR("Out of memory");
         return NULL;

@@ -35,9 +35,7 @@ typedef struct progress {
 
 bool progress_status_map_insert(progress_status_map *progress_status_map, char *key, progress *value);
 
-progress *progress_status_map_search(progress_status_map *progress_status_map, char *key);
-
-progress_status_map *progress_status_map_new(map_cmp_func comparator, map_kvfree_func kvfree);
+progress_status_map *progress_status_map_new();
 
 size_t progress_status_map_size(progress_status_map *progress_status_map);
 

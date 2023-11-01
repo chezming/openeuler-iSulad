@@ -648,6 +648,7 @@ bool grpc_pull_write_function(void *writer, void *data)
 
     image_pull_progress_to_grpc(response, gresponse);
 
+    free_image_progress(response);
     return gwriter->Write(gresponse);
 }
 

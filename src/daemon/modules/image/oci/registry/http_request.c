@@ -699,19 +699,21 @@ static int xfer_inner(void *p, int64_t dltotal, int64_t dlnow, int64_t ultotal, 
         return -1;
     }
 
+    if (!progress_status_map_lock(arg->map_store)) {
+        ERROR("Cannot update progress status map for locking failed");
+        return -1;
+    }
+
     // If the item exists, only replace the value.
-    progress_value = progress_status_map_search(arg->map_store, arg->digest);
+    progress_value = map_search(arg->map_store->map, arg->digest);
     if (progress_value != NULL) {
-        if (!progress_status_map_lock(arg->map_store)) {
-            ERROR("Cannot update progress status map for locking failed");
-            return -1;
-        }
         progress_value->dlnow = dlnow;
         progress_value->dltotal = dltotal;
         progress_status_map_unlock(arg->map_store);
 
         return 0;
     }
+    progress_status_map_unlock(arg->map_store);
 
     progress_value = util_common_calloc_s(sizeof(progress));
     if (progress_value == NULL) {
