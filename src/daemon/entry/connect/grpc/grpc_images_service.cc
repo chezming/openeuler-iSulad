@@ -638,6 +638,7 @@ void image_pull_progress_to_grpc(const image_progress *progress,
     if (progress->image != nullptr) {
         gresponse.set_image_ref(progress->image);
     }
+    free(data);
 }
 
 bool grpc_pull_write_function(void *writer, void *data)

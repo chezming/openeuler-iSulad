@@ -10,7 +10,7 @@
  * See the Mulan PSL v2 for more details.
  * Author: Chenwei
  * Create: 2023-08-25
- * Description: provide pthread safe progress status map
+ * Description: provide pthread safe pull progress status map definition
  ******************************************************************************/
 #ifndef DAEMON_MODULES_IMAGE_OCI_PROGRESS_STATUS_MAP_H
 #define DAEMON_MODULES_IMAGE_OCI_PROGRESS_STATUS_MAP_H

@@ -10,7 +10,7 @@
  * See the Mulan PSL v2 for more details.
  * Author: Chenwei
  * Create: 2023-08-25
- * Description: provide pthread safe container map definition
+ * Description: provide pthread safe pull progress status map definition
  ******************************************************************************/
 #include "progress.h"
 #include <isula_libutils/log.h>
@@ -68,10 +68,12 @@ progress_status_map *progress_status_map_new()
     }
     progress_status_map->map = map_new(MAP_STR_PTR, MAP_DEFAULT_CMP_FUNC, MAP_DEFAULT_FREE_FUNC);
     if (progress_status_map->map == NULL) {
+        free(progress_status_map);
         ERROR("Out of memory");
         return NULL;
     }
     if (pthread_mutex_init(&(progress_status_map->mutex), NULL) != 0) {
+        progress_status_map_free(progress_status_map);
         ERROR("New map failed for mutex init");
         return NULL;
     }
