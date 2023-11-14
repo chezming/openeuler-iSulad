@@ -219,7 +219,7 @@ void *get_progress_status(void *arg)
         progresses->progresses = util_smart_calloc_s(sizeof(image_progress_progresses_element *), progress_size);
         if (progresses->progresses == NULL) {
             ERROR("Out of memory. Skip progress show.");
-            goto error;
+            goto roundend;
         }
         if (status->image != NULL) {
             progresses->image = util_strdup_s(status->image->id);
@@ -228,7 +228,7 @@ void *get_progress_status(void *arg)
 
         if (!progress_status_map_lock(status->status_store)) {
             ERROR("Cannot itorate progress status map for locking failed");
-            goto error;
+            goto roundend;
         }
         map_itor *itor = map_itor_new(status->status_store->map); 
         for (i = 0; map_itor_valid(itor) && i < progress_size; map_itor_next(itor), i++) {
@@ -241,7 +241,7 @@ void *get_progress_status(void *arg)
                 WARN("Out of memory. Skip progress show.");
                 map_itor_free(itor);
                 progress_status_map_unlock(status->status_store);
-                goto error;
+                goto roundend;
             }
             progresses->progresses[i]->id = util_strdup_s((char *)id + strlen((char *)id) - ID_LEN);
             progresses->progresses[i]->total = value->dltotal;
@@ -254,14 +254,14 @@ void *get_progress_status(void *arg)
         /* send to client */
         write_ok = status->stream->write_func(status->stream->writer, progresses);
         if (write_ok) {
-            continue;
+            goto roundend;
         } 
         if(status->stream->is_cancelled(status->stream->context)) {
             ERROR("pull stream is cancelled");
-            goto error;
+            goto roundend;
         }    
         ERROR("Send progress data to client failed");
-error:
+roundend:
         free_image_progress(progresses);
     }
     return NULL;

@@ -158,7 +158,7 @@ int rest_server_init(const char *socket, daemon_shutdown_cb_t shutdown_cb)
         goto error_out;
     }
 
-    // evhtp_use_dynamic_threads(g_htp, NULL, NULL, 0, 0, 0, NULL);
+    evhtp_use_dynamic_threads(g_htp, NULL, NULL, 0, 0, 0, NULL);
     if (evhtp_bind_socket(g_htp, g_socketpath, 0, BACKLOG) < 0) {
         ERROR("Evhtp_bind_socket error");
         goto error_out;
