@@ -73,7 +73,8 @@ progress_status_map *progress_status_map_new()
         return NULL;
     }
     if (pthread_mutex_init(&(progress_status_map->mutex), NULL) != 0) {
-        progress_status_map_free(progress_status_map);
+        map_free(progress_status_map->map);
+        free(progress_status_map);
         ERROR("New map failed for mutex init");
         return NULL;
     }
@@ -87,6 +88,7 @@ void progress_status_map_free(progress_status_map *progress_status_map)
         return;
     }
 
+    pthread_mutex_destroy(&(progress_status_map->mutex));
     map_free(progress_status_map->map);
     free(progress_status_map);
 }

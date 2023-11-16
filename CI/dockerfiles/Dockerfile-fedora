@@ -94,7 +94,8 @@ RUN dnf update -y && dnf install -y automake \
 			lvm2 \
 			patch \
 			tcpdump \
-			iputils
+			iputils \
+            ncurses-devel
 
 RUN dnf clean all
 RUN pip3 install meson ninja

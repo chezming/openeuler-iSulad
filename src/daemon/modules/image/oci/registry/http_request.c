@@ -724,9 +724,7 @@ static int xfer_inner(void *p, int64_t dltotal, int64_t dlnow, int64_t ultotal, 
     progress_value->dlnow = dlnow;
     progress_value->dltotal = dltotal;
 
-    if (arg->map_store != NULL && arg->digest != NULL) {
-        progress_status_map_insert(arg->map_store, arg->digest, progress_value);
-    }
+    progress_status_map_insert(arg->map_store, arg->digest, progress_value);
 
     return 0;
 }

@@ -318,6 +318,7 @@ int oci_do_pull_image(const im_pull_request *request, stream_func_wrapper *strea
         goto out;
     }
     arg.image = image;
+    response->image_ref = util_strdup_s(image->id);
 
 out:
     arg.should_terminal = true;
