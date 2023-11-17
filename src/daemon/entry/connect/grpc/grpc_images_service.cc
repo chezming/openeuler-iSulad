@@ -643,11 +643,11 @@ void image_pull_progress_to_grpc(const image_progress *progress,
 
 bool grpc_pull_write_function(void *writer, void *data)
 {
-    auto *response = static_cast<image_progress *>(data);
+    auto *progress = static_cast<image_progress *>(data);
     auto *gwriter = static_cast<ServerWriter<PullImageResponse> *>(writer);
     PullImageResponse gresponse;
 
-    image_pull_progress_to_grpc(response, gresponse);
+    image_pull_progress_to_grpc(progress, gresponse);
 
     return gwriter->Write(gresponse);
 }

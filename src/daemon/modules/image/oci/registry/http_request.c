@@ -694,9 +694,13 @@ static int xfer_inner(void *p, int64_t dltotal, int64_t dlnow, int64_t ultotal, 
     progress_arg *arg = (progress_arg *)p;
     progress *progress_value = NULL;
 
-    if (arg == NULL || arg->map_store == NULL || arg->digest == NULL) {
+    if (arg == NULL || arg->map_store == NULL) {
         ERROR("Wrong progress arg");
         return -1;
+    }
+    // When fetch_manifest_list, there's no digest. It's not a layer pulling progress and skip it.
+    if (arg->digest == NULL) {
+        return 0;
     }
 
     if (!progress_status_map_lock(arg->map_store)) {

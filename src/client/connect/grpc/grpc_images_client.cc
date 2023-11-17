@@ -423,6 +423,7 @@ public:
                 output_progress(gresponse);
             }
         } else {
+            reader->Read(&gresponse);
             WARN("The terminal may not support ANSI Escape code. Display is skipped");
         }
         Status status = reader->Finish();

@@ -184,6 +184,7 @@ typedef struct status_arg {
     progress_status_map *status_store;
     bool should_terminal;
     imagetool_image_summary *image;
+    char *image_name;
     stream_func_wrapper *stream;
 } status_arg;
 
@@ -222,7 +223,7 @@ void *get_progress_status(void *arg)
             goto roundend;
         }
         if (status->image != NULL) {
-            progresses->image = util_strdup_s(status->image->id);
+            progresses->image = util_strdup_s(status->image_name);
             status->image = NULL;
         }
 
@@ -256,7 +257,7 @@ void *get_progress_status(void *arg)
         if (write_ok) {
             goto roundend;
         } 
-        if(status->stream->is_cancelled(status->stream->context)) {
+        if (status->stream->is_cancelled(status->stream->context)) {
             ERROR("pull stream is cancelled");
             goto roundend;
         }    
@@ -275,7 +276,7 @@ int oci_do_pull_image(const im_pull_request *request, stream_func_wrapper *strea
     char *dest_image_name = NULL;
     progress_status_map *progress_status_store = NULL;
 
-    if (request == NULL || request->image == NULL || response == NULL) {
+    if (request == NULL || request->image == NULL || response == NULL || stream == NULL) {
         ERROR("Invalid NULL param");
         return -1;
     }
@@ -318,8 +319,22 @@ int oci_do_pull_image(const im_pull_request *request, stream_func_wrapper *strea
         goto out;
     }
     arg.image = image;
-    response->image_ref = util_strdup_s(image->id);
+    arg.image_name = dest_image_name;
+    if (!request->is_progress_visible) {
+        image_progress *progresses;
 
+        progresses = util_common_calloc_s(sizeof(image_progress));
+        if (progresses == NULL) {
+            ERROR("Out of memory. Skip progress show.");
+            goto out;   
+        }
+        progresses->image = util_strdup_s(dest_image_name);
+        if (stream->write_func(stream->writer, progresses)) {
+            ERROR("Send progress data to client failed");
+            goto out;
+        }
+    }
+    
 out:
     arg.should_terminal = true;
     if (tid != 0 && pthread_join(tid, NULL) != 0) {
