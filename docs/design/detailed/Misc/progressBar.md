@@ -1,5 +1,5 @@
 # 方案目标
-在Image Load & pull过程中，显示多个layer下载的进度。
+在Image pull过程中，显示多个layer下载的进度。
 
 之前的grpc pull和cri pull共用了接口，需要新增grpc pull接口，该接口类型为stream，带progress status。
 重写函数oci_do_pull_image，底层函数pull_image复用。
@@ -12,51 +12,28 @@
 # 总体设计
 ## 主要功能模块
 ### Progress status store
-为每一个connection建立一个status map。 map的key为Layer ID，内容结构体定义如下:
+每次pull命令或者行为为一个connection。每个image会按照layer来下载。所以我们建立了一个status map。 map的key为Layer ID，内容结构体定义如下:
 
 ```
 struct progress_status {
     // Layer ID
     char ID[13];
 
-    // Progress of an action, such as Downloading, Loading
-    char action[32];
-
-    // total is the end value describing when we made 100% progress for an operation.
+    // total is the end value describing when we made 100% progress for an operation. Unit is Byte.
     int64 total;
 
-    // start is the initial value for the operation.
-    int64 start;
-
-    // current is the current value for the operation.
+    // current is the current value for the operation. Unit is Byte.
     int64 current;
-    
-    // units is the unit to print for progress. It defaults to "B" - bytes if empty.
-    char units[4];
 }
 ```
 
 #### API
 ```
-map *init_progress_store();
+progress_status_map *progress_status_map_new();
 
-int write_progress_status(map *, progress_status); 
+bool progress_status_map_insert(progress_status_map *progress_status_map, char *key, progress *value);
 
-map *get_progress_status();
 ```
-### 状态设置
-一般下载状态有:
-- Pulling fs layer
-- Waiting
-- Downloading
-- Downloaded
-- Extract 
-- Pull complete
-
-还有一些异常状态，如Already exist，Retrying，所以该状态不做强制定义。
-
-加载状态有:
-- Loading layer
 
 ### Client Progress 显示
 在client每次读到消息时，获取当前窗口宽度(termios.h: tcgetattr)，如果宽度小于110字符，则压缩显示(已下载/全部字节)，如果不是，则显示进度条。
@@ -65,21 +42,17 @@ map *get_progress_status();
 
 ## 主要流程
 ### 下载任务获取下载状态
-在结构体pull_descriptor新增outputfunc和outputparam， 传递write_progress_status和map *。
-新增http_request_with_status封装http_request，兼容原有函数，增加参数outputfunc和param做output。
-```
-int http_request_with_status(const char *url, struct http_get_options *options, long *response_code, int recursive_len, void *outputFunc(void *), void *output_param);
-```
-在http_request_with_status中，新建线程，在curl_easy_perform之后，每隔100ms获取更新一次本任务状态并更新progress status map。
+在结构体pull_descriptor新增*progress_status_store， 传递write_progress_status的map *。
 
-```
-curl_off_t dl;
-curl_easy_getinfo(curl， CURLINFO_SIZE_DOWNLOAD_T， &dl);
-```
+在http_request中，修改原来的桩函数xfer，这个函数将实时采集curl pull的状态，如当前下载的字节数，总的字节数。
+
 
 ### server获取下载状态并传递给client
-新增函数int ImagesServiceImpl::Pull， oci_pull_with_status。 在pull_image里新建线程，初始化status map，在结构体参数options中传递。
-每隔100ms读取status map并序列化为json message，写入response stream。
+新增函数int ImagesServiceImpl::PullImage，函数Response参数为stream，每隔100ms读取progress status map并序列化为json message，写入response stream。
+```
+Status ImagesServiceImpl::PullImage(ServerContext *context, const PullImageRequest *request,
+                                    ServerWriter<PullImageResponse> *writer)
+```
 
 ### client收取状态并显示
-阻塞式读取response stream， 流不为空则一直读取并显示。
+修改原来的grpc_images_client中ImagesPull函数。阻塞式读取response stream， 流不为空则一直读取并打印显示每个progress status。
