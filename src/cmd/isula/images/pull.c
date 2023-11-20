@@ -14,10 +14,12 @@
  ********************************************************************************/
 #include "pull.h"
 
+#ifdef GRPC_CONNECTOR
 #include <curses.h>
+#include <term.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
-#include <term.h>
 
 #include "utils.h"
 #include "client_arguments.h"
