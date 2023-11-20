@@ -31,6 +31,13 @@ fi
 pip3 install meson ninja
 # dnf install -y cargo rust rust-packaging
 
+# It is already in the iSulad path.
+pwd
+git log -1
+git branch 
+git pull
+git remote -v
+
 cd ~
 
 rm -rf lxc
