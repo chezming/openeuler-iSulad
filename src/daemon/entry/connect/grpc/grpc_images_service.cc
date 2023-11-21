@@ -22,8 +22,8 @@
 #include <string>
 
 #include <isula_libutils/auto_cleanup.h>
-#include <isula_libutils/log.h>
 #include <isula_libutils/image_progress.h>
+#include <isula_libutils/log.h>
 #include "utils.h"
 #include "grpc_server_tls_auth.h"
 #include "grpc_containers_service.h"
@@ -689,16 +689,12 @@ Status ImagesServiceImpl::PullImage(ServerContext *context, const PullImageReque
     stream.writer = (void *)writer;
 
     ret = cb->image.pull(image_req, &stream, &image_res);
-    if (ret != 0) {
-        free_image_pull_image_request(image_req);
-        free_image_pull_image_response(image_res);
-        return Status(StatusCode::UNKNOWN, errmsg);
-    }
-
     free_image_pull_image_request(image_req);
     free_image_pull_image_response(image_res);
-
-    return Status::OK;
+    if (ret == 0) {
+        return Status::OK;
+    }
+    return Status(StatusCode::UNKNOWN, errmsg);
 }
 
 #ifdef ENABLE_IMAGE_SEARCH

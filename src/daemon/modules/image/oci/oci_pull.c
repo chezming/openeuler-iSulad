@@ -276,14 +276,14 @@ int oci_do_pull_image(const im_pull_request *request, stream_func_wrapper *strea
     char *dest_image_name = NULL;
     progress_status_map *progress_status_store = NULL;
 
-    if (request == NULL || request->image == NULL || response == NULL || stream == NULL) {
+    if (request == NULL || request->image == NULL || response == NULL) {
         ERROR("Invalid NULL param");
         return -1;
     }
 
     pthread_t tid = 0;
     status_arg arg = {0};
-    if (request->is_progress_visible) {
+    if (request->is_progress_visible && stream != NULL) {
         progress_status_store = progress_status_map_new();
         if (progress_status_store == NULL) {
             ERROR("Out of memory and will not show the pull progress");
@@ -320,7 +320,7 @@ int oci_do_pull_image(const im_pull_request *request, stream_func_wrapper *strea
     }
     arg.image = image;
     arg.image_name = dest_image_name;
-    if (!request->is_progress_visible) {
+    if (!request->is_progress_visible && stream != NULL) {
         image_progress *progresses;
 
         progresses = util_common_calloc_s(sizeof(image_progress));
@@ -334,6 +334,7 @@ int oci_do_pull_image(const im_pull_request *request, stream_func_wrapper *strea
             goto out;
         }
     }
+    response->image_ref = util_strdup_s(image->id);
     
 out:
     arg.should_terminal = true;
