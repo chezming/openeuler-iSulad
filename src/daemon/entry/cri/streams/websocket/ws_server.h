@@ -33,7 +33,8 @@
 
 namespace {
 const int MAX_ECHO_PAYLOAD = 4096;
-const int MAX_PROTOCOL_NUM = 2;
+const int MAX_PROTOCOL_NUM = 4;
+const unsigned char WS_CLOSE_FLAG = 255;
 } // namespace
 
 enum WebsocketChannel { STDINCHANNEL = 0, STDOUTCHANNEL, STDERRCHANNEL, ERRORCHANNEL, RESIZECHANNEL };
@@ -74,7 +75,9 @@ private:
     // redirect libwebsockets logs to iSulad
     static void EmitLog(int level, const char *line);
     // libwebsockets Callback function
-    static int Callback(struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len);
+    static int WsCallback(struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len);
+    static int HttpCallback(struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len);
+    static int GetWsToken(struct lws *wsi, char *dest, int len, enum lws_token_indexes h);
 
 private:
     static std::atomic<WebsocketServer *> m_instance;
@@ -83,13 +86,10 @@ private:
     volatile int m_forceExit = 0;
     std::thread m_pthreadService;
     const struct lws_protocols m_protocols[MAX_PROTOCOL_NUM] = {
-        {
-            "channel.k8s.io",
-            Callback,
-            0,
-            MAX_ECHO_PAYLOAD,
-        },
-        { nullptr, nullptr, 0, 0 }
+        { "http", HttpCallback, 0, MAX_ECHO_PAYLOAD, 0, nullptr, 0 },
+        { "v5.channel.k8s.io", WsCallback, 0, MAX_ECHO_PAYLOAD, 0, nullptr, 0 },
+        { "channel.k8s.io", WsCallback, 0, MAX_ECHO_PAYLOAD, 0, nullptr, 0 },
+        { nullptr, nullptr, 0, 0, 0, nullptr, 0 },
     };
     RouteCallbackRegister m_handler;
     static std::unordered_map<int, SessionData *> m_wsis;
