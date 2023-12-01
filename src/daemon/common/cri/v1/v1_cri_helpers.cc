@@ -26,6 +26,7 @@
 #include "v1_cri_security_context.h"
 #include "cri_helpers.h"
 #include "cri_constants.h"
+#include "checkpoint_common.h"
 #include "cxxutils.h"
 #include "path.h"
 #include "utils.h"

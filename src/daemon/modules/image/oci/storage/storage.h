@@ -195,6 +195,10 @@ char *storage_rootfs_get_dir(void);
 
 container_inspect_graph_driver *storage_get_metadata_by_container_id(const char *id);
 
+#ifdef ENABLE_CRI_API_V1
+int storage_tar_diff_files(const char *id, const char *target_file, const char *rootpath);
+#endif /* ENABLE_CRI_API_V1 */
+
 #ifdef __cplusplus
 }
 #endif

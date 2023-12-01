@@ -64,6 +64,9 @@ int oci_tag(const im_tag_request *request);
 #ifdef ENABLE_IMAGE_SEARCH
 int oci_search(const im_search_request *request, imagetool_search_result **result);
 #endif
+#ifdef ENABLE_CRI_API_V1
+int oci_tar_diff_files(const char *id, const char *target_file, const char *rootpath);
+#endif /* ENABLE_CRI_API_V1 */
 
 #ifdef __cplusplus
 }

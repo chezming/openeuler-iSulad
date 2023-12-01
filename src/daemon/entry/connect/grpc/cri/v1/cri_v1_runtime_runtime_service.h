@@ -84,6 +84,10 @@ public:
                                      const runtime::v1::ListPodSandboxStatsRequest *request,
                                      runtime::v1::ListPodSandboxStatsResponse *reply) override;
 
+    grpc::Status CheckpointContainer(grpc::ServerContext *context,
+                                          const runtime::v1::CheckpointContainerRequest *request,
+                                          runtime::v1::CheckpointContainerResponse *reply) override;
+
     grpc::Status UpdateContainerResources(grpc::ServerContext *context,
                                           const runtime::v1::UpdateContainerResourcesRequest *request,
                                           runtime::v1::UpdateContainerResourcesResponse *reply) override;

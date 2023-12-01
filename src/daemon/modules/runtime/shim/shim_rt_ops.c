@@ -813,3 +813,9 @@ int rt_shim_rebuild_config(const char *name, const char *runtime, const rt_rebui
 {
     return 0;
 }
+
+int rt_shim_checkpoint(const char *id, const char *runtime, const rt_checkpoint_params_t *params)
+{
+    ERROR("rt_shim_checkpoint not impl");
+    return -1;
+}

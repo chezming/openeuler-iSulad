@@ -42,6 +42,7 @@
 #include "utils_file.h"
 #include "utils_string.h"
 #include "utils_verify.h"
+#include "util_archive.h"
 #include "sha256.h"
 #ifdef ENABLE_REMOTE_LAYER_STORE
 #include "remote_support.h"
@@ -1942,3 +1943,26 @@ char *storage_rootfs_get_dir()
 {
     return rootfs_store_get_data_dir();
 }
+
+#ifdef ENABLE_CRI_API_V1
+int storage_tar_diff_files(const char *id, const char *target_file, const char *rootpath)
+{
+    int ret = 0;
+    __isula_auto_free char *errmsg = NULL;
+    container_inspect_graph_driver *graph_driver = NULL;
+
+    graph_driver = storage_get_metadata_by_container_id(id);
+    if (graph_driver == NULL) {
+        ERROR("Failed to get storage metadata");
+        return -1;
+    }
+
+    if (archive_chroot_tar(graph_driver->data->upper_dir, target_file, rootpath, &errmsg) != 0) {
+        ret = -1;
+        ERROR("Failed to tar files %s. %s", graph_driver->data->upper_dir, errmsg);
+    }
+
+    free_container_inspect_graph_driver(graph_driver);
+    return ret;
+}
+#endif /* ENABLE_CRI_API_V1 */

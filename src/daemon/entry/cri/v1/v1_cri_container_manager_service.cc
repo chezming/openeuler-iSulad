@@ -14,12 +14,15 @@
  *********************************************************************************/
 
 #include "v1_cri_container_manager_service.h"
+
+#include <isula_libutils/log.h>
+#include <isula_libutils/container_stop_request.h>
+#include <isula_libutils/auto_cleanup.h>
+
 #include "v1_cri_helpers.h"
 #include "cri_helpers.h"
 #include "utils.h"
 #include "errors.h"
-#include "isula_libutils/log.h"
-#include "isula_libutils/container_stop_request.h"
 #include "v1_naming.h"
 #include "path.h"
 #include "service_container_api.h"
@@ -1196,6 +1199,51 @@ ContainerManagerService::ContainerStatus(const std::string &containerID, Errors 
     free_container_inspect(inspect);
     return contStatus;
 }
+
+void ContainerManagerService::CheckpointContainer(const std::string &containerID,
+                                                  const std::string &targetFile, Errors &error)
+{
+    if (containerID.empty()) {
+        error.SetError("Invalid empty container id.");
+        return;
+    }
+    if (m_cb == nullptr || m_cb->container.checkpoint == nullptr) {
+        error.SetError("Unimplemented callback");
+        return;
+    }
+
+    std::string realContainerID = CRIHelpers::GetRealContainerOrSandboxID(m_cb, containerID, false, error);
+    if (error.NotEmpty()) {
+        ERROR("Failed to find container id %s: %s", containerID.c_str(), error.GetCMessage());
+        error.Errorf("Failed to find container id %s: %s", containerID.c_str(), error.GetCMessage());
+        return;
+    }
+    INFO("Checkpointing container: %s", containerID.c_str());
+
+    container_checkpoint_request *request { nullptr };
+    container_checkpoint_response *response { nullptr };
+
+    auto checkpoint_request_wrapper = makeUniquePtrCStructWrapper<container_checkpoint_request>(free_container_checkpoint_request);
+    if (checkpoint_request_wrapper == nullptr) {
+        ERROR("Out of memory");
+        error.Errorf("Out of memory");
+        return;
+    }
+    request = checkpoint_request_wrapper->get();
+    request->id = util_strdup_s(containerID.c_str());
+    request->target_file = util_strdup_s(targetFile.c_str());
+    request->keep_running = true;
+
+    if (m_cb->container.checkpoint(request, &response) != 0) {
+        if (response != nullptr && response->errmsg != nullptr) {
+            error.SetError(response->errmsg);
+        } else {
+            error.SetError("Failed to call checkpoint container callback");
+        }
+    }
+
+    free_container_checkpoint_response(response);
+}                             
 
 void ContainerManagerService::UpdateContainerResources(const std::string &containerID,
                                                        const runtime::v1::LinuxContainerResources &resources,

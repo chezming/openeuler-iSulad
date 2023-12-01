@@ -102,6 +102,9 @@ struct bim_ops {
 #ifdef ENABLE_IMAGE_SEARCH
     int (*search_image)(const im_search_request *request, imagetool_search_result **results);
 #endif
+#ifdef ENABLE_CRI_API_V1
+    int (*tar_diff_files)(const char *id, const char *target_file, const char *rootpath);
+#endif /* ENABLE_CRI_API_V1 */
 };
 
 struct bim {
@@ -165,6 +168,9 @@ static const struct bim_ops g_embedded_ops = {
 #ifdef ENABLE_IMAGE_SEARCH
     .search_image = NULL,
 #endif
+#ifdef ENABLE_CRI_API_V1
+    .tar_diff_files = NULL,
+#endif /* ENABLE_CRI_API_V1 */
 };
 #endif
 
@@ -203,6 +209,9 @@ static const struct bim_ops g_oci_ops = {
 #ifdef ENABLE_IMAGE_SEARCH
     .search_image = oci_search,
 #endif
+#ifdef ENABLE_CRI_API_V1
+    .tar_diff_files = oci_tar_diff_files,
+#endif /* ENABLE_CRI_API_V1 */
 };
 #endif
 
@@ -241,6 +250,9 @@ static const struct bim_ops g_ext_ops = {
 #ifdef ENABLE_IMAGE_SEARCH
     .search_image = NULL,
 #endif
+#ifdef ENABLE_CRI_API_V1
+    .tar_diff_files = NULL,
+#endif /* ENABLE_CRI_API_V1 */
 };
 
 static const struct bim_type g_bims[] = {
@@ -2394,3 +2406,67 @@ out:
     return ret;
 }
 #endif
+
+#ifdef ENABLE_CRI_API_V1
+void free_im_tar_diff_files_request(im_tar_diff_files_request *ptr)
+{
+    if (ptr == NULL) {
+        return;
+    }
+    free(ptr->id);
+    ptr->id = NULL;
+    free(ptr->image_type);
+    ptr->image_type = NULL;
+    free(ptr->target_file);
+    ptr->target_file = NULL;
+    free(ptr->rootpath);
+    ptr->rootpath = NULL;
+
+    free(ptr);
+}
+
+static inline bool check_im_tar_diff_files(const im_tar_diff_files_request *request)
+{
+    return (request == NULL) || (request->image_type == NULL) || (request->id == NULL) ||
+        (request->target_file == NULL) || (request->rootpath == NULL);
+}
+
+int im_tar_diff_files(const im_tar_diff_files_request *request)
+{
+    int ret = 0;
+    struct bim *bim = NULL;
+    if (check_im_tar_diff_files(request)) {
+        ERROR("Invalid input arguments");
+        return -1;
+    }
+
+    bim = bim_get(request->image_type, NULL, NULL, NULL);
+    if (bim == NULL) {
+        ERROR("Failed to init bim, image type:%s", request->image_type);
+        ret = -1;
+        goto out;
+    }
+    if (bim->ops->tar_diff_files == NULL) {
+        ERROR("Unimplements container tar diff files in %s", bim->type);
+        ret = -1;
+        goto out;
+    }
+
+    EVENT("Event: {Object: %s, Type: tape archiving diff files %s with image type %s}",
+        request->id, request->target_file, request->image_type);
+    ret = bim->ops->tar_diff_files(request->id, request->target_file, request->rootpath);
+    if (ret != 0) {
+        ERROR("Failed to tape archive diff files %s with image type %s in %s",
+            request->id, request->image_type, request->target_file);
+        ret = -1;
+        goto out;
+    }
+
+    EVENT("Event: {Object: %s, Type: tape archived diff files %s with image type %s}",
+        request->id, request->target_file, request->image_type);
+
+out:
+    bim_put(bim);
+    return ret;
+}
+#endif /* ENABLE_CRI_API_V1 */

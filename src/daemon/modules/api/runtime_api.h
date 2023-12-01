@@ -202,6 +202,13 @@ typedef struct _rt_runtime_rebuild_config_params_t {
     const char *rootpath;
 } rt_rebuild_config_params_t;
 
+typedef struct _rt_checkpoint_params_t {
+    const char *root_path;
+    const char *state;
+    const char *image_path;
+    bool leave_running;
+} rt_checkpoint_params_t;
+
 struct rt_ops {
     /* detect whether runtime is of this runtime type */
     bool (*detect)(const char *runtime);
@@ -239,6 +246,7 @@ struct rt_ops {
     int (*rt_resize)(const char *name, const char *runtime, const rt_resize_params_t *params);
     int (*rt_exec_resize)(const char *name, const char *runtime, const rt_exec_resize_params_t *params);
     int (*rt_rebuild_config)(const char *name, const char *runtime, const rt_rebuild_config_params_t *params);
+    int (*rt_checkpoint)(const char *name, const char *runtime, const rt_checkpoint_params_t *params);
 };
 
 int runtime_create(const char *name, const char *runtime, const rt_create_params_t *params);
@@ -257,6 +265,8 @@ int runtime_resume(const char *name, const char *runtime, const rt_resume_params
 int runtime_attach(const char *name, const char *runtime, const rt_attach_params_t *params);
 
 int runtime_update(const char *name, const char *runtime, const rt_update_params_t *params);
+
+int runtime_checkpoint(const char *name, const char *runtime, const rt_checkpoint_params_t *params);
 
 int runtime_listpids(const char *name, const char *runtime, const rt_listpids_params_t *params, rt_listpids_out_t *out);
 int runtime_rebuild_config(const char *name, const char *runtime, const rt_rebuild_config_params_t *params);

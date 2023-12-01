@@ -2122,3 +2122,44 @@ int rt_isula_rebuild_config(const char *name, const char *runtime, const rt_rebu
 {
     return 0;
 }
+
+int rt_isula_checkpoint(const char *id, const char *runtime, const rt_checkpoint_params_t *params)
+{
+    __isula_auto_free const char **opts = NULL;
+    int opts_len;
+    char workdir[PATH_MAX] = { 0 };
+    int ret = 0;
+    int i = 0;
+
+    if (id == NULL || runtime == NULL || params == NULL) {
+        ERROR("nullptr arguments not allowed");
+        return -1;
+    }
+
+    ret = snprintf(workdir, sizeof(workdir), "%s/%s", params->state, id);
+    if (ret < 0 || (size_t)ret >= sizeof(workdir)) {
+        ERROR("failed join workdir %s/%s", params->state, id);
+        return -1;
+    }
+
+    opts_len = 5;
+    if (params->leave_running) {
+        opts_len += 1;
+    }
+
+    opts = (const char **)util_smart_calloc_s(sizeof(char *), opts_len);
+    if (opts == NULL) {
+        ERROR("out of memory");
+        return -1;
+    }
+    opts[i++] = "--file-locks";
+    opts[i++] = "--image-path";
+    opts[i++] = params->image_path;
+    opts[i++] = "--work-path";
+    opts[i++] = params->root_path;
+    if (params->leave_running) {
+        opts[i++] = "--leave-running";
+    }
+
+    return runtime_call_simple(workdir, runtime, "checkpoint", opts, opts_len, id, NULL);
+}

@@ -526,8 +526,6 @@ out:
     return ret;
 }
 
-#define CONFIG_V2_JSON "config.v2.json"
-
 /* save config v2 json */
 int save_config_v2_json(const char *id, const char *rootpath, const char *v2configstr)
 {
@@ -563,7 +561,6 @@ out:
     return v2config;
 }
 
-#define HOSTCONFIGJSON "hostconfig.json"
 /* save host config */
 int save_host_config(const char *id, const char *rootpath, const char *hostconfigstr)
 {

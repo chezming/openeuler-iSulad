@@ -83,6 +83,8 @@ extern "C" {
 #define DEFAULT_CERT_FILE "cert.pem"
 #define OCI_CONFIG_JSON "config.json"
 #define OCI_CONFIG_JSON_V1 "ociconfig.json"
+#define HOSTCONFIGJSON "hostconfig.json"
+#define CONFIG_V2_JSON "config.v2.json"
 
 #define LOG_MAX_RETRIES 10
 

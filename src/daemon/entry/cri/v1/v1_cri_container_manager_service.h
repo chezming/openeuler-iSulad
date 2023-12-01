@@ -62,6 +62,9 @@ public:
     auto ContainerStatus(const std::string &containerID, Errors &error)
     -> std::unique_ptr<runtime::v1::ContainerStatus>;
 
+    void CheckpointContainer(const std::string &containerID,
+                             const std::string &targetFile, Errors &error);
+
     void UpdateContainerResources(const std::string &containerID,
                                   const runtime::v1::LinuxContainerResources &resources, Errors &error);
 

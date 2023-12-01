@@ -240,6 +240,15 @@ typedef struct {
 } im_search_response;
 #endif
 
+#ifdef ENABLE_CRI_API_V1
+typedef struct {
+    char *id;
+    char *image_type;
+    char *target_file;
+    char *rootpath;
+} im_tar_diff_files_request;
+#endif /* ENABLE_CRI_API_V1 */
+
 int image_module_init(const isulad_daemon_configs *args);
 
 void image_module_exit(void);
@@ -370,6 +379,11 @@ void free_im_search_response(im_search_response *response);
 
 int im_search_images(im_search_request *request, im_search_response **response);
 #endif
+
+#ifdef ENABLE_CRI_API_V1
+void free_im_tar_diff_files_request(im_tar_diff_files_request *ptr);
+int im_tar_diff_files(const im_tar_diff_files_request *request);
+#endif /* ENABLE_CRI_API_V1 */
 
 #ifdef __cplusplus
 }

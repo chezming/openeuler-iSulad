@@ -848,3 +848,9 @@ out:
     free_oci_runtime_spec(oci_spec);
     return ret;
 }
+
+int rt_lcr_checkpoint(const char *id, const char *runtime, const rt_checkpoint_params_t *params)
+{
+    ERROR("rt_lcr_checkpoint not impl");
+    return -1;
+}
