@@ -219,6 +219,9 @@ bool check_opt_container_log_opt(const char *driver, const char *opt_key)
     if (driver == NULL || opt_key == NULL) {
         return false;
     }
+    if (strcmp(CONTAINER_LOG_CONFIG_KEY_DRIVER, opt_key) == 0) {
+        return true;
+    }
     for (idx = 0; idx < DRIVER_MAX; idx++) {
         if (strcmp(driver_idx[idx], driver) == 0) {
             break;

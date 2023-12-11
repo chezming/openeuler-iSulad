@@ -37,6 +37,7 @@
 #include "image_store.h"
 #include "rootfs_store.h"
 #include "err_msg.h"
+#include "checkpoint_common.h"
 #include "constants.h"
 #include "utils_array.h"
 #include "utils_file.h"
@@ -44,9 +45,11 @@
 #include "utils_verify.h"
 #include "util_archive.h"
 #include "sha256.h"
+#include "isulad_config.h"
 #ifdef ENABLE_REMOTE_LAYER_STORE
 #include "remote_support.h"
 #endif
+#include "path.h"
 
 static pthread_rwlock_t g_storage_rwlock;
 static char *g_storage_run_root;
@@ -1104,11 +1107,68 @@ void free_layer_list(struct layer_list *ptr)
     free(ptr);
 }
 
+static ssize_t restore_archive_io_read(void *context, void *buf, size_t buf_len)
+{
+    int *read_fd = (int *)context;
+
+    return util_read_nointr(*read_fd, buf, buf_len);
+}
+
+static int restore_archive_io_close(void *context, char **err)
+{
+    int *read_fd = (int *)context;
+
+    close(*read_fd);
+    free(read_fd);
+    return 0;
+}
+
+static int restore_read_wrapper(const char *restore_target, struct io_read_wrapper *diff_reader)
+{
+    __isula_auto_free char *diff_path = NULL;
+    int *fd_ptr = NULL;
+    int ret = 0;
+
+    DEBUG("Restore diff files.");
+
+    diff_path = util_path_join(restore_target, CHECKPOINT_DIFF_FILE);
+    if (diff_path == NULL) {
+        ERROR("Failed to get diff file path %s", CHECKPOINT_DIFF_FILE);
+        return -1;
+    }
+    if (!util_file_exists(diff_path)) {
+        ERROR("Diff file not exists: %s", diff_path);
+        return -1;
+    }
+    
+    fd_ptr = util_common_calloc_s(sizeof(int));
+    if (fd_ptr == NULL) {
+        ERROR("Memory out");
+        return -1;
+    }
+    *fd_ptr = util_open(diff_path, O_RDONLY, 0);
+    if (*fd_ptr == -1) {
+        ERROR("Failed to open diff file %s", diff_path);
+        ret = -1;
+        goto clean_out;
+    }
+
+    diff_reader->context = fd_ptr;
+    fd_ptr = NULL;
+    diff_reader->read = restore_archive_io_read;
+    diff_reader->close = restore_archive_io_close;
+clean_out:
+    free(fd_ptr);
+    return ret;
+}
+
 static int do_create_container_rw_layer(const char *container_id, const char *image_top_layer, const char *mount_label,
-                                        json_map_string_string *storage_opts)
+                                        json_map_string_string *storage_opts, const char *restore_target)
 {
     int ret = 0;
     struct layer_opts *opts = NULL;
+    struct io_read_wrapper diff_reader = { 0 };
+    struct io_read_wrapper *diff_reader_ptr = NULL;
 
     storage_layer_create_opts_t copts = {
         .parent = image_top_layer,
@@ -1123,7 +1183,16 @@ static int do_create_container_rw_layer(const char *container_id, const char *im
         goto out;
     }
 
-    if (layer_store_create(container_id, opts, NULL, NULL) != 0) {
+    if (restore_target != NULL) {
+        diff_reader_ptr = &diff_reader;
+        if (restore_read_wrapper(restore_target, diff_reader_ptr) != 0) {
+            ERROR("Failed to fill restore reader");
+            ret = -1;
+            goto out;
+        }
+    }
+
+    if (layer_store_create(container_id, opts, diff_reader_ptr, NULL) != 0) {
         ERROR("Failed to create container rootfs layer");
         ret = -1;
         goto out;
@@ -1131,11 +1200,14 @@ static int do_create_container_rw_layer(const char *container_id, const char *im
 
 out:
     free_layer_opts(opts);
+    if (diff_reader.close != NULL) {
+        diff_reader.close(diff_reader.context, NULL);
+    }
     return ret;
 }
 
 int storage_rootfs_create(const char *container_id, const char *image, const char *mount_label,
-                          json_map_string_string *storage_opts, char **mountpoint)
+                          json_map_string_string *storage_opts, char **mountpoint, const char *restore_target)
 {
     int ret = 0;
     char *rootfs_id = NULL;
@@ -1162,7 +1234,7 @@ int storage_rootfs_create(const char *container_id, const char *image, const cha
     }
 
     // note: we use container id as the layer id of the container
-    if (do_create_container_rw_layer(container_id, image_summary->top_layer, mount_label, storage_opts) != 0) {
+    if (do_create_container_rw_layer(container_id, image_summary->top_layer, mount_label, storage_opts, restore_target) != 0) {
         ERROR("Failed to do create rootfs layer");
         ret = -1;
         goto unlock_out;

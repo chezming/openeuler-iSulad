@@ -181,7 +181,7 @@ void free_layer_list(struct layer_list *ptr);
 
 /* container rootfs operations */
 int storage_rootfs_create(const char *container_id, const char *image, const char *mount_label,
-                          json_map_string_string *storage_opts, char **mountpoint);
+                          json_map_string_string *storage_opts, char **mountpoint, const char *restore_target);
 
 int storage_rootfs_delete(const char *container_id);
 

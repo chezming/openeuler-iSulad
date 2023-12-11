@@ -213,6 +213,8 @@ void container_free(container_t *container)
     container->state_path = NULL;
     free(container->image_id);
     container->image_id = NULL;
+    free(container->restore_archive);
+    container->restore_archive = NULL;
 
     free(container->log_path);
     container->log_path = NULL;

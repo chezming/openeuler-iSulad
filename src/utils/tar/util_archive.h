@@ -50,6 +50,7 @@ int archive_unpack(const struct io_read_wrapper *content, const char *dstdir, co
 bool valid_archive_format(const char *file);
 
 int archive_chroot_tar(const char *path, const char *file, const char *root_dir, char **errmsg);
+int archive_chroot_untar(const char *src_file, const char *dst_path, const char *root_dir, char **errmsg);
 
 int archive_chroot_tar_stream(const char *chroot_dir, const char *tar_path, const char *src_base,
                               const char *dst_base, const char *root_dir, struct io_read_wrapper *content);

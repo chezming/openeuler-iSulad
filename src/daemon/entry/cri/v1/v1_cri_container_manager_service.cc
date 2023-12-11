@@ -22,13 +22,17 @@
 #include "v1_cri_helpers.h"
 #include "cri_helpers.h"
 #include "utils.h"
+#include "utils_verify.h"
 #include "errors.h"
 #include "v1_naming.h"
 #include "path.h"
+#include "checkpoint_common.h"
 #include "service_container_api.h"
 #include "request_cache.h"
 #include "stream_server.h"
 #include "sandbox_manager.h"
+#include "cxxutils.h"
+#include "cstruct_wrapper.h"
 
 namespace CRIV1 {
 auto ContainerManagerService::GetContainerOrSandboxRuntime(const std::string &realID, Errors &error) -> std::string
@@ -401,6 +405,267 @@ auto ContainerManagerService::GenerateSandboxInfo(
     return sandbox_info;
 }
 
+auto ContainerManagerService::GenerateContainerconfigRestore(container_config **custom_config, container_config **container_config_dump,
+                                    const runtime::v1::ContainerConfig &containerConfig, sandbox::Sandbox &sandbox,
+                                    google::protobuf::Map<std::string, std::string> &mapAnnotations,
+                                    Errors &error) -> int
+{
+    google::protobuf::Map<std::string, std::string> mapLabels;
+    auto restorePodSandboxConfig = sandbox.GetSandboxConfig();
+
+    // confirm annotations
+    mapAnnotations[CRIHelpers::Constants::SANDBOX_ID_ANNOTATION_KEY] = sandbox.GetId();
+    mapAnnotations[CRIHelpers::Constants::IMAGE_NAME_ANNOTATION_KEY] = containerConfig.image().image();
+    if (restorePodSandboxConfig.has_metadata()) {
+        mapAnnotations[CRIHelpers::Constants::SANDBOX_NAME_ANNOTATION_KEY] = restorePodSandboxConfig.metadata().name();
+        mapAnnotations[CRIHelpers::Constants::SANDBOX_NAMESPACE_ANNOTATION_KEY] = restorePodSandboxConfig.metadata().namespace_();
+    }
+    if (containerConfig.has_metadata()) {
+        mapAnnotations[CRIHelpers::Constants::CONTAINER_NAME_ANNOTATION_KEY] = containerConfig.metadata().name();
+        mapAnnotations[CRIHelpers::Constants::CONTAINER_ATTEMPT_ANNOTATION_KEY] = std::to_string(containerConfig.metadata().attempt());
+    }
+    
+    // confirm labels
+    CRIHelpers::ExtractAnnotations((*container_config_dump)->labels, mapLabels);
+    mapLabels[CRIHelpers::Constants::SANDBOX_ID_LABEL_KEY] = sandbox.GetId();
+    if (!restorePodSandboxConfig.log_directory().empty() || !containerConfig.log_path().empty()) {
+        std::string logpath = restorePodSandboxConfig.log_directory() + "/" + containerConfig.log_path();
+        char real_logpath[PATH_MAX] { 0 };
+        if (util_clean_path(logpath.c_str(), real_logpath, sizeof(real_logpath)) == nullptr) {
+            ERROR("Failed to clean path: %s", logpath.c_str());
+            error.Errorf("Failed to clean path: %s", logpath.c_str());
+            return -1;
+        }
+        mapLabels[CRIHelpers::Constants::CONTAINER_LOGPATH_LABEL_KEY] = real_logpath;
+    }
+
+    // confirm customconfig
+    (*custom_config)->annotations = CRIHelpers::MakeAnnotations(mapAnnotations, error);
+    if ((*custom_config)->annotations == nullptr) {
+        ERROR("Failed to make annotations");
+        error.Errorf("Failed to make annotations");
+        return -1;
+    }
+    (*custom_config)->labels = CRIHelpers::MakeLabels(mapLabels, error);
+    if ((*custom_config)->labels == nullptr) {
+        ERROR("Failed to make labels");
+        error.Errorf("Failed to make labels");
+        return -1;
+    }
+    std::swap(*custom_config, *container_config_dump);
+    // use updated annotations and labels
+    std::swap((*custom_config)->annotations, (*container_config_dump)->annotations);
+    std::swap((*custom_config)->labels, (*container_config_dump)->labels);
+    
+    return 0;
+}
+
+auto ContainerManagerService::GenerateHostconfigRestore(host_config **hostconfig, host_config **host_config_dump,
+                               oci_runtime_spec *oci_runtime_spec_dump, const runtime::v1::ContainerConfig &containerConfig,
+                               Errors &error) -> int
+{
+    std::unordered_map<std::string, bool> ignoreMounts = {
+        {"/proc", true},
+        {"/dev", true},
+        {"/dev/pts", true},
+        {"/dev/mqueue", true},
+        {"/sys", true},
+        {"/sys/fs/cgroup", true},
+        {"/dev/shm", true},
+        {"/etc/resolv.conf", true},
+        {"/etc/hostname", true},
+        {"/etc/hosts", true},
+        {"/run/secrets", true},
+        {"/run/.containerenv", true}
+    };
+    const google::protobuf::RepeatedPtrField<runtime::v1::Mount> mounts = containerConfig.mounts();
+    (*hostconfig)->binds = (char **)util_smart_calloc_s(sizeof(char *), oci_runtime_spec_dump->mounts_len);
+    if ((*hostconfig)->binds == nullptr) {
+        error.SetError("Out of memory");
+        return -1;
+    }
+
+    for (size_t i = 0; i < oci_runtime_spec_dump->mounts_len; i++) {
+        std::string containerPath(oci_runtime_spec_dump->mounts[i]->destination);
+        if (ignoreMounts[containerPath]) {
+            continue;
+        }
+        std::string hostPath(oci_runtime_spec_dump->mounts[i]->source);
+        std::string bind;
+        std::vector<std::string> attrs;
+
+        for (int j = 0; j < mounts.size(); j++) {
+            if (mounts[j].container_path() == containerPath) {
+                hostPath = mounts[j].host_path();
+            }
+        }
+        bind = hostPath + ":" + containerPath;
+
+        if (oci_runtime_spec_dump->mounts[i]->options_len > 0) {
+            for (size_t k = 0; k < oci_runtime_spec_dump->mounts[i]->options_len; k++) {
+                if (util_valid_mount_mode(oci_runtime_spec_dump->mounts[i]->options[k])) {
+                    attrs.push_back(oci_runtime_spec_dump->mounts[i]->options[k]);
+                }
+            }
+            if (!attrs.empty()) {
+                bind += ":" + CXXUtils::StringsJoin(attrs, ",");
+            }
+        }
+        (*hostconfig)->binds[(*hostconfig)->binds_len] = util_strdup_s(bind.c_str());
+        (*hostconfig)->binds_len++;
+    }
+
+    std::swap(*hostconfig, *host_config_dump);
+    std::swap((*hostconfig)->binds, (*host_config_dump)->binds);
+    std::swap((*hostconfig)->binds_len, (*host_config_dump)->binds_len);
+
+    return 0;
+}
+
+auto ContainerManagerService::GenerateContainerNameRestore(google::protobuf::Map<std::string, std::string> &mapAnnotations,
+                                                           sandbox::Sandbox &sandbox, std::string &cname, Errors &error) -> int
+{
+    runtime::v1::ContainerMetadata cMetadata;
+    if (mapAnnotations.count(CRIHelpers::Constants::CONTAINER_NAME_ANNOTATION_KEY) == 0) {
+        ERROR("annotation don't contains the container name");
+        error.Errorf("annotation don't contains the container name");
+        return -1;
+    }
+    if (mapAnnotations.count(CRIHelpers::Constants::CONTAINER_ATTEMPT_ANNOTATION_KEY) == 0) {
+        ERROR("annotation don't contains the container attempt");
+        error.Errorf("annotation don't contains the container attempt");
+        return -1;
+    }
+    cMetadata.set_name(mapAnnotations[CRIHelpers::Constants::CONTAINER_NAME_ANNOTATION_KEY]);
+    cMetadata.set_attempt(static_cast<google::protobuf::uint32>(
+        std::stoul(mapAnnotations[CRIHelpers::Constants::CONTAINER_ATTEMPT_ANNOTATION_KEY])));
+    cname = CRINamingV1::MakeContainerNameByMetadata(sandbox.GetSandboxConfig().metadata(), cMetadata);
+    return 0;
+}
+
+container_create_request *
+ContainerManagerService::GenerateCreateContainerRequestRestore(const std::string &podSandboxID,
+                                                               const runtime::v1::ContainerConfig &containerConfig,
+                                                               const runtime::v1::PodSandboxConfig &podSandboxConfig,
+                                                               Errors &error)
+{
+    __isula_auto_free char *restore_target { nullptr };
+    oci_runtime_spec *oci_runtime_spec_dump = { nullptr };
+    host_config *host_config_dump = { nullptr };
+    container_config_v2 *container_config_v2_dump = { nullptr };
+    container_config *container_config_dump = { nullptr };
+    std::string restoreSandboxID;
+    google::protobuf::Map<std::string, std::string> mapAnnotations;
+    std::shared_ptr<sandbox::Sandbox> sandbox { nullptr };
+    std::string cname;
+    struct parser_context ctx {
+        OPT_GEN_SIMPLIFY, 0
+    };
+    parser_error perror { nullptr };
+
+    // 1. calloc memory
+    auto request_wrapper = makeUniquePtrCStructWrapper<container_create_request>(free_container_create_request);
+    auto hostconfig_wrapper = makeUniquePtrCStructWrapper<host_config>(free_host_config);
+    auto custom_config_wrapper = makeUniquePtrCStructWrapper<container_config>(free_container_config);
+    if (request_wrapper == nullptr || hostconfig_wrapper == nullptr || custom_config_wrapper == nullptr) {
+        ERROR("Out of memory");
+        error.SetError("Out of memory");
+        return nullptr;
+    }
+    auto request = request_wrapper->get();
+    auto hostconfig = hostconfig_wrapper->get();
+    auto custom_config = custom_config_wrapper->get();
+
+    // 2. load checkpoint config files
+    // TODO id is unknow before untaring
+    if (CRIHelpersV1::LoadCheckpointConfigFiles(containerConfig.image().image(), &restore_target, &oci_runtime_spec_dump,
+        &host_config_dump, &container_config_v2_dump, error) != 0) {
+        return nullptr;
+    }
+    auto oci_runtime_spec_dump_wrapper = makeUniquePtrCStructWrapper<oci_runtime_spec>(oci_runtime_spec_dump, free_oci_runtime_spec);
+    auto host_config_dump_wrapper = makeUniquePtrCStructWrapper<host_config>(host_config_dump, free_host_config);
+    auto container_config_v2_dump_wrapper = makeUniquePtrCStructWrapper<container_config_v2>(container_config_v2_dump, free_container_config_v2);
+    container_config_dump = container_config_v2_dump->common_config->config;
+    if (container_config_dump == nullptr) {
+        ERROR("Failed to parse container config file");
+        error.Errorf("Failed to parse container config file");
+        return nullptr;
+    }
+
+    // 3. confirm sandbox
+    CRIHelpers::ExtractAnnotations(container_config_dump->annotations, mapAnnotations);
+    if (podSandboxID.empty()) {
+        // restore into previous sandbox
+        restoreSandboxID = mapAnnotations[CRIHelpers::Constants::SANDBOX_ID_ANNOTATION_KEY];
+    } else {
+        restoreSandboxID = podSandboxID;
+    }
+    sandbox = sandbox::SandboxManager::GetInstance()->GetSandbox(restoreSandboxID);
+    if (sandbox == nullptr) {
+        ERROR("Failed to get sandbox instance: %s for creating container", restoreSandboxID.c_str());
+        error.Errorf("Failed to get sandbox instance: %s for creating container", restoreSandboxID.c_str());
+        return nullptr;
+    }
+
+    // 4. update custom_config
+    if (GenerateContainerconfigRestore(&custom_config, &container_config_dump,
+        containerConfig, *sandbox, mapAnnotations, error) != 0) {
+        ERROR("Failed to generate custom config json: %s", error.GetMessage().c_str());
+        error.Errorf("Failed to generate custom config json: %s", error.GetMessage().c_str());
+        return nullptr;
+    }
+
+    // 5. update hostconfig
+    if (GenerateHostconfigRestore(&hostconfig, &host_config_dump, oci_runtime_spec_dump, containerConfig, error) != 0) {
+        ERROR("Failed to generate host config json: %s", error.GetMessage().c_str());
+        error.Errorf("Failed to generate host config json: %s", error.GetMessage().c_str());
+        return nullptr;
+    }
+    CRIHelpersV1::UpdateCreateConfig(custom_config, hostconfig, containerConfig, (*sandbox).GetId(), error);
+    if (error.NotEmpty()) {
+        return nullptr;
+    }
+    // use dumped masked_paths and readonly_paths
+    if (oci_runtime_spec_dump->linux->masked_paths_len != 0) {
+        std::swap(hostconfig->masked_paths, oci_runtime_spec_dump->linux->masked_paths);
+        std::swap(hostconfig->masked_paths_len, oci_runtime_spec_dump->linux->masked_paths_len);
+    }
+    if (oci_runtime_spec_dump->linux->readonly_paths_len != 0) {
+        std::swap(hostconfig->readonly_paths, oci_runtime_spec_dump->linux->readonly_paths);
+        std::swap(hostconfig->readonly_paths_len, oci_runtime_spec_dump->linux->readonly_paths_len);
+    }
+
+    // 6. update container name
+    if (GenerateContainerNameRestore(mapAnnotations, *sandbox, cname, error) != 0) {
+        return nullptr;
+    }
+
+    // 7. generate variables of container_create_request
+    request->id = util_strdup_s(cname.c_str());
+    request->runtime = util_strdup_s((*sandbox).GetRuntime().c_str());
+    request->sandbox = GenerateSandboxInfo(*sandbox, error);              
+    if (error.NotEmpty()) {
+        return nullptr;
+    }
+    request->image = util_strdup_s(container_config_v2_dump->common_config->image);
+    request->restore_target = restore_target;
+    restore_target = nullptr;
+    request->restore_archive = util_strdup_s(containerConfig.image().image().c_str());
+    request->restore_id = util_strdup_s(container_config_v2_dump->common_config->id);
+    request->customconfig = container_config_generate_json(custom_config, &ctx, &perror);
+    if (request->customconfig == nullptr) {
+        error.Errorf("Failed to generate custom config json: %s", perror);
+        return nullptr;
+    }
+    request->hostconfig = host_config_generate_json(hostconfig, &ctx, &perror);
+    if (request->hostconfig == nullptr) {
+        error.Errorf("Failed to generate host config json: %s", perror);
+        return nullptr;
+    }
+    
+    return request_wrapper->move();
+}                                                        
+
 container_create_request *
 ContainerManagerService::GenerateCreateContainerRequest(sandbox::Sandbox &sandbox,
                                                         const runtime::v1::ContainerConfig &containerConfig,
@@ -446,7 +711,7 @@ ContainerManagerService::GenerateCreateContainerRequest(sandbox::Sandbox &sandbo
 
     custom_config =
         GenerateCreateContainerCustomConfig(cname, sandbox.GetId(), containerConfig, podSandboxConfig, error);
-    if (error.NotEmpty()) {
+    if (error.NotEmpty()) { 
         goto cleanup;
     }
 
@@ -483,30 +748,52 @@ std::string ContainerManagerService::CreateContainer(const std::string &podSandb
                                                      const runtime::v1::PodSandboxConfig &podSandboxConfig,
                                                      Errors &error)
 {
+    int ret;
     std::string response_id;
     std::shared_ptr<sandbox::Sandbox> sandbox { nullptr };
 
+    if (!containerConfig.has_image()) {
+        ERROR("Config image is empty");
+        error.SetError("Config image is empty");
+        return response_id;
+    }
     if (m_cb == nullptr || m_cb->container.create == nullptr) {
+        ERROR("Unimplemented callback");
         error.SetError("Unimplemented callback");
         return response_id;
     }
     container_create_request *request { nullptr };
     container_create_response *response { nullptr };
+    std::unique_ptr<CStructWrapper<container_create_request>> request_wrapper { nullptr };
+    std::unique_ptr<CStructWrapper<container_create_response>> response_wrapper { nullptr };
+    bool checkpointImageFlag = false;
 
-    sandbox = sandbox::SandboxManager::GetInstance()->GetSandbox(podSandboxID);
-    if (sandbox == nullptr) {
-        ERROR("Failed to get sandbox instance: %s for creating container", podSandboxID.c_str());
-        error.Errorf("Failed to get sandbox instance: %s for creating container", podSandboxID.c_str());
-        return response_id;
+    checkpointImageFlag = util_file_exists(containerConfig.image().image().c_str());
+    if (checkpointImageFlag) {
+        /* This might be a checkpoint image when image is a file. 
+         * Let's pass it to the checkpoint code.
+         */
+        DEBUG("%s is a file. Assuming it is a checkpoint archive", containerConfig.image().image().c_str());
+        request = GenerateCreateContainerRequestRestore(podSandboxID, containerConfig, podSandboxConfig, error);
+    } else {
+        sandbox = sandbox::SandboxManager::GetInstance()->GetSandbox(podSandboxID);
+        if (sandbox == nullptr) {
+            ERROR("Failed to get sandbox instance: %s for creating container", podSandboxID.c_str());
+            error.Errorf("Failed to get sandbox instance: %s for creating container", podSandboxID.c_str());
+            return response_id;
+        }
+
+        request = GenerateCreateContainerRequest(*sandbox, containerConfig, podSandboxConfig, error);
     }
-
-    request = GenerateCreateContainerRequest(*sandbox, containerConfig, podSandboxConfig, error);
+    request_wrapper = makeUniquePtrCStructWrapper<container_create_request>(request, free_container_create_request);
     if (error.NotEmpty()) {
         error.SetError("Failed to generate create container request");
         goto cleanup;
     }
 
-    if (m_cb->container.create(request, &response) != 0) {
+    ret = m_cb->container.create(request, &response);
+    response_wrapper = makeUniquePtrCStructWrapper<container_create_response>(response, free_container_create_response);
+    if (ret != 0) {
         if (response != nullptr && (response->errmsg != nullptr)) {
             error.SetError(response->errmsg);
         } else {
@@ -518,8 +805,9 @@ std::string ContainerManagerService::CreateContainer(const std::string &podSandb
     response_id = response->id;
 
 cleanup:
-    free_container_create_request(request);
-    free_container_create_response(response);
+    if (checkpointImageFlag) {
+        clean_checkpoint_files(request->restore_target);
+    }
     return response_id;
 }
 

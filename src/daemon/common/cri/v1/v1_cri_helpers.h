@@ -21,6 +21,8 @@
 
 #include <isula_libutils/docker_seccomp.h>
 #include <isula_libutils/host_config.h>
+#include <isula_libutils/container_config_v2.h>
+#include <isula_libutils/oci_runtime_spec.h>
 #include <isula_libutils/container_config.h>
 
 #include "api_v1.pb.h"
@@ -77,6 +79,9 @@ std::string CRISandboxerConvert(const std::string &runtime);
 
 void ApplySandboxSecurityContextToHostConfig(const runtime::v1::LinuxSandboxSecurityContext &context, host_config *hc,
                                              Errors &error);
+
+auto LoadCheckpointConfigFiles(const std::string &image, char **restore_target, oci_runtime_spec **ociconfig,
+                               host_config **hostconfig, container_config_v2 **configv2, Errors &error) -> int;
 
 }; // namespace CRIHelpers
 

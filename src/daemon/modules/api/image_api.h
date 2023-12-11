@@ -213,6 +213,7 @@ typedef struct {
     char *container_id;
     char *rootfs; // only used for external image type
     char *mount_label; // mount label for selinux
+    char *restore_target; // image path for restore container
     json_map_string_string *storage_opt;
 } im_prepare_request;
 

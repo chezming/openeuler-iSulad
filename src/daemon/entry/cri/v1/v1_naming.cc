@@ -74,23 +74,28 @@ void ParseSandboxName(const google::protobuf::Map<std::string, std::string> &ann
     metadata.set_attempt(static_cast<google::protobuf::uint32>(std::stoul(sandboxAttempt)));
 }
 
-std::string MakeContainerName(const runtime::v1::PodSandboxConfig &s, const runtime::v1::ContainerConfig &c)
+std::string MakeContainerNameByMetadata(const runtime::v1::PodSandboxMetadata &sbMetadata, const runtime::v1::ContainerMetadata &cMetadata)
 {
     std::string sname;
 
     sname.append(CRI::Constants::kubePrefix);
     sname.append(CRI::Constants::nameDelimiter);
-    sname.append(c.metadata().name());
+    sname.append(cMetadata.name());
     sname.append(CRI::Constants::nameDelimiter);
-    sname.append(s.metadata().name());
+    sname.append(sbMetadata.name());
     sname.append(CRI::Constants::nameDelimiter);
-    sname.append(s.metadata().namespace_());
+    sname.append(sbMetadata.namespace_());
     sname.append(CRI::Constants::nameDelimiter);
-    sname.append(s.metadata().uid());
+    sname.append(sbMetadata.uid());
     sname.append(CRI::Constants::nameDelimiter);
-    sname.append(std::to_string(c.metadata().attempt()));
+    sname.append(std::to_string(cMetadata.attempt()));
 
     return sname;
+}
+
+std::string MakeContainerName(const runtime::v1::PodSandboxConfig &s, const runtime::v1::ContainerConfig &c)
+{
+    return MakeContainerNameByMetadata(s.metadata(), c.metadata());
 }
 
 void ParseContainerName(const google::protobuf::Map<std::string, std::string> &annotations,

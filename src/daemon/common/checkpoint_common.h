@@ -30,6 +30,8 @@ extern "C" {
 #define CHECKPOINT_DIFF_FILE "diff.tar"
 
 const char **get_checkpoint_config_files(void);
+void clean_checkpoint_files(const char *dst_path);
+int untar_checkpoint_files(const char *image_path, const char *root_dir, char **dst_path, char **errmsg);
 
 #ifdef __cplusplus
 }
