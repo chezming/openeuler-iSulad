@@ -1287,12 +1287,23 @@ static void get_runtime_cmd(process_t *p, const char *log_path, const char *pid_
             params[i++] = p->state->cwd;
         }
     } else {
-        params[i++] = "create";
+        if (p->state->checkpoint != NULL) {
+            params[i++] = "restore";
+        } else {
+            params[i++] = "create";
+        }
         params[i++] = "--bundle";
         params[i++] = p->bundle;
     }
     params[i++] = "--pid-file";
     params[i++] = pid_path;
+    if (p->state->checkpoint != NULL) {
+        params[i++] = "--detach";
+        params[i++] = "--image-path";
+        params[i++] = p->state->checkpoint;
+        params[i++] = "--work-path";
+        params[i++] = p->bundle;
+    }
     if (p->console_sock_path != NULL) {
         params[i++] = "--console-socket";
         params[i++] = p->console_sock_path;

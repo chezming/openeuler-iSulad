@@ -47,6 +47,7 @@ static const struct rt_ops g_lcr_rt_ops = {
     .rt_kill = rt_lcr_kill,
     .rt_rebuild_config = rt_lcr_rebuild_config,
     .rt_checkpoint = rt_lcr_checkpoint,
+    .rt_restore = rt_lcr_restore,
 };
 
 static const struct rt_ops g_isula_rt_ops = {
@@ -69,6 +70,7 @@ static const struct rt_ops g_isula_rt_ops = {
     .rt_kill = rt_isula_kill,
     .rt_rebuild_config = rt_isula_rebuild_config,
     .rt_checkpoint = rt_isula_checkpoint,
+    .rt_restore = rt_isula_restore,
 };
 
 #ifdef ENABLE_SHIM_V2
@@ -92,6 +94,7 @@ static const struct rt_ops g_shim_rt_ops = {
     .rt_kill = rt_shim_kill,
     .rt_rebuild_config = rt_shim_rebuild_config,
     .rt_checkpoint = rt_shim_checkpoint,
+    .rt_restore = rt_shim_restore,
 };
 #endif
 
@@ -455,6 +458,30 @@ int runtime_checkpoint(const char *name, const char *runtime, const rt_checkpoin
     }
 
     ret = ops->rt_checkpoint(name, runtime, params);
+
+out:
+    return ret;
+}
+
+int runtime_restore(const char *name, const char *runtime, const rt_create_params_t *params, pid_ppid_info_t *pid_info)
+{
+    int ret = 0;
+    const struct rt_ops *ops = NULL;
+
+    if (name == NULL || runtime == NULL || params == NULL || pid_info == NULL) {
+        ERROR("Invalid arguments for runtime restore");
+        ret = -1;
+        goto out;
+    }
+
+    ops = rt_ops_query(runtime);
+    if (ops == NULL) {
+        ERROR("Failed to get runtime ops");
+        ret = -1;
+        goto out;
+    }
+
+    ret = ops->rt_restore(name, runtime, params, pid_info);
 
 out:
     return ret;

@@ -56,6 +56,7 @@
 #include "utils_file.h"
 #include "console.h"
 #include "shim_constants.h"
+#include "checkpoint_common.h"
 
 #define SHIM_BINARY "isulad-shim"
 #define RESIZE_FIFO_NAME "resize_fifo"
@@ -1156,6 +1157,10 @@ int rt_isula_create(const char *id, const char *runtime, const rt_create_params_
     copy_process(&p, config->process);
     copy_annotations(&p, config->annotations);
 
+    if (params->checkpoint_path != NULL) {
+        p.checkpoint = (char *)params->checkpoint_path;
+    }
+
     ret = create_process_json_file(workdir, &p);
     if (ret != 0) {
         ERROR("%s: failed create json file", id);
@@ -1181,17 +1186,57 @@ out:
     return ret;
 }
 
-int rt_isula_start(const char *id, const char *runtime, const rt_start_params_t *params, pid_ppid_info_t *pid_info)
+static int get_container_process_proc_info(const char *id, char *workdir, pid_ppid_info_t *pid_info)
 {
-    char workdir[PATH_MAX] = { 0 };
     char shim_pid_file_name[PATH_MAX] = { 0 };
     pid_t pid = 0;
     pid_t shim_pid = -1;
-    int ret = -1;
     int splice_ret = 0;
-    int nret = 0;
     __isula_auto_free proc_t *proc = NULL;
     __isula_auto_free proc_t *p_proc = NULL;
+
+    splice_ret = snprintf(shim_pid_file_name, sizeof(shim_pid_file_name), "%s/shim-pid", workdir);
+    if (splice_ret < 0 || (size_t)splice_ret >= sizeof(shim_pid_file_name)) {
+        ERROR("%s: wrong shim workdir", id);
+        return -1;
+    }
+
+    pid = get_container_process_pid(workdir);
+    if (pid < 0) {
+        ERROR("%s: failed wait init pid", id);
+        return -1;
+    }
+
+    file_read_int(shim_pid_file_name, &shim_pid);
+    if (shim_pid < 0) {
+        ERROR("%s: failed to read isulad shim pid", id);
+        return -1;
+    }
+
+    proc = util_get_process_proc_info(pid);
+    if (proc == NULL) {
+        ERROR("%s: failed to read pidinfo", id);
+        return -1;
+    }
+
+    p_proc = util_get_process_proc_info(shim_pid);
+    if (p_proc == NULL) {
+        ERROR("%s: failed to read isulad shim pidinfo", id);
+        return -1;
+    }
+
+    pid_info->pid = proc->pid;
+    pid_info->start_time = proc->start_time;
+    pid_info->ppid = shim_pid;
+    pid_info->pstart_time = p_proc->start_time;
+    return 0;
+}
+
+int rt_isula_start(const char *id, const char *runtime, const rt_start_params_t *params, pid_ppid_info_t *pid_info)
+{
+    char workdir[PATH_MAX] = { 0 };
+    int ret = -1;
+    int nret = 0;
 
     if (id == NULL || runtime == NULL || params == NULL || pid_info == NULL) {
         ERROR("nullptr arguments not allowed");
@@ -1204,40 +1249,9 @@ int rt_isula_start(const char *id, const char *runtime, const rt_start_params_t 
         return -1;
     }
 
-    splice_ret = snprintf(shim_pid_file_name, sizeof(shim_pid_file_name), "%s/shim-pid", workdir);
-    if (splice_ret < 0 || (size_t)splice_ret >= sizeof(shim_pid_file_name)) {
-        ERROR("%s: wrong shim workdir", id);
-        return -1;
-    }
-
-    pid = get_container_process_pid(workdir);
-    if (pid < 0) {
-        ERROR("%s: failed wait init pid", id);
+    if (get_container_process_proc_info(id, workdir, pid_info) != 0) {
         goto out;
     }
-
-    file_read_int(shim_pid_file_name, &shim_pid);
-    if (shim_pid < 0) {
-        ERROR("%s: failed to read isulad shim pid", id);
-        goto out;
-    }
-
-    proc = util_get_process_proc_info(pid);
-    if (proc == NULL) {
-        ERROR("%s: failed to read pidinfo", id);
-        goto out;
-    }
-
-    p_proc = util_get_process_proc_info(shim_pid);
-    if (p_proc == NULL) {
-        ERROR("%s: failed to read isulad shim pidinfo", id);
-        goto out;
-    }
-
-    pid_info->pid = proc->pid;
-    pid_info->start_time = proc->start_time;
-    pid_info->ppid = shim_pid;
-    pid_info->pstart_time = p_proc->start_time;
 
     if (runtime_call_simple(workdir, runtime, "start", NULL, 0, id, NULL) != 0) {
         ERROR("call runtime start id failed");
@@ -2162,4 +2176,25 @@ int rt_isula_checkpoint(const char *id, const char *runtime, const rt_checkpoint
     }
 
     return runtime_call_simple(workdir, runtime, "checkpoint", opts, opts_len, id, NULL);
+}
+
+int rt_isula_restore(const char *id, const char *runtime, const rt_create_params_t *params, pid_ppid_info_t *pid_info)
+{
+    char workdir[PATH_MAX] = { 0 };
+    int nret = 0;
+
+    if (id == NULL || runtime == NULL || params == NULL || pid_info == NULL) {
+        ERROR("Nullptr arguments not allowed");
+        return -1;
+    }
+
+    if (rt_isula_create(id, runtime, params) != 0) {
+        return -1;
+    }
+    nret = snprintf(workdir, sizeof(workdir), "%s/%s", params->state, id);
+    if (nret < 0 || (size_t)nret >= sizeof(workdir)) {
+        ERROR("%s: missing shim workdir", id);
+        return -1;
+    }
+    return get_container_process_proc_info(id, workdir, pid_info);
 }

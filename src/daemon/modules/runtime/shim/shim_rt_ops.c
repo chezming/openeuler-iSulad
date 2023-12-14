@@ -819,3 +819,9 @@ int rt_shim_checkpoint(const char *id, const char *runtime, const rt_checkpoint_
     ERROR("rt_shim_checkpoint not impl");
     return -1;
 }
+
+int rt_shim_restore(const char *id, const char *runtime, const rt_create_params_t *params, pid_ppid_info_t *pid_info)
+{
+    ERROR("rt_shim_restore not impl");
+    return -1;
+}

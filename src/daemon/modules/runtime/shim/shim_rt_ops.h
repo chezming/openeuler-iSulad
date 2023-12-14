@@ -65,6 +65,7 @@ bool is_valid_v2_runtime(const char* name);
 int rt_shim_rebuild_config(const char *name, const char *runtime, const rt_rebuild_config_params_t *params);
 
 int rt_shim_checkpoint(const char *id, const char *runtime, const rt_checkpoint_params_t *params);
+int rt_shim_restore(const char *id, const char *runtime, const rt_create_params_t *params, pid_ppid_info_t *pid_info);
 
 #ifdef __cplusplus
 }

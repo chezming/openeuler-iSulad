@@ -81,6 +81,9 @@ typedef struct _rt_create_params_t {
     bool tty;
     bool open_stdin;
     const char *task_addr;
+    struct { /* for restore */
+        const char *checkpoint_path;
+    };
 } rt_create_params_t;
 
 typedef struct _rt_start_params_t {
@@ -247,6 +250,7 @@ struct rt_ops {
     int (*rt_exec_resize)(const char *name, const char *runtime, const rt_exec_resize_params_t *params);
     int (*rt_rebuild_config)(const char *name, const char *runtime, const rt_rebuild_config_params_t *params);
     int (*rt_checkpoint)(const char *name, const char *runtime, const rt_checkpoint_params_t *params);
+    int (*rt_restore)(const char *name, const char *runtime, const rt_create_params_t *params, pid_ppid_info_t *pid_info);
 };
 
 int runtime_create(const char *name, const char *runtime, const rt_create_params_t *params);
@@ -267,6 +271,7 @@ int runtime_attach(const char *name, const char *runtime, const rt_attach_params
 int runtime_update(const char *name, const char *runtime, const rt_update_params_t *params);
 
 int runtime_checkpoint(const char *name, const char *runtime, const rt_checkpoint_params_t *params);
+int runtime_restore(const char *name, const char *runtime, const rt_create_params_t *params, pid_ppid_info_t *pid_info);
 
 int runtime_listpids(const char *name, const char *runtime, const rt_listpids_params_t *params, rt_listpids_out_t *out);
 int runtime_rebuild_config(const char *name, const char *runtime, const rt_rebuild_config_params_t *params);
