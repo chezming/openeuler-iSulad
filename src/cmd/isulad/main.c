@@ -1724,12 +1724,24 @@ out:
     return ret;
 }
 #endif
+#define USE_THPOOL
+
+#ifdef USE_THPOOL
+#define THPOOL_DEBUG
+#include "thpool.h"
+#endif 
+
 
 /*
  * Takes socket path as argument
  */
 int main(int argc, char **argv)
 {
+#ifdef USE_THPOOL
+    threadpool thpool = thpool_init(10);
+    printf("thpool init %s\n",thpool_to_string(thpool));
+#endif
+
     struct timespec t_start, t_end;
     double use_time = 0;
     char *msg = NULL;

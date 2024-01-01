@@ -7,6 +7,7 @@ add_subdirectory(sha256)
 add_subdirectory(tar)
 add_subdirectory(http)
 add_subdirectory(buffer)
+add_subdirectory(threadpool)
 
 set(local_utils_srcs
     ${utils_top_srcs}
@@ -15,6 +16,7 @@ set(local_utils_srcs
     ${CUTILS_SRCS}
     ${CONSOLE_SRCS}
     ${BUFFER_SRCS}
+    ${THPOOL_SRCS}
     )
 
 set(local_utils_incs
@@ -24,6 +26,7 @@ set(local_utils_incs
     ${CUTILS_INCS}
     ${CONSOLE_INCS}
     ${BUFFER_INCS}
+    ${THPOOL_INCS}
     )
 
 if (GRPC_CONNECTOR)
