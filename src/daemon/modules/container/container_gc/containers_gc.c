@@ -38,6 +38,7 @@
 #include "restartmanager.h"
 #include "utils_file.h"
 #include "utils_timestamp.h"
+#include "thpool.h"
 
 static containers_gc_t g_gc_containers;
 
@@ -517,6 +518,7 @@ static void do_gc_container(struct linked_list *it)
 
 static void *gchandler(void *arg)
 {
+    printf("---------------------------gchander running--------------\n");
     int ret = 0;
     struct linked_list *it = NULL;
 
@@ -578,11 +580,12 @@ out:
 int start_gchandler()
 {
     int ret = -1;
-    pthread_t a_thread;
+    // pthread_t a_thread;
 
     INFO("Starting garbage collector...");
 
-    ret = pthread_create(&a_thread, NULL, gchandler, NULL);
+    // ret = pthread_create(&a_thread, NULL, gchandler, NULL);
+    ret = add_work_to_threadpool(gchandler, NULL); 
     if (ret != 0) {
         CRIT("Thread creation failed");
         goto out;

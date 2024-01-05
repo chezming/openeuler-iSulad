@@ -1740,9 +1740,9 @@ int main(int argc, char **argv)
 #ifdef USE_THPOOL
     // init thread_pool
     threadpool p =  get_threadpool_instance(10);
-    p = get_threadpool_instance(10);
+    // p = get_threadpool_instance(10);
     printf("get thread_pool %s\n",thpool_to_string(p));
-    _add_work_to_threadpool(test_func,NULL);
+    // _add_work_to_threadpool(test_func,NULL);
 
 #endif
 
