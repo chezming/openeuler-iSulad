@@ -105,7 +105,11 @@ typedef struct thpool_{
 	jobqueue  jobqueue;                  /* job queue                 */
 } thpool_;
 
-
+/* singleton threadpool */
+typedef struct sigleton_threadpool_{
+	threadpool pool;
+	int id;
+}sigleton_threadpool_;
 
 
 
@@ -588,3 +592,80 @@ static void bsem_wait(bsem* bsem_p) {
 	bsem_p->v = 0;
 	pthread_mutex_unlock(&bsem_p->mutex);
 }
+
+void test_func(void* args){
+	printf("test function\n");
+}
+
+
+void functino_wrapper(void* (*function_p)(void*),void* arg_p){
+	function_p(arg_p);
+}
+typedef void(*NO_RETURN_FUNC)(void*);
+
+
+/******************************************************singleton threadpool******************************************************************/
+
+/* Singleton pattern for the thread pool */
+threadpool get_threadpool_instance(int num_threads) {
+    static threadpool thpool_instance = NULL;
+
+    if (thpool_instance == NULL) {
+        printf("init thread pool contains %d threads",num_threads);
+        thpool_instance = thpool_init(num_threads);
+    }
+
+    return thpool_instance;
+}
+
+/* Wrapper functions for singleton pattern */
+int _add_work_to_threadpool(void (*function_p)(void*), void* arg_p) {
+    printf("use _add_work...\n");
+    threadpool thpool = get_threadpool_instance(0);
+    if (thpool == NULL) {
+        return -1; // Error: Thread pool not initialized
+    }
+    return thpool_add_work(thpool, function_p, arg_p);
+}
+
+// 
+int add_work_to_threadpool(void* (*function_p)(void*), void* arg_p){
+	printf("use wrapped func\n");
+	return _add_work_to_threadpool((NO_RETURN_FUNC)(function_p),arg_p);
+}
+
+
+
+
+// static void wait_for_threadpool() {
+//     threadpool thpool = get_threadpool_instance(0);
+//     if (thpool != NULL) {
+//         thpool_wait(thpool);
+//     }
+// }
+
+// static void pause_threadpool() {
+//     threadpool thpool = get_threadpool_instance(0);
+//     if (thpool != NULL) {
+//         thpool_pause(thpool);
+//     }
+// }
+
+// static void resume_threadpool() {
+//     threadpool thpool = get_threadpool_instance(0);
+//     if (thpool != NULL) {
+//         thpool_resume(thpool);
+//     }
+// }
+
+// static void destroy_threadpool() {
+//     threadpool thpool = get_threadpool_instance(0);
+//     if (thpool != NULL) {
+//         thpool_destroy(thpool);
+//     }
+// }
+
+// static int num_threads_working() {
+//     threadpool thpool = get_threadpool_instance(0);
+//     return (thpool != NULL) ? thpool_num_threads_working(thpool) : 0;
+// }

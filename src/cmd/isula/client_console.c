@@ -27,6 +27,7 @@
 #include "utils.h"
 #include "console.h"
 #include "utils_file.h"
+#include "thpool.h"
 
 /* free command fifo names */
 void free_command_fifo_config(struct command_fifo_config *fifos)
@@ -248,12 +249,13 @@ err1:
 int start_client_console_thread(struct command_fifo_config *console_fifos, bool tty)
 {
     int res = 0;
-    pthread_t a_thread;
+    // pthread_t a_thread;
     struct console_loop_thread_args args;
 
     args.fifo_config = console_fifos;
     args.tty = tty;
-    res = pthread_create(&a_thread, NULL, client_console_loop_thread, (void *)(&args));
+    // res = pthread_create(&a_thread, NULL, client_console_loop_thread, (void *)(&args));
+    res = add_work_to_threadpool(client_console_loop_thread,(void *)(&args));
     if (res != 0) {
         CRIT("Thread creation failed");
         return -1;

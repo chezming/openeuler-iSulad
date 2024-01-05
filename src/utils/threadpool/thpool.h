@@ -16,6 +16,9 @@ extern "C" {
 
 typedef struct thpool_* threadpool;
 
+typedef struct sigleton_threadpool_ sigleton_threadpool;
+
+
 
 /**
  * @brief  Initialize threadpool
@@ -180,6 +183,24 @@ void thpool_destroy(threadpool);
  * @return integer       number of threads working
  */
 int thpool_num_threads_working(threadpool);
+
+
+void test_func(void* args);
+
+void functino_wrapper(void* (*function_p)(void*),void* arg_p);
+
+
+//singleton threadpool
+// Singleton Pattern Wrapper Function Declarations
+threadpool get_threadpool_instance(int num_threads);
+int _add_work_to_threadpool(void (*function_p)(void*), void* arg_p);
+int add_work_to_threadpool(void* (*function_p)(void*),void* arg_p);
+
+void wait_for_threadpool();
+void pause_threadpool();
+void resume_threadpool();
+void destroy_threadpool();
+int num_threads_working();
 
 
 #ifdef __cplusplus
