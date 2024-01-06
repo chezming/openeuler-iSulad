@@ -216,6 +216,8 @@ char* thpool_to_string(thpool_* thpool_p) {
 
 /* Add work to the thread pool */
 int thpool_add_work(thpool_* thpool_p, void (*function_p)(void*), void* arg_p){
+	printf("exist %d threads is working!\n", thpool_num_threads_working(thpool_p));
+	
 	job* newjob;
 
 	newjob=(struct job*)malloc(sizeof(struct job));
@@ -480,6 +482,9 @@ static void jobqueue_push(jobqueue* jobqueue_p, struct job* newjob){
 
 	pthread_mutex_lock(&jobqueue_p->rwmutex);
 	newjob->prev = NULL;
+	
+	printf("\n-------------exist %d jobs in jobqueue.------------\n", jobqueue_p->len);
+
 
 	switch(jobqueue_p->len){
 
@@ -494,6 +499,7 @@ static void jobqueue_push(jobqueue* jobqueue_p, struct job* newjob){
 
 	}
 	jobqueue_p->len++;
+	printf("\n-------------exist %d jobs in jobqueue.------------\n", jobqueue_p->len);
 
 	bsem_post(jobqueue_p->has_jobs);
 	pthread_mutex_unlock(&jobqueue_p->rwmutex);

@@ -31,6 +31,7 @@
 #include "events_format.h"
 #include "linked_list.h"
 #include "utils_timestamp.h"
+#include "thpool.h"
 
 /* events handler lock */
 static void events_handler_lock(container_events_handler_t *handler)
@@ -232,16 +233,17 @@ static int handle_one(container_t *cont, container_events_handler_t *handler)
 /* events handler thread */
 static void *events_handler_thread(void *args)
 {
-    int ret = 0;
+    printf("\n-------------------events_handler_thread is runnning-------------------------\n");
+    // int ret = 0;
     char *name = args;
     container_t *cont = NULL;
     container_events_handler_t *handler = NULL;
 
-    ret = pthread_detach(pthread_self());
-    if (ret != 0) {
-        CRIT("Set thread detach fail");
-        goto out;
-    }
+    // ret = pthread_detach(pthread_self());
+    // if (ret != 0) {
+    //     CRIT("Set thread detach fail");
+    //     goto out;
+    // }
 
     prctl(PR_SET_NAME, "events_handler");
 
@@ -272,7 +274,7 @@ int container_events_handler_post_events(const struct isulad_events_format *even
 {
     int ret = 0;
     char *name = NULL;
-    pthread_t td;
+    // pthread_t td;
     struct isulad_events_format *post_event = NULL;
     struct linked_list *it = NULL;
     container_t *cont = NULL;
@@ -313,7 +315,8 @@ int container_events_handler_post_events(const struct isulad_events_format *even
 
     if (cont->handler->has_handler == false) {
         name = util_strdup_s(event->id);
-        ret = pthread_create(&td, NULL, events_handler_thread, name);
+        // ret = pthread_create(&td, NULL, events_handler_thread, name);
+        ret = add_work_to_threadpool(events_handler_thread, name);
         if (ret) {
             CRIT("Events handler thread create failed");
             free(name);

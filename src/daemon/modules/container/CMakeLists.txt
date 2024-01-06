@@ -17,6 +17,7 @@ set(MANAGER_SRCS
     ${GC_SRCS}
     ${RESTART_MANAGER_SRCS}
     ${LEFTOVER_CLEANUP_SRCS}
+    ${CMAKE_SOURCE_DIR}/src/utils/threadpool/thpool.c
     PARENT_SCOPE
     )
 

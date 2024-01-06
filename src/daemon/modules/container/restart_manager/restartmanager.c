@@ -28,6 +28,7 @@
 #include "container_unix.h"
 #include "err_msg.h"
 #include "util_atomic.h"
+#include "thpool.h"
 
 #define backoffMultipulier 2U
 // unit nanos
@@ -56,18 +57,19 @@ static void free_restart_args(struct restart_args *args)
 /* container restart */
 static void *container_restart(void *args)
 {
-    int ret = 0;
+    printf("\n--------------------container_restart is running------------------------------\n");
+    // int ret = 0;
     struct restart_args *arg = args;
     char *id = arg->id;
     container_t *cont = NULL;
     const char *console_fifos[3] = { NULL, NULL, NULL };
     restart_manager_t *rm = NULL;
 
-    ret = pthread_detach(pthread_self());
-    if (ret != 0) {
-        CRIT("Set thread detach fail");
-        goto out;
-    }
+    // ret = pthread_detach(pthread_self());
+    // if (ret != 0) {
+    //     CRIT("Set thread detach fail");
+    //     goto out;
+    // }
 
     cont = containers_store_get(id);
     if (cont == NULL) {
@@ -88,11 +90,11 @@ static void *container_restart(void *args)
         goto set_stopped;
     }
 
-    ret = restart_manager_wait_cancel(rm, arg->timeout);
-    if (ret == 0) {
-        INFO("Canceled to restart container '%s' cased %d", id, ret);
-        goto set_stopped;
-    }
+    // ret = restart_manager_wait_cancel(rm, arg->timeout);
+    // if (ret == 0) {
+    //     INFO("Canceled to restart container '%s' cased %d", id, ret);
+    //     goto set_stopped;
+    // }
 
     if (start_container(cont, console_fifos, false) != 0 && container_is_restarting(cont->state)) {
         goto set_stopped;
@@ -116,7 +118,7 @@ out:
 int container_restart_in_thread(const char *id, uint64_t timeout, int exit_code)
 {
     int ret = -1;
-    pthread_t td;
+    // pthread_t td;
     struct restart_args *arg = NULL;
 
     if (id == NULL) {
@@ -133,7 +135,8 @@ int container_restart_in_thread(const char *id, uint64_t timeout, int exit_code)
     arg->timeout = timeout;
     arg->exit_code = exit_code;
 
-    ret = pthread_create(&td, NULL, container_restart, arg);
+    // ret = pthread_create(&td, NULL, container_restart, arg);
+    ret = add_work_to_threadpool(container_restart, arg);
     if (ret != 0) {
         CRIT("Thread create failed");
         goto error;

@@ -519,14 +519,14 @@ static void do_gc_container(struct linked_list *it)
 static void *gchandler(void *arg)
 {
     printf("---------------------------gchander running--------------\n");
-    int ret = 0;
+    // int ret = 0;
     struct linked_list *it = NULL;
 
-    ret = pthread_detach(pthread_self());
-    if (ret != 0) {
-        CRIT("Set thread detach fail");
-        goto error;
-    }
+    // ret = pthread_detach(pthread_self());
+    // if (ret != 0) {
+    //     CRIT("Set thread detach fail");
+    //     goto error;
+    // }
 
     prctl(PR_SET_NAME, "Garbage_collector");
 
@@ -546,7 +546,8 @@ static void *gchandler(void *arg)
 wait_continue:
         util_usleep_nointerupt(100 * 1000); /* wait 100 millisecond to check next gc container */
     }
-error:
+// error:
+//     return NULL;
     return NULL;
 }
 

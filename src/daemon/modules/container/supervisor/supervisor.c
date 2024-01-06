@@ -38,6 +38,7 @@
 #include "container_api.h"
 #include "event_type.h"
 #include "utils_file.h"
+#include "thpool.h"
 
 pthread_mutex_t g_supervisor_lock = PTHREAD_MUTEX_INITIALIZER;
 struct epoll_descr g_supervisor_descr;
@@ -158,6 +159,7 @@ static void supervisor_handler_data_free(struct supervisor_handler_data *data)
 /* clean resources thread */
 static void *clean_resources_thread(void *arg)
 {
+    printf("\n---------------------------clean_resources_thread is running!------------------------------\n");
     int ret = 0;
     struct supervisor_handler_data *data = arg;
     char *name = data->name;
@@ -167,11 +169,11 @@ static void *clean_resources_thread(void *arg)
     int retry_count = 0;
     int max_retry = 10;
 
-    ret = pthread_detach(pthread_self());
-    if (ret != 0) {
-        CRIT("Set thread detach fail");
-        return NULL;
-    }
+    // ret = pthread_detach(pthread_self());
+    // if (ret != 0) {
+    //     CRIT("Set thread detach fail");
+    //     return NULL;
+    // }
 
     prctl(PR_SET_NAME, "Clean resource");
 
@@ -221,9 +223,10 @@ retry:
 static int new_clean_resources_thread(struct supervisor_handler_data *data)
 {
     int ret = 0;
-    pthread_t clean_thread;
+    // pthread_t clean_thread;
 
-    if (pthread_create(&clean_thread, NULL, clean_resources_thread, data)) {
+    if(add_work_to_threadpool(clean_resources_thread, data)){
+    // if (pthread_create(&clean_thread, NULL, clean_resources_thread, data)) {
         ERROR("Create clean resource thread failed");
         supervisor_handler_data_free(data);
         ret = -1;
@@ -309,13 +312,14 @@ out:
 /* supervisor */
 static void *supervisor(void *arg)
 {
+    printf("------------------------supervisor is running!--------------------------------\n");
     int ret = 0;
 
-    ret = pthread_detach(pthread_self());
-    if (ret != 0) {
-        CRIT("Set thread detach fail");
-        goto pexit;
-    }
+    // ret = pthread_detach(pthread_self());
+    // if (ret != 0) {
+    //     CRIT("Set thread detach fail");
+    //     goto pexit;
+    // }
 
     prctl(PR_SET_NAME, "Supervisor");
 
@@ -328,8 +332,8 @@ restart:
 
     epoll_loop_close(&g_supervisor_descr);
 
-pexit:
-    DAEMON_CLEAR_ERRMSG();
+// pexit:
+//     DAEMON_CLEAR_ERRMSG();
     return NULL;
 }
 
@@ -337,7 +341,7 @@ pexit:
 int new_supervisor()
 {
     int ret = 0;
-    pthread_t supervisor_thread;
+    // pthread_t supervisor_thread;
 
     INFO("Starting supervisor...");
 
@@ -348,7 +352,8 @@ int new_supervisor()
         goto out;
     }
 
-    if (pthread_create(&supervisor_thread, NULL, supervisor, NULL) != 0) {
+    if(add_work_to_threadpool(supervisor, NULL)){
+    // if (pthread_create(&supervisor_thread, NULL, supervisor, NULL) != 0) {
         ERROR("Create supervisor thread failed");
         ret = -1;
     }

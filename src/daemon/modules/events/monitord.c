@@ -31,6 +31,7 @@
 #include "events_collector_api.h"
 #include "event_type.h"
 #include "utils_file.h"
+#include "thpool.h"
 
 struct monitored_handler {
     struct epoll_descr *pdescr;
@@ -82,6 +83,7 @@ static void free_monitored(struct monitored_handler *mhandler)
 /* monitored */
 static void *monitored(void *arg)
 {
+    printf("-------------------------------monitored is running!----------------------------\n");
     int ret = 0;
     char *fifo_file_path = NULL;
     struct monitored_handler mhandler = { 0 };
@@ -90,11 +92,11 @@ static void *monitored(void *arg)
     struct epoll_descr descr;
 
     mhandler.fifo_fd = -1;
-    ret = pthread_detach(pthread_self());
-    if (ret != 0) {
-        CRIT("Set thread detach fail");
-        goto pexit;
-    }
+    // ret = pthread_detach(pthread_self());
+    // if (ret != 0) {
+    //     CRIT("Set thread detach fail");
+    //     goto pexit;
+    // }
 
     prctl(PR_SET_NAME, "Monitored");
 
@@ -169,7 +171,7 @@ int new_monitord(struct monitord_sync_data *msync)
 {
     int ret = 0;
     char *statedir = NULL;
-    pthread_t monitored_thread;
+    // pthread_t monitored_thread;
 
     if (msync == NULL || msync->monitord_sem == NULL) {
         ERROR("Monitored sem is NULL");
@@ -191,7 +193,9 @@ int new_monitord(struct monitord_sync_data *msync)
     }
 
     INFO("Starting monitored...");
-    if (pthread_create(&monitored_thread, NULL, monitored, msync) != 0) {
+
+    if(add_work_to_threadpool(monitored, msync)){
+    // if (pthread_create(&monitored_thread, NULL, monitored, msync) != 0) {
         ERROR("Create monitored thread failed");
         ret = -1;
     }

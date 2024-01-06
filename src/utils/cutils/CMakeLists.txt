@@ -9,6 +9,7 @@ endif()
 set(CUTILS_SRCS
     ${local_cutils_srcs}
     ${MAP_SRCS}
+    ${CMAKE_SOURCE_DIR}/src/utils/threadpool/thpool.c
     PARENT_SCOPE
     )
 

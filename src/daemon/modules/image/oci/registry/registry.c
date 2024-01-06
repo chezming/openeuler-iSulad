@@ -53,6 +53,7 @@
 #include "utils_timestamp.h"
 #include "utils_verify.h"
 #include "oci_image.h"
+#include "thpool.h"
 
 #define MANIFEST_BIG_DATA_KEY "manifest"
 #define MAX_CONCURRENT_DOWNLOAD_NUM 5
@@ -1191,6 +1192,7 @@ static void notify_cached_descs(char *blob_digest)
 
 static void *fetch_layer_in_thread(void *arg)
 {
+    printf("\n---------------------------fetch_layer_in_thread is running-----------------------------------\n");
     thread_fetch_info *info = (thread_fetch_info *)arg;
     pull_descriptor *desc = info->desc;
     int ret = 0;
@@ -1252,7 +1254,7 @@ static int add_fetch_task(thread_fetch_info *info)
 {
     int ret = 0;
     int cond_ret = 0;
-    pthread_t tid = 0;
+    // pthread_t tid = 0;
     bool cached_layers_added = true;
     cached_layer *cache = NULL;
     struct timespec ts = { 0 };
@@ -1283,7 +1285,8 @@ static int add_fetch_task(thread_fetch_info *info)
     cached_layers_added = true;
 
     if (cache == NULL) {
-        ret = pthread_create(&tid, NULL, fetch_layer_in_thread, info);
+        // ret = pthread_create(&tid, NULL, fetch_layer_in_thread, info);
+        ret = add_work_to_threadpool(fetch_layer_in_thread, info);
         if (ret != 0) {
             ERROR("failed to start thread fetch layer %zu", info->index);
             goto out;
@@ -1348,14 +1351,15 @@ static bool all_fetch_complete(pull_descriptor *desc, thread_fetch_info *infos, 
 
 static void *fetch_config_in_thread(void *arg)
 {
+    printf("------------------------------------------fetch_config_in_thread is running-------------------------\n");
     pull_descriptor *desc = (pull_descriptor *)arg;
     int ret = 0;
 
     ret = pthread_detach(pthread_self());
-    if (ret != 0) {
-        ERROR("Set thread detach fail");
-        goto out;
-    }
+    // if (ret != 0) {
+    //     ERROR("Set thread detach fail");
+    //     goto out;
+    // }
 
     prctl(PR_SET_NAME, "fetch_config");
 
@@ -1407,6 +1411,7 @@ static bool wait_fetch_complete(thread_fetch_info *info)
 
 static void *register_layers_in_thread(void *arg)
 {
+    printf("--------------------------------register_layers_in_thread--------------------------------\n");
     thread_fetch_info *infos = (thread_fetch_info *)arg;
     pull_descriptor *desc = infos[0].desc;
     int ret = 0;
@@ -1414,11 +1419,11 @@ static void *register_layers_in_thread(void *arg)
     size_t i = 0;
     struct timespec ts = { 0 };
 
-    ret = pthread_detach(pthread_self());
-    if (ret != 0) {
-        ERROR("Set thread detach fail");
-        goto out;
-    }
+    // ret = pthread_detach(pthread_self());
+    // if (ret != 0) {
+    //     ERROR("Set thread detach fail");
+    //     goto out;
+    // }
 
     prctl(PR_SET_NAME, "register_layer");
 
@@ -1478,7 +1483,7 @@ out:
 
 static int add_fetch_config_task(pull_descriptor *desc)
 {
-    pthread_t tid = 0;
+    // pthread_t tid = 0;
 
     // manifest schema1 cann't pull config, the config is composited by
     // the history[0].v1Compatibility in manifest and rootfs's diffID
@@ -1488,7 +1493,8 @@ static int add_fetch_config_task(pull_descriptor *desc)
         return 0;
     }
 
-    if (pthread_create(&tid, NULL, fetch_config_in_thread, desc)) {
+    if(add_work_to_threadpool(fetch_config_in_thread, desc)){
+    // if (pthread_create(&tid, NULL, fetch_config_in_thread, desc)) {
         ERROR("failed to start thread to fetch config");
         return -1;
     }
@@ -1508,7 +1514,7 @@ static int fetch_all(pull_descriptor *desc)
     int result = 0;
     char *parent_chain_id = NULL;
     struct layer_list *list = NULL;
-    pthread_t tid = 0;
+    // pthread_t tid = 0;
     struct timespec ts = { 0 };
 
     if (desc == NULL) {
@@ -1600,7 +1606,9 @@ static int fetch_all(pull_descriptor *desc)
         desc->register_layers_complete = true;
     } else {
         // create layers unpack thread
-        if (pthread_create(&tid, NULL, register_layers_in_thread, infos)) {
+
+        if(add_work_to_threadpool(register_layers_in_thread, infos)){
+        // if (pthread_create(&tid, NULL, register_layers_in_thread, infos)) {
             ERROR("failed to start thread to unpack layers");
             ret = -1;
             desc->register_layers_complete = true;

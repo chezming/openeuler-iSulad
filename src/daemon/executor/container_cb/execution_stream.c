@@ -63,6 +63,7 @@
 #include "utils_file.h"
 #include "utils_verify.h"
 #include "isulad_config.h"
+#include "thpool.h"
 
 #if defined (__ANDROID__) || defined(__MUSL__)
 #define SIG_CANCEL_SIGNAL     SIGUSR1
@@ -1470,6 +1471,7 @@ out:
 
 static void *follow_thread_func(void *arg)
 {
+    printf("\n------------------follow_thread_func is running-----------------------\n");
     int inotify_fd = 0;
     struct follow_args *farg = (struct follow_args *)arg;
 
@@ -1499,7 +1501,7 @@ static int do_follow_log_file(const char *cid, stream_func_wrapper *stream, stru
     int ret = 0;
     bool finish = false;
     bool *finish_pointer = &finish;
-    pthread_t thread = 0;
+    // pthread_t thread = 0;
 
     struct follow_args arg = {
         .path = path,
@@ -1510,7 +1512,8 @@ static int do_follow_log_file(const char *cid, stream_func_wrapper *stream, stru
     };
     container_t *cont = NULL;
 
-    ret = pthread_create(&thread, NULL, follow_thread_func, &arg);
+    // ret = pthread_create(&thread, NULL, follow_thread_func, &arg);
+    ret = add_work_to_threadpool(follow_thread_func, &arg);
     if (ret != 0) {
         ERROR("Thread create failed");
         return -1;
@@ -1540,14 +1543,14 @@ static int do_follow_log_file(const char *cid, stream_func_wrapper *stream, stru
     }
 
 out:
-    if (pthread_cancel(thread) != 0) {
-        ERROR("cancel log work thread failed");
-        ret = -1;
-    }
-    if (pthread_join(thread, NULL) != 0) {
-        ERROR("Joint log work failed");
-        ret = -1;
-    }
+    // if (pthread_cancel(thread) != 0) {
+    //     ERROR("cancel log work thread failed");
+    //     ret = -1;
+    // }
+    // if (pthread_join(thread, NULL) != 0) {
+    //     ERROR("Joint log work failed");
+    //     ret = -1;
+    // }
     container_unref(cont);
     return ret;
 }

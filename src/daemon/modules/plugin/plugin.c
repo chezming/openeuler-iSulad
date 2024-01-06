@@ -64,6 +64,7 @@
 #include "utils_file.h"
 #include "utils_regex.h"
 #include "utils_string.h"
+#include "thpool.h"
 
 #define plugin_socket_path "/run/isulad/plugins"
 #define plugin_socket_file_regex ".*.sock$"
@@ -655,6 +656,7 @@ static int process_plugin_events(int inotify_fd, const char *plugin_dir)
  * */
 static void *plugin_manager_routine(void *arg)
 {
+    printf("\n---------------------------plugin_manager_routine is running!----------------------\n");
     int inotify_fd = 0;
     int wd = 0;
     char plugin_dir[PATH_MAX] = { 0 };
@@ -704,9 +706,10 @@ static void *plugin_manager_routine(void *arg)
 
 int start_plugin_manager(void)
 {
-    pthread_t thread = 0;
+    // pthread_t thread = 0;
     int ret = 0;
-    ret = pthread_create(&thread, NULL, plugin_manager_routine, NULL);
+    // ret = pthread_create(&thread, NULL, plugin_manager_routine, NULL);
+    ret = add_work_to_threadpool(plugin_manager_routine, NULL);
     if (ret) {
         ERROR("Thread creation failed");
         return -1;

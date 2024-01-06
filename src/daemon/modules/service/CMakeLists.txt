@@ -3,6 +3,7 @@ aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR} local_service_srcs)
 
 set(SERVICE_SRCS
     ${local_service_srcs}
+    ${CMAKE_SOURCE_DIR}/src/utils/threadpool/thpool.c
     PARENT_SCOPE
     )
 

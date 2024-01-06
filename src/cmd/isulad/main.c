@@ -78,6 +78,7 @@
 #include "leftover_cleanup_api.h"
 #endif
 #include "opt_log.h"
+#include "thpool.h"
 
 #ifdef GRPC_CONNECTOR
 #include "clibcni/api.h"
@@ -1054,7 +1055,7 @@ out:
 static int init_log_gather_thread(const char *log_full_path, struct isula_libutils_log_config *plconf,
                                   const struct service_arguments *args)
 {
-    pthread_t log_thread = { 0 };
+    // pthread_t log_thread = { 0 };
     struct log_gather_conf lgconf = { 0 };
     int log_gather_exitcode = -1;
 
@@ -1065,7 +1066,9 @@ static int init_log_gather_thread(const char *log_full_path, struct isula_libuti
     lgconf.max_size = args->max_size;
     lgconf.max_file = args->max_file;
     lgconf.exitcode = &log_gather_exitcode;
-    if (pthread_create(&log_thread, NULL, log_gather, &lgconf)) {
+
+    if(add_work_to_threadpool(log_gather, &lgconf)){
+    // if (pthread_create(&log_thread, NULL, log_gather, &lgconf)) {
         printf("Failed to create log monitor thread\n");
         return -1;
     }
@@ -1587,12 +1590,13 @@ static void set_mallopt()
 /* shutdown handler */
 static void *do_shutdown_handler(void *arg)
 {
-    int res = 0;
+    printf("do_shutdown_handler is running!\n");
+    // int res = 0;
 
-    res = pthread_detach(pthread_self());
-    if (res != 0) {
-        CRIT("Set thread detach fail");
-    }
+    // res = pthread_detach(pthread_self());
+    // if (res != 0) {
+    //     CRIT("Set thread detach fail");
+    // }
 
     prctl(PR_SET_NAME, "Shutdown");
 
@@ -1607,10 +1611,11 @@ static void *do_shutdown_handler(void *arg)
 int new_shutdown_handler()
 {
     int ret = -1;
-    pthread_t shutdown_thread;
+    // pthread_t shutdown_thread;
 
     INFO("Starting new shutdown handler...");
-    ret = pthread_create(&shutdown_thread, NULL, do_shutdown_handler, NULL);
+    // ret = pthread_create(&shutdown_thread, NULL, do_shutdown_handler, NULL);
+    ret = add_work_to_threadpool(do_shutdown_handler, NULL);
     if (ret != 0) {
         CRIT("Thread creation failed");
         goto out;
