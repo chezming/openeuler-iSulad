@@ -1493,12 +1493,19 @@ static int add_fetch_config_task(pull_descriptor *desc)
         return 0;
     }
 
+<<<<<<< HEAD
     if(add_work_to_threadpool(fetch_config_in_thread, desc)){
     // if (pthread_create(&tid, NULL, fetch_config_in_thread, desc)) {
+=======
+    // if (pthread_create(&tid, NULL, fetch_config_in_thread, desc)) {
+    //     ERROR("failed to start thread to fetch config");
+    //     return -1;
+    // }
+    if (add_work_to_threadpool(fetch_config_in_thread, desc)) {
+>>>>>>> 6025af49f1063adedcdcc72ef1f597e5c60d0afd
         ERROR("failed to start thread to fetch config");
         return -1;
     }
-
     return 0;
 }
 
@@ -1606,9 +1613,18 @@ static int fetch_all(pull_descriptor *desc)
         desc->register_layers_complete = true;
     } else {
         // create layers unpack thread
+<<<<<<< HEAD
 
         if(add_work_to_threadpool(register_layers_in_thread, infos)){
         // if (pthread_create(&tid, NULL, register_layers_in_thread, infos)) {
+=======
+        // if (pthread_create(&tid, NULL, register_layers_in_thread, infos)) {
+        //     ERROR("failed to start thread to unpack layers");
+        //     ret = -1;
+        //     desc->register_layers_complete = true;
+        // }
+        if (add_work_to_threadpool(register_layers_in_thread, infos)) {
+>>>>>>> 6025af49f1063adedcdcc72ef1f597e5c60d0afd
             ERROR("failed to start thread to unpack layers");
             ret = -1;
             desc->register_layers_complete = true;

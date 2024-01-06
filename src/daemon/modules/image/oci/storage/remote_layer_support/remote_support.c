@@ -118,10 +118,10 @@ int remote_start_refresh_thread(pthread_rwlock_t *remote_lock)
         goto free_out;
     }
 
-    if (pthread_detach(a_thread) != 0) {
-        SYSERROR("Failed to detach 0x%lx", a_thread);
-        goto free_out;
-    }
+    // if (pthread_detach(a_thread) != 0) {
+    //     SYSERROR("Failed to detach 0x%lx", a_thread);
+    //     goto free_out;
+    // }
 
     return 0;
 

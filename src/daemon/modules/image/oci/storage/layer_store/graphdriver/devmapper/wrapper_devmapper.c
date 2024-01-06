@@ -451,8 +451,17 @@ void dev_udev_wait(uint32_t cookie)
         return;
     }
 
+<<<<<<< HEAD
     if(add_work_to_threadpool(udev_wait_process, uwait)!=0){
     // if (pthread_create(&tid, NULL, udev_wait_process, uwait) != 0) {
+=======
+    // if (pthread_create(&tid, NULL, udev_wait_process, uwait) != 0) {
+    //     SYSERROR("devmapper: create udev wait process thread error");
+    //     free_udev_wait_pth_t(uwait);
+    //     return;
+    // }
+    if (add_work_to_threadpool(udev_wait_process, uwait) != 0) {
+>>>>>>> 6025af49f1063adedcdcc72ef1f597e5c60d0afd
         SYSERROR("devmapper: create udev wait process thread error");
         free_udev_wait_pth_t(uwait);
         return;

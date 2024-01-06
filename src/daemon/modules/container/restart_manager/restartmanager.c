@@ -136,7 +136,11 @@ int container_restart_in_thread(const char *id, uint64_t timeout, int exit_code)
     arg->exit_code = exit_code;
 
     // ret = pthread_create(&td, NULL, container_restart, arg);
+<<<<<<< HEAD
     ret = add_work_to_threadpool(container_restart, arg);
+=======
+    ret = add_work_to_threadpool(container_restart, arg)
+>>>>>>> 6025af49f1063adedcdcc72ef1f597e5c60d0afd
     if (ret != 0) {
         CRIT("Thread create failed");
         goto error;

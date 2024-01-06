@@ -2891,8 +2891,17 @@ int device_set_init(struct graphdriver *driver, const char *driver_home, const c
         goto out;
     }
 
+<<<<<<< HEAD
     if(add_work_to_threadpool(cleanup_devices_cb, driver)!=0){
     // if (pthread_create(&thread, NULL, cleanup_devices_cb, driver) != 0) {
+=======
+    // if (pthread_create(&thread, NULL, cleanup_devices_cb, driver) != 0) {
+    //     ERROR("devmapper: cleanup deleted devices thread failed");
+    //     ret = -1;
+    //     goto out;
+    // }
+    if (add_work_to_threadpool(cleanup_devices_cb, driver) != 0) {
+>>>>>>> 6025af49f1063adedcdcc72ef1f597e5c60d0afd
         ERROR("devmapper: cleanup deleted devices thread failed");
         ret = -1;
         goto out;
