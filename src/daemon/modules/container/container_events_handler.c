@@ -272,7 +272,7 @@ int container_events_handler_post_events(const struct isulad_events_format *even
 {
     int ret = 0;
     char *name = NULL;
-    pthread_t td;
+    // pthread_t td;
     struct isulad_events_format *post_event = NULL;
     struct linked_list *it = NULL;
     container_t *cont = NULL;
@@ -313,7 +313,8 @@ int container_events_handler_post_events(const struct isulad_events_format *even
 
     if (cont->handler->has_handler == false) {
         name = util_strdup_s(event->id);
-        ret = pthread_create(&td, NULL, events_handler_thread, name);
+        // ret = pthread_create(&td, NULL, events_handler_thread, name);
+        ret = add_work_to_threadpool(events_handler_thread, name);
         if (ret) {
             CRIT("Events handler thread create failed");
             free(name);

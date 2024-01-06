@@ -373,11 +373,11 @@ static void *stop_container_on_unhealthy(void *arg)
     char *container_id = NULL;
     container_t *cont = NULL;
 
-    ret = pthread_detach(pthread_self());
-    if (ret != 0) {
-        CRIT("Set thread detach fail");
-        return NULL;
-    }
+    // ret = pthread_detach(pthread_self());
+    // if (ret != 0) {
+    //     CRIT("Set thread detach fail");
+    //     return NULL;
+    // }
 
     if (arg == NULL) {
         ERROR("Invalid input arguments");
@@ -416,9 +416,14 @@ static int handle_increment_streak(container_t *cont, int retries)
     if (health->failing_streak >= retries) {
         set_health_status(cont, UNHEALTHY);
         if (cont->common_config->config->healthcheck->exit_on_unhealthy) {
-            pthread_t stop_container_tid = { 0 };
+            // pthread_t stop_container_tid = { 0 };
             char *container_id = util_strdup_s(cont->common_config->id);
-            if (pthread_create(&stop_container_tid, NULL, stop_container_on_unhealthy, (void *)container_id)) {
+            // if (pthread_create(&stop_container_tid, NULL, stop_container_on_unhealthy, (void *)container_id)) {
+            //     free(container_id);
+            //     ERROR("Failed to create thread to exec health check");
+            //     ret = -1;
+            // }
+            if (add_work_to_threadpool(stop_container_on_unhealthy, (void *)container_id)) {
                 free(container_id);
                 ERROR("Failed to create thread to exec health check");
                 ret = -1;
@@ -893,15 +898,20 @@ void container_update_health_monitor(const char *container_id)
         // ensured that the health check monitor process is stopped
         close_health_check_monitor(cont);
         init_monitor_idle_status(cont->health_check);
-        if (pthread_create(&monitor_tid, NULL, health_check_monitor, (void *)cid)) {
+        // if (pthread_create(&monitor_tid, NULL, health_check_monitor, (void *)cid)) {
+        //     free(cid);
+        //     ERROR("Failed to create thread to monitor health check...");
+        //     goto out;
+        // }
+        if (add_work_to_threadpool(health_check_monitor, (void *)cid)) {
             free(cid);
             ERROR("Failed to create thread to monitor health check...");
             goto out;
         }
-        if (pthread_detach(monitor_tid)) {
-            ERROR("Failed to detach the health check monitor thread");
-            goto out;
-        }
+        // if (pthread_detach(monitor_tid)) {
+        //     ERROR("Failed to detach the health check monitor thread");
+        //     goto out;
+        // }
     } else {
         close_health_check_monitor(cont);
     }

@@ -1065,7 +1065,11 @@ static int init_log_gather_thread(const char *log_full_path, struct isula_libuti
     lgconf.max_size = args->max_size;
     lgconf.max_file = args->max_file;
     lgconf.exitcode = &log_gather_exitcode;
-    if (pthread_create(&log_thread, NULL, log_gather, &lgconf)) {
+    // if (pthread_create(&log_thread, NULL, log_gather, &lgconf)) {
+    //     printf("Failed to create log monitor thread\n");
+    //     return -1;
+    // }
+    if (add_work_to_threadpool(log_gather, &lgconf)) {
         printf("Failed to create log monitor thread\n");
         return -1;
     }

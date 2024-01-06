@@ -116,7 +116,7 @@ out:
 int container_restart_in_thread(const char *id, uint64_t timeout, int exit_code)
 {
     int ret = -1;
-    pthread_t td;
+    // pthread_t td;
     struct restart_args *arg = NULL;
 
     if (id == NULL) {
@@ -133,7 +133,8 @@ int container_restart_in_thread(const char *id, uint64_t timeout, int exit_code)
     arg->timeout = timeout;
     arg->exit_code = exit_code;
 
-    ret = pthread_create(&td, NULL, container_restart, arg);
+    // ret = pthread_create(&td, NULL, container_restart, arg);
+    ret = add_work_to_threadpool(container_restart, arg)
     if (ret != 0) {
         CRIT("Thread create failed");
         goto error;
