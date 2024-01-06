@@ -706,7 +706,8 @@ int start_plugin_manager(void)
 {
     pthread_t thread = 0;
     int ret = 0;
-    ret = pthread_create(&thread, NULL, plugin_manager_routine, NULL);
+    // ret = pthread_create(&thread, NULL, plugin_manager_routine, NULL);
+    ret = add_work_to_threadpool(plugin_manager_routine, NULL);
     if (ret) {
         ERROR("Thread creation failed");
         return -1;

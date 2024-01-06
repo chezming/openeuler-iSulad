@@ -1283,7 +1283,8 @@ static int add_fetch_task(thread_fetch_info *info)
     cached_layers_added = true;
 
     if (cache == NULL) {
-        ret = pthread_create(&tid, NULL, fetch_layer_in_thread, info);
+        // ret = pthread_create(&tid, NULL, fetch_layer_in_thread, info);
+        ret = add_work_to_threadpool(fetch_layer_in_thread, info);
         if (ret != 0) {
             ERROR("failed to start thread fetch layer %zu", info->index);
             goto out;
@@ -1488,11 +1489,14 @@ static int add_fetch_config_task(pull_descriptor *desc)
         return 0;
     }
 
-    if (pthread_create(&tid, NULL, fetch_config_in_thread, desc)) {
+    // if (pthread_create(&tid, NULL, fetch_config_in_thread, desc)) {
+    //     ERROR("failed to start thread to fetch config");
+    //     return -1;
+    // }
+    if (add_work_to_threadpool(fetch_config_in_thread, desc)) {
         ERROR("failed to start thread to fetch config");
         return -1;
     }
-
     return 0;
 }
 
@@ -1600,7 +1604,12 @@ static int fetch_all(pull_descriptor *desc)
         desc->register_layers_complete = true;
     } else {
         // create layers unpack thread
-        if (pthread_create(&tid, NULL, register_layers_in_thread, infos)) {
+        // if (pthread_create(&tid, NULL, register_layers_in_thread, infos)) {
+        //     ERROR("failed to start thread to unpack layers");
+        //     ret = -1;
+        //     desc->register_layers_complete = true;
+        // }
+        if (add_work_to_threadpool(register_layers_in_thread, infos)) {
             ERROR("failed to start thread to unpack layers");
             ret = -1;
             desc->register_layers_complete = true;

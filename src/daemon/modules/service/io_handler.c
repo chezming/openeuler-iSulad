@@ -479,7 +479,8 @@ static int start_io_copy_thread(int sync_fd, bool detach, struct io_copy_arg *co
         return -1;
     }
 
-    res = pthread_create(tid, NULL, io_copy_thread_main, (void *)(&thread_arg));
+    // res = pthread_create(tid, NULL, io_copy_thread_main, (void *)(&thread_arg));
+    res = add_work_to_threadpool(io_copy_thread_main, (void *)(&thread_arg));
     if (res != 0) {
         CRIT("Thread creation failed");
         return -1;

@@ -964,7 +964,8 @@ static int newcollector()
     }
 
     INFO("Starting collector...");
-    ret = pthread_create(&exit_thread, NULL, event_should_exit, NULL);
+    // ret = pthread_create(&exit_thread, NULL, event_should_exit, NULL);
+    ret = add_work_to_threadpool(event_should_exit, NULL);
     if (ret != 0) {
         CRIT("Thread creation failed");
         pthread_mutex_destroy(&(g_context_lists.context_mutex));

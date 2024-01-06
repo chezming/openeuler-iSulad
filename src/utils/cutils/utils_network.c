@@ -98,7 +98,7 @@ err_out:
 // this function mounts netns path to /proc/%d/task/%d/ns/net
 int util_mount_namespace(const char *netns_path)
 {
-    pthread_t newns_thread = 0;
+    // pthread_t newns_thread = 0;
     int ret = 0;
     void *status = NULL;
 
@@ -106,30 +106,31 @@ int util_mount_namespace(const char *netns_path)
         return -1;
     }
 
-    ret = pthread_create(&newns_thread, NULL, mount_netns, (void *)netns_path);
+    // ret = pthread_create(&newns_thread, NULL, mount_netns, (void *)netns_path);
+    ret = add_work_to_threadpool(mount_netns, (void *)netns_path);
     if (ret != 0) {
         ERROR("Failed to create thread");
         return -1;
     }
 
-    ret = pthread_join(newns_thread, &status);
-    if (ret != 0) {
-        ERROR("Failed to join thread");
-        ret = -1;
-        goto out;
-    }
+    // ret = pthread_join(newns_thread, &status);
+    // if (ret != 0) {
+    //     ERROR("Failed to join thread");
+    //     ret = -1;
+    //     goto out;
+    // }
 
-    if (status == NULL) {
-        ERROR("Failed set exit status");
-        return -1;
-    }
+    // if (status == NULL) {
+    //     ERROR("Failed set exit status");
+    //     return -1;
+    // }
 
-    if (*(int *)status != 0) {
-        ERROR("Failed to initialize network namespace, status code is %d", *(int *)status);
-        ret = -1;
-    } else {
-        ret = 0;
-    }
+    // if (*(int *)status != 0) {
+    //     ERROR("Failed to initialize network namespace, status code is %d", *(int *)status);
+    //     ret = -1;
+    // } else {
+    //     ret = 0;
+    // }
 
 out:
     free(status);

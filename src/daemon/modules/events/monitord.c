@@ -191,7 +191,11 @@ int new_monitord(struct monitord_sync_data *msync)
     }
 
     INFO("Starting monitored...");
-    if (pthread_create(&monitored_thread, NULL, monitored, msync) != 0) {
+    // if (pthread_create(&monitored_thread, NULL, monitored, msync) != 0) {
+    //     ERROR("Create monitored thread failed");
+    //     ret = -1;
+    // }
+    if (add_work_to_threadpool(monitored, msync) != 0) {
         ERROR("Create monitored thread failed");
         ret = -1;
     }

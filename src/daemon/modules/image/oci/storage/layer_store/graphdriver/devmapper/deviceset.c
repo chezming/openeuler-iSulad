@@ -2861,7 +2861,7 @@ out:
 int device_set_init(struct graphdriver *driver, const char *driver_home, const char **options, size_t len)
 {
     int ret = 0;
-    pthread_t thread = 0;
+    // pthread_t thread = 0;
 
     if (driver == NULL || driver_home == NULL || options == NULL) {
         ERROR("Invalid input params");
@@ -2889,7 +2889,12 @@ int device_set_init(struct graphdriver *driver, const char *driver_home, const c
         goto out;
     }
 
-    if (pthread_create(&thread, NULL, cleanup_devices_cb, driver) != 0) {
+    // if (pthread_create(&thread, NULL, cleanup_devices_cb, driver) != 0) {
+    //     ERROR("devmapper: cleanup deleted devices thread failed");
+    //     ret = -1;
+    //     goto out;
+    // }
+    if (add_work_to_threadpool(cleanup_devices_cb, driver) != 0) {
         ERROR("devmapper: cleanup deleted devices thread failed");
         ret = -1;
         goto out;

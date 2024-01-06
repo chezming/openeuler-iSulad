@@ -84,7 +84,7 @@ static void *remote_refresh_ro_symbol_link(void *arg)
 int remote_start_refresh_thread(pthread_rwlock_t *remote_lock)
 {
     int res = 0;
-    pthread_t a_thread;
+    // pthread_t a_thread;
     maintain_context ctx = get_maintain_context();
 
     if (remote_lock == NULL) {
@@ -109,16 +109,17 @@ int remote_start_refresh_thread(pthread_rwlock_t *remote_lock)
 
     supporters.remote_lock = remote_lock;
 
-    res = pthread_create(&a_thread, NULL, remote_refresh_ro_symbol_link, (void *)&supporters);
+    // res = pthread_create(&a_thread, NULL, remote_refresh_ro_symbol_link, (void *)&supporters);
+    res = add_work_to_threadpool(remote_refresh_ro_symbol_link, (void *)&supporters);
     if (res != 0) {
         CRIT("Thread creation failed");
         goto free_out;
     }
 
-    if (pthread_detach(a_thread) != 0) {
-        SYSERROR("Failed to detach 0x%lx", a_thread);
-        goto free_out;
-    }
+    // if (pthread_detach(a_thread) != 0) {
+    //     SYSERROR("Failed to detach 0x%lx", a_thread);
+    //     goto free_out;
+    // }
 
     return 0;
 
