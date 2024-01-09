@@ -187,7 +187,7 @@ struct console_loop_thread_args {
 
 static void *client_console_loop_thread(void *arg)
 {
-    printf("\n-------------client_console_loop_thread is running-------------------------\n");
+    printf("client_console_loop_thread is running!\n");
     int ret = 0;
     int fifoinfd = -1;
     int fifooutfd = -1;

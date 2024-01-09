@@ -57,8 +57,8 @@ static void free_restart_args(struct restart_args *args)
 /* container restart */
 static void *container_restart(void *args)
 {
-    printf("\n--------------------container_restart is running------------------------------\n");
-    // int ret = 0;
+    printf("container_restart is running!\n");
+    int ret = 0;
     struct restart_args *arg = args;
     char *id = arg->id;
     container_t *cont = NULL;
@@ -90,11 +90,11 @@ static void *container_restart(void *args)
         goto set_stopped;
     }
 
-    // ret = restart_manager_wait_cancel(rm, arg->timeout);
-    // if (ret == 0) {
-    //     INFO("Canceled to restart container '%s' cased %d", id, ret);
-    //     goto set_stopped;
-    // }
+    ret = restart_manager_wait_cancel(rm, arg->timeout);
+    if (ret == 0) {
+        INFO("Canceled to restart container '%s' cased %d", id, ret);
+        goto set_stopped;
+    }
 
     if (start_container(cont, console_fifos, false) != 0 && container_is_restarting(cont->state)) {
         goto set_stopped;
@@ -136,11 +136,7 @@ int container_restart_in_thread(const char *id, uint64_t timeout, int exit_code)
     arg->exit_code = exit_code;
 
     // ret = pthread_create(&td, NULL, container_restart, arg);
-<<<<<<< HEAD
     ret = add_work_to_threadpool(container_restart, arg);
-=======
-    ret = add_work_to_threadpool(container_restart, arg)
->>>>>>> 6025af49f1063adedcdcc72ef1f597e5c60d0afd
     if (ret != 0) {
         CRIT("Thread create failed");
         goto error;

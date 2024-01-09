@@ -233,7 +233,7 @@ static int handle_one(container_t *cont, container_events_handler_t *handler)
 /* events handler thread */
 static void *events_handler_thread(void *args)
 {
-    printf("\n-------------------events_handler_thread is runnning-------------------------\n");
+    printf("events_handler_thread is runnning!\n");
     // int ret = 0;
     char *name = args;
     container_t *cont = NULL;

@@ -1192,7 +1192,7 @@ static void notify_cached_descs(char *blob_digest)
 
 static void *fetch_layer_in_thread(void *arg)
 {
-    printf("\n---------------------------fetch_layer_in_thread is running-----------------------------------\n");
+    printf("fetch_layer_in_thread is running!\n");
     thread_fetch_info *info = (thread_fetch_info *)arg;
     pull_descriptor *desc = info->desc;
     int ret = 0;
@@ -1351,7 +1351,7 @@ static bool all_fetch_complete(pull_descriptor *desc, thread_fetch_info *infos, 
 
 static void *fetch_config_in_thread(void *arg)
 {
-    printf("------------------------------------------fetch_config_in_thread is running-------------------------\n");
+    printf("fetch_config_in_thread is running!\n");
     pull_descriptor *desc = (pull_descriptor *)arg;
     int ret = 0;
 
@@ -1411,7 +1411,7 @@ static bool wait_fetch_complete(thread_fetch_info *info)
 
 static void *register_layers_in_thread(void *arg)
 {
-    printf("--------------------------------register_layers_in_thread--------------------------------\n");
+    printf("register_layers_in_thread is running!\n");
     thread_fetch_info *infos = (thread_fetch_info *)arg;
     pull_descriptor *desc = infos[0].desc;
     int ret = 0;
@@ -1493,16 +1493,8 @@ static int add_fetch_config_task(pull_descriptor *desc)
         return 0;
     }
 
-<<<<<<< HEAD
     if(add_work_to_threadpool(fetch_config_in_thread, desc)){
     // if (pthread_create(&tid, NULL, fetch_config_in_thread, desc)) {
-=======
-    // if (pthread_create(&tid, NULL, fetch_config_in_thread, desc)) {
-    //     ERROR("failed to start thread to fetch config");
-    //     return -1;
-    // }
-    if (add_work_to_threadpool(fetch_config_in_thread, desc)) {
->>>>>>> 6025af49f1063adedcdcc72ef1f597e5c60d0afd
         ERROR("failed to start thread to fetch config");
         return -1;
     }
@@ -1613,18 +1605,9 @@ static int fetch_all(pull_descriptor *desc)
         desc->register_layers_complete = true;
     } else {
         // create layers unpack thread
-<<<<<<< HEAD
 
         if(add_work_to_threadpool(register_layers_in_thread, infos)){
         // if (pthread_create(&tid, NULL, register_layers_in_thread, infos)) {
-=======
-        // if (pthread_create(&tid, NULL, register_layers_in_thread, infos)) {
-        //     ERROR("failed to start thread to unpack layers");
-        //     ret = -1;
-        //     desc->register_layers_complete = true;
-        // }
-        if (add_work_to_threadpool(register_layers_in_thread, infos)) {
->>>>>>> 6025af49f1063adedcdcc72ef1f597e5c60d0afd
             ERROR("failed to start thread to unpack layers");
             ret = -1;
             desc->register_layers_complete = true;

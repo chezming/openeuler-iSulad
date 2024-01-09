@@ -159,7 +159,7 @@ static void supervisor_handler_data_free(struct supervisor_handler_data *data)
 /* clean resources thread */
 static void *clean_resources_thread(void *arg)
 {
-    printf("\n---------------------------clean_resources_thread is running!------------------------------\n");
+    printf("clean_resources_thread is running!");
     int ret = 0;
     struct supervisor_handler_data *data = arg;
     char *name = data->name;
@@ -225,18 +225,8 @@ static int new_clean_resources_thread(struct supervisor_handler_data *data)
     int ret = 0;
     // pthread_t clean_thread;
 
-<<<<<<< HEAD
     if(add_work_to_threadpool(clean_resources_thread, data)){
     // if (pthread_create(&clean_thread, NULL, clean_resources_thread, data)) {
-=======
-    // if (pthread_create(&clean_thread, NULL, clean_resources_thread, data)) {
-    //     ERROR("Create clean resource thread failed");
-    //     supervisor_handler_data_free(data);
-    //     ret = -1;
-    // }
-    
-    if (add_work_to_threadpool(clean_resources_thread, data)) {
->>>>>>> 6025af49f1063adedcdcc72ef1f597e5c60d0afd
         ERROR("Create clean resource thread failed");
         supervisor_handler_data_free(data);
         ret = -1;
@@ -321,7 +311,7 @@ out:
 /* supervisor */
 static void *supervisor(void *arg)
 {
-    printf("------------------------supervisor is running!--------------------------------\n");
+    printf("supervisor is running!\n");
     int ret = 0;
 
     // ret = pthread_detach(pthread_self());
@@ -360,18 +350,9 @@ int new_supervisor()
         ret = -1;
         goto out;
     }
-<<<<<<< HEAD
 
     if(add_work_to_threadpool(supervisor, NULL)){
     // if (pthread_create(&supervisor_thread, NULL, supervisor, NULL) != 0) {
-=======
-    
-    // if (pthread_create(&supervisor_thread, NULL, supervisor, NULL) != 0) {
-    //     ERROR("Create supervisor thread failed");
-    //     ret = -1;
-    // }
-    if (add_work_to_threadpool(supervisor, NULL) != 0) {
->>>>>>> 6025af49f1063adedcdcc72ef1f597e5c60d0afd
         ERROR("Create supervisor thread failed");
         ret = -1;
     }

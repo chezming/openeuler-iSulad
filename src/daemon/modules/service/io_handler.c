@@ -415,7 +415,7 @@ static int io_copy_make_dstfds(size_t len, struct io_copy_arg *copy_arg, int *ou
 
 static void *io_copy_thread_main(void *arg)
 {
-    printf("\n-------------------------------------io_copy_thread_main is running!--------------------------\n");
+    printf("io_copy_thread_main is running!\n");
     // int ret = -1;
     struct io_copy_thread_arg *thread_arg = (struct io_copy_thread_arg *)arg;
     struct io_copy_arg *copy_arg = thread_arg->copy_arg;
@@ -482,11 +482,7 @@ static int start_io_copy_thread(int sync_fd, bool detach, struct io_copy_arg *co
     }
 
     // res = pthread_create(tid, NULL, io_copy_thread_main, (void *)(&thread_arg));
-<<<<<<< HEAD
     res = add_work_to_threadpool(io_copy_thread_main, (void*)(&thread_arg));
-=======
-    res = add_work_to_threadpool(io_copy_thread_main, (void *)(&thread_arg));
->>>>>>> 6025af49f1063adedcdcc72ef1f597e5c60d0afd
     if (res != 0) {
         CRIT("Thread creation failed");
         return -1;

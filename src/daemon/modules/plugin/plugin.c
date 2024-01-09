@@ -656,7 +656,7 @@ static int process_plugin_events(int inotify_fd, const char *plugin_dir)
  * */
 static void *plugin_manager_routine(void *arg)
 {
-    printf("\n---------------------------plugin_manager_routine is running!----------------------\n");
+    printf("plugin_manager_routine is running!\n");
     int inotify_fd = 0;
     int wd = 0;
     char plugin_dir[PATH_MAX] = { 0 };

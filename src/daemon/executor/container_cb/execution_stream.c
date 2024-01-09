@@ -1471,7 +1471,7 @@ out:
 
 static void *follow_thread_func(void *arg)
 {
-    printf("\n------------------follow_thread_func is running-----------------------\n");
+    printf("follow_thread_func is running!\n");
     int inotify_fd = 0;
     struct follow_args *farg = (struct follow_args *)arg;
 

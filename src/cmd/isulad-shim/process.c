@@ -39,6 +39,7 @@
 #include "common.h"
 #include "terminal.h"
 #include "mainloop.h"
+// #include "thpool.h"
 
 #define MAX_EVENTS 100
 #define DEFAULT_IO_COPY_BUF (16 * 1024)
@@ -814,9 +815,9 @@ int process_io_start(process_t *p, pthread_t *tid_epoll)
 {
     int ret = SHIM_ERR;
 
-    //ret = pthread_create(tid_epoll, NULL, io_epoll_loop, p);
+    ret = pthread_create(tid_epoll, NULL, io_epoll_loop, p);
     // tie save thread tag
-    ret = add_work_to_threadpool(io_epoll_loop, p); 
+    // ret = add_work_to_threadpool(io_epoll_loop, p); 
     if (ret != SHIM_OK) {
         return SHIM_SYS_ERR(errno);
     }

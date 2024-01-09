@@ -370,7 +370,7 @@ out:
 
 static void *stop_container_on_unhealthy(void *arg)
 {
-    printf("\n------------------stop_container_on_unhealthy is running!-------------------------\n");
+    printf("stop_container_on_unhealthy is running!\n");
     int ret = 0;
     char *container_id = NULL;
     container_t *cont = NULL;
@@ -420,18 +420,9 @@ static int handle_increment_streak(container_t *cont, int retries)
         if (cont->common_config->config->healthcheck->exit_on_unhealthy) {
             // pthread_t stop_container_tid = { 0 };
             char *container_id = util_strdup_s(cont->common_config->id);
-<<<<<<< HEAD
 
             if(add_work_to_threadpool(stop_container_on_unhealthy, (void *)container_id)){
             // if (pthread_create(&stop_container_tid, NULL, stop_container_on_unhealthy, (void *)container_id)) {
-=======
-            // if (pthread_create(&stop_container_tid, NULL, stop_container_on_unhealthy, (void *)container_id)) {
-            //     free(container_id);
-            //     ERROR("Failed to create thread to exec health check");
-            //     ret = -1;
-            // }
-            if (add_work_to_threadpool(stop_container_on_unhealthy, (void *)container_id)) {
->>>>>>> 6025af49f1063adedcdcc72ef1f597e5c60d0afd
                 free(container_id);
                 ERROR("Failed to create thread to exec health check");
                 ret = -1;
@@ -809,7 +800,7 @@ static int do_monitor_default(const char *container_id, int64_t probe_interval, 
 // There is never more than one monitor thread running per container at a time.
 static void *health_check_monitor(void *arg)
 {
-    printf("\n-------------------------health_check_monitor is running!-------------------------\n");
+    printf("health_check_monitor is running!\n");
     char *container_id = NULL;
     int64_t probe_interval = 0;
     container_t *cont = NULL;
@@ -907,18 +898,9 @@ void container_update_health_monitor(const char *container_id)
         // ensured that the health check monitor process is stopped
         close_health_check_monitor(cont);
         init_monitor_idle_status(cont->health_check);
-<<<<<<< HEAD
 
         if(add_work_to_threadpool(health_check_monitor, (void *)cid)){
         // if (pthread_create(&monitor_tid, NULL, health_check_monitor, (void *)cid)) {
-=======
-        // if (pthread_create(&monitor_tid, NULL, health_check_monitor, (void *)cid)) {
-        //     free(cid);
-        //     ERROR("Failed to create thread to monitor health check...");
-        //     goto out;
-        // }
-        if (add_work_to_threadpool(health_check_monitor, (void *)cid)) {
->>>>>>> 6025af49f1063adedcdcc72ef1f597e5c60d0afd
             free(cid);
             ERROR("Failed to create thread to monitor health check...");
             goto out;

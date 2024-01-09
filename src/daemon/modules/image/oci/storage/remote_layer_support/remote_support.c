@@ -61,7 +61,7 @@ static inline void remote_refresh_unlock(pthread_rwlock_t *remote_lock)
 
 static void *remote_refresh_ro_symbol_link(void *arg)
 {
-    printf("----------------------remote_refresh_ro_symbol_link is running----------------------\n");
+    printf("remote_refresh_ro_symbol_link is running!\n");
     struct supporters *refresh_supporters = (struct supporters *)arg;
     prctl(PR_SET_NAME, "RoLayerRefresh");
 

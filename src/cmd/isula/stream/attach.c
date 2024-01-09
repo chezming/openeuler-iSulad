@@ -205,7 +205,7 @@ struct wait_thread_arg {
 
 static void *container_wait_thread_main(void *thread_arg)
 {
-    printf("---------------------container_wait_thread_main is running------------------\n");
+    printf("container_wait_thread_main is running!\n");
     int ret = -1;
     isula_connect_ops *ops = NULL;
     struct isula_wait_request request = { 0 };

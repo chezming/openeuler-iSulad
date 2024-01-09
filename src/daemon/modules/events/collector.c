@@ -747,7 +747,7 @@ delete_and_continue:
 /* event should exit */
 static void *event_should_exit(void *arg)
 {
-    printf("\n---------------------------event_should_exit is running-------------------------------\n");
+    printf("event_should_exit is running!\n");
     // int res = 0;
     int err = 0;
 

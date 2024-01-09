@@ -83,7 +83,7 @@ static void free_monitored(struct monitored_handler *mhandler)
 /* monitored */
 static void *monitored(void *arg)
 {
-    printf("-------------------------------monitored is running!----------------------------\n");
+    printf("monitored is running!\n");
     int ret = 0;
     char *fifo_file_path = NULL;
     struct monitored_handler mhandler = { 0 };

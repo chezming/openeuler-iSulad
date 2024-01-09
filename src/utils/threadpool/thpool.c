@@ -216,7 +216,7 @@ char* thpool_to_string(thpool_* thpool_p) {
 
 /* Add work to the thread pool */
 int thpool_add_work(thpool_* thpool_p, void (*function_p)(void*), void* arg_p){
-	printf("exist %d threads is working!\n", thpool_num_threads_working(thpool_p));
+	printf("-------------exist %d threads is working!------------\n", thpool_num_threads_working(thpool_p));
 	
 	job* newjob;
 
@@ -483,7 +483,7 @@ static void jobqueue_push(jobqueue* jobqueue_p, struct job* newjob){
 	pthread_mutex_lock(&jobqueue_p->rwmutex);
 	newjob->prev = NULL;
 	
-	printf("\n-------------exist %d jobs in jobqueue.------------\n", jobqueue_p->len);
+	// printf("\n-------------exist %d jobs in jobqueue.------------\n", jobqueue_p->len);
 
 
 	switch(jobqueue_p->len){
@@ -626,7 +626,6 @@ threadpool get_threadpool_instance(int num_threads) {
 
 /* Wrapper functions for singleton pattern */
 int _add_work_to_threadpool(void (*function_p)(void*), void* arg_p) {
-    printf("use _add_work...\n");
     threadpool thpool = get_threadpool_instance(0);
     if (thpool == NULL) {
         return -1; // Error: Thread pool not initialized
@@ -636,7 +635,6 @@ int _add_work_to_threadpool(void (*function_p)(void*), void* arg_p) {
 
 // 
 int add_work_to_threadpool(void* (*function_p)(void*), void* arg_p){
-	printf("use wrapped func\n");
 	return _add_work_to_threadpool((NO_RETURN_FUNC)(function_p),arg_p);
 }
 

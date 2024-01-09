@@ -518,7 +518,7 @@ static void do_gc_container(struct linked_list *it)
 
 static void *gchandler(void *arg)
 {
-    printf("---------------------------gchander running--------------\n");
+    printf("gchander is running!\n");
     // int ret = 0;
     struct linked_list *it = NULL;
 
