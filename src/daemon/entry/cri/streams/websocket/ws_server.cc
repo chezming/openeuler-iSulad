@@ -194,6 +194,14 @@ void WebsocketServer::CloseWsSession(int socketID)
             close(session->pipes.at(1));
             session->pipes.at(1) = -1;
         }
+#ifdef ENABLE_PORTFORWARD
+        for (size_t i = 0; i < session->portPipes.size(); i++) {
+            if (session->portPipes[i][1] >= 0) {
+                close(session->portPipes[i][1]);
+                session->portPipes[i][1] = -1;
+            }
+        }
+#endif
         (void)sem_wait(session->syncCloseSem);
         (void)sem_destroy(session->syncCloseSem);
         delete session->syncCloseSem;
@@ -430,6 +438,21 @@ int WebsocketServer::ResizeTerminal(int socketID, const char *jsonData, size_t l
     return ret;
 }
 
+#ifdef ENABLE_PORTFORWARD
+// write to the fifo corresponding to the port
+void WebsocketServer::PortforwardReceive(SessionData *session, void *in, size_t len)
+{
+    int channel = *static_cast<char *>(in);
+    if (channel < 0 || channel >= MAX_PORT_NUM) {
+        ERROR("Received  write over!");
+    }
+
+    if (util_write_nointr_in_total(session->portPipes[channel][1], static_cast<char *>(in) + 1, len - 1) < 0) {
+        SYSERROR("Sub write over!");
+    }
+}
+#endif
+
 void WebsocketServer::Receive(int socketID, void *in, size_t len, bool complete)
 {
     auto it = m_wsis.find(socketID);
@@ -437,6 +460,13 @@ void WebsocketServer::Receive(int socketID, void *in, size_t len, bool complete)
         ERROR("Invailed websocket session!");
         return;
     }
+#ifdef ENABLE_PORTFORWARD
+    // Distinguish portforward from other operations
+    if (it->second->method == "portforward") {
+        PortforwardReceive(it->second, in, len);
+        return;
+    }
+#endif
 
     if (!it->second->IsStdinComplete()) {
         DEBUG("Receive remaning stdin data with length %zu", len);

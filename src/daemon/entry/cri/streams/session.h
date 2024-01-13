@@ -40,6 +40,17 @@ struct SessionData {
     std::string suffix;
     volatile bool completeStdin;
 
+#ifdef ENABLE_PORTFORWARD
+    // Record the method corresponding to the session
+    // and distinguish portforward from other opts
+    std::string method;
+    // fifo used to receive data during portforward
+    std::vector<std::vector<int>> portPipes;
+
+    // Record the index of the port
+    // modify this value after starting the thread.
+    int index;
+#endif
     unsigned char *FrontMessage();
     void PopMessage();
     int PushMessage(unsigned char *message);
@@ -52,6 +63,9 @@ struct SessionData {
 
 ssize_t WsWriteStdoutToClient(void *context, const void *data, size_t len);
 ssize_t WsWriteStderrToClient(void *context, const void *data, size_t len);
+#ifdef ENABLE_PORTFORWARD
+ssize_t WsWriteDataToClient(void *context, const void *data, size_t len);
+#endif
 ssize_t WsWriteStatusErrToClient(void *context, const cri_status_error *status);
 ssize_t WsDoNotWriteStdoutToClient(void *context, const void *data, size_t len);
 ssize_t WsDoNotWriteStderrToClient(void *context, const void *data, size_t len);

@@ -94,7 +94,10 @@ public:
 
     grpc::Status Attach(grpc::ServerContext *context, const runtime::v1alpha2::AttachRequest *request,
                         runtime::v1alpha2::AttachResponse *response) override;
-
+#ifdef ENABLE_PORTFORWARD
+    grpc::Status PortForward(grpc::ServerContext *context, const runtime::v1alpha2::PortForwardRequest *request,
+                        runtime::v1alpha2::PortForwardResponse *response) override;
+#endif
     grpc::Status UpdateRuntimeConfig(grpc::ServerContext *context,
                                      const runtime::v1alpha2::UpdateRuntimeConfigRequest *request,
                                      runtime::v1alpha2::UpdateRuntimeConfigResponse *reply) override;

@@ -108,6 +108,14 @@ void CRIRuntimeServiceImpl::Attach(const runtime::v1alpha2::AttachRequest &req, 
     m_containerManager->Attach(req, resp, error);
 }
 
+#ifdef ENABLE_PORTFORWARD
+void CRIRuntimeServiceImpl::PortForward(const runtime::v1alpha2::PortForwardRequest &req, runtime::v1alpha2::PortForwardResponse *resp,
+                                 Errors &error)
+{
+    m_podSandboxManager->PortForward(req, resp, error);
+}
+#endif
+
 auto CRIRuntimeServiceImpl::RunPodSandbox(const runtime::v1alpha2::PodSandboxConfig &config,
                                           const std::string &runtimeHandler, Errors &error) -> std::string
 {

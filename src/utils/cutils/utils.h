@@ -72,6 +72,10 @@ int malloc_trim(size_t pad);
 #define HOST_PATH_MODE_USERNS_REMAP 0701
 #define DEFAULT_SHM_SIZE (64 * SIZE_MB)
 
+#ifdef ENABLE_PORTFORWARD
+#define MAX_PORT_NUM 256
+#endif
+
 #define ECOMMON 1
 
 #define PARAM_NUM 100

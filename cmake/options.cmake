@@ -120,6 +120,13 @@ if (ENABLE_SHIM_V2 STREQUAL "ON")
     message("${Green}--  Enable shim v2 runtime${ColourReset}")
 endif()
 
+option(ENABLE_PORTFORWARD "enable portforward" OFF)
+if (ENABLE_PORTFORWARD STREQUAL "ON")
+	add_definitions(-DENABLE_PORTFORWARD=1)
+	set(ENABLE_PORTFORWARD 1)
+    message("${Green}--  Enable portforward${ColourReset}")
+endif()
+
 option(ENABLE_METRICS "enable metrics for CRI" OFF)
 if (ENABLE_METRICS STREQUAL "ON")
     add_definitions(-DENABLE_METRICS)

@@ -104,6 +104,10 @@
 #endif
 #include "isula_libutils/container_update_network_settings_request.h"
 #include "isula_libutils/container_update_network_settings_response.h"
+#ifdef ENABLE_PORTFORWARD
+#include <isula_libutils/container_portforward_request.h>
+#include <isula_libutils/container_portforward_response.h>
+#endif
 
 #include "events_format.h"
 #include "stream_wrapper.h"
@@ -234,7 +238,10 @@ typedef struct {
 
     int (*attach)(const container_attach_request *request, container_attach_response **response, int stdinfd,
                   struct io_write_wrapper *stdout, struct io_write_wrapper *stderr);
-
+#ifdef ENABLE_PORTFORWARD
+    int (*portforward)(const container_portforward_request *request, struct io_write_wrapper *stream_writer, struct io_read_wrapper *stream_reader,
+                        container_portforward_response **response);
+#endif
     int (*update)(const container_update_request *request, container_update_response **response);
 
     int (*stats)(const container_stats_request *request, container_stats_response **response);

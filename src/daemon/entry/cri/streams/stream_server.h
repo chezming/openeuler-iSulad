@@ -29,6 +29,8 @@ void cri_stream_server_shutdown(void);
 
 url::URLDatum cri_stream_server_url(void);
 
+auto BuildURL(const std::string &method, const std::string &token) -> std::string;
+
 #ifdef __cplusplus
 }
 #endif

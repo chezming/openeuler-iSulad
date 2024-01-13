@@ -52,6 +52,11 @@ typedef enum {
     RESIZE,
     PAUSED1,
     MAX_STATE,
+#ifdef ENABLE_PORTFORWARD
+    PORTFORWARD_CREATE,
+    PORTFORWARD_START,
+    PORTFORWARD_DIE,
+#endif
 } runtime_state_t;
 
 // relate to g_isulad_image_event_strtype and image_events_type_t

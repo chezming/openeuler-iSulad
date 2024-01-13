@@ -30,6 +30,10 @@
 #include "network_namespace.h"
 #include "cri_image_manager_service_impl.h"
 #include "namespace.h"
+#ifdef ENABLE_PORTFORWARD
+#include "request_cache.h"
+#include "stream_server.h"
+#endif
 
 namespace CRI {
 auto PodSandboxManagerService::EnsureSandboxImageExists(const std::string &image, Errors &error) -> bool
@@ -1719,10 +1723,63 @@ void PodSandboxManagerService::ListPodSandboxStats(const runtime::v1alpha2::PodS
     }
 }
 
+#ifdef ENABLE_PORTFORWARD
+auto PodSandboxManagerService::ValidatePortForwardRequest(const runtime::v1alpha2::PortForwardRequest &req, Errors &error) -> int
+{
+    if (req.pod_sandbox_id().empty()) {
+        error.SetError("Missing required pod sandbox id!");
+        return -1;
+    }
+
+    if (req.port_size() > MAX_PORT_NUM) {
+        error.Errorf("The number of ports %d exceeds the maximum number of ports:%d", req.port_size(), MAX_PORT_NUM);
+        return -1;
+    }
+
+    (void)CRIHelpers::GetRealContainerOrSandboxID(m_cb, req.pod_sandbox_id(), true, error);
+    if (error.NotEmpty()) {
+        ERROR("Failed to find container id %s: %s", req.pod_sandbox_id().c_str(), error.GetCMessage());
+        error.Errorf("Failed to find container id %s: %s", req.pod_sandbox_id().c_str(), error.GetCMessage());
+        return -1;
+    }
+
+    return 0;
+}
+#endif
+
 void PodSandboxManagerService::PortForward(const runtime::v1alpha2::PortForwardRequest &req,
                                            runtime::v1alpha2::PortForwardResponse *resp, Errors &error)
 {
-    // This feature is temporarily not supported
+#ifdef ENABLE_PORTFORWARD
+    int i;
+    if (ValidatePortForwardRequest(req, error) != 0) {
+        return;
+    }
+    if (resp == nullptr) {
+        error.SetError("Empty portforward response arguments");
+        return;
+    }
+    auto portForwardReq = new (std::nothrow) StreamRequest();
+    if (portForwardReq == nullptr) {
+        error.SetError("Out of memory");
+        return;
+    }
+
+    portForwardReq->containerID = req.pod_sandbox_id();
+    for (i = 0; i < req.port_size(); i++) {
+        portForwardReq->ports.push_back(req.port(i));
+    }
+
+    RequestCache *cache = RequestCache::GetInstance();
+    std::string token = cache->InsertRequest(req.pod_sandbox_id(), portForwardReq);
+    if (token.empty()) {
+        error.SetError("Failed to get a unique token!");
+        delete portForwardReq;
+        return;
+    }
+    std::string url = BuildURL("portforward", token);
+    resp->set_url(url);
+#endif
 }
 
 } // namespace CRI

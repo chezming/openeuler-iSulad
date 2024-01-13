@@ -155,6 +155,10 @@ private:
     void GetFilterPodSandbox(const runtime::v1alpha2::PodSandboxStatsFilter *filter,
                              std::vector<std::string> &podSandboxIDs, Errors &error);
 
+#ifdef ENABLE_PORTFORWARD
+    auto ValidatePortForwardRequest(const runtime::v1alpha2::PortForwardRequest &req, Errors &error) -> int;
+#endif
+
 private:
     std::string m_podSandboxImage;
     std::mutex m_networkReadyLock;

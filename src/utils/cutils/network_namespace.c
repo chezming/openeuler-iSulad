@@ -260,3 +260,25 @@ char *new_sandbox_network_key(void)
 
     return util_strdup_s(netns);
 }
+
+#ifdef ENABLE_PORTFORWARD
+int enter_net_namespace(const char* netns_path)
+{
+    int netns_fd = open(netns_path, O_RDONLY);
+    if (netns_fd < 0) {
+        ERROR("Failed to open network namespace file");
+        return -1;
+    }
+
+    DEBUG("enter netns_path : %s", netns_path);
+
+    if (setns(netns_fd, CLONE_NEWNET) < 0) {
+        SYSERROR("Failed to set network namespace: %s", netns_path);
+        close(netns_fd);
+        return -1;
+    }
+
+    close(netns_fd);
+    return 0;
+}
+#endif

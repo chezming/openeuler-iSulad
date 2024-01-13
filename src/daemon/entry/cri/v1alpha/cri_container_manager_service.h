@@ -124,7 +124,6 @@ private:
     void ExecSyncFromGRPC(const std::string &containerID, const google::protobuf::RepeatedPtrField<std::string> &cmd,
                           int64_t timeout, container_exec_request **request, Errors &error);
     auto ValidateExecRequest(const runtime::v1alpha2::ExecRequest &req, Errors &error) -> int;
-    auto BuildURL(const std::string &method, const std::string &token) -> std::string;
     auto InspectContainerState(const std::string &containerID, Errors &err) -> container_inspect_state *;
     auto ValidateAttachRequest(const runtime::v1alpha2::AttachRequest &req, Errors &error) -> int;
     auto IsSELinuxLabelEmpty(const ::runtime::v1alpha2::SELinuxOption &selinuxOption) -> bool;

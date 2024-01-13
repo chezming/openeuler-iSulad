@@ -148,8 +148,8 @@ void SessionData::EraseAllMessage()
 
 
 namespace {
-// TODO: we should change WebsocketChannel to common type
-void DoWriteToClient(SessionData *session, const void *data, size_t len, WebsocketChannel channel)
+// channel is enum WebsocketChannel or index of portforward ports.
+void DoWriteToClient(SessionData *session, const void *data, size_t len, int channel)
 {
     auto *buf = static_cast<unsigned char *>(util_common_calloc_s(LWS_PRE + MAX_BUFFER_SIZE + 1));
     if (buf == nullptr) {
@@ -162,7 +162,7 @@ void DoWriteToClient(SessionData *session, const void *data, size_t len, Websock
         return;
     }
     // Determine if it is standard output channel or error channel
-    buf[LWS_PRE] = static_cast<int>(channel);
+    buf[LWS_PRE] = channel;
 
     (void)memcpy(&buf[LWS_PRE + 1], const_cast<void *>(data), len);
 
@@ -173,7 +173,7 @@ void DoWriteToClient(SessionData *session, const void *data, size_t len, Websock
     }
 }
 
-ssize_t WsWriteToClient(void *context, const void *data, size_t len, WebsocketChannel channel)
+ssize_t WsWriteToClient(void *context, const void *data, size_t len, int channel)
 {
     auto *lwsCtx = static_cast<SessionData *>(context);
 
@@ -186,6 +186,7 @@ ssize_t WsWriteToClient(void *context, const void *data, size_t len, WebsocketCh
     DoWriteToClient(lwsCtx, data, len, channel);
     return static_cast<ssize_t>(len);
 }
+
 }; // namespace
 
 ssize_t WsWriteStdoutToClient(void *context, const void *data, size_t len)
@@ -226,6 +227,21 @@ ssize_t WsWriteStatusErrToClient(void *context, const cri_status_error *status)
 
     return WsWriteToClient(context, data, strlen(data), ERRORCHANNEL);
 }
+
+#ifdef ENABLE_PORTFORWARD
+// Write functions for different channels
+ssize_t WsWriteDataToClient(void *context, const void *data, size_t len)
+{
+    if (context == nullptr) {
+        ERROR("websocket session context empty");
+        return -1;
+    }
+
+    auto *lwsCtx = static_cast<SessionData *>(context);
+
+    return WsWriteToClient(context, data, len, lwsCtx->index);
+}
+#endif
 
 ssize_t WsDoNotWriteStdoutToClient(void *context, const void *data, size_t len)
 {

@@ -33,7 +33,11 @@
 
 namespace {
 const int MAX_ECHO_PAYLOAD = 4096;
+#ifdef ENABLE_PORTFORWARD
+const int MAX_PROTOCOL_NUM = 5;
+#else
 const int MAX_PROTOCOL_NUM = 4;
+#endif
 const unsigned char WS_CLOSE_FLAG = 255;
 } // namespace
 
@@ -59,6 +63,9 @@ private:
     std::vector<std::string> split(std::string str, char r);
 
     int CreateContext();
+#ifdef ENABLE_PORTFORWARD
+    void PortforwardReceive(SessionData *session, void *in, size_t len);
+#endif
     inline void Receive(int socketID, void *in, size_t len, bool complete);
     int Wswrite(struct lws *wsi, const unsigned char *message);
     inline void DumpHandshakeInfo(struct lws *wsi) noexcept;
@@ -89,6 +96,9 @@ private:
         { "http", HttpCallback, 0, MAX_ECHO_PAYLOAD, 0, nullptr, 0 },
         { "v5.channel.k8s.io", WsCallback, 0, MAX_ECHO_PAYLOAD, 0, nullptr, 0 },
         { "channel.k8s.io", WsCallback, 0, MAX_ECHO_PAYLOAD, 0, nullptr, 0 },
+#ifdef ENABLE_PORTFORWARD
+        { "portforward.k8s.io", WsCallback, 0, MAX_ECHO_PAYLOAD, 0, nullptr, 0 },
+#endif
         { nullptr, nullptr, 0, 0, 0, nullptr, 0 },
     };
     RouteCallbackRegister m_handler;

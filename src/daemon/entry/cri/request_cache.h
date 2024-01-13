@@ -28,6 +28,9 @@ class StreamRequest {
 public:
     std::string containerID;
     std::vector<std::string> streamCmds;
+#ifdef ENABLE_PORTFORWARD
+    std::vector<int32_t> ports;
+#endif
     bool streamTty;
     bool streamStdin;
     bool streamStdout;
