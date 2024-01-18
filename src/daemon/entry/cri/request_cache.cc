@@ -58,7 +58,7 @@ std::string RequestCache::InsertRequest(const std::string &containerID, StreamRe
     GarbageCollection();
     // If the cache is full, reject the request.
     if (m_ll.size() == MaxInFlight) {
-        ERROR("too many cache in flight!");
+        ERROR("Too many cache in flight!");
         return "";
     }
     auto token = UniqueToken();
@@ -117,7 +117,7 @@ std::string RequestCache::UniqueToken()
             return token;
         }
     }
-    ERROR("create unique token failed!");
+    ERROR("Create unique token failed!");
     return "";
 }
 
