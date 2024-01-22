@@ -33,6 +33,7 @@
 #include <isula_libutils/host_config.h>
 #include <isula_libutils/json_common.h>
 #include <isula_libutils/oci_runtime_spec.h>
+#include <isula_libutils/auto_cleanup.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -53,9 +54,12 @@
 #include "err_msg.h"
 #include "event_type.h"
 #include "map.h"
-#include "stream_wrapper.h"
 #include "utils_array.h"
+#include "stream_wrapper.h"
 #include "utils_verify.h"
+#include "util_archive.h"
+#include "checkpoint_common.h"
+#include "path.h"
 
 struct stats_context {
     struct filters_args *stats_filters;
@@ -1598,6 +1602,289 @@ pack_response:
     return (cc == ISULAD_SUCCESS) ? 0 : -1;
 }
 
+#ifdef ENABLE_CRI_API_V1
+static int prepare_checkpoint_path(const char *id, char **checkpoint_target_path, char **checkpoint_image_path)
+{
+    const char *isulad_tmpdir_env = NULL;
+    char tmp_dir[PATH_MAX] = { 0 };
+    char cleanpath[PATH_MAX] = { 0 };
+    int ret;
+
+    isulad_tmpdir_env = getenv("ISULAD_TMPDIR");
+    if (!util_valid_isulad_tmpdir(isulad_tmpdir_env)) {
+        INFO("if not setted isulad tmpdir or setted unvalid dir, use default tmp dir: %s", DEFAULT_ISULAD_TMPDIR);
+        // if not setted isulad tmpdir, just use DEFAULT_ISULAD_TMPDIR
+        isulad_tmpdir_env = DEFAULT_ISULAD_TMPDIR;
+    }
+
+    ret = snprintf(tmp_dir, sizeof(tmp_dir), "%s/isulad_tmpdir/%s/%s",
+        isulad_tmpdir_env, CRIU_DIRECTORY, id);
+    if (ret < 0 || (size_t)ret >= sizeof(tmp_dir)) {
+        ERROR("Failed to join temporary directory: %s", CRIU_DIRECTORY);
+        return -1;
+    }
+    if (util_clean_path(tmp_dir, cleanpath, sizeof(cleanpath)) == NULL) {
+        ERROR("Failed to clean path for %s", tmp_dir);
+        return -1;
+    }
+    *checkpoint_target_path = util_strdup_s(cleanpath);
+
+    *checkpoint_image_path = util_path_join(*checkpoint_target_path, CHECKPOINT_IMAGE_DIRECTORY);
+    if (*checkpoint_image_path == NULL) {
+        ERROR("Failed to join temporary directory: %s", CHECKPOINT_IMAGE_DIRECTORY);
+        return -1;
+    }
+    
+    if ((util_dir_exists(*checkpoint_target_path)) &&
+        (util_recursive_remove_path(*checkpoint_target_path) != 0)) {
+        ERROR("Failed to remove path %s", *checkpoint_target_path);
+        return -1;
+    }
+    if (util_mkdir_p(*checkpoint_image_path, ROOTFS_STORE_PATH_MODE) != 0) {
+        ERROR("Failed mkdir dir %s", *checkpoint_image_path);
+        return -1;
+    }
+
+    return 0;
+}
+
+static int prepare_checkpoint_export(container_t *cont, char *checkpoint_target_path)
+{
+    __isula_auto_free char *prefix_path = NULL;
+    __isula_auto_free char *rootpath = NULL;
+    __isula_auto_free char *checkpoint_diff_file = NULL;
+    __isula_auto_free char *errmsg = NULL;
+    im_tar_diff_files_request *tar_diff_files_request = NULL;
+    const char **g_checkpoint_config_files = get_checkpoint_config_files();
+    int i;
+    int ret = 0;
+
+    prefix_path = util_path_join(cont->root_path, cont->common_config->id);
+    if (prefix_path == NULL) {
+        ERROR("Failed to get path");
+        return -1;
+    }
+
+    for (i = 0; g_checkpoint_config_files[i] != NULL; i++) {
+        __isula_auto_free char *src_file_path = util_path_join(prefix_path, g_checkpoint_config_files[i]);
+        __isula_auto_free char *dest_file_path = util_path_join(checkpoint_target_path, g_checkpoint_config_files[i]);
+        if (src_file_path == NULL || dest_file_path == NULL) {    
+            ERROR("Failed to get path %s", g_checkpoint_config_files[i]);
+            return -1;
+        }
+        if (util_copy_file(src_file_path, dest_file_path, ISULAD_TEMP_DIRECTORY_MODE) != 0) {    
+            ERROR("Failed to copy file from %s to %s", src_file_path, dest_file_path);
+            return -1;
+        }
+    }
+
+    checkpoint_diff_file = util_path_join(checkpoint_target_path, CHECKPOINT_DIFF_FILE);
+    if (checkpoint_diff_file == NULL) {
+        ERROR("Failed to get path");
+        return -1;
+    }
+    rootpath = conf_get_isulad_rootdir();
+    if (rootpath == NULL) {
+        ERROR("Failed to get isulad rootdir");
+        return -1;
+    }
+    tar_diff_files_request = util_common_calloc_s(sizeof(*tar_diff_files_request));
+    if (tar_diff_files_request == NULL) {
+        ERROR("Out of memory");
+        return -1;
+    }
+
+    tar_diff_files_request->id = util_strdup_s(cont->common_config->id);
+    tar_diff_files_request->image_type = util_strdup_s(cont->common_config->image_type);
+    tar_diff_files_request->target_file = util_strdup_s(checkpoint_diff_file);
+    tar_diff_files_request->rootpath = util_strdup_s(rootpath);
+    if (im_tar_diff_files(tar_diff_files_request) != 0) {
+        ret = -1;
+    }
+
+    free_im_tar_diff_files_request(tar_diff_files_request);
+    return ret;
+}
+
+static int export_checkpoint(const container_checkpoint_request *request,
+                             container_t *cont, char *checkpoint_target_path)
+{
+    __isula_auto_free char *rootpath = NULL;
+    __isula_auto_free char *errmsg = NULL;
+
+    rootpath = conf_get_isulad_rootdir();
+    if (rootpath == NULL) {
+        ERROR("Failed to get isulad rootdir");
+        return -1;
+    }
+
+    if (archive_chroot_tar(checkpoint_target_path, request->target_file, rootpath, &errmsg) != 0) {
+        ERROR("Failed to tar file %s. %s", request->target_file, errmsg);
+        return -1;
+    }
+
+    return 0;
+}
+
+static int do_checkpoint(const container_checkpoint_request *request,
+                         container_t *cont)
+{
+    int ret = 0;
+    __isula_auto_free char *checkpoint_target_path = NULL;
+    __isula_auto_free char *checkpoint_image_path = NULL;
+    const char *id = cont->common_config->id;
+    rt_pause_params_t pause_params = { 0 };
+    rt_checkpoint_params_t checkpoint_params = { 0 };
+    rt_status_params_t status_params = { 0 };
+    struct runtime_container_status_info real_status = { 0 };
+    rt_resume_params_t resume_params = { 0 };
+
+    container_lock(cont);
+
+    if (!container_is_running(cont->state)) {
+        ERROR("Container %s is not running", id);
+        isulad_set_error_message("Container %s is not running", id);
+        ret = -1;
+        goto unlock_out;
+    }
+    pause_params.rootpath = cont->root_path;
+    pause_params.state = cont->state_path;
+    if (runtime_pause(id, cont->runtime, &pause_params)) {
+        ERROR("Failed to pause container:%s", id);
+        ret = -1;
+        goto unlock_out;
+    }
+
+    if (prepare_checkpoint_path(id, &checkpoint_target_path, &checkpoint_image_path) != 0) {
+        ret = -1;
+        goto unpause_out;
+    }
+    if (prepare_checkpoint_export(cont, checkpoint_target_path) != 0) {
+        ret = -1;
+        ERROR("Failed to write config dumps for container %s", id);
+        goto clean_dump_file_out;
+    }
+    
+    checkpoint_params.root_path = cont->root_path;
+    checkpoint_params.state = cont->state_path;
+    checkpoint_params.image_path = checkpoint_image_path;
+    checkpoint_params.leave_running = request->keep_running;
+    if (runtime_checkpoint(id, cont->runtime, &checkpoint_params) != 0) {
+        ERROR("Failed to checkpoint container:%s", id);
+        ret = -1;
+        goto clean_dump_file_out;
+    }
+    if (!request->keep_running) {
+        container_state_set_stopped(cont->state, 0);
+    }
+
+    if (export_checkpoint(request, cont, checkpoint_target_path) != 0) {
+        ret = -1;
+        ERROR("Failed to write file system changes of container %s", id);
+        goto clean_dump_file_out;
+    }
+
+clean_dump_file_out:
+    if ((util_dir_exists(checkpoint_target_path)) &&
+        (util_recursive_remove_path(checkpoint_target_path) != 0)) {
+        SYSERROR("Failed to remove path %s", *checkpoint_target_path);
+        ret = -1;
+    }
+unpause_out:
+    status_params.rootpath = cont->root_path;
+    status_params.state = cont->state_path;
+    if (cont->common_config->sandbox_info != NULL) {
+        status_params.task_address = cont->common_config->sandbox_info->task_address;
+    }
+    if (runtime_status(id, cont->runtime, &status_params, &real_status) != 0) {
+        ERROR("Failed to get container status:%s", id);
+        ret = -1;
+    }
+    if (real_status.status == RUNTIME_CONTAINER_STATUS_PAUSED) {
+        resume_params.rootpath = cont->root_path;
+        resume_params.state = cont->state_path;
+        if (runtime_resume(id, cont->runtime, &resume_params)) {
+            ERROR("Failed to resume container:%s", id);
+            ret = -1;
+        }
+    }
+    if (container_state_to_disk(cont) != 0) {
+        ERROR("Failed to save container \"%s\" to disk", id);
+        ret = -1;
+    }
+
+unlock_out:
+    container_unlock(cont);
+    return ret;
+}
+
+static void pack_checkpoint_response(container_checkpoint_response *response, uint32_t cc)
+{
+    if (response == NULL) {
+        return;
+    }
+    response->cc = cc;
+    if (g_isulad_errmsg != NULL) {
+        response->errmsg = util_strdup_s(g_isulad_errmsg);
+        DAEMON_CLEAR_ERRMSG();
+    }
+}
+
+static int container_checkpoint_cb(const container_checkpoint_request *request,
+                                   container_checkpoint_response **response)
+{
+    int cc = ISULAD_SUCCESS;
+    container_t *cont = NULL;
+    const char *id = NULL;
+
+    DAEMON_CLEAR_ERRMSG();
+    if (request == NULL || response == NULL) {
+        ERROR("Invalid NULL input");
+        return -1;
+    }
+
+    *response = util_common_calloc_s(sizeof(*response));
+    if (*response == NULL) {
+        ERROR("Out of memory");
+        cc = ISULAD_ERR_MEMOUT;
+        goto pack_response;
+    }
+
+    if (!util_valid_container_id_or_name(request->id)) {
+        ERROR("Invalid container id %s", request->id);
+        isulad_set_error_message("Invalid container id %s", request->id);
+        cc = ISULAD_ERR_EXEC;
+        goto pack_response;
+    }
+
+    cont = containers_store_get(request->id);
+    if (cont == NULL) {
+        ERROR("No such container: %s", request->id);
+        isulad_set_error_message("No such container: %s", request->id);
+        cc = ISULAD_ERR_EXEC;
+        goto pack_response;
+    }
+
+    id = cont->common_config->id;
+    isula_libutils_set_log_prefix(id);
+    EVENT("Event: {Object: %s, Type: checkpointing}", id);
+
+    if (do_checkpoint(request, cont) != 0) {
+        cc = ISULAD_ERR_EXEC;
+        goto pack_response;
+    }
+
+    EVENT("Event: {Object: %s, Type: checkpointed}", id);
+    (void)isulad_monitor_send_container_event(id, CHECKPOINT, -1, 0, NULL, NULL);
+
+pack_response:
+    pack_checkpoint_response(*response, cc);
+    container_unref(cont);
+    isula_libutils_free_log_prefix();
+    return (cc == ISULAD_SUCCESS) ? 0 : -1;
+}
+#endif /* ENABLE_CRI_API_V1 */
+
 void container_extend_callback_init(service_container_callback_t *cb)
 {
     cb->update = container_update_cb;
@@ -1607,4 +1894,7 @@ void container_extend_callback_init(service_container_callback_t *cb)
     cb->events = container_events_cb;
     cb->export_rootfs = container_export_cb;
     cb->resize = container_resize_cb;
+#ifdef ENABLE_CRI_API_V1
+    cb->checkpoint = container_checkpoint_cb;
+#endif /* ENABLE_CRI_API_V1 */
 }

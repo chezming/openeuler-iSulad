@@ -85,6 +85,9 @@ public:
                              std::vector<std::unique_ptr<runtime::v1::PodSandboxStats>> &podsStats,
                              Errors &error) override;
 
+    void CheckpointContainer(const std::string &containerID,
+                             const std::string &targetFile, Errors &error) override;
+
     void UpdateContainerResources(const std::string &containerID,
                                   const runtime::v1::LinuxContainerResources &resources, Errors &error) override;
 

@@ -83,6 +83,9 @@ public:
                                      std::vector<std::unique_ptr<runtime::v1::PodSandboxStats>> &podsStats,
                                      Errors &error) = 0;
 
+    virtual void CheckpointContainer(const std::string &containerID,
+                                     const std::string &targetFile, Errors &error) = 0;
+
     virtual void UpdateContainerResources(const std::string &containerID,
                                           const runtime::v1::LinuxContainerResources &resources, Errors &error) = 0;
 

@@ -62,6 +62,7 @@
 #include "opt_log.h"
 #include "runtime_api.h"
 #include "id_name_manager.h"
+#include "checkpoint_common.h"
 
 #ifdef ENABLE_CRI_API_V1
 static bool validate_sandbox_info(const container_sandbox_info *sandbox)
@@ -630,9 +631,21 @@ out:
     return ret;
 }
 
+#ifdef ENABLE_CRI_API_V1
+static void container_fill_restore_info(container_t *cont, const container_create_request *request)
+{
+    if (request->restore_id == NULL) {
+        return;
+    }
+    cont->restore = true;
+    cont->restore_archive = util_strdup_s(request->restore_archive);
+}
+#endif /* ENABLE_CRI_API_V1 */
+
 static int register_new_container(const char *id, const char *image_id, const char *runtime, host_config *host_spec,
                                   container_config_v2_common_config *v2_spec,
-                                  container_network_settings *network_settings)
+                                  container_network_settings *network_settings,
+                                  const container_create_request *request)
 {
     int ret = -1;
     bool registered = false;
@@ -675,6 +688,10 @@ static int register_new_container(const char *id, const char *image_id, const ch
         ERROR("Failed to fill restart manager");
         goto out;
     }
+
+#ifdef ENABLE_CRI_API_V1
+    container_fill_restore_info(cont, request);
+#endif /* ENABLE_CRI_API_V1 */
 
 #ifdef ENABLE_NETWORK
     // Allow network settings to be NULL for a temporary period, update it later
@@ -740,6 +757,11 @@ static int maintain_container_id(const container_create_request *request, char *
 #endif
         if (name == NULL) {
             nret = id_name_manager_add_entry_with_new_id_and_name(&id, &name);
+#ifdef ENABLE_CRI_API_V1
+        } else if (request->restore_id != NULL) {
+            id = util_strdup_s(request->restore_id);
+            nret = id_name_manager_add_entry_with_existing_id(id, name);
+#endif /* ENABLE_CRI_API_V1 */
         } else {
             nret = id_name_manager_add_entry_with_new_id(name, &id);
         }
@@ -1149,7 +1171,8 @@ static int get_basic_spec(const container_create_request *request, host_config *
 
 static int do_image_create_container_roofs_layer(const char *container_id, const char *image_type,
                                                  const char *image_name, const char *mount_label, const char *rootfs,
-                                                 json_map_string_string *storage_opt, char **real_rootfs)
+                                                 json_map_string_string *storage_opt, char **real_rootfs,
+                                                 const char *restore_target)
 {
     int ret = 0;
     im_prepare_request *request = NULL;
@@ -1165,6 +1188,7 @@ static int do_image_create_container_roofs_layer(const char *container_id, const
     request->image_type = util_strdup_s(image_type);
     request->mount_label = util_strdup_s(mount_label);
     request->rootfs = util_strdup_s(rootfs);
+    request->restore_target = util_strdup_s(restore_target);
     if (storage_opt != NULL) {
         request->storage_opt = util_common_calloc_s(sizeof(json_map_string_string));
         if (request->storage_opt == NULL) {
@@ -1464,7 +1488,7 @@ int container_create_cb(const container_create_request *request, container_creat
     }
 
     ret = do_image_create_container_roofs_layer(id, image_type, image_name, v2_spec->mount_label, request->rootfs,
-                                                host_spec->storage_opt, &real_rootfs);
+                                                host_spec->storage_opt, &real_rootfs, request->restore_target);
     if (ret != 0) {
         ERROR("Can not create container %s rootfs layer", id);
         cc = ISULAD_ERR_EXEC;
@@ -1558,7 +1582,7 @@ int container_create_cb(const container_create_request *request, container_creat
         goto umount_channel;
     }
 
-    if (register_new_container(id, image_id, runtime, host_spec, v2_spec, network_settings)) {
+    if (register_new_container(id, image_id, runtime, host_spec, v2_spec, network_settings, request)) {
         ERROR("Failed to register new container");
         cc = ISULAD_ERR_EXEC;
         goto umount_channel;

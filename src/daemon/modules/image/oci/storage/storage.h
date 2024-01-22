@@ -181,7 +181,7 @@ void free_layer_list(struct layer_list *ptr);
 
 /* container rootfs operations */
 int storage_rootfs_create(const char *container_id, const char *image, const char *mount_label,
-                          json_map_string_string *storage_opts, char **mountpoint);
+                          json_map_string_string *storage_opts, char **mountpoint, const char *restore_target);
 
 int storage_rootfs_delete(const char *container_id);
 
@@ -194,6 +194,10 @@ int storage_rootfs_umount(const char *container_id, bool force);
 char *storage_rootfs_get_dir(void);
 
 container_inspect_graph_driver *storage_get_metadata_by_container_id(const char *id);
+
+#ifdef ENABLE_CRI_API_V1
+int storage_tar_diff_files(const char *id, const char *target_file, const char *rootpath);
+#endif /* ENABLE_CRI_API_V1 */
 
 #ifdef __cplusplus
 }

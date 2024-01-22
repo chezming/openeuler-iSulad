@@ -402,7 +402,7 @@ int oci_prepare_rf(const im_prepare_request *request, char **real_rootfs)
     }
 
     if (storage_rootfs_create(request->container_id, request->image_name, request->mount_label, request->storage_opt,
-                              real_rootfs) != 0) {
+                              real_rootfs, request->restore_target) != 0) {
         ERROR("Failed to create container rootfs:%s", request->container_id);
         isulad_try_set_error_message("Failed to create container rootfs:%s", request->container_id);
         ret = -1;
@@ -884,3 +884,10 @@ int oci_search(const im_search_request *request, imagetool_search_result **resul
     return ret;
 }
 #endif
+
+#ifdef ENABLE_CRI_API_V1
+int oci_tar_diff_files(const char *id, const char *target_file, const char *rootpath)
+{
+    return storage_tar_diff_files(id, target_file, rootpath);
+}
+#endif /* ENABLE_CRI_API_V1 */

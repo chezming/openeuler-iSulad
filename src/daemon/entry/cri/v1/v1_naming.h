@@ -23,6 +23,9 @@
 namespace CRINamingV1 {
 std::string MakeSandboxName(const runtime::v1::PodSandboxMetadata &metadata);
 
+std::string MakeContainerNameByMetadata(const runtime::v1::PodSandboxMetadata &sbMetadata,
+                                        const runtime::v1::ContainerMetadata &cMetadata);
+
 std::string MakeContainerName(const runtime::v1::PodSandboxConfig &s,
                               const runtime::v1::ContainerConfig &c);
 

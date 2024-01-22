@@ -82,6 +82,12 @@ auto CRIRuntimeServiceImpl::ContainerStatus(const std::string &containerID, Erro
     return m_containerManager->ContainerStatus(containerID, error);
 }
 
+void CRIRuntimeServiceImpl::CheckpointContainer(const std::string &containerID,
+                             const std::string &targetFile, Errors &error)
+{
+    m_containerManager->CheckpointContainer(containerID, targetFile, error);
+}                             
+
 void CRIRuntimeServiceImpl::UpdateContainerResources(const std::string &containerID,
                                                      const runtime::v1::LinuxContainerResources &resources,
                                                      Errors &error)

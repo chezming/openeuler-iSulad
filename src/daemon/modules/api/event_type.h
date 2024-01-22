@@ -51,6 +51,7 @@ typedef enum {
     EXPORT,
     RESIZE,
     PAUSED1,
+    CHECKPOINT,
     MAX_STATE,
 } runtime_state_t;
 

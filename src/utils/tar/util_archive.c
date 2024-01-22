@@ -1368,6 +1368,50 @@ cleanup:
     return ret;
 }
 
+static ssize_t archive_io_read(void *context, void *buf, size_t buf_len)
+{
+    int *read_fd = (int *)context;
+    return util_read_nointr(*read_fd, buf, buf_len);
+}
+
+static int archive_io_close(void *context, char **err)
+{
+    int *read_fd = (int *)context;
+    close(*read_fd);
+    return 0;
+}
+
+int archive_chroot_untar(const char *src_file, const char *dst_path, const char *root_dir, char **errmsg)
+{
+    struct archive_options options = { 0 };
+    struct io_read_wrapper reader = { 0 };
+    int fd;
+    int ret = 0;
+
+    fd = util_open(src_file, O_RDONLY, 0);
+    if (fd == -1) {
+        ERROR("Failed to open file %s", src_file);
+        return -1;
+    }
+    reader.context = &fd;
+    reader.read = archive_io_read;
+    reader.close = archive_io_close;
+
+    options.whiteout_format = NONE_WHITEOUT_FORMATE;
+    if (archive_unpack(&reader, dst_path, &options, root_dir, errmsg) != 0) {
+        ERROR("Failed to unpack to %s: %s", dst_path, *errmsg);
+        ret = -1;
+        goto out;
+    }
+
+out:
+    if (reader.close != NULL) {
+        reader.close(reader.context, NULL);
+    }
+
+    return ret;
+}
+
 static ssize_t pipe_read(void *context, void *buf, size_t len)
 {
     return util_read_nointr(*(int *)context, buf, len);

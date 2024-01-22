@@ -22,16 +22,20 @@
 
 #include <isula_libutils/log.h>
 #include <isula_libutils/parse_common.h>
+#include <isula_libutils/auto_cleanup.h>
 
 #include "v1_cri_security_context.h"
 #include "cri_helpers.h"
 #include "cri_constants.h"
+#include "checkpoint_common.h"
 #include "cxxutils.h"
 #include "path.h"
 #include "utils.h"
+#include "utils_file.h"
 #include "service_container_api.h"
 #include "isulad_config.h"
 #include "sha256.h"
+#include "util_archive.h"
 
 namespace CRIHelpersV1 {
 
@@ -456,6 +460,92 @@ void ApplySandboxSecurityContextToHostConfig(const runtime::v1::LinuxSandboxSecu
         error.Errorf("Failed to add securityOpts to hostconfig: %s", error.GetMessage().c_str());
         return;
     }
+}
+
+auto LoadCheckpointConfigFiles(const std::string &image, char **restore_target, oci_runtime_spec **ociconfig,
+                               host_config **hostconfig, container_config_v2 **configv2, Errors &error) -> int
+{
+    if (image.empty() || restore_target == nullptr || ociconfig == nullptr || hostconfig == nullptr || configv2 == nullptr) {
+        ERROR("Invalid input arguments");
+        error.Errorf("Invalid input arguments");
+        return -1;
+    }
+
+    int ret = 0;
+    __isula_auto_free char *rootDir { nullptr };
+    __isula_auto_free char *errmsg { nullptr };
+    __isula_auto_free parser_error perror { nullptr };
+    __isula_auto_free char *configPathTmp { nullptr };
+    struct parser_context ctx {
+        OPT_GEN_SIMPLIFY, 0
+    };
+
+    rootDir = conf_get_isulad_rootdir();
+    if (rootDir == nullptr) {
+        ERROR("Failed to get isulad rootdir");
+        error.Errorf("Failed to get isulad rootdir");
+        return -1;
+    }
+    if (untar_checkpoint_files(image.c_str(), rootDir, restore_target, &errmsg) != 0) {
+        ERROR("Failed to untar image %s, %s", image.c_str(), errmsg);
+        error.Errorf("Failed to untar image %s, %s", image.c_str(), errmsg);
+        return -1;
+    }
+
+    configPathTmp = util_path_join(*restore_target, OCI_CONFIG_JSON);
+    if (configPathTmp == nullptr) {
+        ERROR("Failed to get config path %s", OCI_CONFIG_JSON);
+        error.Errorf("Failed to get config path %s", OCI_CONFIG_JSON);
+        return -1;
+    }
+    *ociconfig = oci_runtime_spec_parse_file(configPathTmp, &ctx, &perror);
+    if (*ociconfig == nullptr) {
+        ERROR("Failed to parse config file:%s", perror);
+        error.Errorf("Failed to parse config file:%s", perror);
+        ret = -1;
+        goto free_out;
+    }
+    UTIL_FREE_AND_SET_NULL(configPathTmp);
+
+    configPathTmp = util_path_join(*restore_target, HOSTCONFIGJSON);
+    if (configPathTmp == nullptr) {
+        ERROR("Failed to get config path %s", HOSTCONFIGJSON);
+        error.Errorf("Failed to get config path %s", HOSTCONFIGJSON);
+        ret = -1;
+        goto free_out;
+    }
+    *hostconfig = host_config_parse_file(configPathTmp, &ctx, &perror);
+    if (*hostconfig == nullptr) {
+        ERROR("Failed to parse config file:%s", perror);
+        error.Errorf("Failed to parse config file:%s", perror);
+        ret = -1;
+        goto free_out;
+    }
+    UTIL_FREE_AND_SET_NULL(configPathTmp);
+
+    configPathTmp = util_path_join(*restore_target, CONFIG_V2_JSON);
+    if (configPathTmp == nullptr) {
+        ERROR("Failed to get config path %s", CONFIG_V2_JSON);
+        error.Errorf("Failed to get config path %s", CONFIG_V2_JSON);
+        ret = -1;
+        goto free_out;
+    }
+    *configv2 = container_config_v2_parse_file(configPathTmp, &ctx, &perror);
+    if (*configv2== nullptr) {
+        ERROR("Failed to parse config file:%s", perror);
+        error.Errorf("Failed to parse config file:%s", perror);
+        ret = -1;
+        goto free_out;
+    }
+    UTIL_FREE_AND_SET_NULL(configPathTmp);
+    goto out;
+
+free_out:
+    free_oci_runtime_spec(*ociconfig);
+    free_host_config(*hostconfig);
+    free_container_config_v2(*configv2);
+out:
+    return ret;
 }
 
 } // v1 namespace CRIHelpers

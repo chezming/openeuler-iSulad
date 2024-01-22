@@ -76,6 +76,8 @@
 #include "sandbox_ops.h"
 #include "vsock_io_handler.h"
 #endif
+#include "checkpoint_common.h"
+#include "path.h"
 
 #define KATA_RUNTIME "kata-runtime"
 
@@ -727,6 +729,34 @@ static int do_oci_spec_update(const char *id, oci_runtime_spec *oci_spec, host_c
     return 0;
 }
 
+static char *get_checkpoint_path(const char *restore_archive, char **restore_target)
+{
+    __isula_auto_free char *dst_path = NULL;
+    __isula_auto_free char *root_dir = NULL;
+    __isula_auto_free char *errmsg = NULL;
+    char *checkpoint_path = NULL;
+    
+    root_dir = conf_get_isulad_rootdir();
+    if (root_dir == NULL) {
+        ERROR("Failed to get isulad rootdir");
+        return NULL;
+    }
+    if (untar_checkpoint_files(restore_archive, root_dir, &dst_path, &errmsg) != 0) {
+        ERROR("Failed to untar image %s, %s", restore_archive, errmsg);
+        return NULL;
+    }
+    checkpoint_path = util_path_join(dst_path, CHECKPOINT_IMAGE_DIRECTORY);
+    if (checkpoint_path == NULL) {
+        ERROR("Failed to get checkpoint path %s", CHECKPOINT_IMAGE_DIRECTORY);
+        clean_checkpoint_files(dst_path);
+        return NULL;
+    }
+
+    *restore_target = dst_path;
+    dst_path = NULL;
+    return checkpoint_path;
+}
+
 static int do_start_container(container_t *cont, const char *console_fifos[], bool reset_rm, pid_ppid_info_t *pid_info)
 {
     int ret = 0;
@@ -746,6 +776,8 @@ static int do_start_container(container_t *cont, const char *console_fifos[], bo
     oci_runtime_spec *oci_spec = NULL;
     rt_create_params_t create_params = { 0 };
     rt_start_params_t start_params = { 0 };
+    __isula_auto_free char *restore_target = NULL;
+    __isula_auto_free char *checkpoint_path = NULL;
 
     nret = snprintf(bundle, sizeof(bundle), "%s/%s", cont->root_path, id);
     if (nret < 0 || (size_t)nret >= sizeof(bundle)) {
@@ -889,27 +921,45 @@ static int do_start_container(container_t *cont, const char *console_fifos[], bo
     }
 #endif
 
-    if (runtime_create(id, runtime, &create_params) != 0) {
-        ret = -1;
-        goto close_exit_fd;
-    }
+#ifdef ENABLE_CRI_API_V1
+    if (!cont->restore) {
+#endif /* ENABLE_CRI_API_V1 */
+        if (runtime_create(id, runtime, &create_params) != 0) {
+            ret = -1;
+            goto close_exit_fd;
+        }
 
-    start_params.rootpath = cont->root_path;
-    start_params.state = cont->state_path;
-    start_params.tty = tty;
-    start_params.open_stdin = open_stdin;
-    start_params.logpath = engine_log_path;
-    start_params.loglevel = loglevel;
-    start_params.console_fifos = console_fifos;
-    start_params.start_timeout = start_timeout;
-    start_params.container_pidfile = pidfile;
-    start_params.exit_fifo = exit_fifo;
-    start_params.image_type_oci = false;
-    if (strcmp(IMAGE_TYPE_OCI, cont->common_config->image_type) == 0) {
-        start_params.image_type_oci = true;
-    }
+        start_params.rootpath = cont->root_path;
+        start_params.state = cont->state_path;
+        start_params.tty = tty;
+        start_params.open_stdin = open_stdin;
+        start_params.logpath = engine_log_path;
+        start_params.loglevel = loglevel;
+        start_params.console_fifos = console_fifos;
+        start_params.start_timeout = start_timeout;
+        start_params.container_pidfile = pidfile;
+        start_params.exit_fifo = exit_fifo;
+        start_params.image_type_oci = false;
+        if (strcmp(IMAGE_TYPE_OCI, cont->common_config->image_type) == 0) {
+            start_params.image_type_oci = true;
+        }
 
-    ret = runtime_start(id, runtime, &start_params, pid_info);
+        ret = runtime_start(id, runtime, &start_params, pid_info);
+#ifdef ENABLE_CRI_API_V1
+    } else {
+        checkpoint_path = get_checkpoint_path(cont->restore_archive, &restore_target);
+        if (checkpoint_path == NULL) {
+            ret = -1;
+            goto close_exit_fd;
+        }
+        create_params.checkpoint_path = checkpoint_path;
+        ret = runtime_restore(id, runtime, &create_params, pid_info);
+        if (ret == 0) {
+            cont->restore = false;
+        }
+        clean_checkpoint_files(restore_target);
+    }
+#endif /* ENABLE_CRI_API_V1 */
     if (ret == 0) {
         if (do_post_start_on_success(id, runtime, pidfile, exit_fifo_fd, pid_info) != 0) {
             ERROR("Failed to do post start on runtime start success");

@@ -57,6 +57,8 @@
 #include "isula_libutils/container_wait_response.h"
 #include "isula_libutils/container_version_request.h"
 #include "isula_libutils/container_version_response.h"
+#include "isula_libutils/container_checkpoint_request.h"
+#include "isula_libutils/container_checkpoint_response.h"
 #include "isula_libutils/container_path_stat.h"
 #include "isula_libutils/container_copy_to_request.h"
 #include "isula_libutils/host_info_request.h"
@@ -267,6 +269,10 @@ typedef struct {
 
     int (*update_network_settings)(const container_update_network_settings_request *request,
                                    container_update_network_settings_response **response);
+#ifdef ENABLE_CRI_API_V1
+    int (*checkpoint)(const container_checkpoint_request *request,
+                      container_checkpoint_response **response);
+#endif /* ENABLE_CRI_API_V1 */
 } service_container_callback_t;
 
 typedef struct {

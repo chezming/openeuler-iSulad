@@ -14,11 +14,14 @@
  *********************************************************************************/
 #include <sys/mount.h>
 
+#include <isula_libutils/auto_cleanup.h>
+
 #include "utils.h"
 #include "utils_fs.h"
 #include "path.h"
 #include "cleanup.h"
 #include "oci_rootfs_clean.h"
+#include "checkpoint_common.h"
 
 static struct cleaners *create_cleaners()
 {
@@ -189,6 +192,16 @@ static void cleanup_path(char *dir)
     if (!util_dir_exists(cleanpath)) {
         return;
     }
+
+#ifdef ENABLE_CRI_API_V1
+    __isula_auto_free char *criu_tmp_path = NULL;
+    criu_tmp_path = util_path_join(cleanpath, CRIU_DIRECTORY);
+    if (util_dir_exists(criu_tmp_path)) {
+        if (util_recursive_rmdir(criu_tmp_path, 0) != 0) {
+            WARN("failed to remove directory %s", criu_tmp_path);
+        }
+    }
+#endif /* ENABLE_CRI_API_V1 */
 
     nret = util_scan_subdirs(cleanpath, walk_isulad_tmpdir_cb, NULL);
     if (nret != 0) {

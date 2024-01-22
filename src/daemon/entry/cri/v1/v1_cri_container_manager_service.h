@@ -23,6 +23,8 @@
 #include "callback.h"
 #include <isula_libutils/container_config.h>
 #include <isula_libutils/host_config.h>
+#include <isula_libutils/container_config_v2.h>
+#include <isula_libutils/oci_runtime_spec.h>
 #include <isula_libutils/container_create_request.h>
 #include <isula_libutils/container_list_response.h>
 #include <isula_libutils/container_inspect.h>
@@ -62,6 +64,9 @@ public:
     auto ContainerStatus(const std::string &containerID, Errors &error)
     -> std::unique_ptr<runtime::v1::ContainerStatus>;
 
+    void CheckpointContainer(const std::string &containerID,
+                             const std::string &targetFile, Errors &error);
+
     void UpdateContainerResources(const std::string &containerID,
                                   const runtime::v1::LinuxContainerResources &resources, Errors &error);
 
@@ -74,6 +79,19 @@ public:
 
 private:
     auto GetContainerOrSandboxRuntime(const std::string &realID, Errors &error) -> std::string;
+    auto GenerateCreateContainerRequestRestore(const std::string &podSandboxID,
+                                               const runtime::v1::ContainerConfig &containerConfig,
+                                               const runtime::v1::PodSandboxConfig &podSandboxConfig,
+                                               Errors &error) -> container_create_request *;
+    auto GenerateContainerconfigRestore(container_config **custom_config, container_config **container_config_dump,
+                                        const runtime::v1::ContainerConfig &containerConfig, sandbox::Sandbox &sandbox,
+                                        google::protobuf::Map<std::string, std::string> &mapAnnotations,
+                                        Errors &error) -> int;
+    auto GenerateHostconfigRestore(host_config **hostconfig, host_config **host_config_dump,
+                                   oci_runtime_spec *oci_runtime_spec_dump, const runtime::v1::ContainerConfig &containerConfig,
+                                   Errors &error) -> int;
+    auto GenerateContainerNameRestore(google::protobuf::Map<std::string, std::string> &mapAnnotations,
+                                      sandbox::Sandbox &sandbox, std::string &cname, Errors &error) -> int;                                    
     auto GenerateCreateContainerRequest(sandbox::Sandbox &sandbox,
                                         const runtime::v1::ContainerConfig &containerConfig,
                                         const runtime::v1::PodSandboxConfig &podSandboxConfig,

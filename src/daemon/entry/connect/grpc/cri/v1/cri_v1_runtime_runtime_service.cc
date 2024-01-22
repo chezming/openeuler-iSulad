@@ -507,6 +507,29 @@ RuntimeV1RuntimeServiceImpl::ListPodSandboxStats(grpc::ServerContext *context,
     return grpc::Status::OK;
 }
 
+grpc::Status RuntimeV1RuntimeServiceImpl::CheckpointContainer(grpc::ServerContext *context,
+                                                              const runtime::v1::CheckpointContainerRequest *request,
+                                                              runtime::v1::CheckpointContainerResponse *reply)
+{
+    Errors error;
+
+    if (request == nullptr || reply == nullptr) {
+        ERROR("Invalid input arguments");
+        return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT, "Invalid input arguments");
+    }
+
+    EVENT("Event: {Object: CRI, Type: Checkpointing Container: %s}", request->container_id().c_str());
+
+    m_rService->CheckpointContainer(request->container_id(), request->location(), error);
+    if (!error.Empty()) {
+        ERROR("Object: CRI, Type: Failed to checkpoint container %s", request->container_id().c_str());
+        return grpc::Status(grpc::StatusCode::UNKNOWN, error.GetMessage());
+    }
+    EVENT("Event: {Object: CRI, Type: Checkpointed Container: %s}", request->container_id().c_str());
+
+    return grpc::Status::OK;
+}
+
 grpc::Status
 RuntimeV1RuntimeServiceImpl::UpdateContainerResources(grpc::ServerContext *context,
                                                       const runtime::v1::UpdateContainerResourcesRequest *request,
