@@ -169,6 +169,12 @@ extern "C" {
 #ifdef ENABLE_CRI_API_V1
 /* sandbox id max length */
 #define SANDBOX_ID_MAX_LEN 64
+
+#ifdef ENABLE_NRI
+#define DEFAULT_PLUGIN_PATH "/opt/nri/plugins";
+#define DEFAULT_NRI_SOCK_PATH "/var/run/nri/nri.sock";
+#define DEFALUT_NRI_CONFIG_PATH "/etc/nri/conf.d";
+#endif
 #endif
 
 #define CONTAINER_EXEC_ID_MAX_LEN 64

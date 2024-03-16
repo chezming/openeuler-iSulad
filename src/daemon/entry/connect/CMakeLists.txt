@@ -51,6 +51,10 @@ if(GRPC_CONNECTOR)
         list(APPEND local_server_connect_incs ${CMAKE_BINARY_DIR}/grpc/src/api/services/cri/v1)
     endif()
 
+    if (ENABLE_NRI)
+        list(APPEND local_server_connect_incs ${CMAKE_BINARY_DIR}/grpc/src/api/services/nri)
+    endif()
+
     if(ENABLE_NATIVE_NETWORK)
         aux_source_directory(${CMAKE_BINARY_DIR}/grpc/src/api/services/network CONNECT_API_NETWORK)
         list(APPEND local_server_connect_srcs ${CONNECT_API_NETWORK})

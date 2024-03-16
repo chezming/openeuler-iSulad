@@ -28,6 +28,10 @@
 #endif
 #include "cri_service.h"
 
+#ifdef ENABLE_NRI
+#include "nri_runtime_service.h"
+#endif
+
 #include "isula_libutils/log.h"
 #include "errors.h"
 #include "grpc_server_tls_auth.h"
@@ -55,6 +59,17 @@ public:
             return -1;
         }
 
+#ifdef ENABLE_NRI
+        nri_suppport = false;
+        if (args->json_confs != NULL && args->json_confs->nri_support) {
+            nri_suppport = true;
+        }
+
+        // 这里需要添加NRI 对应socket的添加以及init
+        if (nri_suppport && m_nriRuntimeService.Init(args->json_confs) != 0) {
+            return -1;
+        }
+#endif
         // hosts has been validate by util_validate_socket
         auto hosts = std::vector<std::string>(args->hosts, args->hosts + args->hosts_len);
         for (auto host : hosts) {
@@ -87,6 +102,13 @@ public:
         // Register all CRI GRPC services
         m_criService.Register(m_builder);
 
+#ifdef ENABLE_NRI
+        // registry all NRI service
+        // 注册
+        if (nri_suppport) {
+            m_nriRuntimeService.Register(m_builder);
+        }
+#endif
         // Finally assemble the server.
         m_server = m_builder.BuildAndStart();
         if (m_server == nullptr) {
@@ -104,6 +126,11 @@ public:
 
         // Wait for stream server to shutdown
         m_criService.Wait();
+#ifdef ENABLE_NRI
+        if (nri_suppport) {
+            m_nriRuntimeService.Wait();
+        }
+#endif
     }
 
     void Shutdown(void)
@@ -112,7 +139,7 @@ public:
 
         // call CRI to shutdown stream server
         m_criService.Shutdown();
-
+        
         // Shutdown daemon, this operation should remove socket file.
         for (const auto &address : m_socketPath) {
             if (address.find(UNIX_SOCKET_PREFIX) == 0) {
@@ -121,8 +148,26 @@ public:
                 }
             }
         }
+#ifdef ENABLE_NRI
+        // nri 模块shutdown
+        if (!nri_suppport) {
+            return;
+        }
+        m_nriRuntimeService.Shutdown();
+
+        // Shutdown nri runtime daemon, this operation should remove socket file.
+        for (const auto &address : m_nriSocketPath) {
+            if (address.find(UNIX_SOCKET_PREFIX) == 0) {
+                if (unlink(address.c_str() + strlen(UNIX_SOCKET_PREFIX)) < 0 && errno != ENOENT) {
+                    SYSWARN("Failed to remove '%s'.", address.c_str());
+                }
+            }
+        }
+#endif
     }
 
+
+    // 新增将某个socket从listenPort中去掉的函数?? 好像不用，直接通过closed来判断？那不是会持续listen很多吗？
 private:
     int ListeningPort(const struct service_arguments *args, Errors &err)
     {
@@ -177,7 +222,20 @@ private:
             m_builder.AddListeningPort(address, grpc::InsecureServerCredentials());
             INFO("Server listening on %s", address.c_str());
         }
+#ifdef ENABLE_NRI
+        // nri 模块shutdown
+        if (!nri_suppport) {
+            return 0;
+        }
 
+        // 这里添加要新增listen的socket
+
+        // Listen on the given socket address without any authentication mechanism.
+        for (const auto &address : m_nriSocketPath) {
+            m_builder.AddListeningPort(address, grpc::InsecureServerCredentials());
+            INFO("Server listening on %s", address.c_str());
+        }
+#endif
         return 0;
     }
 
@@ -200,6 +258,7 @@ private:
     }
 
 private:
+
     ContainerServiceImpl m_containerService;
     ImagesServiceImpl m_imagesService;
     VolumeServiceImpl m_volumeService;
@@ -209,10 +268,18 @@ private:
     // CRI services
     CRIUnify::CRIService m_criService;
 
+#ifdef ENABLE_NRI
+    bool nri_suppport;
+    // 这里新增一个nri serive的变量
+    NRIRuntimeService m_nriRuntimeService; 
+    // 这里新增nri对应的socketpath
+    std::vector<std::string> m_nriSocketPath;
+#endif
     ServerBuilder m_builder;
 #ifdef ENABLE_GRPC_REMOTE_CONNECT
     std::vector<std::string> m_tcpPath;
 #endif
+
     std::vector<std::string> m_socketPath;
     std::unique_ptr<Server> m_server;
 };
@@ -239,6 +306,11 @@ int grpc_server_init(const struct service_arguments *args)
 
     return 0;
 }
+
+// int grpc_server_remove_listening_port()
+// {
+
+// }
 
 void grpc_server_wait(void)
 {

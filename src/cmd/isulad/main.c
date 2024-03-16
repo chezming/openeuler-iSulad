@@ -83,6 +83,13 @@
 #endif
 #include "id_name_manager.h"
 
+#ifdef ENABLE_CRI_API_V1
+#ifdef ENABLE_NRI
+#include "nri_adaption.h"
+#include "errors.h"
+#endif
+#endif
+
 sem_t g_daemon_shutdown_sem;
 sem_t g_daemon_wait_shutdown_sem;
 
@@ -1413,6 +1420,15 @@ static int isulad_server_init_common()
         ERROR("Failed to init name index");
         goto out;
     }
+
+#ifdef ENABLE_CRI_API_V1 && ENABLE_NRI
+    Errors err;
+    NRIAdaptation::GetInstance()->Init(err);
+    if (err.NotEmpty()) {
+        ERROR("Failed to init NRIAdaptation: %s", err.GetCMessage());
+        goto out;
+    }
+#endif
 
     ret = 0;
 

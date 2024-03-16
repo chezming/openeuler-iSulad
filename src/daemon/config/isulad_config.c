@@ -456,6 +456,29 @@ out:
     (void)isulad_server_conf_unlock();
     return path;
 }
+
+#ifdef ENABLE_NRI
+bool conf_get_nri_support(void)
+{
+    return true;
+}
+char *conf_get_nri_plugin_config_path(void)
+{
+    return DEFALUT_NRI_CONFIG_PATH;
+}
+char *conf_get_nri_plugin_path(void)
+{
+    return DEFAULT_PLUGIN_PATH;
+}
+char *conf_get_nri_plugin_registration_timeout(void)
+{
+    return NULL;
+}
+char *conf_get_nri_plugin_requst_timeout(void)
+{
+    return NULL;
+}
+#endif
 #endif
 
 /* conf get isulad rootdir */
@@ -1760,6 +1783,13 @@ int merge_json_confs_into_global(struct service_arguments *args)
     args->json_confs->cri_sandboxers = tmp_json_confs->cri_sandboxers;
     tmp_json_confs->cri_sandboxers = NULL;
     args->json_confs->enable_cri_v1 = tmp_json_confs->enable_cri_v1;
+#ifdef ENABLE_NRI
+    args->json_confs->nri_support = tmp_json_confs->nri_support;
+    override_string_value(&args->json_confs->plugin_config_path , &tmp_json_confs->plugin_config_path);
+    override_string_value(&args->json_confs->plugin_path, &tmp_json_confs->plugin_path);
+    override_string_value(&args->json_confs->plugin_registration_timeout, &tmp_json_confs->plugin_registration_timeout);
+    override_string_value(&args->json_confs->plugin_requst_timeout, &tmp_json_confs->plugin_requst_timeout);
+#endif
 #endif
 
     args->json_confs->systemd_cgroup = tmp_json_confs->systemd_cgroup;
