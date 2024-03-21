@@ -24,6 +24,8 @@ extern "C" {
 
 int grpc_server_init(const struct service_arguments *args);
 
+// int grpc_server_remove_listening_port();
+
 void grpc_server_wait(void);
 
 void grpc_server_shutdown(void);
