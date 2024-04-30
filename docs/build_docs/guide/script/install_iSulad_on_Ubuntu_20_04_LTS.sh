@@ -16,7 +16,9 @@ mkdir -p $BUILD_DIR
 
 # build lxc
 cd $BUILD_DIR
-git clone https://gitee.com/src-openeuler/lxc.git
+git clone https://gitee.com/src-openeuler/lxc.git --branch=openEuler-22.03-LTS --depth 1
+# git clone https://gitee.com/src-openeuler/lxc.git
+
 cd lxc
 ./apply-patches
 cd lxc-4.0.3
@@ -27,7 +29,7 @@ make install
 
 # build lcr
 cd $BUILD_DIR
-git clone https://gitee.com/openeuler/lcr.git
+git clone https://gitee.com/openeuler/lcr.git --branch=stable-v2.0.x --depth 1
 cd lcr
 mkdir build
 cd build
@@ -37,7 +39,7 @@ make install
 
 # build and install clibcni
 cd $BUILD_DIR
-git clone https://gitee.com/openeuler/clibcni.git
+git clone https://gitee.com/openeuler/clibcni.git --branch=stable-v2.0.x --depth 1
 cd clibcni
 mkdir build
 cd build
@@ -47,7 +49,7 @@ make install
 
 # build and install iSulad
 cd $BUILD_DIR
-git clone https://gitee.com/openeuler/iSulad.git
+git clone https://gitee.com/openeuler/iSulad.git --branch=stable-v2.0.x --depth 1
 cd iSulad
 mkdir build
 cd build
