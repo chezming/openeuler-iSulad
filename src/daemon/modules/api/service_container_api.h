@@ -18,6 +18,10 @@
 #include "io_wrapper.h"
 #include <isula_libutils/container_exec_request.h>
 #include <isula_libutils/container_exec_response.h>
+#ifdef ENABLE_PORTFORWARD
+#include <isula_libutils/container_portforward_request.h>
+#include <isula_libutils/container_portforward_response.h>
+#endif
 #include <isula_libutils/container_inspect.h>
 
 #ifdef __cplusplus
@@ -46,7 +50,10 @@ int delete_container(container_t *cont, bool force);
 
 int exec_container(const container_t *cont, const container_exec_request *request, container_exec_response *response,
                    int stdinfd, struct io_write_wrapper *stdout_handler, struct io_write_wrapper *stderr_handler);
-
+#ifdef ENABLE_PORTFORWARD
+int portforward_container(const container_t *cont, const container_portforward_request *request, struct io_write_wrapper *stream_writer,
+                            struct io_read_wrapper *stream_reader, container_portforward_response *response);
+#endif
 container_inspect *inspect_container(const char *id, int timeout, bool with_host_config);
 container_inspect_state *inspect_container_state(const char *id, int timeout);
 

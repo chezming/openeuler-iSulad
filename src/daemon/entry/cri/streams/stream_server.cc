@@ -20,6 +20,9 @@
 #include "attach_serve.h"
 #include "ws_server.h"
 #include "isulad_config.h"
+#ifdef ENABLE_PORTFORWARD
+#include "portforward_serve.h"
+#endif
 
 static url::URLDatum m_url;
 
@@ -38,6 +41,10 @@ void cri_stream_server_init(Errors &err)
     // register support service
     server->RegisterCallback(std::string("exec"), std::make_shared<ExecServe>());
     server->RegisterCallback(std::string("attach"), std::make_shared<AttachServe>());
+#ifdef ENABLE_PORTFORWARD
+    server->RegisterCallback(std::string("portforward"), std::make_shared<PortForwardServe>());
+#endif
+
     server->Start(err);
 }
 
@@ -57,3 +64,12 @@ url::URLDatum cri_stream_server_url(void)
 {
     return m_url;
 }
+
+auto BuildURL(const std::string &method, const std::string &token) -> std::string
+{
+    url::URLDatum url;
+    url.SetPathWithoutEscape("/cri/" + method + "/" + token);
+
+    return cri_stream_server_url().ResolveReference(&url)->String();
+}
+

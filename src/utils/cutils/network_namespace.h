@@ -32,6 +32,10 @@ int remove_network_namespace_file(const char *netns_path);
 
 char *new_sandbox_network_key(void);
 
+#ifdef ENABLE_PORTFORWARD
+int enter_net_namespace(const char* netns_path);
+#endif
+
 #ifdef __cplusplus
 }
 #endif

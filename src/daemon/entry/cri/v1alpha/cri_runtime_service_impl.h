@@ -62,6 +62,9 @@ public:
 
     void Exec(const runtime::v1alpha2::ExecRequest &req, runtime::v1alpha2::ExecResponse *resp, Errors &error) override;
 
+#ifdef ENABLE_PORTFORWARD
+    void PortForward(const runtime::v1alpha2::PortForwardRequest &req, runtime::v1alpha2::PortForwardResponse *resp,Errors &error);
+#endif
     void Attach(const runtime::v1alpha2::AttachRequest &req, runtime::v1alpha2::AttachResponse *resp,
                 Errors &error) override;
 

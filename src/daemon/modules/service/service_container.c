@@ -14,6 +14,13 @@
  ******************************************************************************/
 #define _GNU_SOURCE
 #include <unistd.h>
+#ifdef ENABLE_PORTFORWARD
+#include <sys/mount.h>
+#include <sys/eventfd.h>
+#include <sys/epoll.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#endif
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
@@ -2260,6 +2267,33 @@ static void exec_container_end(container_exec_response *response, const containe
     }
 }
 
+#ifdef ENABLE_PORTFORWARD
+static void portforward_container_end(container_portforward_response *response, const container_t *cont,
+                                uint32_t cc, int sync_fd, pthread_t thread_id)
+{
+    if (response != NULL) {
+        response->cc = cc;
+        if (g_isulad_errmsg != NULL) {
+            response->errmsg = util_strdup_s(g_isulad_errmsg);
+            DAEMON_CLEAR_ERRMSG();
+        }
+    }
+    if (sync_fd >= 0 && cc != ISULAD_SUCCESS) {
+        if (eventfd_write(sync_fd, 1) < 0) {
+            SYSERROR("Failed to write eventfd");
+        }
+    }
+    if (thread_id > 0) {
+        if (pthread_join(thread_id, NULL) != 0) {
+            ERROR("Failed to join thread: 0x%lx", thread_id);
+        }
+    }
+    if (sync_fd >= 0) {
+        close(sync_fd);
+    }
+}
+#endif
+
 static void cleanup_exec_console_io(const container_t *cont, const char *fifopath, const char *io_addresses[])
 {
 #ifdef ENABLE_CRI_API_V1
@@ -2416,3 +2450,314 @@ pack_response:
 
     return (cc == ISULAD_SUCCESS) ? 0 : -1;
 }
+
+#ifdef ENABLE_PORTFORWARD
+struct sock_to_client_epoll_args {
+    struct io_write_wrapper *stream_writer;
+    int index;
+};
+
+static int sock_to_client_cb(int fd, uint32_t events, void *cbdata, struct epoll_descr *descr)
+{
+    struct sock_to_client_epoll_args *args = (struct sock_to_client_epoll_args *)cbdata;
+    char buf[MAX_BUFFER_SIZE] = { 0 };
+    int ret = EPOLL_LOOP_HANDLE_CONTINUE;
+    ssize_t r_ret, nret;
+
+    if (events & EPOLLHUP) {
+        ret = EPOLL_LOOP_HANDLE_CLOSE;
+        goto out;
+    }
+
+    if (!(events & EPOLLIN)) {
+        return EPOLL_LOOP_HANDLE_CONTINUE;
+    }
+
+    // reserve memory for 'i' that identify index and '\0'
+    r_ret = util_read_nointr(fd, buf, sizeof(buf) - 2);
+    if (r_ret <= 0) {
+        ret = EPOLL_LOOP_HANDLE_CLOSE;
+        goto out;
+    }
+    buf[sizeof(buf) - 2] = args->index;
+    r_ret++;
+
+    nret = args->stream_writer->write_func(args->stream_writer->context, buf, r_ret);
+    if (nret <= 0 || nret != r_ret) {
+        SYSERROR("Failed to write, index: %d, expect: %zd, wrote: %zd!", args->index, r_ret, nret);
+        ret = EPOLL_LOOP_HANDLE_CLOSE;
+        goto out;
+    }
+
+out:
+    // Delete the handle from epoll, because if the write end of the handle is disconnected,
+    // it will enter again when epoll is repeated
+    if (ret != EPOLL_LOOP_HANDLE_CONTINUE) {
+        epoll_loop_del_handler(descr, fd);
+    }
+    return ret;
+}
+
+static int clent_to_sock_cb(int fd, uint32_t events, void *cbdata, struct epoll_descr *descr)
+{
+    int *sockfd = (int *)cbdata;
+    char buf[MAX_BUFFER_SIZE] = { 0 };
+    int ret = EPOLL_LOOP_HANDLE_CONTINUE;
+    ssize_t r_ret, nret;
+
+    if (events & EPOLLHUP) {
+        ret = EPOLL_LOOP_HANDLE_CLOSE;
+        goto out;
+    }
+
+    if (!(events & EPOLLIN)) {
+        return EPOLL_LOOP_HANDLE_CONTINUE;
+    }
+
+    r_ret = util_read_nointr(fd, buf, sizeof(buf) - 1);
+    if (r_ret <= 0) {
+        ret = EPOLL_LOOP_HANDLE_CLOSE;
+        goto out;
+    }
+
+    nret = util_write_nointr_in_total(*sockfd, buf, r_ret);
+    if ((nret <= 0) || (nret != r_ret)) {
+        SYSERROR("Failed to write %d", *sockfd);
+        ret = EPOLL_LOOP_HANDLE_CLOSE;
+        goto out;
+    }
+
+out:
+    // Delete the handle from epoll, because if the write end of the handle is disconnected,
+    // it will enter again when epoll is repeated
+    if (ret != EPOLL_LOOP_HANDLE_CONTINUE) {
+        epoll_loop_del_handler(descr, fd);
+    }
+    return ret;
+}
+
+static int do_portforward_epoll_loop(struct io_write_wrapper *stream_writer, struct io_read_wrapper *stream_reader, int *sockfd, size_t ports_len)
+{
+    size_t i;
+    int nret;
+    int ret = -1;
+    struct epoll_descr descr = { 0 };
+    struct sock_to_client_epoll_args epoll_args[ports_len];
+
+    nret = epoll_loop_open(&descr);
+    if (nret != 0) {
+        ERROR("Create epoll_loop error");
+        return ret;
+    }
+    for (i = 0; i < ports_len; i++) {
+        epoll_args[i].stream_writer = stream_writer;
+        epoll_args[i].index = i;
+        // pod port sock[i] --> websocket client
+        nret = epoll_loop_add_handler(&descr, sockfd[i], sock_to_client_cb, &epoll_args[i]);
+        if (nret != 0) {
+            ERROR("Failed to add handler for sockfd %d", sockfd[i]);
+            goto out;
+        }
+        // pipe[i][0] --> pod port sock[i]
+        nret = epoll_loop_add_handler(&descr, ((int *)(stream_reader->context))[i], clent_to_sock_cb, &sockfd[i]);
+        if (nret != 0) {
+            ERROR("Failed to add handler for pipe %d", ((int *)(stream_reader->context))[i]);
+            goto out;
+        }
+    }
+
+    nret = epoll_loop(&descr, -1);
+    if (nret != 0) {
+        SYSERROR("Failed to do epoll loop ");
+        goto out;
+    }
+    ret = 0;
+
+out:
+    for (; i >= 0; i--) {
+        (void)epoll_loop_del_handler(&descr, sockfd[i]);
+        (void)epoll_loop_del_handler(&descr, ((int *)(stream_reader->context))[i]);
+    }
+    epoll_loop_close(&descr);
+    return ret;
+}
+
+struct portforward_callback_args {
+    char* netns_path;
+    struct io_write_wrapper *stream_writer;
+    struct io_read_wrapper *stream_reader;
+    int32_t *ports;
+    size_t ports_len;
+};
+
+static void free_portforward_callback_args(struct portforward_callback_args *args)
+{
+    if (args == NULL) {
+        return;
+    }
+
+    free(args->netns_path);
+    args->netns_path = NULL;
+
+    free(args->ports);
+    args->ports = NULL;
+
+    free(args);
+}
+
+static int socket_stream_connect(int32_t port)
+{
+    int sock = -1;
+    struct sockaddr_in s_addr;
+
+    bzero(&s_addr, sizeof(s_addr));
+    s_addr.sin_addr.s_addr = INADDR_ANY;
+    s_addr.sin_port = htons(port);
+    s_addr.sin_family = AF_INET;
+
+    sock = socket(AF_INET, SOCK_STREAM, 0);
+    if (sock < 0) {
+        SYSERROR("get socket failed");
+        return -1;
+    }
+
+    if (bind(sock, (struct sockaddr *)&s_addr, sizeof(struct sockaddr_in)) < 0) {
+        SYSERROR("bind port failed");
+        return -1;
+    }
+    return sock;
+}
+
+static void *pod_io_copy_thread(void *arg)
+{
+    struct portforward_callback_args *args = (struct portforward_callback_args *)arg;
+    int sockfd[args->ports_len];
+    size_t i;
+
+    prctl(PR_SET_NAME, "PodIOCopy");
+
+    if (enter_net_namespace(args->netns_path) != 0) {
+        ERROR("Failed to enter netns_path: %s", args->netns_path);
+        return NULL;
+    }
+
+    for(i = 0; i < args->ports_len; i++) {
+        sockfd[i] = socket_stream_connect(args->ports[i]);
+        if (sockfd[i] == -1) {
+            ERROR("Failed to create socket stream connect");
+            goto out;
+        }
+    }
+
+    if (do_portforward_epoll_loop(args->stream_writer, args->stream_reader, sockfd, args->ports_len)) {
+        ERROR("Failed to create console loop thread");
+        goto out;
+    }
+ 
+out:
+    for(i = i - 1; i >= 0; i--) {
+        close(sockfd[i]);
+    }
+    return NULL;
+}
+
+
+static int do_portforward_container(const container_t *cont, const container_portforward_request *request, struct io_write_wrapper *stream_writer,
+                            struct io_read_wrapper *stream_reader, int *sync_fd, pthread_t *thread_id)
+{
+    struct portforward_callback_args *args = NULL;
+    int ret = -1;
+
+    args = util_common_calloc_s(sizeof(struct portforward_callback_args));
+    if (args == NULL) {
+        ERROR("Out of memory");
+        return -1;
+    }
+
+    args->ports = util_smart_calloc_s(sizeof(int), request->ports_len);
+    if (args->ports == NULL) {
+        ERROR("Out of memory");
+        goto out;
+    }
+
+    for (size_t i = 0; i < request->ports_len; i++) {
+        args->ports[i] = request->ports[i];
+        args->ports_len++;
+    }
+
+    args->netns_path = util_strdup_s(cont->network_settings->sandbox_key);
+    args->stream_reader = stream_reader;
+    args->stream_writer = stream_writer;
+    ret = pthread_create(thread_id, NULL, pod_io_copy_thread, (void *)args);
+    if (ret != 0) {
+        ERROR("Failed to create pod io copy thread");
+        ret = -1;
+        goto out;
+    }
+    ret = 0;
+out:
+    free_portforward_callback_args(args);
+    return ret;
+}
+
+int portforward_container(const container_t *cont, const container_portforward_request *request, struct io_write_wrapper *stream_writer,
+                            struct io_read_wrapper *stream_reader, container_portforward_response *response)
+{
+    int sync_fd = -1;
+    uint32_t cc = ISULAD_SUCCESS;
+    char *id = NULL;
+    pthread_t thread_id = 0;
+
+    if (cont == NULL || request == NULL || response == NULL) {
+        ERROR("Invalid NULL input");
+        return -1;
+    }
+
+    id = cont->common_config->id;
+    WARN("Event: {Object: %s, Type: portforwarding}", id);
+
+    (void)isulad_monitor_send_container_event(id, PORTFORWARD_CREATE, -1, 0, NULL, NULL);
+
+    if (container_is_in_gc_progress(id)) {
+        isulad_set_error_message("You cannot portforward container %s in garbage collector progress.", id);
+        ERROR("You cannot portforward container %s in garbage collector progress.", id);
+        cc = ISULAD_ERR_EXEC;
+        goto pack_response;
+    }
+
+    if (!container_is_running(cont->state)) {
+        ERROR("Container %s is not running", id);
+        isulad_set_error_message("Container %s is not running", id);
+        cc = ISULAD_ERR_EXEC;
+        goto pack_response;
+    }
+
+    if (container_is_paused(cont->state)) {
+        ERROR("Container %s ispaused, unpause the container before portforward", id);
+        isulad_set_error_message("Container %s paused, unpause the container before portforward", id);
+        cc = ISULAD_ERR_EXEC;
+        goto pack_response;
+    }
+
+    if (container_is_restarting(cont->state)) {
+        ERROR("Container %s is currently restarting, wait until the container is running", id);
+        isulad_set_error_message("Container %s is currently restarting, wait until the container is running", id);
+        cc = ISULAD_ERR_EXEC;
+        goto pack_response;
+    }
+
+    (void)isulad_monitor_send_container_event(id, PORTFORWARD_START, -1, 0, NULL, NULL);
+
+    if (do_portforward_container(cont, request, stream_writer, stream_reader, &sync_fd, &thread_id)) {
+        cc = ISULAD_ERR_EXEC;
+        goto pack_response;
+    }
+
+    WARN("Event: {Object: %s, Type: portforward end}", id);
+    (void)isulad_monitor_send_container_event(id, PORTFORWARD_DIE, -1, 0, NULL, NULL);
+
+pack_response:
+    portforward_container_end(response, cont, cc, sync_fd, thread_id);
+    return (cc == ISULAD_SUCCESS) ? 0 : -1;
+}
+#endif

@@ -598,6 +598,32 @@ grpc::Status RuntimeRuntimeServiceImpl::Attach(grpc::ServerContext *context,
     return grpc::Status::OK;
 }
 
+#ifdef ENABLE_PORTFORWARD
+grpc::Status RuntimeRuntimeServiceImpl::PortForward(grpc::ServerContext *context, const runtime::v1alpha2::PortForwardRequest *request,
+                        runtime::v1alpha2::PortForwardResponse *response)
+{
+    Errors error;
+
+    if (request == nullptr || response == nullptr) {
+        ERROR("Invalid input arguments");
+        return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT, "Invalid input arguments");
+    }
+
+    EVENT("Event: {Object: CRI, Type: PortForward Pod: %s}", request->pod_sandbox_id().c_str());
+
+    m_rService->PortForward(*request, response, error);
+    if (!error.Empty()) {
+        ERROR("Object: CRI, Type: Failed to portForward pod:%s due to %s", request->pod_sandbox_id().c_str(),
+              error.GetMessage().c_str());
+        return grpc::Status(grpc::StatusCode::UNKNOWN, error.GetMessage());
+    }
+
+    EVENT("Event: {Object: CRI, Type: PortForwarded Pod: %s}", request->pod_sandbox_id().c_str());
+
+    return grpc::Status::OK;
+}
+#endif
+
 grpc::Status
 RuntimeRuntimeServiceImpl::UpdateRuntimeConfig(grpc::ServerContext *context,
                                                const runtime::v1alpha2::UpdateRuntimeConfigRequest *request,

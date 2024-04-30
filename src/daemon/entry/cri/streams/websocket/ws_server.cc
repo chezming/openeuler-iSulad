@@ -20,6 +20,7 @@
 #include <utility>
 #include <sys/resource.h>
 #include <isula_libutils/log.h>
+#include <isula_libutils/auto_cleanup.h>
 #include <isula_libutils/cri_terminal_size.h>
 #include "cxxutils.h"
 #include "utils.h"
@@ -63,7 +64,7 @@ WebsocketServer::~WebsocketServer()
 url::URLDatum WebsocketServer::GetWebsocketUrl()
 {
     url::URLDatum wsUrl;
-    wsUrl.SetScheme("ws");
+    wsUrl.SetScheme("http");
     wsUrl.SetHost("localhost:" + std::to_string(m_listenPort));
     return wsUrl;
 }
@@ -193,6 +194,14 @@ void WebsocketServer::CloseWsSession(int socketID)
             close(session->pipes.at(1));
             session->pipes.at(1) = -1;
         }
+#ifdef ENABLE_PORTFORWARD
+        for (size_t i = 0; i < session->portPipes.size(); i++) {
+            if (session->portPipes[i][1] >= 0) {
+                close(session->portPipes[i][1]);
+                session->portPipes[i][1] = -1;
+            }
+        }
+#endif
         (void)sem_wait(session->syncCloseSem);
         (void)sem_destroy(session->syncCloseSem);
         delete session->syncCloseSem;
@@ -358,7 +367,7 @@ int WebsocketServer::Wswrite(struct lws *wsi, const unsigned char *message)
             return 0;
         }
         auto n = lws_write(wsi, (unsigned char *)(&message[LWS_PRE]), strlen((const char *)(&message[LWS_PRE + 1])) + 1,
-                           LWS_WRITE_TEXT);
+                           LWS_WRITE_BINARY);
         if (n < 0) {
             ERROR("ERROR %d writing to socket, hanging up", n);
             return -1;
@@ -429,6 +438,21 @@ int WebsocketServer::ResizeTerminal(int socketID, const char *jsonData, size_t l
     return ret;
 }
 
+#ifdef ENABLE_PORTFORWARD
+// write to the fifo corresponding to the port
+void WebsocketServer::PortforwardReceive(SessionData *session, void *in, size_t len)
+{
+    int channel = *static_cast<char *>(in);
+    if (channel < 0 || channel >= MAX_PORT_NUM) {
+        ERROR("Received  write over!");
+    }
+
+    if (util_write_nointr_in_total(session->portPipes[channel][1], static_cast<char *>(in) + 1, len - 1) < 0) {
+        SYSERROR("Sub write over!");
+    }
+}
+#endif
+
 void WebsocketServer::Receive(int socketID, void *in, size_t len, bool complete)
 {
     auto it = m_wsis.find(socketID);
@@ -436,6 +460,13 @@ void WebsocketServer::Receive(int socketID, void *in, size_t len, bool complete)
         ERROR("Invailed websocket session!");
         return;
     }
+#ifdef ENABLE_PORTFORWARD
+    // Distinguish portforward from other operations
+    if (it->second->method == "portforward") {
+        PortforwardReceive(it->second, in, len);
+        return;
+    }
+#endif
 
     if (!it->second->IsStdinComplete()) {
         DEBUG("Receive remaning stdin data with length %zu", len);
@@ -456,6 +487,12 @@ void WebsocketServer::Receive(int socketID, void *in, size_t len, bool complete)
         return;
     }
 
+    if (*static_cast<unsigned char *>(in) == WS_CLOSE_FLAG && len > 1 && *(static_cast<char *>(in) + 1) == WebsocketChannel::STDINCHANNEL) {
+        // Got the CLOSE stream signal from client side
+        it->second->SetStdinComplete(true);
+        return;
+    }
+
     if (*static_cast<char *>(in) == WebsocketChannel::STDINCHANNEL) {
         if (util_write_nointr_in_total(m_wsis[socketID]->pipes.at(1), static_cast<char *>(in) + 1, len - 1) < 0) {
             SYSERROR("Sub write over!");
@@ -469,7 +506,7 @@ out:
     it->second->SetStdinComplete(complete);
 }
 
-int WebsocketServer::Callback(struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len)
+int WebsocketServer::WsCallback(struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len)
 {
     switch (reason) {
         case LWS_CALLBACK_HTTP:
@@ -488,7 +525,8 @@ int WebsocketServer::Callback(struct lws *wsi, enum lws_callback_reasons reason,
             }
             break;
         case LWS_CALLBACK_ESTABLISHED: {
-                DEBUG("new connection has been established");
+                int socketID = lws_get_socket_fd(wsi);
+                DEBUG("new connection: %d has been established", socketID);
             }
             break;
         case LWS_CALLBACK_SERVER_WRITEABLE: {
@@ -518,7 +556,11 @@ int WebsocketServer::Callback(struct lws *wsi, enum lws_callback_reasons reason,
 
                 // avoid: push message to buffer and set closed true
                 if (sessionClosed) {
-                    DEBUG("websocket session disconnected");
+                    // we should tell client we close reason is normal
+                    // length of 'normal' + '\0' is 7
+                    unsigned char buf[7] = "normal";
+                    lws_close_reason(wsi, LWS_CLOSE_STATUS_NORMAL, buf, sizeof(buf) - 1);
+                    DEBUG("websocket session: %d disconnected", socketID);
                     return -1;
                 }
                 lws_callback_on_writable(wsi);
@@ -532,15 +574,42 @@ int WebsocketServer::Callback(struct lws *wsi, enum lws_callback_reasons reason,
             }
             break;
         case LWS_CALLBACK_CLOSED: {
-                DEBUG("connection has been closed");
                 int socketID = lws_get_socket_fd(wsi);
                 WebsocketServer::GetInstance()->CloseWsSession(socketID);
+                DEBUG("connection: %d has been closed", socketID);
             }
             break;
         default:
             break;
     }
     return 0;
+}
+
+int WebsocketServer::GetWsToken(struct lws *wsi, char *dest, int max_dest_len, enum lws_token_indexes idx)
+{
+    int hlen;
+
+    hlen = lws_hdr_total_length(wsi, (enum lws_token_indexes)idx);
+    if (hlen <= 0 || hlen >= max_dest_len - 1) {
+        return -1;
+    }
+    if (lws_hdr_copy(wsi, dest, max_dest_len, (enum lws_token_indexes)idx) < 0) {
+        return -1;
+    }
+    return 0;
+}
+
+int WebsocketServer::HttpCallback(struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len)
+{
+    switch (reason) {
+        case LWS_CALLBACK_HTTP_CONFIRM_UPGRADE: {
+                return 0;
+            }
+        default:
+            break;
+    }
+
+    return lws_callback_http_dummy(wsi, reason, user, in, len);
 }
 
 void WebsocketServer::ServiceWorkThread(int threadid)

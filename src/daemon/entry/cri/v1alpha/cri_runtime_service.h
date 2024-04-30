@@ -62,7 +62,10 @@ public:
 
     virtual void Attach(const runtime::v1alpha2::AttachRequest &req, runtime::v1alpha2::AttachResponse *resp,
                         Errors &error) = 0;
-
+#ifdef ENABLE_PORTFORWARD
+    virtual void PortForward(const runtime::v1alpha2::PortForwardRequest &req, runtime::v1alpha2::PortForwardResponse *resp,
+                        Errors &error) = 0;
+#endif
     virtual auto RunPodSandbox(const runtime::v1alpha2::PodSandboxConfig &config, const std::string &runtimeHandler,
                                Errors &error) -> std::string = 0;
 

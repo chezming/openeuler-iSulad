@@ -28,6 +28,10 @@
 #include <isula_libutils/container_copy_to_request.h>
 #include <isula_libutils/container_exec_request.h>
 #include <isula_libutils/container_exec_response.h>
+#ifdef ENABLE_PORTFORWARD
+#include <isula_libutils/container_portforward_request.h>
+#include <isula_libutils/container_portforward_response.h>
+#endif
 #include <isula_libutils/container_path_stat.h>
 #include <isula_libutils/host_config.h>
 #include <isula_libutils/json_common.h>
@@ -1723,10 +1727,84 @@ out:
     return (cc == ISULAD_SUCCESS) ? 0 : -1;
 }
 
+#ifdef ENABLE_PORTFORWARD
+static int container_portforward_cb(const container_portforward_request *request, struct io_write_wrapper *stream_writer, 
+                                    struct io_read_wrapper *stream_reader, container_portforward_response **response)
+{
+    int ret = 0;
+    uint32_t cc = ISULAD_SUCCESS;
+    char *id = NULL;
+    container_t *cont = NULL;
+
+    DAEMON_CLEAR_ERRMSG();
+
+    if (request == NULL || response == NULL) {
+        ERROR("Invalid NULL input");
+        return -1;
+    }
+
+    *response = util_common_calloc_s(sizeof(container_portforward_response));
+    if (*response == NULL) {
+        ERROR("Out of memory");
+        return -1;
+    }
+
+    if (request->pod_sandbox_id == NULL) {
+        ERROR("Receive NULL Request id");
+        cc = ISULAD_ERR_INPUT;
+        ret = -1;
+        goto pack_err_response;
+    }
+
+    if (!util_valid_container_id_or_name(request->pod_sandbox_id)) {
+        ERROR("Invalid container name %s", request->pod_sandbox_id);
+        isulad_set_error_message("Invalid container name %s", request->pod_sandbox_id);
+        cc = ISULAD_ERR_EXEC;
+        ret = -1;
+        goto pack_err_response;
+    }
+
+    cont = containers_store_get(request->pod_sandbox_id);
+    if (cont == NULL) {
+        ERROR("No such container:%s", request->pod_sandbox_id);
+        isulad_set_error_message("No such container:%s", request->pod_sandbox_id);
+        cc = ISULAD_ERR_EXEC;
+        ret = -1;
+        goto pack_err_response;
+    }
+
+    id = cont->common_config->id;
+
+    isula_libutils_set_log_prefix(id);
+
+    if (portforward_container(cont, request, stream_writer, stream_reader, *response) != 0) {
+        ret = -1;
+        // pack err response in portforward_container, there is no need to pack here.
+        goto out;
+    }
+
+    goto out;
+
+pack_err_response:
+    (*response)->cc = cc;
+    if (g_isulad_errmsg != NULL) {
+        (*response)->errmsg = util_strdup_s(g_isulad_errmsg);
+        DAEMON_CLEAR_ERRMSG();
+    }
+
+out:
+    container_unref(cont);
+    return ret;
+}
+#endif
+
 void container_stream_callback_init(service_container_callback_t *cb)
 {
     cb->attach = container_attach_cb;
     cb->exec = container_exec_cb;
+#ifdef ENABLE_PORTFORWARD
+    cb->portforward = container_portforward_cb;
+#endif
 #ifdef ENABLE_OCI_IMAGE
     cb->copy_from_container = copy_from_container_cb;
     cb->copy_to_container = copy_to_container_cb;

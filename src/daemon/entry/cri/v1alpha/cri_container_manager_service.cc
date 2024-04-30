@@ -1420,14 +1420,6 @@ cleanup:
     free_container_exec_response(response);
 }
 
-auto ContainerManagerService::BuildURL(const std::string &method, const std::string &token) -> std::string
-{
-    url::URLDatum url;
-    url.SetPathWithoutEscape("/cri/" + method + "/" + token);
-
-    return cri_stream_server_url().ResolveReference(&url)->String();
-}
-
 auto ContainerManagerService::InspectContainerState(const std::string &Id, Errors &err) -> container_inspect_state *
 {
     container_inspect_state *inspect_data { nullptr };
@@ -1572,4 +1564,5 @@ void ContainerManagerService::Attach(const runtime::v1alpha2::AttachRequest &req
     std::string url = BuildURL("attach", token);
     resp->set_url(url);
 }
+
 } // namespace CRI
