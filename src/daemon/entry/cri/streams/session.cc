@@ -15,6 +15,7 @@
 #include "session.h"
 
 #include <isula_libutils/log.h>
+#include <isula_libutils/auto_cleanup.h>
 #include "ws_server.h"
 #include "utils.h"
 
@@ -205,6 +206,25 @@ ssize_t WsWriteStderrToClient(void *context, const void *data, size_t len)
     }
 
     return WsWriteToClient(context, data, len, STDERRCHANNEL);
+}
+
+ssize_t WsWriteStatusErrToClient(void *context, const cri_status_error *status)
+{
+    struct parser_context jctx = { OPT_GEN_SIMPLIFY, 0 };
+    __isula_auto_free parser_error err = nullptr;
+    __isula_auto_free char *data = nullptr;
+
+    if (context == nullptr) {
+        ERROR("websocket session context empty");
+        return -1;
+    }
+    data = cri_status_error_generate_json(status, &jctx, &err);
+    if (data == NULL) {
+        ERROR("Failed to parse cri status: %s", err);
+        return -1;
+    }
+
+    return WsWriteToClient(context, data, strlen(data), ERRORCHANNEL);
 }
 
 ssize_t WsDoNotWriteStdoutToClient(void *context, const void *data, size_t len)

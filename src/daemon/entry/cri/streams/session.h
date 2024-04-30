@@ -23,6 +23,7 @@
 #include <unistd.h>
 #include <array>
 #include <semaphore.h>
+#include <isula_libutils/cri_status_error.h>
 #include "request_cache.h"
 
 namespace {
@@ -51,6 +52,7 @@ struct SessionData {
 
 ssize_t WsWriteStdoutToClient(void *context, const void *data, size_t len);
 ssize_t WsWriteStderrToClient(void *context, const void *data, size_t len);
+ssize_t WsWriteStatusErrToClient(void *context, const cri_status_error *status);
 ssize_t WsDoNotWriteStdoutToClient(void *context, const void *data, size_t len);
 ssize_t WsDoNotWriteStderrToClient(void *context, const void *data, size_t len);
 int closeWsConnect(void *context, char **err);
