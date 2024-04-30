@@ -152,7 +152,7 @@ static void GetOnePodIP(std::string nsenterPath, std::string netnsPath, std::str
         }
         std::string tIP = ParseIPFromLine(lines[i], stdout_str);
         if (tIP.empty()) {
-            error.Errorf("parse %s to ip failed", lines[i]);
+            error.Errorf("Parse %s to ip failed", lines[i]);
             break;
         }
         ips.push_back(tIP);
@@ -213,7 +213,7 @@ void InitNetworkPlugin(std::vector<std::shared_ptr<NetworkPlugin>> *plugins, std
         std::string tmpName = (*it)->Name();
         // qualify plugin name
         if (pluginMap.find(tmpName) != pluginMap.end()) {
-            allErr += ("network plugin " + tmpName + "was registered more than once");
+            allErr += ("Network plugin " + tmpName + "was registered more than once");
             continue;
         }
 
@@ -342,7 +342,7 @@ void PodNetworkStatus::SetIPs(std::vector<std::string> &ips)
 void PluginManager::Lock(const std::string &fullPodName, Errors &error)
 {
     if (pthread_mutex_lock(&m_podsLock) != 0) {
-        error.SetError("plugin manager lock failed");
+        error.SetError("Plugin manager lock failed");
         return;
     }
     auto iter = m_pods.find(fullPodName);
@@ -352,7 +352,7 @@ void PluginManager::Lock(const std::string &fullPodName, Errors &error)
         if (tmpLock == nullptr) {
             error.SetError("Out of memory");
             if (pthread_mutex_unlock(&m_podsLock) != 0) {
-                error.SetError("plugin manager unlock failed");
+                error.SetError("Plugin manager unlock failed");
             }
             return;
         }
@@ -364,7 +364,7 @@ void PluginManager::Lock(const std::string &fullPodName, Errors &error)
     lock->Increase();
 
     if (pthread_mutex_unlock(&m_podsLock) != 0) {
-        error.SetError("plugin manager unlock failed");
+        error.SetError("Plugin manager unlock failed");
     }
 
     lock->Lock(error);
@@ -373,7 +373,7 @@ void PluginManager::Lock(const std::string &fullPodName, Errors &error)
 void PluginManager::Unlock(const std::string &fullPodName, Errors &error)
 {
     if (pthread_mutex_lock(&m_podsLock) != 0) {
-        error.SetError("plugin manager lock failed");
+        error.SetError("Plugin manager lock failed");
         return;
     }
 
@@ -396,7 +396,7 @@ void PluginManager::Unlock(const std::string &fullPodName, Errors &error)
     }
 unlock:
     if (pthread_mutex_unlock(&m_podsLock) != 0) {
-        error.SetError("plugin manager unlock failed");
+        error.SetError("Plugin manager unlock failed");
     }
 }
 
@@ -662,7 +662,7 @@ static void ParseOneLineNetworkStats(std::string &headerLine, std::string &value
 static void ParseNetworkStats(const std::string &stdoutString, struct NetworkInterfaceStats &stats, Errors &error)
 {
     if (stdoutString.length() == 0) {
-        error.SetError("none command output");
+        error.SetError("None command output");
         return;
     }
 
