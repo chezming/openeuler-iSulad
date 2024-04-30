@@ -35,6 +35,7 @@
 #include "utils.h"
 #include "utils_file.h"
 #include "err_msg.h"
+#include "thpool.h"
 
 static char *create_single_fifo(const char *statepath, const char *subpath, const char *stdflag)
 {
@@ -414,7 +415,8 @@ static int io_copy_make_dstfds(size_t len, struct io_copy_arg *copy_arg, int *ou
 
 static void *io_copy_thread_main(void *arg)
 {
-    int ret = -1;
+    printf("io_copy_thread_main is running!\n");
+    // int ret = -1;
     struct io_copy_thread_arg *thread_arg = (struct io_copy_thread_arg *)arg;
     struct io_copy_arg *copy_arg = thread_arg->copy_arg;
     size_t len = 0;
@@ -426,13 +428,13 @@ static void *io_copy_thread_main(void *arg)
     int sync_fd = thread_arg->sync_fd;
     bool posted = false;
 
-    if (thread_arg->detach) {
-        ret = pthread_detach(pthread_self());
-        if (ret != 0) {
-            CRIT("Set thread detach fail");
-            goto err;
-        }
-    }
+    // if (thread_arg->detach) {
+    //     ret = pthread_detach(pthread_self());
+    //     if (ret != 0) {
+    //         CRIT("Set thread detach fail");
+    //         goto err;
+    //     }
+    // }
 
     (void)prctl(PR_SET_NAME, "IoCopy");
 
@@ -479,7 +481,8 @@ static int start_io_copy_thread(int sync_fd, bool detach, struct io_copy_arg *co
         return -1;
     }
 
-    res = pthread_create(tid, NULL, io_copy_thread_main, (void *)(&thread_arg));
+    // res = pthread_create(tid, NULL, io_copy_thread_main, (void *)(&thread_arg));
+    res = add_work_to_threadpool(io_copy_thread_main, (void*)(&thread_arg));
     if (res != 0) {
         CRIT("Thread creation failed");
         return -1;

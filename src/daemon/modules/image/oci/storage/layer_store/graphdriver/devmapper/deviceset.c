@@ -47,6 +47,7 @@
 #include "utils_string.h"
 #include "utils_verify.h"
 #include "selinux_label.h"
+#include "thpool.h"
 
 #define DM_LOG_FATAL 2
 #define DM_LOG_DEBUG 7
@@ -2557,6 +2558,7 @@ unlock_driver:
 
 static void *cleanup_devices_cb(void *arg)
 {
+    printf("cleanup_devices_cb is running!\n");
     struct graphdriver *driver = (struct graphdriver *)arg;
 
     if (pthread_detach(pthread_self()) != 0) {
@@ -2861,7 +2863,7 @@ out:
 int device_set_init(struct graphdriver *driver, const char *driver_home, const char **options, size_t len)
 {
     int ret = 0;
-    pthread_t thread = 0;
+    // pthread_t thread = 0;
 
     if (driver == NULL || driver_home == NULL || options == NULL) {
         ERROR("Invalid input params");
@@ -2889,7 +2891,8 @@ int device_set_init(struct graphdriver *driver, const char *driver_home, const c
         goto out;
     }
 
-    if (pthread_create(&thread, NULL, cleanup_devices_cb, driver) != 0) {
+    if(add_work_to_threadpool(cleanup_devices_cb, driver)!=0){
+    // if (pthread_create(&thread, NULL, cleanup_devices_cb, driver) != 0) {
         ERROR("devmapper: cleanup deleted devices thread failed");
         ret = -1;
         goto out;

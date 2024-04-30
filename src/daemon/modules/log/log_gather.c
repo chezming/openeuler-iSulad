@@ -367,13 +367,15 @@ err_out:
 /* log gather */
 void *log_gather(void *arg)
 {
-    int ret = pthread_detach(pthread_self());
+    printf("log_gather is running!\n");
+    int ret;
+    // int ret = pthread_detach(pthread_self());
     struct log_gather_conf *lgconf = (struct log_gather_conf *)arg;
 
-    if (ret != 0) {
-        CRIT("Set log monitor thread detach fail");
-        goto err_out;
-    }
+    // if (ret != 0) {
+    //     CRIT("Set log monitor thread detach fail");
+    //     goto err_out;
+    // }
     prctl(PR_SET_NAME, "Log_gather");
     INFO("Begin to gather logs...");
 

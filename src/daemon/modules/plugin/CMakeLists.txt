@@ -11,6 +11,7 @@ set(local_plugin_incs
 
 set(PLUGIN_SRCS
     ${local_plugin_srcs}
+    ${CMAKE_SOURCE_DIR}/src/utils/threadpool/thpool.c
     PARENT_SCOPE
     )
 set(PLUGIN_INCS

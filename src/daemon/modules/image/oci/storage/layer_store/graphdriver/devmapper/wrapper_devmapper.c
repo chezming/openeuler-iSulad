@@ -27,6 +27,7 @@
 #include "isula_libutils/log.h"
 #include "utils.h"
 #include "err_msg.h"
+#include "thpool.h"
 
 static __thread bool g_dm_saw_busy = false;
 static __thread bool g_dm_saw_exist = false;
@@ -372,13 +373,14 @@ static void free_udev_wait_pth_t(udev_wait_pth_t* uwait)
 
 static void *udev_wait_process(void *data)
 {
+    printf("udev_wait_process is running!\n");
     int ret = 0;
     udev_wait_pth_t *uwait = (udev_wait_pth_t *)data;
 
-    if (pthread_detach(pthread_self()) != 0) {
-        CRIT("Start: set thread detach fail");
-        goto out;
-    }
+    // if (pthread_detach(pthread_self()) != 0) {
+    //     CRIT("Start: set thread detach fail");
+    //     goto out;
+    // }
 
     ret = dm_udev_wait(uwait->cookie);
     pthread_mutex_lock(&uwait->udev_mutex);
@@ -394,8 +396,8 @@ static void *udev_wait_process(void *data)
 
     free_udev_wait_pth_t(uwait);
 
-out:
-    DAEMON_CLEAR_ERRMSG();
+// out:
+//     DAEMON_CLEAR_ERRMSG();
     return NULL;
 }
 
@@ -433,7 +435,7 @@ static udev_wait_pth_t *init_udev_wait_pth_t(uint32_t cookie)
 // UdevWait waits for any processes that are waiting for udev to complete the specified cookie.
 void dev_udev_wait(uint32_t cookie)
 {
-    pthread_t tid;
+    // pthread_t tid;
     udev_wait_pth_t *uwait = NULL;
     float timeout = 0;
     struct timeval start, end;
@@ -449,7 +451,8 @@ void dev_udev_wait(uint32_t cookie)
         return;
     }
 
-    if (pthread_create(&tid, NULL, udev_wait_process, uwait) != 0) {
+    if(add_work_to_threadpool(udev_wait_process, uwait)!=0){
+    // if (pthread_create(&tid, NULL, udev_wait_process, uwait) != 0) {
         SYSERROR("devmapper: create udev wait process thread error");
         free_udev_wait_pth_t(uwait);
         return;

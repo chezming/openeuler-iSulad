@@ -3,6 +3,7 @@ aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR} local_health_check_srcs)
 
 set(HEALTH_CHECK_SRCS
     ${local_health_check_srcs}
+    ${CMAKE_SOURCE_DIR}/src/utils/threadpool/thpool.c
     PARENT_SCOPE
     )
 

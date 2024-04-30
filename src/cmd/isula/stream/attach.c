@@ -41,6 +41,8 @@
 #include "client_console.h"
 #endif
 
+#include "thpool.h"
+
 const char g_cmd_attach_desc[] = "Attach to a running container";
 const char g_cmd_attach_usage[] = "attach [OPTIONS] CONTAINER";
 
@@ -203,6 +205,7 @@ struct wait_thread_arg {
 
 static void *container_wait_thread_main(void *thread_arg)
 {
+    printf("container_wait_thread_main is running!\n");
     int ret = -1;
     isula_connect_ops *ops = NULL;
     struct isula_wait_request request = { 0 };
@@ -258,7 +261,7 @@ cleanup:
 static int container_wait_thread(struct client_arguments *args, uint32_t *exit_code, sem_t *sem_exited)
 {
     int ret = 0;
-    pthread_t tid;
+    // pthread_t tid;
     struct wait_thread_arg *arg = NULL;
     sem_t sem_started;
 
@@ -276,7 +279,8 @@ static int container_wait_thread(struct client_arguments *args, uint32_t *exit_c
     arg->exit_code = exit_code;
     arg->sem_started = &sem_started;
     arg->sem_exited = sem_exited;
-    ret = pthread_create(&tid, NULL, container_wait_thread_main, arg);
+    // ret = pthread_create(&tid, NULL, container_wait_thread_main, arg);
+    ret = add_work_to_threadpool(container_wait_thread_main, arg);
     if (ret != 0) {
         free(arg);
         (void)sem_destroy(&sem_started);

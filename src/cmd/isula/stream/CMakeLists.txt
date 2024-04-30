@@ -10,5 +10,6 @@ endif()
 
 set(ISULA_STREAM_SRCS
     ${local_isula_stream_srcs}
+    ${CMAKE_SOURCE_DIR}/src/utils/threadpool/thpool.c
     PARENT_SCOPE
     )

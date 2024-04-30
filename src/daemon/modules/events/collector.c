@@ -43,6 +43,7 @@
 #include "utils.h"
 #include "utils_array.h"
 #include "utils_timestamp.h"
+#include "thpool.h"
 
 static struct context_lists g_context_lists;
 
@@ -746,14 +747,15 @@ delete_and_continue:
 /* event should exit */
 static void *event_should_exit(void *arg)
 {
-    int res = 0;
+    printf("event_should_exit is running!\n");
+    // int res = 0;
     int err = 0;
 
-    res = pthread_detach(pthread_self());
-    if (res != 0) {
-        CRIT("Set thread detach fail");
-        goto error;
-    }
+    // res = pthread_detach(pthread_self());
+    // if (res != 0) {
+    //     CRIT("Set thread detach fail");
+    //     goto error;
+    // }
 
     prctl(PR_SET_NAME, "Clients_checker");
 
@@ -809,7 +811,7 @@ static void *event_should_exit(void *arg)
 
         sleep(1);
     }
-error:
+// error:
     return NULL;
 }
 
@@ -944,7 +946,7 @@ free_out:
 static int newcollector()
 {
     int ret = -1;
-    pthread_t exit_thread;
+    // pthread_t exit_thread;
 
     linked_list_init(&(g_context_lists.context_list));
     linked_list_init(&(g_events_buffer.event_list));
@@ -964,7 +966,8 @@ static int newcollector()
     }
 
     INFO("Starting collector...");
-    ret = pthread_create(&exit_thread, NULL, event_should_exit, NULL);
+    // ret = pthread_create(&exit_thread, NULL, event_should_exit, NULL);
+    ret = add_work_to_threadpool(event_should_exit, NULL);
     if (ret != 0) {
         CRIT("Thread creation failed");
         pthread_mutex_destroy(&(g_context_lists.context_mutex));

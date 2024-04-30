@@ -15,6 +15,7 @@ set(CMD_ISULA_SRCS
     ${ISULA_VOLUME_SRCS}
     ${ISULA_INFORMATION_SRCS}
     ${ISULA_STREAM_SRCS}
+    ${CMAKE_SOURCE_DIR}/src/utils/threadpool/thpool.c
     PARENT_SCOPE
     )
 

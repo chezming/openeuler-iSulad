@@ -27,6 +27,7 @@
 #include "utils.h"
 #include "console.h"
 #include "utils_file.h"
+#include "thpool.h"
 
 /* free command fifo names */
 void free_command_fifo_config(struct command_fifo_config *fifos)
@@ -186,6 +187,7 @@ struct console_loop_thread_args {
 
 static void *client_console_loop_thread(void *arg)
 {
+    printf("client_console_loop_thread is running!\n");
     int ret = 0;
     int fifoinfd = -1;
     int fifooutfd = -1;
@@ -248,12 +250,13 @@ err1:
 int start_client_console_thread(struct command_fifo_config *console_fifos, bool tty)
 {
     int res = 0;
-    pthread_t a_thread;
+    // pthread_t a_thread;
     struct console_loop_thread_args args;
 
     args.fifo_config = console_fifos;
     args.tty = tty;
-    res = pthread_create(&a_thread, NULL, client_console_loop_thread, (void *)(&args));
+    // res = pthread_create(&a_thread, NULL, client_console_loop_thread, (void *)(&args));
+    res = add_work_to_threadpool(client_console_loop_thread,(void *)(&args));
     if (res != 0) {
         CRIT("Thread creation failed");
         return -1;
@@ -266,15 +269,16 @@ int start_client_console_thread(struct command_fifo_config *console_fifos, bool 
 
 static void *client_console_resize_thread(void *arg)
 {
+    printf("client_console_resize_thread is running!\n");
     int ret = 0;
     struct client_arguments *args = arg;
     struct winsize wsz = { 0 };
 
-    ret = pthread_detach(pthread_self());
-    if (ret != 0) {
-        CRIT("Start: set thread detach fail");
-        goto out;
-    }
+    // ret = pthread_detach(pthread_self());
+    // if (ret != 0) {
+    //     CRIT("Start: set thread detach fail");
+    //     goto out;
+    // }
 
     if (!isatty(STDIN_FILENO)) {
         goto out;
@@ -307,9 +311,10 @@ out:
 int start_client_console_resize_thread(struct client_arguments *args)
 {
     int res = 0;
-    pthread_t a_thread;
+    // pthread_t a_thread;
 
-    res = pthread_create(&a_thread, NULL, client_console_resize_thread, (void *)(args));
+    // res = pthread_create(&a_thread, NULL, client_console_resize_thread, (void *)(args));
+    res = add_work_to_threadpool(client_console_resize_thread, (void *)(args));
     if (res != 0) {
         CRIT("Thread creation failed");
         return -1;
